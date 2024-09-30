@@ -1,0 +1,20 @@
+#pragma once
+
+enum class XboxButtonID
+{
+	DPAD_UP,
+	DPAD_DOWN,
+	DPAD_LEFT,
+	DPAD_RIGHT,
+	START,
+	BACK,
+	LEFT_THUMB,
+	RIGHT_THUMB,
+	LEFT_SHOULDER,
+	RIGHT_SHOULDER,
+	A,
+	B,
+	X,
+	Y,
+	NUM
+};

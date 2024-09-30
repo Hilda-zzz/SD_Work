@@ -1,0 +1,15 @@
+﻿  Main.cpp
+  UnitTests_Custom.cpp
+  UnitTests_MP1A2.cpp
+  UnitTests_MP1A3.cpp
+  Generating code
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(63): warning C4715: 'GetTurnedTowardDegrees': not all control paths return a value
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(252): warning C4702: unreachable code
+  63 of 177 functions (35.6%) were compiled, the rest were copied from previous compilation.
+    52 functions were new in current compilation
+    36 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Game.vcxproj -> C:\p4\Personal\SD\MathUnitTests\Temporary\MathUnitTests_x64_Release\MathUnitTests_Release_x64.exe
+  Copying MathUnitTests_Release_x64.exe to C:\p4\Personal\SD\MathUnitTests\Run...
+  C:\p4\Personal\SD\MathUnitTests\Temporary\MathUnitTests_x64_Release\MathUnitTests_Release_x64.exe -> C:\p4\Personal\SD\MathUnitTests\Run\MathUnitTests_Release_x64.exe
+  1 File(s) copied

@@ -1,0 +1,8 @@
+﻿  MathUtils.cpp
+  Camera.cpp
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Camera.cpp(4,63): warning C4100: 'topRight': unreferenced formal parameter
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Camera.cpp(4,39): warning C4100: 'bottomLeft': unreferenced formal parameter
+  Renderer.cpp
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Renderer.cpp(75,42): warning C4100: 'camera': unreferenced formal parameter
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Renderer.cpp(82,40): warning C4100: 'camera': unreferenced formal parameter
+  Engine.vcxproj -> C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Engine.lib

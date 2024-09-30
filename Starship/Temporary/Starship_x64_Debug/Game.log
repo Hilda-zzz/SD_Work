@@ -1,0 +1,11 @@
+﻿  Game.cpp
+C:\p4\Personal\SD\Starship\Code\Game\Debris.hpp(8,120): warning C4227: anachronism used: qualifiers on reference are ignored
+C:\p4\Personal\SD\Starship\Code\Game\Game.hpp(58,26): warning C4227: anachronism used: qualifiers on reference are ignored
+C:\p4\Personal\SD\Starship\Code\Game\Game.hpp(58,135): warning C4227: anachronism used: qualifiers on reference are ignored
+C:\p4\Personal\SD\Starship\Code\Game\Game.cpp(545,47): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\p4\Personal\SD\Starship\Code\Game\Game.cpp(762,31): warning C4227: anachronism used: qualifiers on reference are ignored
+C:\p4\Personal\SD\Starship\Code\Game\Game.cpp(762,141): warning C4227: anachronism used: qualifiers on reference are ignored
+  Game.vcxproj -> C:\p4\Personal\SD\Starship\Temporary\Starship_x64_Debug\Starship_Debug_x64.exe
+  Copying Starship_Debug_x64.exe to C:\p4\Personal\SD\Starship\Run...
+  C:\p4\Personal\SD\Starship\Temporary\Starship_x64_Debug\Starship_Debug_x64.exe -> C:\p4\Personal\SD\Starship\Run\Starship_Debug_x64.exe
+  1 File(s) copied
