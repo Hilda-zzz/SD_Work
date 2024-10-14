@@ -8,13 +8,14 @@
 extern Renderer* g_theRenderer;
 
 Debris::Debris(Game* game, float x, float y,float minSpeed,float maxSpeed, 
-	float minRadius, float maxRadius, Rgba8 color, Vec2& const oriVelocity) : Entity(game, x, y)
+	float minRadius, float maxRadius, Rgba8 color, Vec2 const& oriVelocity,int type) : Entity(game, x, y)
 {
 	m_orientationDegrees = game->m_rng->RollRandomFloatInRange(0.f, 360.f);
 	m_angularVelocity = game->m_rng->RollRandomFloatInRange(-200.f, 200.f);
 	m_physicsRadius = minRadius;
 	m_cosmeticRadius = maxRadius;
 	m_health = 0;
+	m_type = type;
 	float velocity_angle = game->m_rng->RollRandomFloatInRange(0.f, 360.f);
 	float speed= game->m_rng->RollRandomFloatInRange(minSpeed, maxSpeed);
 	m_velocity = Vec2::MakeFromPolarDegrees(velocity_angle, speed)+oriVelocity;
@@ -35,7 +36,7 @@ Debris::Debris(Game* game, float x, float y,float minSpeed,float maxSpeed,
 		i += 3;
 		j += 1;
 	}
-	startTime = GetCurrentTimeSeconds();
+	m_startTime = GetCurrentTimeSeconds();
 }
 
 void Debris::Update(float deltaTime)
@@ -43,12 +44,24 @@ void Debris::Update(float deltaTime)
 	m_orientationDegrees += m_angularVelocity * deltaTime;
 	m_position.x += m_velocity.x * deltaTime;
 	m_position.y += m_velocity.y * deltaTime;
-	currentTime= GetCurrentTimeSeconds();
-	current_a = RangeMapClamped(currentTime, startTime, startTime + 2, 130.f, 0.f);
-	if (IsOffscreen()||currentTime-startTime>2)
+	if (m_type == 1)
 	{
-		Die();
+		m_currentTime = GetCurrentTimeSeconds();
+		m_current_a = RangeMapClamped((float)m_currentTime, (float)m_startTime, (float)m_startTime + 2.f, 130.f, 0.f);
+		if (IsOffscreen() || (float)m_currentTime - (float)m_startTime > 2.f)
+		{
+			Die();
+		}
 	}
+	else if (m_type == 2)
+	{
+		m_current_a = 255;
+		if (IsOffscreen())
+		{
+			Die();
+		}
+	}
+	
 }
 
 void Debris::Render() const
@@ -58,7 +71,7 @@ void Debris::Render() const
 	{
 		temp_vertices[i].m_position = vertices[i].m_position;
 		temp_vertices[i].m_uvTexCoords = vertices[i].m_uvTexCoords;
-		unsigned char uc_a = static_cast<unsigned char>(current_a);
+		unsigned char uc_a = static_cast<unsigned char>(m_current_a);
 		Rgba8 cur_color{ vertices[i].m_color.r,vertices[i].m_color.g,vertices[i].m_color.b,uc_a };
 		temp_vertices[i].m_color = cur_color;
 	}

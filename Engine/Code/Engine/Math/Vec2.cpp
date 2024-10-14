@@ -300,3 +300,20 @@ float Vec2::NormalizeAndGetPreviousLength()
 	return length;
 }
 
+Vec2 const Vec2::GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const
+{
+	float Vn_f = DotProduct2D(Vec2(x, y), normalOfSurfaceToReflectOffOf);
+	Vec2 Vn = normalOfSurfaceToReflectOffOf * Vn_f;
+	Vec2 Vt = Vec2(x, y) - Vn;
+	Vec2 R = Vt - Vn;
+	return R;
+}
+
+void Vec2::Reflect(Vec2 const& normalOfSurfaceToReflectOffOf)
+{
+	float Vn_f = DotProduct2D(Vec2(x, y), normalOfSurfaceToReflectOffOf);
+	Vec2 Vn = normalOfSurfaceToReflectOffOf * Vn_f;
+	Vec2 Vt = Vec2(x, y) - Vn;
+	*this = Vt - Vn;
+}
+

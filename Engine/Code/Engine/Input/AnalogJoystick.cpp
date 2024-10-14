@@ -40,14 +40,14 @@ float AnalogJoystick::GetOuterDeadZoneFraction() const
 void AnalogJoystick::Reset()
 {
     //?
-    //m_correctedPosition =Vec2 { 0.f,0.f };
-    //m_rawPosition = Vec2{ 0.f,0.f };
+    m_correctedPosition =Vec2 { 0.f,0.f };
+    m_rawPosition = Vec2{ 0.f,0.f };
 }
 
 void AnalogJoystick::SetDeadZoneThresholds(float normalizedInnerDeadzoneThreshold, float normalizedOuterDeadzonesThreshold)
 {
     m_innerDeadZoneFraction = normalizedInnerDeadzoneThreshold;
-    m_outerDeadZoneFraction = normalizedInnerDeadzoneThreshold;
+    m_outerDeadZoneFraction = normalizedOuterDeadzonesThreshold;
 }
 
 void AnalogJoystick::UpdatePosition(float rawNormalizedX, float rawNormalizedY)

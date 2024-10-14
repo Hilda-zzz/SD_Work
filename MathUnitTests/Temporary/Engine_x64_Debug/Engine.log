@@ -1,6 +1,6 @@
 ﻿  MathUtils.cpp
-C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(80,18): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(258,15): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(85,18): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(400,15): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
 C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(63,1): warning C4715: 'GetTurnedTowardDegrees': not all control paths return a value
-C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(252,1): warning C4702: unreachable code
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(394,1): warning C4702: unreachable code
   Engine.vcxproj -> C:\p4\Personal\SD\MathUnitTests\Temporary\Engine_x64_Debug\Engine.lib

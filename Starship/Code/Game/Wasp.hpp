@@ -6,16 +6,11 @@ class Wasp :public Entity
 {
 public:
     Wasp(Game* game, float x, float y);
-
     void Update(float deltaTime) override;
     void Render() const  override;
     void Die() override;
-
-    //------------------------------------------------------
-
-
-    Vertex_PCU vertices[NUM_BEETLE_VERTS];
+    void GetHurt(float hurtPoint);
 
 private:
-
+    Vertex_PCU vertices[NUM_WASP_VERTS];
 };

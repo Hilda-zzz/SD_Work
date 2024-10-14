@@ -51,23 +51,19 @@ void Renderer::Shutdown()
 
 }
 
-void Renderer::BeginView()
-{
-	// Establish a 2D (orthographic) drawing coordinate system: (0,0) bottom-left to (10,10) top-right
-	// #SD1ToDo: This will be replaced by a call to g_renderer->BeginView( m_worldView ); or similar
-	glLoadIdentity();
-	//glOrtho(0.f, 10.f, 0.f, 10.f, 0.f, 1.f); // arguments are: xLeft, xRight, yBottom, yTop, zNear, zFar
-	glOrtho(0.f, 200.f, 0.f, 100.f, 0.f, 1.f);
-
-	//Replace by camera??
-}
+//void Renderer::BeginView()
+//{
+//	// Establish a 2D (orthographic) drawing coordinate system: (0,0) bottom-left to (10,10) top-right
+//	// #SD1ToDo: This will be replaced by a call to g_renderer->BeginView( m_worldView ); or similar
+//	glLoadIdentity();
+//	//glOrtho(0.f, 10.f, 0.f, 10.f, 0.f, 1.f); // arguments are: xLeft, xRight, yBottom, yTop, zNear, zFar
+//	glOrtho(0.f, 200.f, 0.f, 100.f, 0.f, 1.f);
+//
+//	//Replace by camera??
+//}
 
 void Renderer::ClearScreen(const Rgba8& clearColor)
 {
-	// Clear all screen (backbuffer) pixels to medium-blue
-	// #SD1ToDo: This will become g_renderer->ClearColor( Rgba8( 0, 0, 127, 255 ) );
-	//glClearColor(0.f, 0.f, 0.5f, 1.f); // Note; glClearColor takes colors as floats in [0,1], not bytes in [0,255]
-	//glClearColor(0.40f, 0.20f, 0.00f, 1.00f);
 	glClearColor(clearColor.r/255.f, clearColor.g/255.f, clearColor.b/255.f, clearColor.a/255.f);
 	glClear(GL_COLOR_BUFFER_BIT); // ALWAYS clear the screen at the top of each frame's Render()!
 }
@@ -75,8 +71,8 @@ void Renderer::ClearScreen(const Rgba8& clearColor)
 void Renderer::BeginCamera(const Camera& camera)
 {
 	glLoadIdentity();
-	glOrtho(0.f, 200.f, 0.f, 100.f, 0.f, 1.f);
-	//camera->SetOrthoView();
+	glOrtho(camera.GetOrthoBottomLeft().x, camera.GetOrthoTopRight().x,
+		camera.GetOrthoBottomLeft().y,camera.GetOrthoTopRight().y, 0.f, 1.f);
 }
 
 void Renderer::EndCamera(const Camera& camera)
@@ -84,17 +80,13 @@ void Renderer::EndCamera(const Camera& camera)
 
 }
 
-//void Renderer::DrawVertexArray(float shipx,float shipy)
 void Renderer::DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs)
 {
-	// Draw some triangles (provide 3 vertexes each)
-	// #SD1ToDo: Move all OpenGL code into Renderer.cpp (only); call g_renderer->DrawVertexArray() instead
 	glBegin(GL_TRIANGLES);
 	{
 		for (int i = 0; i < numVertexs; i++)
 		{
 			Rgba8 const& color = vertexs[i].m_color;
-			//const Vec2& tex = vertexs[i].m_uvTexCoords;
 			Vec3 const& pos = vertexs[i].m_position;
 
 			glColor4ub(color.r, color.g, color.b, color.a);

@@ -12,6 +12,10 @@
 extern Renderer* g_theRenderer;
 extern App* g_theApp;
 extern InputSystem* g_theInput;
+extern AudioSystem* g_theAudio;
+//Rgba8 shipOriColor = Rgba8(102, 153, 204, 255);
+Rgba8 shipOriColor = Rgba8(22, 212, 204, 238);
+Rgba8 curShipColor = shipOriColor;
 PlayerShip::PlayerShip(Game* game, float x, float y): Entity(game, x, y) 
 {
 	//can use initialize list
@@ -20,27 +24,37 @@ PlayerShip::PlayerShip(Game* game, float x, float y): Entity(game, x, y)
 	m_cosmeticRadius = PLAYER_SHIP_COSMETIC_RADIUS;
 	m_velocity = Vec2{ 0.f,0.f };
 	m_isDead = false;
-	m_health = 4;
+	m_lives = 4;
+	m_health = 80;
 	m_thrustFraction = 0.f;
-	vertices[0] = Vertex_PCU(Vec3(-2, 1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[1] = Vertex_PCU(Vec3(0, 2, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[2] = Vertex_PCU(Vec3(2, 1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
+	InitializedVerts(vertices, curShipColor);
+	m_Canon = new Canon(game, x, y, 3);
+	m_laserExplosionCanon = new LaserExplosionCanon(game, x, y, 1);
+	m_lightSaber = new LightSaber(game, x, y, 1);
 
-	vertices[3] = Vertex_PCU(Vec3(-2, 1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[4] = Vertex_PCU(Vec3(-2, -1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[5] = Vertex_PCU(Vec3(0, 1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
+	//tail verts
+	tail_vertices[0]= Vertex_PCU(Vec3(-2.f, 1.f, 0.f), Rgba8(189,29,56), Vec2(0.f, 0.f));
+	tail_vertices[1] = Vertex_PCU(Vec3(-2.f, -1.f, 0.f), Rgba8(189, 29, 56), Vec2(0.f, 0.f));
+	tail_vertices[2] = Vertex_PCU(Vec3(-2.f,0.f, 0.f), Rgba8(71, 229, 180,10), Vec2(0.f, 0.f));
+}
 
-	vertices[6] = Vertex_PCU(Vec3(-2, -1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[7] = Vertex_PCU(Vec3(0, -1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[8] = Vertex_PCU(Vec3(0, 1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-
-	vertices[9] = Vertex_PCU(Vec3(0, -1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[10] = Vertex_PCU(Vec3(1, 0, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[11] = Vertex_PCU(Vec3(0, 1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-
-	vertices[12] = Vertex_PCU(Vec3(-2, -1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[13] = Vertex_PCU(Vec3(2, -1, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
-	vertices[14] = Vertex_PCU(Vec3(0, -2, 0.f), Rgba8(102, 153, 204, 255), Vec2(0.f, 0.f));
+PlayerShip::~PlayerShip()
+{
+	if (m_Canon != nullptr)
+	{
+		delete m_Canon;
+		m_Canon = nullptr;
+	}
+	if (m_laserExplosionCanon != nullptr)
+	{
+		delete m_laserExplosionCanon;
+		m_laserExplosionCanon = nullptr;
+	}
+	if (m_lightSaber != nullptr)
+	{
+		delete m_lightSaber;
+		m_lightSaber = nullptr;
+	}
 }
 
 void PlayerShip::Update(float deltaTime) 
@@ -57,48 +71,141 @@ void PlayerShip::Update(float deltaTime)
 		//accelerate
 		m_isAccelerate = g_theInput->IsKeyDown('E');
 		//shoot
-		m_isShoot = g_theInput->WasKeyJustPressed(32);
-	
+		//m_isShoot = g_theInput->WasKeyJustPressed(32);
+		m_isKeepShoot = g_theInput->IsKeyDown(32);
+		m_isJustShoot = g_theInput->WasKeyJustPressed(32);
 		//respawn
-		
+		//light saber
+
+		m_isSaber = g_theInput->IsKeyDown('J');
+		m_isChangeState = g_theInput->WasKeyJustPressed('C');
+		if (m_isChangeState)
+		{
+			g_theAudio->StartSound(m_game->playerChangeWeaponSound);
+			if (m_FirstWeaponState == 1)
+			{
+				m_FirstWeaponState = 2;
+			}
+			else
+			{
+				m_FirstWeaponState = 1;
+			}
+		}
 		if (m_isShipRotateLeft)
 		{
-			m_orientationDegrees += PLAYER_SHIP_TURN_SPEED * deltaTime;
+			if(m_FirstWeaponState==1)
+				m_orientationDegrees += PLAYER_SHIP_TURN_SPEED * deltaTime;
+			else
+				m_orientationDegrees += PLAYER_SHIP_TURN_SPEED_SLOW * deltaTime;
 		}
 
 		if (m_isShipRotateRight)
 		{
-			m_orientationDegrees -= PLAYER_SHIP_TURN_SPEED * deltaTime;
+			if (m_FirstWeaponState == 1)
+				m_orientationDegrees -= PLAYER_SHIP_TURN_SPEED * deltaTime;
+			else
+				m_orientationDegrees -= PLAYER_SHIP_TURN_SPEED_SLOW * deltaTime;
 		}
 
+		if (m_isControllerAccelerate)
+		{
+			return;
+		}
+		else
+		{
+			if (m_isAccelerate)
+			{
+				m_thrustFraction = 1.0f;
+				//m_velocity += Vec2::MakeFromPolarDegrees(m_orientationDegrees, PLAYER_SHIP_ACCELERATION * deltaTime);
+			}
+			else
+			{
+				m_thrustFraction =0.0f;
+			}
+		}
 		if (m_isAccelerate)
 		{
+			//m_thrustFraction = 1.0f;
 			m_velocity += Vec2::MakeFromPolarDegrees(m_orientationDegrees, PLAYER_SHIP_ACCELERATION * deltaTime);
 		}
 
+
+		if (m_velocity.GetLength() > 0)
+		{
+			Vec2 deltaVelocity = -m_velocity;
+			deltaVelocity.SetLength(0.02f);
+			m_velocity += deltaVelocity;
+		}
 		BounceOffWall();
 
 		m_position.x += m_velocity.x * deltaTime;
 		m_position.y += m_velocity.y * deltaTime;
 
-		if (m_isShoot)
+		if (m_isKeepShoot&&m_FirstWeaponState==1)
 		{
-			m_game->Shoot();
+			m_game->PlayerShipKeepShoot();
 		}
+
+		if (m_isJustShoot && m_FirstWeaponState == 2)
+		{
+			m_game->PlayerShipJustShoot();
+		}
+
+		if (m_isInvincibleState)
+		{
+			double curTime = GetCurrentTimeSeconds();
+			if (curTime - m_invincibleStartTime > 3.0)
+			{
+				m_isInvincibleState = false;
+				curShipColor = shipOriColor;
+				return;
+			}
+			float temp = RangeMap(SinDegrees(curTime * 500.f), -1.f, 1.f, 0.4f, 1.f);
+			curShipColor = Rgba8(110, 47, 117, 255.f * temp);
+		}
+
+		if (m_FirstWeaponState == 1)
+		{
+			m_Canon->Update(deltaTime);
+		}
+		else if (m_FirstWeaponState == 2)
+		{
+			m_laserExplosionCanon->Update(deltaTime);
+		}
+		if (m_magicPoint < m_maxMagicPoint)
+		{
+			m_magicPoint += 0.04;
+		}
+	
+		if (m_isSaber==true && m_magicPoint > MIN_SABER_MP)
+		{
+			m_lightSaber->Update(deltaTime);
+			m_magicPoint -= 0.3f;
+		}
+
+		if (g_theInput->WasKeyJustPressed('J'))
+		{
+			g_theAudio->StartSound(m_game->playerSaberSound);
+		}
+
+		//trail tail
+		float tailLen = RangeMapClamped(m_thrustFraction, 0.f, 1.f, 5.f, 12.f);
+		float offset=m_game->m_rng->RollRandomFloatInRange(-0.5f, 0.5f);
+		tail_vertices[2] = Vertex_PCU(Vec3(-tailLen+ offset, 0.f, 0.f), Rgba8(214, 116, 207, 10), Vec2(0.f, 0.f));
 	}
 	
-	if (m_isDead == true && g_theInput->WasKeyJustPressed('N') && m_health > 0)
+	if (m_isDead == true && g_theInput->WasKeyJustPressed('N') && m_lives > 1)
 	{
 		RespawnShip();
 	}
 
-	if (m_isDead && m_health <= 1&&m_completeDead==false)
+	if (m_isDead && m_lives <= 1&&m_isUseUpLives==false)
 	{
 		//wait to return menu
-		m_completeDead = true;
+		m_isUseUpLives = true;
 		m_deadTime= GetCurrentTimeSeconds();
 	}
-	if (m_completeDead == true)
+	if (m_isUseUpLives == true)
 	{
 		float curTime= GetCurrentTimeSeconds();
 		if (curTime - m_deadTime >= 2)
@@ -117,71 +224,149 @@ void PlayerShip::UpdateFromController(float deltaSeconds)
 	{
 		if (m_isDead)
 		{
-			if (controller.WasButtonJustPressed(XboxButtonID::START) && m_health > 0)
+			if (controller.WasButtonJustPressed(XboxButtonID::START) && m_lives > 0)
 			{
 				RespawnShip();
 			}
 			return;
 		}
 
+		//move
 		float leftStickMagnitude = controller.GetLeftStick().GetMagnitude();
 		if (leftStickMagnitude > 0.f&&!m_isShipRotateLeft&&!m_isShipRotateRight)
 		{
+			m_isControllerAccelerate = true;
 			m_thrustFraction = leftStickMagnitude;
 			m_orientationDegrees = controller.GetLeftStick().GetOrientationDegrees();
 			m_velocity += Vec2::MakeFromPolarDegrees(m_orientationDegrees, PLAYER_SHIP_ACCELERATION * deltaSeconds*m_thrustFraction);
 		}
-
-		if (controller.WasButtonJustPressed(XboxButtonID::A))
+		else
 		{
-			m_game->Shoot();
+			m_isControllerAccelerate = false;
+			m_thrustFraction = 0.f;
+		}
+		//fire
+		if (controller.WasButtonJustPressed(XboxButtonID::A)&& m_FirstWeaponState == 2)
+		{
+			m_game->PlayerShipJustShoot();
+		}
+		if (controller.IsButtongDown(XboxButtonID::A) && m_FirstWeaponState == 1)
+		{
+			m_game->PlayerShipKeepShoot();
+		}
+		//change weapon
+		if (controller.WasButtonJustPressed(XboxButtonID::B))
+		{
+			g_theAudio->StartSound(m_game->playerChangeWeaponSound);
+			if (m_FirstWeaponState == 1)
+			{
+				m_FirstWeaponState = 2;
+			}
+			else
+			{
+				m_FirstWeaponState = 1;
+			}
+		}
+		//light saber
+		if (controller.IsButtongDown(XboxButtonID::Y) && m_magicPoint > MIN_SABER_MP)
+		{
+			m_isControllerSaber = true;
+			m_lightSaber->Update(deltaSeconds);
+			m_magicPoint -= 0.3f;
+		}
+		else
+		{
+			m_isControllerSaber = false;
+		}
+		if (controller.WasButtonJustPressed(XboxButtonID::Y) && m_magicPoint > MIN_SABER_MP)
+		{
+			g_theAudio->StartSound(m_game->playerSaberSound);
+		}
+		//bullet time
+		if (controller.IsButtongDown(XboxButtonID::Y) && m_magicPoint > MIN_SABER_MP)
+		{
+
 		}
 	}
+
 }
 
 void PlayerShip::Render() const
 {
 	if (m_isDead == false)
 	{
+		if ((m_isSaber||m_isControllerSaber) && m_magicPoint > MIN_SABER_MP)
+		{
+			m_lightSaber->Render();
+		}
+		
 		Vertex_PCU temp_vertices[NUM_SHIP_VERTS];
 		for (int i = 0; i < NUM_SHIP_VERTS; i++)
 		{
 			temp_vertices[i] = vertices[i];
+			temp_vertices[i].m_color = curShipColor;
+		}
+		TransformVertexArrayXY3D(NUM_SHIP_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
+		g_theRenderer->DrawVertexArray(NUM_SHIP_VERTS, temp_vertices); //NUM_SHIP_VERTS
+
+		if (m_FirstWeaponState == 1)
+		{
+			m_Canon->Render();
+		}
+		else if (m_FirstWeaponState == 2)
+		{
+			m_laserExplosionCanon->Render();
 		}
 
-		TransformVertexArrayXY3D(NUM_SHIP_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
-
-		g_theRenderer->DrawVertexArray(NUM_SHIP_VERTS, temp_vertices); //NUM_SHIP_VERTS
+		Vertex_PCU temp_tail_vertices[3];
+		for (int i = 0; i < 3; i++)
+		{
+			temp_tail_vertices[i] = tail_vertices[i];
+			//temp_tail_vertices[i].m_color = curShipColor;
+		}
+		TransformVertexArrayXY3D(3, temp_tail_vertices, 1.f, m_orientationDegrees, m_position);
+		g_theRenderer->DrawVertexArray(3, temp_tail_vertices); //NUM_SHIP_VERTS
 	}	
 }
 
 void PlayerShip::Die() 
 {
+	m_isInvincibleState = false;
+	m_game->ShakeScreen();
 	m_game->GenerateDebris(m_position, Rgba8(102, 153, 204, 130), 8, 15.f, 35.f, 1.5f, 2.f, m_velocity);
 	m_isDead = true;
+	g_theAudio->StartSound(m_game->playerDiedSound);
 	//m_game->SpawnNewDebrisCluster(10,m_position,m_velocity,10.f,10.f,m_color)
+}
+
+void PlayerShip::GetHurt(float hurtHp)
+{
+	m_health -= hurtHp;
+	m_isInvincibleState = true;
+	m_invincibleStartTime = GetCurrentTimeSeconds();
+	g_theAudio->StartSound(m_game->playerHurtSound);
 }
 
 void PlayerShip::BounceOffWall()
 {
-	if (m_position.x < PLAYER_SHIP_PHYSICS_RADIUS )
+	if (m_position.x < WORLDSPACE_SIZE_BL_X+PLAYER_SHIP_PHYSICS_RADIUS )
 	{
-		m_position.x = PLAYER_SHIP_PHYSICS_RADIUS;
+		m_position.x = WORLDSPACE_SIZE_BL_X + PLAYER_SHIP_PHYSICS_RADIUS;
 		m_velocity.x = -m_velocity.x;
 	}
-	if (m_position.x > WORLD_SIZE_X- PLAYER_SHIP_PHYSICS_RADIUS)
+	if (m_position.x > WORLDSPACE_SIZE_TR_X- PLAYER_SHIP_PHYSICS_RADIUS)
 	{
-		m_position.x = WORLD_SIZE_X - PLAYER_SHIP_PHYSICS_RADIUS;
+		m_position.x = WORLDSPACE_SIZE_TR_X - PLAYER_SHIP_PHYSICS_RADIUS;
 		m_velocity.x = -m_velocity.x;
 	}
-	if (m_position.y < PLAYER_SHIP_PHYSICS_RADIUS )
+	if (m_position.y < WORLDSPACE_SIZE_BL_Y+PLAYER_SHIP_PHYSICS_RADIUS )
 	{
-		m_position.y = PLAYER_SHIP_PHYSICS_RADIUS;
+		m_position.y = WORLDSPACE_SIZE_BL_Y + PLAYER_SHIP_PHYSICS_RADIUS;
 		m_velocity.y = -m_velocity.y;
 	}
-	if (m_position.y > WORLD_SIZE_Y - PLAYER_SHIP_PHYSICS_RADIUS)
+	if (m_position.y > WORLDSPACE_SIZE_TR_Y - PLAYER_SHIP_PHYSICS_RADIUS)
 	{
-		m_position.y = WORLD_SIZE_Y - PLAYER_SHIP_PHYSICS_RADIUS;
+		m_position.y = WORLDSPACE_SIZE_TR_Y - PLAYER_SHIP_PHYSICS_RADIUS;
 		m_velocity.y = -m_velocity.y;
 	}
 }
@@ -189,9 +374,12 @@ void PlayerShip::BounceOffWall()
 
 void PlayerShip::RespawnShip()
 {
-	if (m_health >= 1)
+	m_isInvincibleState = true;
+	m_invincibleStartTime = GetCurrentTimeSeconds();
+	m_health = m_maxHealth;
+	if (m_lives >= 1)
 	{
-		m_health--;
+		m_lives--;
 	}
 	m_orientationDegrees = 0;
 	m_velocity.x = 0;

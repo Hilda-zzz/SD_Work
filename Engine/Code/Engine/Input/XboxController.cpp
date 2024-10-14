@@ -2,7 +2,8 @@
 #include <Xinput.h>
 #include "XboxController.hpp"
 #include <Engine/Math/MathUtils.hpp>
-#pragma comment( lib, "xinput" ) // Note: for Windows 7 and earlier support, use “xinput 9_1_0” explicitly instead
+#pragma comment( lib, "xinput" ) 
+// Note: for Windows 7 and earlier support, use “xinput 9_1_0” explicitly instead
 
 XboxController::XboxController()
 {
@@ -94,7 +95,7 @@ bool XboxController::WasButtonJustReleased(XboxButtonID buttonID) const
 void XboxController::Update()
 {
 	XINPUT_STATE xboxControllerState = {};
-	DWORD result = XInputGetState(m_id, &xboxControllerState); // Get fresh state info
+	XInputGetState(m_id, &xboxControllerState); // Get fresh state info
 	if (!IsConnected())
 	{
 		m_isConnected = false;
@@ -104,6 +105,7 @@ void XboxController::Update()
 	{
 		m_isConnected = true;
 
+		//change place
 		for (int i = 0; i < static_cast<int>(XboxButtonID::NUM); i++)
 		{
 			m_buttons[i].m_wasPressedLastFrame = m_buttons[i].m_isPressed;
@@ -136,6 +138,7 @@ void XboxController::Reset()
 	}
 	m_leftTrigger = 0.0f;
 	m_rightTrigger = 0.0f;
+	m_isConnected = false;
 }
 
 void XboxController::UpdateJoystick(AnalogJoystick& out_joysstick, short rawX, short rawY)
@@ -152,6 +155,6 @@ void XboxController::UpdateTrigger(float& our_triggerValue, unsigned char rawVal
 
 void XboxController::UpdateButton(XboxButtonID buttonID, unsigned short buttonFlags, unsigned short buttonFlag)
 {
-	bool isp= (buttonFlags & buttonFlag) == buttonFlag;
+	//bool isp= (buttonFlags & buttonFlag) == buttonFlag;
 	m_buttons[(int)buttonID].m_isPressed = (buttonFlags & buttonFlag) == buttonFlag;
 }

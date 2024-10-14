@@ -8,7 +8,7 @@
 #include "Game.hpp"
 
 extern Renderer* g_theRenderer;
-extern App* g_theApp;
+//extern App* g_theApp;
 Bullet::Bullet(Game* game, float x, float y) : Entity(game, x, y)
 {
 	m_cosmeticRadius = BULLET_COSMETIC_RADIUS;

@@ -17,10 +17,9 @@ public:
 	void BeginCamera(const Camera& camera);
 	void EndCamera(const Camera& camera);
 	void DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs);
-	//void DrawVertexArray(float shipx,float shipy);
 
 	void CreateRenderingContext();
-	void BeginView();
+	//void BeginView();
 
 private:
 

@@ -26,6 +26,7 @@ public:
 	void Shutdown();
 	void BeginFrame();
 	void EndFrame();
+
 	bool WasKeyJustPressed(unsigned char keyCode);
 	bool WasKeyJustReleased(unsigned char keyCode);
 	bool IsKeyDown(unsigned char keyCode);

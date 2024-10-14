@@ -3,10 +3,12 @@
 #include "Game.hpp"
 #include <Engine/Input/InputSystem.hpp>
 #include <Engine/Core/Time.hpp>
+#include <Engine/Audio/AudioSystem.hpp>
 App* g_theApp = nullptr;
 Renderer* g_theRenderer = nullptr;
 Camera* g_theCamera = nullptr;
 InputSystem* g_theInput = nullptr;
+AudioSystem* g_theAudio = nullptr;
 App::~App()
 {
 	delete m_theGame;
@@ -29,6 +31,9 @@ void App::Startup()
 	g_theInput = new InputSystem();
 	g_theInput->Startup();
 
+	g_theAudio = new AudioSystem();
+	g_theAudio->Startup();
+
 	m_theGame = new Game();
 }
 
@@ -49,14 +54,15 @@ void App::Shutdown()
 	g_theInput->Shutdown();
 	delete g_theInput;
 	g_theInput = nullptr;
+
+	g_theAudio->Shutdown();
+	delete g_theAudio;
+	g_theAudio = nullptr;
 }
 
 void App::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
 {
-	//if ( g_theInput->IsKeyDown(27))
-	//{
-	//	//m_isQuitting = true;
-	//}
+
 	if (g_theInput->WasKeyJustPressed('P'))
 	{
 		m_isPause = !m_isPause;
@@ -93,39 +99,37 @@ void App::BeginFrame()
 {
 	g_theRenderer->BeginFrame();
 	g_theInput->BeginFrame(); //call engine system
+	g_theAudio->BeginFrame();
 }
 
 void App::Update(float deltaSeconds)
 {
+	if (g_theInput->WasKeyJustPressed(0x77))
+	{
+		delete m_theGame;
+		m_theGame = nullptr;
+		m_theGame = new Game();
+	}
 	AdjustForPauseAndTimeDitortion(deltaSeconds);
 	m_theGame->Update(deltaSeconds);
-
-	//if (g_theInput->WasKeyJustPressed(0x77))
-	//{
-	//	//reset
-	//	g_theApp->Shutdown();
-	//	delete g_theApp;
-	//	g_theApp = nullptr;
-	//	g_theApp = new App();
-	//	g_theApp->Startup();
-	//}
 }
 
 void App::Render()  const
 {
 	g_theRenderer->ClearScreen(Rgba8(0, 0, 0, 255));
-	g_theRenderer->BeginCamera(*g_theCamera);
+	//g_theRenderer->BeginCamera(*m_theGame->m_worldCamera);
 
 	m_theGame->Renderer();
 	//for的时候用asteroidIndex这种具体的名字
 
-	g_theRenderer->EndCamera(*g_theCamera);
+	g_theRenderer->EndCamera(*m_theGame->m_worldCamera);
 }
 
 void App::EndFrame()
 {	
 	g_theRenderer->EndFrame();
 	g_theInput->EndFrame();
+	g_theAudio->EndFrame();
 }
 
 void App::RunFrame()

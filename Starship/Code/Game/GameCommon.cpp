@@ -51,3 +51,59 @@ void DebugDrawRing(float thickness,float innerRadius,Rgba8 color,Vec2 ori)
 	}
 	g_theRenderer->DrawVertexArray(96, vertices);
 }
+
+void DebugDrawCircle(float radius, Vec2 ori,Rgba8 color)
+{
+	Vertex_PCU vertices[48];
+	int j = 0;
+	for (int i = 0; i < 48; )
+	{
+		Vec2 curPosFirst = Vec2::MakeFromPolarDegrees(22.5f* j, radius)+ori;
+		Vec2 curPosSecond = Vec2::MakeFromPolarDegrees(22.5f * (j + 1), radius)+ori;
+		vertices[i] = Vertex_PCU(Vec3(ori.x, ori.y, 0.f), color, Vec2(0.f, 0.f));
+		vertices[i + 1] = Vertex_PCU(Vec3(curPosFirst.x, curPosFirst.y, 0.f), color, Vec2(0.f, 0.f));
+		vertices[i + 2] = Vertex_PCU(Vec3(curPosSecond.x, curPosSecond.y, 0.f), color, Vec2(0.f, 0.f));
+		i += 3;
+		j += 1;
+	}
+	g_theRenderer->DrawVertexArray(48, vertices);
+}
+
+void DebugDrawHighCircle(float radius, Vec2 ori, Rgba8 color)
+{
+	Vertex_PCU vertices[96];
+	int j = 0;
+	for (int i = 0; i < 96; )
+	{
+		Vec2 curPosFirst = Vec2::MakeFromPolarDegrees(11.25f * j, radius) + ori;
+		Vec2 curPosSecond = Vec2::MakeFromPolarDegrees(11.25f * (j + 1), radius) + ori;
+		vertices[i] = Vertex_PCU(Vec3(ori.x, ori.y, 0.f), color, Vec2(0.f, 0.f));
+		vertices[i + 1] = Vertex_PCU(Vec3(curPosFirst.x, curPosFirst.y, 0.f), color, Vec2(0.f, 0.f));
+		vertices[i + 2] = Vertex_PCU(Vec3(curPosSecond.x, curPosSecond.y, 0.f), color, Vec2(0.f, 0.f));
+		i += 3;
+		j += 1;
+	}
+	g_theRenderer->DrawVertexArray(96, vertices);
+}
+
+void DebugDrawBoxLine(Vec2 botLeft, Vec2 topRight,float width, Rgba8 color)
+{
+	DebugDrawLine(botLeft, Vec2(topRight.x, botLeft.y),width, color);
+	DebugDrawLine(botLeft, Vec2(botLeft.x, topRight.y), width, color);
+	DebugDrawLine(topRight, Vec2(botLeft.x, topRight.y), width, color);
+	DebugDrawLine(topRight, Vec2(topRight.x, botLeft.y), width, color);
+}
+
+void DebugDrawBox(Vec2 botLeft, Vec2 topRight, Rgba8 color)
+{
+	Vertex_PCU vertices[6];
+	vertices[0] = Vertex_PCU(Vec3(botLeft.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[1] = Vertex_PCU(Vec3(botLeft.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[2] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
+
+	vertices[3] = Vertex_PCU(Vec3(botLeft.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[4] = Vertex_PCU(Vec3(topRight.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[5] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
+
+	g_theRenderer->DrawVertexArray(6, vertices);
+}

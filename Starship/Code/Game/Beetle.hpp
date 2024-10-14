@@ -10,7 +10,7 @@ public:
     void Update(float deltaTime) override;
     void Render() const  override;
     void Die() override;
-
+    void GetHurt(float hurtPoint);
     //------------------------------------------------------
 
 

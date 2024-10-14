@@ -26,13 +26,13 @@ int IntVec2::GetLengthSquared() const
 
 float IntVec2::GetOrientationRadians() const
 {
-	float cur_degrees = Atan2Degrees(y, x);
+	float cur_degrees = Atan2Degrees((float)y, (float)x);
 	return  ConvertDegreesToRadians(cur_degrees);
 }
 
 float IntVec2::GetOrientationDegrees() const
 {
-	return Atan2Degrees(y, x);
+	return Atan2Degrees((float)y, (float)x);
 }
 
 IntVec2 const IntVec2::GetRotated90Degrees() const
@@ -47,18 +47,18 @@ IntVec2 const IntVec2::GetRotatedMinus90Degrees() const
 
 void IntVec2::Rotate90Degrees()
 {
-	float pre_x = x;
-	float pre_y = y;
-	x = -pre_y;
-	y = pre_x;
+	float pre_x = (float)x;
+	float pre_y = (float)y;
+	x = (int)-pre_y;
+	y = (int)pre_x;
 }
 
 void IntVec2::RotateMinus90Degrees()
 {
-	float pre_x = x;
-	float pre_y = y;
-	x = pre_y;
-	y = -pre_x;
+	float pre_x = (float)x;
+	float pre_y = (float)y;
+	x = (int)pre_y;
+	y = (int)-pre_x;
 }
 
 void IntVec2::operator=(const IntVec2& copyFrom)

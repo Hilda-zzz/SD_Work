@@ -8,7 +8,8 @@
 #include "Game.hpp"
 
 extern Renderer* g_theRenderer;
-
+extern AudioSystem* g_theAudio;
+constexpr int ORI_BEETLE_HP = 30;
 Beetle::Beetle(Game* game, float x, float y) : Entity(game,x,y)
 {
 	//can use initialize list
@@ -17,15 +18,15 @@ Beetle::Beetle(Game* game, float x, float y) : Entity(game,x,y)
 	m_cosmeticRadius = BEETLE_COSMETIC_RADIUS;
 	m_velocity = Vec2{ 0.f,0.f };
 	m_isDead = false;
-	m_health = 3;
+	m_health = ORI_BEETLE_HP;
+	m_oriHealth= ORI_BEETLE_HP;
+	vertices[0] = Vertex_PCU(Vec3(-1.5f, 1.7f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[1] = Vertex_PCU(Vec3(1.5f, 1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[2] = Vertex_PCU(Vec3(1.5f, -1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
 
-	vertices[0] = Vertex_PCU(Vec3(-1.5, 1.7, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-	vertices[1] = Vertex_PCU(Vec3(1.5, 1, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-	vertices[2] = Vertex_PCU(Vec3(1.5, -1, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-
-	vertices[3] = Vertex_PCU(Vec3(1.5, -1, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-	vertices[4] = Vertex_PCU(Vec3(-1.5,1.7, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-	vertices[5] = Vertex_PCU(Vec3(-1.5,-1.7, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[3] = Vertex_PCU(Vec3(1.5f, -1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[4] = Vertex_PCU(Vec3(-1.5f,1.7f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[5] = Vertex_PCU(Vec3(-1.5f,-1.7f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
 }
 
 void Beetle::Update(float deltaTime)
@@ -40,7 +41,7 @@ void Beetle::Update(float deltaTime)
 	m_position.x += m_velocity.x * deltaTime;
 	m_position.y += m_velocity.y * deltaTime;
 
-	if (m_health == 0)
+	if (m_health <= 0)
 	{
 		Die();
 	}
@@ -64,3 +65,14 @@ void Beetle::Die()
 	m_game->GenerateDebris(m_position, Rgba8(100, 160, 60, 130), 8, 15.f, 35.f, 1.5f, 2.f,m_velocity);
 	m_isGarbage = true;
 }
+
+void Beetle::GetHurt(float hurtPoint)
+{
+	m_health -= hurtPoint;
+	//m_isInvincibleState = true;
+	//m_invincibleStartTime = GetCurrentTimeSeconds();
+
+	g_theAudio->StartSound(m_game->enemyHurtSound, false);
+}
+
+

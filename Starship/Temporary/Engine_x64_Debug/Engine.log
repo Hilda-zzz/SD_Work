@@ -1,2 +1,26 @@
-﻿  InputSystem.cpp
+﻿  AudioSystem.cpp
+  ErrorWarningAssert.cpp
+  Rgba8.cpp
+  StringUtils.cpp
+  Time.cpp
+  VertexUtils.cpp
+  Vertex_PCU.cpp
+  AnalogJoystick.cpp
+  InputSystem.cpp
+  KeyButtonState.cpp
+  XboxController.cpp
+  AABB2.cpp
+  IntVec2.cpp
+  MathUtils.cpp
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(85,18): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(400,15): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
+  RandomNumberGenerator.cpp
+  Vec2.cpp
+  Vec3.cpp
+  Camera.cpp
+  Renderer.cpp
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Renderer.cpp(78,40): warning C4100: 'camera': unreferenced formal parameter
+  Generating Code...
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(63,1): warning C4715: 'GetTurnedTowardDegrees': not all control paths return a value
+C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(394,1): warning C4702: unreachable code
   Engine.vcxproj -> C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\Engine.lib

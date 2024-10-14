@@ -11,11 +11,6 @@ public:
     void Render() const override;
     void Die() override;
 
-    //------------------------------------------------------
-
-
-    Vertex_PCU vertices[NUM_BULLET_VERTS];
-
 private:
-    //void DetectAsteroid();
+    Vertex_PCU vertices[NUM_BULLET_VERTS];
 };

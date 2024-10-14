@@ -55,6 +55,9 @@ public:
 	void Normalize();
 	float NormalizeAndGetPreviousLength();
 
+	Vec2 const GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const;
+	void Reflect(Vec2 const& normalOfSurfaceToReflectOffOf);
+
 	// Operators (const)
 	bool		operator==( Vec2 const& compare ) const;		// vec2 == vec2
 	bool		operator!=( Vec2 const& compare ) const;		// vec2 != vec2

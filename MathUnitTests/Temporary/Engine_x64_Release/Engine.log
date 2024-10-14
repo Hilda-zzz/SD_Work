@@ -1,29 +1,4 @@
-﻿  Time.cpp
-  VertexUtils.cpp
-  AnalogJoystick.cpp
-C:\p4\Personal\SD\Engine\Code\Engine\Input\AnalogJoystick.cpp(47,90): warning C4100: 'normalizedOuterDeadzonesThreshold': unreferenced formal parameter
-  InputSystem.cpp
-  KeyButtonState.cpp
-  XboxController.cpp
-C:\p4\Personal\SD\Engine\Code\Engine\Input\XboxController.cpp(97,8): warning C4189: 'result': local variable is initialized but not referenced
-C:\p4\Personal\SD\Engine\Code\Engine\Input\XboxController.cpp(155,7): warning C4189: 'isp': local variable is initialized but not referenced
-  AABB2.cpp
-  IntVec2.cpp
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(29,38): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(29,35): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(35,25): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(35,22): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(50,14): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(51,14): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(52,6): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(53,6): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(58,14): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(59,14): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(60,6): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\IntVec2.cpp(61,6): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-  MathUtils.cpp
-C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(80,18): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
-C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp(258,15): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
-  Vec2.cpp
-  Vec3.cpp
+﻿  Camera.cpp
+  Renderer.cpp
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Renderer.cpp(78,40): warning C4100: 'camera': unreferenced formal parameter
   Engine.vcxproj -> C:\p4\Personal\SD\MathUnitTests\Temporary\Engine_x64_Release\Engine.lib
