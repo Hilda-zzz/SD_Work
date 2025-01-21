@@ -1,8 +1,13 @@
-#include "MathUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include <cmath> 
-#include "Vec2.hpp"
-#include "Vec3.hpp"
-#include "IntVec2.hpp"
+#include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/LineSegment2.hpp"
+#include "Engine/Math/OBB2.hpp"
+#include "Engine/Math/Capsule2.hpp"
+#include "Engine/Math/Triangle2.hpp"
+#include "Engine/Math/FloatRange.hpp"
 #define PI 3.1415926535897f
 
 //Angle
@@ -58,8 +63,12 @@ float GetTurnedTowardDegrees(float currentDegrees, float goalDegrees, float maxD
 		else
 			return currentDegrees - maxDeltaDegrees;
 	}
-	if (fabsf(angularDispDegrees) <= maxDeltaDegrees)
+	//if (fabsf(angularDispDegrees) <= maxDeltaDegrees)
+	else
+	{
 		return goalDegrees;
+	}
+		
 }
 
 float GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b)
@@ -79,11 +88,16 @@ float DotProduct2D(Vec2 const& a, Vec2 const& b)
 	return a.x*b.x+a.y*b.y;
 }
 
+float CrossProduct2D(Vec2 const& a, Vec2 const& b)
+{
+	return a.x*b.y-a.y*b.x;
+}
+
 //?
 float GetDistance2DInt(IntVec2 const& positionA, IntVec2 const& positionB)
 {
-	return std::sqrt((positionA.x - positionB.x) * (positionA.x - positionB.x) +
-		(positionA.y - positionB.y) * (positionA.y - positionB.y));
+	return std::sqrtf((float)((positionA.x - positionB.x) * (positionA.x - positionB.x) +
+		(positionA.y - positionB.y) * (positionA.y - positionB.y)));
 }
 
 float GetDistanceSquared2D(Vec2 const& positionA, Vec2 const& positionB) 
@@ -139,7 +153,7 @@ Vec2 const GetProjectedOnto2D(Vec2 const& vectorToProject, Vec2 const& vectorToP
 bool DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB)
 {
 	float cur_dis = GetDistance2D(centerA, centerB);
-	if (cur_dis <= radiusA + radiusB)
+	if (cur_dis < radiusA + radiusB)
 	{
 		return true;
 	}
@@ -195,7 +209,73 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec
 	return false;
 }
 
-Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePosition, Vec2 const& discCenter, float discRadius)
+bool IsPointInsideAABB2D(Vec2 const& point, AABB2 const& box)
+{
+	if (box.IsPointInside(point))
+	{
+		return true;
+	}
+	else
+		return false;
+}
+
+bool IsPointInsideCapsule2D(Vec2 const& point, Capsule2 const& capsule)
+{
+	Vec2 n = GetNearestPointOnLineSegment2D(point, capsule.m_bone);
+	Vec2 pn = n - point;
+	return pn.GetLengthSquared() < capsule.radius * capsule.radius;
+}
+
+bool IsPointInsideCapsule2D(Vec2 const& point, Vec2 const& boneStart, Vec2 const& boneEnd, float radius)
+{
+	Vec2 n = GetNearestPointOnLineSegment2D(point, LineSegment2(boneStart,boneEnd));
+	Vec2 pn = n - point;
+	return pn.GetLengthSquared() < radius * radius;
+}
+
+bool IsPointInsideOBB2D(Vec2 const& point, OBB2 const& orientbox)
+{
+	Vec2 cp = point - orientbox.m_center;
+	float cpi = DotProduct2D(orientbox.m_iBasisNormal , cp);
+	float cpj = DotProduct2D(orientbox.m_iBasisNormal.GetRotated90Degrees(), cp);
+	if (abs(cpi) >= orientbox.m_halfDimensions.x)
+	{
+		return false;
+	}
+	else if (abs(cpj) >= orientbox.m_halfDimensions.y)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+bool IsPointInsideTriangle2D(Vec2 const& point, Triangle2 const& triangle)
+{
+	Vec2 ap = point - triangle.m_pointsCounterClockwise[0];
+	Vec2 ab = triangle.m_pointsCounterClockwise[1] - triangle.m_pointsCounterClockwise[0];
+	if (CrossProduct2D(ab, ap) <= 0.f)
+	{
+		return false;
+	}
+	Vec2 bp = point - triangle.m_pointsCounterClockwise[1];
+	Vec2 bc = triangle.m_pointsCounterClockwise[2] - triangle.m_pointsCounterClockwise[1];
+	if (CrossProduct2D(bc, bp) <= 0.f)
+	{
+		return false;
+	}
+	Vec2 cp = point - triangle.m_pointsCounterClockwise[2];
+	Vec2 ca = triangle.m_pointsCounterClockwise[0] - triangle.m_pointsCounterClockwise[2];
+	if (CrossProduct2D(ca, cp) <= 0.f)
+	{
+		return false;
+	}
+	return true;
+}
+
+Vec2 const GetNearestPointOnDisc2D(Vec2 const& referencePosition, Vec2 const& discCenter, float discRadius)
 {
 	if (GetDistance2D(referencePosition, discCenter) <= discRadius)
 	{
@@ -206,6 +286,193 @@ Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePosition, Vec2 const& discCent
 		Vec2 refer_center = referencePosition - discCenter;
 		refer_center.SetLength(discRadius);
 		return refer_center + discCenter;
+	}
+}
+
+Vec2 const GetNearestPointOnAABB2D(Vec2 const& referencePosition, AABB2 const& box)
+{
+	float x = GetClamped(referencePosition.x, box.m_mins.x, box.m_maxs.x);
+	float y = GetClamped(referencePosition.y, box.m_mins.y, box.m_maxs.y);
+	return Vec2(x, y);
+}
+
+Vec2 const GetNearestPointOnInfiniteLine2D(Vec2 const& referencePosition, Vec2 const& vecOnLine, Vec2 const& anotherPointOnLine)
+{
+	Vec2 se = anotherPointOnLine - vecOnLine;
+	Vec2 sp = referencePosition - vecOnLine;
+	if (DotProduct2D(se, sp) !=0.f)
+	{
+		Vec2 sn = GetProjectedOnto2D(sp, se);
+		return vecOnLine + sn;
+	}
+	else
+	{
+		return vecOnLine;
+	}
+}
+
+Vec2 const GetNearestPointOnInfiniteLine2D(Vec2 const& referencePosition, LineSegment2 const& infiniteLine)
+{
+	Vec2 se = infiniteLine.m_end - infiniteLine.m_start;
+	Vec2 sp = referencePosition - infiniteLine.m_start;
+	if (DotProduct2D(se, sp) != 0.f)
+	{
+		Vec2 sn = GetProjectedOnto2D(sp, se);
+		return infiniteLine.m_start + sn;
+	}
+	else
+	{
+		return infiniteLine.m_start;
+	}
+}
+
+Vec2 const GetNearestPointOnLineSegment2D(Vec2 const& referencePosition, Vec2 const& lineSegStart, Vec2 const& lineSegEnd)
+{
+	Vec2 sp = referencePosition - lineSegStart;
+	Vec2 se = lineSegEnd - lineSegStart;
+	Vec2 ep = referencePosition - lineSegEnd;
+	if (DotProduct2D(se,sp)<=0.f)
+	{
+		return lineSegStart;
+	}
+	else if (DotProduct2D(se, ep) >= 0.f)
+	{
+		return lineSegEnd;
+	}
+	else
+	{
+		Vec2 sn = GetProjectedOnto2D(sp, se);
+		return lineSegStart + sn;
+	}
+}
+
+Vec2 const GetNearestPointOnLineSegment2D(Vec2 const& referencePosition, LineSegment2 const& lineSegment)
+{
+	Vec2 sp = referencePosition - lineSegment.m_start;
+	Vec2 se = lineSegment.m_end - lineSegment.m_start;
+	Vec2 ep = referencePosition - lineSegment.m_end;
+	if (DotProduct2D(se, sp) <= 0.f)
+	{
+		return lineSegment.m_start;
+	}
+	else if (DotProduct2D(se, ep) >= 0.f)
+	{
+		return lineSegment.m_end;
+	}
+	else
+	{
+		Vec2 sn = GetProjectedOnto2D(sp, se);
+		return lineSegment.m_start + sn;
+	}
+}
+
+Vec2 const GetNearestPointOnCapsule2D(Vec2 const& referencePosition, Capsule2 const& capsule)
+{
+	if(IsPointInsideCapsule2D(referencePosition, capsule))
+	{
+		return referencePosition;
+	}
+	else
+	{
+		Vec2 sp = referencePosition - capsule.m_bone.m_start;
+		Vec2 se = capsule.m_bone.m_end - capsule.m_bone.m_start;
+		Vec2 ep = referencePosition - capsule.m_bone.m_end;
+		if (DotProduct2D(se, sp) <= 0.f)
+		{
+			sp.SetLength(capsule.radius);
+			return capsule.m_bone.m_start + sp;
+		}
+		else if (DotProduct2D(se, ep) >= 0.f)
+		{
+			se.SetLength(capsule.radius);
+			return capsule.m_bone.m_end + se;
+		}
+		else
+		{
+			Vec2 sn = GetProjectedOnto2D(sp, se);
+			Vec2 n = capsule.m_bone.m_start + sn;
+			Vec2 np = referencePosition - n;
+			np.SetLength(capsule.radius);
+			return n + np;
+		}
+	}
+}
+
+Vec2 const GetNearestPointOnCapsule2D(Vec2 const& referencePosition, Vec2 const& boneStart, Vec2 const& boneEnd, float radius)
+{
+	if (IsPointInsideCapsule2D(referencePosition, boneStart, boneEnd, radius))
+	{
+		return referencePosition;
+	}
+	else
+	{
+		Vec2 sp = referencePosition - boneStart;
+		Vec2 se = boneEnd - boneStart;
+		Vec2 ep = referencePosition - boneEnd;
+		if (DotProduct2D(se, sp) <= 0.f)
+		{
+			sp.SetLength(radius);
+			return boneStart + sp;
+		}
+		else if (DotProduct2D(se, ep) >= 0.f)
+		{
+			ep.SetLength(radius);
+			return boneEnd + ep;
+		}
+		else
+		{
+			Vec2 sn = GetProjectedOnto2D(sp, se);
+			Vec2 n = boneStart + sn;
+			Vec2 np = referencePosition - n;
+			np.SetLength(radius);
+			return n + np;
+		}
+	}
+}
+
+Vec2 const GetNearestPointOnOBB2D(Vec2 const& referencePosition, OBB2 const& orientedBox)
+{
+	Vec2 localP = orientedBox.GetLocalPosForWorldPos(referencePosition);
+	AABB2 localBox = AABB2(-orientedBox.m_halfDimensions.x, -orientedBox.m_halfDimensions.y,
+		orientedBox.m_halfDimensions.x, orientedBox.m_halfDimensions.y);
+	Vec2 nearLocalPoint = localBox.GetNearestPoint(localP);
+	Vec2 worldNearPoint = orientedBox.GetWorldPosForLocalPos(nearLocalPoint);
+	return worldNearPoint;
+}
+
+Vec2 const GetNearestPointOnTriangle2D(Vec2 const& referencePosition, Triangle2 const& triangle)
+{
+	if (IsPointInsideTriangle2D(referencePosition, triangle))
+	{
+		return referencePosition;
+	}
+	else
+	{
+		Vec2 n_ab=GetNearestPointOnLineSegment2D(referencePosition,
+			triangle.m_pointsCounterClockwise[0], triangle.m_pointsCounterClockwise[1]);
+		Vec2 n_bc = GetNearestPointOnLineSegment2D(referencePosition,
+			triangle.m_pointsCounterClockwise[1], triangle.m_pointsCounterClockwise[2]);
+		Vec2 n_ca = GetNearestPointOnLineSegment2D(referencePosition,
+			triangle.m_pointsCounterClockwise[2], triangle.m_pointsCounterClockwise[0]);
+		Vec2 n_real;
+		if (GetDistanceSquared2D(n_ab, referencePosition) < GetDistanceSquared2D(n_bc, referencePosition))
+		{
+			n_real = n_ab;
+		}
+		else
+		{
+			n_real = n_bc;
+		}
+
+		if (GetDistanceSquared2D(n_real, referencePosition) < GetDistanceSquared2D(n_ca, referencePosition))
+		{
+			return n_real;
+		}
+		else
+		{
+			n_real = n_ca;
+			return n_real;
+		}
 	}
 }
 
@@ -391,11 +658,25 @@ float RangeMapClamped(float inValue, float inStart, float inEnd, float outStart,
 		else
 			return RangeMap(inValue, inStart, inEnd, outStart, outEnd);
 	}
-	return 0.0f;
+}
+
+float RangeMapClamped(float inValue, FloatRange const& inRange, FloatRange const& outRange)
+{
+	return RangeMapClamped(inValue, inRange.m_min, inRange.m_max, outRange.m_min, outRange.m_max);
 }
 
 int RoundDownToInt(float value)
 {
 	//?
-	return floorf(value);
+	return (int)floorf(value);
+}
+
+float NormalizeByte(unsigned char uc)
+{
+	return static_cast<float>(uc) / 255.0f;
+}
+
+float DenormalizeByte(float f)
+{
+	return f * 255.0f;
 }

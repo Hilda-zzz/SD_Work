@@ -1,11 +1,10 @@
-#include "Debris.hpp"
-#include <Engine/Math/RandomNumberGenerator.hpp>
-#include "Game.hpp"
-#include <Engine/Core/VertexUtils.hpp>
+#include "Game/Debris.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Game/Game.hpp"
+#include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include <Engine/Math/MathUtils.hpp>
-#include <Engine/Core/Time.hpp>
-extern Renderer* g_theRenderer;
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/Time.hpp"
 
 Debris::Debris(Game* game, float x, float y,float minSpeed,float maxSpeed, 
 	float minRadius, float maxRadius, Rgba8 color, Vec2 const& oriVelocity,int type) : Entity(game, x, y)

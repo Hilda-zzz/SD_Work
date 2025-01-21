@@ -15,6 +15,11 @@ constexpr size_t MISSING_SOUND_ID = (size_t)(-1); // for bad SoundIDs and SoundP
 
 
 //-----------------------------------------------------------------------------------------------
+struct AudioSystemConfig
+{
+
+};
+//-----------------------------------------------------------------------------------------------
 class AudioSystem;
 
 
@@ -22,7 +27,7 @@ class AudioSystem;
 class AudioSystem
 {
 public:
-	AudioSystem();
+	AudioSystem(AudioSystemConfig audioConfig);
 	virtual ~AudioSystem();
 
 public:

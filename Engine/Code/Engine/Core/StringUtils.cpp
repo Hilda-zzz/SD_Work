@@ -43,5 +43,55 @@ const std::string Stringf( int maxLength, char const* format, ... )
 
 
 
+Strings SplitStringOnDelimiter(std::string const& originalString, char delimiterToSplitOn)
+{
+	std::vector<std::string> result;
+	std::string temp;
+	for (int i = 0; i < (int)originalString.size(); i++) 
+	{
+		if (originalString[i] == delimiterToSplitOn) 
+		{
+			result.push_back(temp);
+			temp.clear(); 
+		}
+		else 
+		{
+			temp += originalString[i];
+		}
+	}
+
+	result.push_back(temp);
+
+	return result;
+}
+
+Strings SplitStringOnDelimiterIgnoreSpace(std::string const& originalString, char delimiterToSplitOn)
+{
+	std::vector<std::string> result;
+	std::string temp;
+	for (int i = 0; i < (int)originalString.size(); i++)
+	{
+		if (originalString[i] == delimiterToSplitOn)
+		{
+			result.push_back(temp);
+			temp.clear();
+		}
+		else
+		{
+			if (originalString[i] != ' ')
+			{
+				temp += originalString[i];
+			}
+		}
+	}
+
+	result.push_back(temp);
+
+	return result;
+}
+
+
+
+
 
 

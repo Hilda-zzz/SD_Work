@@ -1,5 +1,8 @@
-#include "AABB2.hpp"
-#include "MathUtils.hpp"
+#include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/MathUtils.hpp"
+
+const AABB2 AABB2::ZERO_TO_ONE = AABB2(Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+
 AABB2::AABB2(AABB2 const& copyFrom):m_mins(copyFrom.m_mins),m_maxs(copyFrom.m_maxs)
 {
 
@@ -13,10 +16,9 @@ AABB2::AABB2(float minX, float minY, float maxX, float maxY)
 	m_maxs.y = maxY;
 }
 
-AABB2::AABB2(Vec2 const& mins, Vec2 const& maxs)
+AABB2::AABB2(Vec2 const& mins, Vec2 const& maxs):m_mins(mins),m_maxs(maxs)
 {
-	m_mins = mins;
-	m_maxs = maxs;
+	
 }
 
 bool AABB2::IsPointInside(Vec2 const& point) const

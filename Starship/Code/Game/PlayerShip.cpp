@@ -4,17 +4,14 @@
 #include "GameCommon.hpp"
 #include "App.hpp"
 #include "Engine/Core/VertexUtils.hpp"
-#include <Engine/Math/MathUtils.hpp>
+#include "Engine/Math/MathUtils.hpp"
 #include "Game.hpp"
-#include <Engine/Input/InputSystem.hpp>
-#include <Engine/Core/Time.hpp>
+#include "Engine/Input/InputSystem.hpp"
+#include "Engine/Core/Time.hpp"
 
-extern Renderer* g_theRenderer;
-extern App* g_theApp;
-extern InputSystem* g_theInput;
-extern AudioSystem* g_theAudio;
+
 //Rgba8 shipOriColor = Rgba8(102, 153, 204, 255);
-Rgba8 shipOriColor = Rgba8(22, 212, 204, 238);
+Rgba8 shipOriColor = Rgba8(22, 212, 204, 255);
 Rgba8 curShipColor = shipOriColor;
 PlayerShip::PlayerShip(Game* game, float x, float y): Entity(game, x, y) 
 {
@@ -107,9 +104,9 @@ void PlayerShip::Update(float deltaTime)
 				m_orientationDegrees -= PLAYER_SHIP_TURN_SPEED_SLOW * deltaTime;
 		}
 
-		if (m_isControllerAccelerate)
+		if (m_thrustFraction > 0.f)
 		{
-			return;
+			m_thrustFraction = m_thrustFraction;
 		}
 		else
 		{
@@ -138,6 +135,21 @@ void PlayerShip::Update(float deltaTime)
 		}
 		BounceOffWall();
 
+		if (m_isStartQuickDash)
+		{
+			if (GetCurrentTimeSeconds() - m_startQuickDashTime > 0.2)
+			{
+				m_isStartQuickDash = false;
+				m_velocity= Vec2::MakeFromPolarDegrees(m_orientationDegrees, m_previousVelocity.GetLength());
+			}
+			else
+			{
+				//add force
+				//m_velocity += Vec2::MakeFromPolarDegrees(m_orientationDegrees, 60.f * deltaTime);
+				m_velocity = Vec2::MakeFromPolarDegrees(m_orientationDegrees, m_quickDashRadius  / 0.2f);
+			}
+		}
+
 		m_position.x += m_velocity.x * deltaTime;
 		m_position.y += m_velocity.y * deltaTime;
 
@@ -160,8 +172,8 @@ void PlayerShip::Update(float deltaTime)
 				curShipColor = shipOriColor;
 				return;
 			}
-			float temp = RangeMap(SinDegrees(curTime * 500.f), -1.f, 1.f, 0.4f, 1.f);
-			curShipColor = Rgba8(110, 47, 117, 255.f * temp);
+			float temp = RangeMap(SinDegrees((float)curTime * 500.f), -1.f, 1.f, 0.4f, 1.f);
+			curShipColor = Rgba8(110, 47, 117, (unsigned char)(255.f * temp));
 		}
 
 		if (m_FirstWeaponState == 1)
@@ -174,7 +186,7 @@ void PlayerShip::Update(float deltaTime)
 		}
 		if (m_magicPoint < m_maxMagicPoint)
 		{
-			m_magicPoint += 0.04;
+			m_magicPoint += 0.04f;
 		}
 	
 		if (m_isSaber==true && m_magicPoint > MIN_SABER_MP)
@@ -188,6 +200,7 @@ void PlayerShip::Update(float deltaTime)
 			g_theAudio->StartSound(m_game->playerSaberSound);
 		}
 
+		
 		//trail tail
 		float tailLen = RangeMapClamped(m_thrustFraction, 0.f, 1.f, 5.f, 12.f);
 		float offset=m_game->m_rng->RollRandomFloatInRange(-0.5f, 0.5f);
@@ -202,12 +215,13 @@ void PlayerShip::Update(float deltaTime)
 	if (m_isDead && m_lives <= 1&&m_isUseUpLives==false)
 	{
 		//wait to return menu
+		g_theAudio->StartSound(m_game->finalDefeat);
 		m_isUseUpLives = true;
-		m_deadTime= GetCurrentTimeSeconds();
+		m_deadTime= (float)GetCurrentTimeSeconds();
 	}
 	if (m_isUseUpLives == true)
 	{
-		float curTime= GetCurrentTimeSeconds();
+		float curTime= (float)GetCurrentTimeSeconds();
 		if (curTime - m_deadTime >= 2)
 		{
 			//m_game->m_isArractMode = true;
@@ -222,9 +236,10 @@ void PlayerShip::UpdateFromController(float deltaSeconds)
 	XboxController const& controller = g_theInput->GetController(0);
 	if (controller.IsConnected())
 	{
+		m_previousRightTrigger = controller.GetRightTrigger();
 		if (m_isDead)
 		{
-			if (controller.WasButtonJustPressed(XboxButtonID::START) && m_lives > 0)
+			if (controller.WasButtonJustPressed(XboxButtonID::START) && m_lives > 1)
 			{
 				RespawnShip();
 			}
@@ -233,18 +248,31 @@ void PlayerShip::UpdateFromController(float deltaSeconds)
 
 		//move
 		float leftStickMagnitude = controller.GetLeftStick().GetMagnitude();
-		if (leftStickMagnitude > 0.f&&!m_isShipRotateLeft&&!m_isShipRotateRight)
+		if (leftStickMagnitude > 0.f && !m_isShipRotateLeft && !m_isShipRotateRight)
 		{
-			m_isControllerAccelerate = true;
 			m_thrustFraction = leftStickMagnitude;
 			m_orientationDegrees = controller.GetLeftStick().GetOrientationDegrees();
-			m_velocity += Vec2::MakeFromPolarDegrees(m_orientationDegrees, PLAYER_SHIP_ACCELERATION * deltaSeconds*m_thrustFraction);
+			m_velocity += Vec2::MakeFromPolarDegrees(m_orientationDegrees, PLAYER_SHIP_ACCELERATION * deltaSeconds * m_thrustFraction);
 		}
 		else
 		{
-			m_isControllerAccelerate = false;
 			m_thrustFraction = 0.f;
 		}
+		//float leftStickMagnitude = controller.GetLeftStick().GetMagnitude();
+		//if (leftStickMagnitude > 0.f&&!m_isShipRotateLeft&&!m_isShipRotateRight)
+		//{
+		//	//m_isAccelerate = true;
+		//	m_isControllerAccelerate = true;
+		//	m_thrustFraction = leftStickMagnitude;
+		//	m_orientationDegrees = controller.GetLeftStick().GetOrientationDegrees();
+		//	m_velocity += Vec2::MakeFromPolarDegrees(m_orientationDegrees, PLAYER_SHIP_ACCELERATION * deltaSeconds*m_thrustFraction);
+		//}
+		//else
+		//{
+		//	//m_isAccelerate = false;
+		//	m_isControllerAccelerate = false;
+		//	m_thrustFraction = 0.f;
+		//}
 		//fire
 		if (controller.WasButtonJustPressed(XboxButtonID::A)&& m_FirstWeaponState == 2)
 		{
@@ -283,18 +311,91 @@ void PlayerShip::UpdateFromController(float deltaSeconds)
 			g_theAudio->StartSound(m_game->playerSaberSound);
 		}
 		//bullet time
-		if (controller.IsButtongDown(XboxButtonID::Y) && m_magicPoint > MIN_SABER_MP)
+		if (controller.GetRightTrigger()>0.f)
 		{
+			if (m_previousRightTrigger <= 0.1f)
+			{
+				g_theAudio->StartSound(m_game->bulletTimeStart);
+			}
+			//trigger bullet time
+			if (m_magicPoint > 3.f)
+			{
+				TriggerBulletTime(controller.GetRightTrigger());
+				if (controller.WasButtonJustPressed(XboxButtonID::X))
+				{
+					TriggerQuickDash();
+					g_theAudio->StartSound(m_game->setBulletTimeMove);
+				}
+			}
+			else
+			{
+				m_isTriggerQuickDash = false;
+				m_game->m_isBulletTime = false;
+			}
+		}
+		else
+		{
+			if (m_isTriggerQuickDash)
+			{
+				g_theAudio->StartSound(m_game->dash);
+				m_game->ShakeScreen();
+				m_isTriggerQuickDash = false;
+				//add dash
+				m_isStartQuickDash = true;
+				m_startQuickDashTime = GetCurrentTimeSeconds();
+				m_previousVelocity = m_velocity;
+			}
+			
+			m_game->m_isBulletTime = false;
+		}
 
+		if (m_isTriggerQuickDash)
+		{
+			UpdateQuickDashUI(leftStickMagnitude);
 		}
 	}
 
+}
+void PlayerShip::TriggerBulletTime(float rightTrigger)
+{
+	m_game->m_deltaTimeRatio = RangeMapClamped(rightTrigger, 0.f, 1.f, 1.f, 0.3f);
+	m_game->m_isBulletTime = true;
+	m_magicPoint -= 0.1f;
+}
+
+void PlayerShip::TriggerQuickDash()
+{
+	m_isTriggerQuickDash = true;
+}
+
+void PlayerShip::RenderQuickDashUI() const
+{
+	DebugDrawHighCircle(m_quickDashRadius, m_position, Rgba8(0, 0, 255, 100));
+
+	Vertex_PCU temp_vertices[NUM_SHIP_VERTS];
+	for (int i = 0; i < NUM_SHIP_VERTS; i++)
+	{
+		temp_vertices[i] = vertices[i];
+		temp_vertices[i].m_color =Rgba8(22, 212, 204,100);
+	}
+	TransformVertexArrayXY3D(NUM_SHIP_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position+Vec2::MakeFromPolarDegrees(m_orientationDegrees, m_quickDashRadius));
+	g_theRenderer->DrawVertexArray(NUM_SHIP_VERTS, temp_vertices);
+
+}
+
+void PlayerShip::UpdateQuickDashUI(float leftMagnitute)
+{
+	m_quickDashRadius = RangeMapClamped(leftMagnitute, 0.f, 1.f, 5.f, 40.f);
 }
 
 void PlayerShip::Render() const
 {
 	if (m_isDead == false)
 	{
+		if (m_isTriggerQuickDash)
+		{
+			RenderQuickDashUI();
+		}
 		if ((m_isSaber||m_isControllerSaber) && m_magicPoint > MIN_SABER_MP)
 		{
 			m_lightSaber->Render();
@@ -326,6 +427,7 @@ void PlayerShip::Render() const
 		}
 		TransformVertexArrayXY3D(3, temp_tail_vertices, 1.f, m_orientationDegrees, m_position);
 		g_theRenderer->DrawVertexArray(3, temp_tail_vertices); //NUM_SHIP_VERTS
+
 	}	
 }
 
@@ -374,13 +476,14 @@ void PlayerShip::BounceOffWall()
 
 void PlayerShip::RespawnShip()
 {
+	g_theAudio->StartSound(m_game->playerRespawn);
 	m_isInvincibleState = true;
 	m_invincibleStartTime = GetCurrentTimeSeconds();
 	m_health = m_maxHealth;
-	if (m_lives >= 1)
-	{
+	//if (m_lives >= 1)
+	//{
 		m_lives--;
-	}
+	//}
 	m_orientationDegrees = 0;
 	m_velocity.x = 0;
 	m_velocity.y = 0;

@@ -1,0 +1,14 @@
+<TileDefinitions>
+	<TileDefinition name="Grass"		mapImageColor="165,248,147,255" isSolid="false" isWater="false"	isDestruct="false"	maxHealth="999" spriteCoords="1,0"	tint="255,255,255,255"/>
+	<TileDefinition name="Stone"		mapImageColor="71,71,71,255"	isSolid="true"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="1,2"	tint="255,255,255,255"/>
+	<TileDefinition name="Wall"			mapImageColor="15,23,17,255"	isSolid="true"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="5,6"	tint="255,255,255,255"/>
+	<TileDefinition name="BrickGround"	mapImageColor="60,53,41,255"	isSolid="false"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="3,6"	tint="100,100,100,255"/>
+	<TileDefinition name="Start"		mapImageColor="185,148,255,255" isSolid="false"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="0,7"	tint="255,255,255,255"/>
+	<TileDefinition name="End"			mapImageColor="39,206,199,255"	isSolid="false"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="1,7"	tint="255,255,255,255"/>
+	<TileDefinition name="Mud"			mapImageColor="158,96,0,255"		isSolid="false"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="5,2"	tint="255,255,255,255"/>
+	<TileDefinition name="ThickGrass"	mapImageColor="20,116,0,255"	isSolid="false"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="1,1"	tint="255,255,255,255"/>
+	<TileDefinition name="PabbleWall"	mapImageColor="126,156,158,255" isSolid="true"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="6,3"	tint="255,255,255,255"/>
+	<TileDefinition name="BrickWall"	mapImageColor="95,80,135,255"   isSolid="true"	isWater="false" isDestruct="false"  maxHealth="999" spriteCoords="7,3"	tint="255,255,255,255"/>
+	<TileDefinition name="Water"		mapImageColor="0,155,255,255"   isSolid="false"	isWater="true"	isDestruct="false"	maxHealth="999" spriteCoords="4,7"	tint="255,255,255,255"/>
+	<TileDefinition name="DesStone"		mapImageColor="161,2,2,255"		isSolid="true"	isWater="false"	isDestruct="true"	maxHealth="10"  spriteCoords="3,5"	tint="255,255,255,255"/>
+</TileDefinitions>

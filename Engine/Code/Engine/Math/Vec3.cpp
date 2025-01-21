@@ -1,10 +1,19 @@
 
 #include "Engine/Math/Vec3.hpp"
-#include "MathUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/StringUtils.hpp"
 extern Vec2 ori;
 Vec3::Vec3(float x, float y, float z):x(x),y(y),z(z)
 {
 
+}
+
+void Vec3::SetFromText(char const* text)
+{
+	Strings result = SplitStringOnDelimiterIgnoreSpace(text, ',');
+	x = (float)atof(result[0].c_str());
+	y = (float)atof(result[1].c_str());
+	z = (float)atof(result[2].c_str());
 }
 
 //-----------------------------------------------------------------------------------------------

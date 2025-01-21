@@ -1,8 +1,8 @@
-#include "BkgStar.hpp"
-#include <Engine/Renderer/Renderer.hpp>
-#include <Engine/Core/VertexUtils.hpp>
+#include "Game/BkgStar.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Core/VertexUtils.hpp"
 
-extern Renderer* g_theRenderer;
+
 Vertex_PCU crossStarVerts[18] = {
 	Vertex_PCU(Vec3(0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
 	Vertex_PCU(Vec3(-0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),

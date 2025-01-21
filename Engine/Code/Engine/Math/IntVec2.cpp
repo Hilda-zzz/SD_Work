@@ -1,12 +1,23 @@
-#include "IntVec2.hpp"
-#include "MathUtils.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include <cmath> 
+#include "Engine/Core/StringUtils.hpp"
+
+const IntVec2 IntVec2::ZERO = IntVec2(0,0);
+
 IntVec2::IntVec2(const IntVec2& copyFrom):x(copyFrom.x),y(copyFrom.y)
 {
 }
 
 IntVec2::IntVec2(int initialX, int initialY) :x(initialX), y(initialY)
 {
+}
+
+void IntVec2::SetFromText(char const* text)
+{
+	Strings result = SplitStringOnDelimiterIgnoreSpace(text, ',');
+	x = atoi(result[0].c_str());
+	y = atoi(result[1].c_str());
 }
 
 float IntVec2::GetLength() const
@@ -65,5 +76,33 @@ void IntVec2::operator=(const IntVec2& copyFrom)
 {
 	x = copyFrom.x;
 	y = copyFrom.y;
+}
+
+bool IntVec2::operator==(IntVec2 const& compare) const
+{
+	if (compare.x == x && compare.y == y)
+	{
+		return true;
+	}
+	else
+		return false;
+}
+bool IntVec2::operator!=(IntVec2 const& compare) const
+{
+	if (compare.x == x && compare.y == y)
+	{
+		return false;
+	}
+	else
+		return true;
+}
+IntVec2 const IntVec2::operator-(IntVec2 const& vecToSubtract) const
+{
+	return IntVec2(x - vecToSubtract.x, y - vecToSubtract.y);
+}
+
+IntVec2 const IntVec2::operator+(IntVec2 const& vecToSubtract) const
+{
+	return IntVec2(x + vecToSubtract.x, y + vecToSubtract.y);
 }
 

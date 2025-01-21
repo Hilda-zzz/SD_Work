@@ -1,9 +1,10 @@
 #include "LightSaber.hpp"
-#include <Engine/Math/MathUtils.hpp>
-#include <Engine/Core/VertexUtils.hpp>
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/VertexUtils.hpp"
 #include "Game/Game.hpp"
-#include <Engine/Renderer/Renderer.hpp>
-extern Renderer* g_theRenderer;
+#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+
 LightSaber::LightSaber(Game* game, float x, float y,int level):Entity(game,x,y)
 {
 	m_level = level;
@@ -39,23 +40,11 @@ LightSaber::LightSaber(Game* game, float x, float y,int level):Entity(game,x,y)
 		TransformPositionXY3D(vertices_180_deg[i].m_position, Vec2(CosDegrees(270.f), SinDegrees(270.f)),
 			Vec2(CosDegrees(360.f), SinDegrees(360.f)), Vec2(0, 0));
 	}
-	//m_aabb_0 = AABB2(vertices_0_deg[1].m_position.x, vertices_0_deg[1].m_position.y, 
-	//	vertices_0_deg[3].m_position.x, vertices_0_deg[3].m_position.y);
-	//m_aabb_120 = AABB2(vertices_120_deg[1].m_position.x, vertices_120_deg[1].m_position.y,
-	//	vertices_120_deg[3].m_position.x, vertices_120_deg[3].m_position.y);
-	//m_aabb_240 = AABB2(vertices_240_deg[1].m_position.x, vertices_240_deg[1].m_position.y,
-	//	vertices_240_deg[3].m_position.x, vertices_240_deg[3].m_position.y);
-	//m_aabb_90 = AABB2(vertices_90_deg[1].m_position.x, vertices_90_deg[1].m_position.y,
-	//	vertices_90_deg[3].m_position.x, vertices_90_deg[3].m_position.y);
-	//m_aabb_180 = AABB2(vertices_180_deg[1].m_position.x, vertices_180_deg[1].m_position.y,
-	//	vertices_180_deg[3].m_position.x, vertices_180_deg[3].m_position.y);
-	//m_aabb_270 = AABB2(vertices_270_deg[1].m_position.x, vertices_270_deg[1].m_position.y,
-	//	vertices_270_deg[3].m_position.x, vertices_270_deg[3].m_position.y);
-
 }
 
 void LightSaber::Update(float deltaTime)
 {
+	UNUSED(deltaTime);
 	m_orientationDegrees = m_game->m_playerShip->m_orientationDegrees;
 	m_position = m_game->m_playerShip->m_position;
 }

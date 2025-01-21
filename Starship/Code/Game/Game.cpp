@@ -1,23 +1,27 @@
 #include <Game/Game.hpp>
 #include "App.hpp"
-#include <Engine/Core/VertexUtils.hpp>
+#include "Engine/Core/VertexUtils.hpp"
 #include"Engine/Math/RandomNumberGenerator.hpp"
 #include "Game/BkgStar.hpp"
-#include <Engine/Core/ErrorWarningAssert.hpp>
-#include <Engine/Math/MathUtils.hpp>
-#include <Engine/Input/InputSystem.hpp>
-#include <Engine/Renderer/Renderer.hpp>
-#include <Engine/Core/Time.hpp>
-
-extern App*			g_theApp;
-extern InputSystem* g_theInput;
-extern Renderer*	g_theRenderer;
-extern AudioSystem* g_theAudio;
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Input/InputSystem.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Core/Time.hpp"
+#include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+//extern App*			g_theApp;
+//extern InputSystem* g_theInput;
+//extern Renderer*	g_theRenderer;
+//extern AudioSystem* g_theAudio;
+BitmapFont* g_testFont = nullptr;
 
 SoundPlaybackID bgm;
 
 Game::Game()
 {
+	g_testFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+
 	clickSound = g_theAudio->CreateOrGetSound("Data/Audio/Click.mp3");
 	playerNormalShootSound= g_theAudio->CreateOrGetSound("Data/Audio/Laser_Shoot49.mp3");
 	playerExpShootSound= g_theAudio->CreateOrGetSound("Data/Audio/EXPShoot2.mp3");
@@ -35,6 +39,15 @@ Game::Game()
 	enmeyDiedSound = g_theAudio->CreateOrGetSound("Data/Audio/LightSaberStart.mp3");
 	enemyShootSound = g_theAudio->CreateOrGetSound("Data/Audio/LightSaberStart.mp3");
 
+	playerRespawn= g_theAudio->CreateOrGetSound("Data/Audio/playerRespawn.wav");
+	finalDefeat= g_theAudio->CreateOrGetSound("Data/Audio/finalDefeat.wav");
+	finalSuccess= g_theAudio->CreateOrGetSound("Data/Audio/finalSuccess.wav");
+	newWave=g_theAudio->CreateOrGetSound("Data/Audio/newWave.mp3");
+	bulletTimeStart= g_theAudio->CreateOrGetSound("Data/Audio/bulletTimeStart.wav");
+	setBulletTimeMove= g_theAudio->CreateOrGetSound("Data/Audio/setBulletTimeMove.wav");
+	dash = g_theAudio->CreateOrGetSound("Data/Audio/dash.wav");
+
+	g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Moon.png");
 
 	m_rng = new RandomNumberGenerator();
 	//m_playerShip = new PlayerShip(this,WORLD_CENTER_X,WORLD_CENTER_Y);
@@ -47,11 +60,11 @@ Game::Game()
 	//m_isWaspsClear = false;
 	m_startTime = GetCurrentTimeSeconds();
 	m_isArractMode = true;
-	m_enemyNumInEachWaves[0] = EnemyNumInWave{ 60,1,0,1 };
-	m_enemyNumInEachWaves[1] = EnemyNumInWave{ 10,2,1,2 };
-	m_enemyNumInEachWaves[2] = EnemyNumInWave{ 10,2,1,2 };
-	m_enemyNumInEachWaves[3] = EnemyNumInWave{ 10,3,1,2 };
-	m_enemyNumInEachWaves[4] = EnemyNumInWave{ 10,3,2,2 };
+	m_enemyNumInEachWaves[0] = EnemyNumInWave{ 60,2,2,2,3 };
+	m_enemyNumInEachWaves[1] = EnemyNumInWave{ 10,3,3,3,4 };
+	m_enemyNumInEachWaves[2] = EnemyNumInWave{ 20,4,4,4,5 };
+	m_enemyNumInEachWaves[3] = EnemyNumInWave{ 20,4,5,5,3 };
+	m_enemyNumInEachWaves[4] = EnemyNumInWave{ 20,4,6,6,3 };
 
 	m_worldCamera = new Camera();
 	m_worldCamera->SetOrthoView(Vec2{ 0.f,0.f }, Vec2{ 200.f,100.f });
@@ -65,6 +78,7 @@ Game::Game()
 
 Game::~Game()
 {
+	g_theAudio->StopSound(bgm);
 	delete m_playerShip;
 	m_playerShip = nullptr;
 
@@ -151,7 +165,7 @@ void Game::InitGameplay()
 	m_waveState = 0;
 	GenerateEachWave(m_enemyNumInEachWaves[0]);
 
-	m_turret[0] = new Turret(this, 250.f, 50.f);
+	//m_turret[0] = new Turret(this, 250.f, 50.f);
 
 	m_isAsteroidsClear = false;
 	m_isBeetlesClear = false;
@@ -243,8 +257,13 @@ void Game::ResetGameplayBackToAttractMode()
 
 void Game::Update(float deltaSeconds)
 {
+	AdjustForPauseAndTimeDitortion(deltaSeconds);
 	if (!m_isArractMode)
 	{
+		if (m_isBulletTime)
+		{
+			deltaSeconds *= m_deltaTimeRatio;
+		}
 		UpdateGameplayMode(deltaSeconds);
 	}
 	else
@@ -254,10 +273,43 @@ void Game::Update(float deltaSeconds)
 
 }
 
+void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
+{
+	if (g_theInput->WasKeyJustPressed('P'))
+	{
+		m_isPause = !m_isPause;
+	}
+
+	m_isSlow = g_theInput->IsKeyDown('T');
+
+	if (g_theInput->WasKeyJustPressed('O'))
+	{
+		m_isPause = false;
+		m_pauseAfterUpdate = true;
+	}
+
+	//--------------------------------------------------------------------------------------
+
+	if (m_isPause)
+	{
+		deltaSeconds = 0.f;
+	}
+	if (m_isSlow)
+	{
+		deltaSeconds *= 0.10f;
+	}
+	if (m_pauseAfterUpdate)
+	{
+		m_isPause = true;
+		m_pauseAfterUpdate = false;
+	}
+}
+
 void Game::Renderer() const
 {
 	if (!m_isArractMode)
 	{
+		g_theRenderer->BindTexture(nullptr);
 		g_theRenderer->BeginCamera(*m_worldCamera);
 		RenderBkg();
 		RenderBullet();
@@ -281,6 +333,7 @@ void Game::Renderer() const
 	}
 	else
 	{
+		g_theRenderer->BindTexture(nullptr);
 		g_theRenderer->BeginCamera(*m_screenCamera);
 		RenderAttractMode();
 	}
@@ -564,6 +617,42 @@ void Game::RenderUI() const
 			DebugDrawCircle(1.5f, Vec2(asteroidMapPosX, asteroidMapPosY), Rgba8(116, 116, 116, 255));
 		}
 	}
+	for (int i = 0; i < MAX_BEETLES; i++)
+	{
+		if (m_beetles[i] != nullptr)
+		{
+			float asteroidMapPosX = RangeMapClamped(m_beetles[i]->m_position.x, -200.f, 400.f, 1350.f, 1550.f);
+			float asteroidMapPosY = RangeMapClamped(m_beetles[i]->m_position.y, -100.f, 200.f, 660.f, 760.f);
+			DebugDrawCircle(1.5f, Vec2(asteroidMapPosX, asteroidMapPosY), Rgba8::GREEN);
+		}
+	}
+	for (int i = 0; i < MAX_WASPS; i++)
+	{
+		if (m_wasps[i] != nullptr)
+		{
+			float asteroidMapPosX = RangeMapClamped(m_wasps[i]->m_position.x, -200.f, 400.f, 1350.f, 1550.f);
+			float asteroidMapPosY = RangeMapClamped(m_wasps[i]->m_position.y, -100.f, 200.f, 660.f, 760.f);
+			DebugDrawCircle(1.5f, Vec2(asteroidMapPosX, asteroidMapPosY), Rgba8::YELLOW);
+		}
+	}
+	for (int i = 0; i < MAX_TURRET; i++)
+	{
+		if (m_turret[i] != nullptr)
+		{
+			float asteroidMapPosX = RangeMapClamped(m_turret[i]->m_position.x, -200.f, 400.f, 1350.f, 1550.f);
+			float asteroidMapPosY = RangeMapClamped(m_turret[i]->m_position.y, -100.f, 200.f, 660.f, 760.f);
+			DebugDrawCircle(1.5f, Vec2(asteroidMapPosX, asteroidMapPosY), Rgba8::MAGNETA);
+		}
+	}
+	for (int i = 0; i < MAX_SHOOTWASPS; i++)
+	{
+		if (m_shootWasps[i] != nullptr)
+		{
+			float asteroidMapPosX = RangeMapClamped(m_shootWasps[i]->m_position.x, -200.f, 400.f, 1350.f, 1550.f);
+			float asteroidMapPosY = RangeMapClamped(m_shootWasps[i]->m_position.y, -100.f, 200.f, 660.f, 760.f);
+			DebugDrawCircle(1.5f, Vec2(asteroidMapPosX, asteroidMapPosY), Rgba8::BLUE);
+		}
+	}
 		
 	//hp bar
 	DebugDrawBox(Vec2(55.f, 740.f), Vec2(350.f, 760.f), Rgba8(80, 80, 125, 255));
@@ -577,7 +666,6 @@ void Game::RenderUI() const
 	float mpLen = RangeMapClamped(m_playerShip->m_magicPoint, 0.f, m_playerShip->m_maxMagicPoint, 0.f, 65.f);
 	DebugDrawBox(Vec2(60.f, 55.f), Vec2(90.f, 55.f+mpLen), Rgba8(226, 146, 80, 180));
 	//main(first) arm position
-	DebugDrawBoxLine(Vec2(125.f, 50.f), Vec2(185.f, 110.f), 2.f, Rgba8(80, 80, 125, 255));
 	if (m_playerShip->m_FirstWeaponState == 1)
 	{
 		if (m_playerShip->m_Canon->m_level==1)
@@ -615,10 +703,27 @@ void Game::RenderUI() const
 	}
 	//second arm position
 	DebugDrawBoxLine(Vec2(205.f, 50.f), Vec2(265.f, 110.f), 2.f, Rgba8(80, 80, 125, 255));
-	DebugDrawBox(Vec2(205.f, 50.f), Vec2(265.f, 110.f), Rgba8(226, 146, 80, 200));
+	DebugDrawBox(Vec2(230.f, 60.f), Vec2(240.f, 100.f), Rgba8(226, 146, 80, 200));
+	DebugDrawBox(Vec2(215.f, 75.f), Vec2(255.f, 85.f), Rgba8(226, 146, 80, 200));
+	
 
 	//third arm position
 	DebugDrawBoxLine(Vec2(285.f, 50.f), Vec2(345.f, 110.f), 2.f, Rgba8(80, 80, 125, 255));
+	DebugDrawHighCircle(15.f, Vec2(315.f, 80.f), Rgba8::BLUE);
+	DebugDrawRing(3.f,20.f, Rgba8(0,255,255,150), Vec2(315.f, 80.f));
+
+	DebugDrawBoxLine(Vec2(125.f, 50.f), Vec2(185.f, 110.f), 2.f, Rgba8(80, 80, 125, 255));
+	std::vector<Vertex_PCU> textVerts;
+	g_testFont->AddVertsForText2D(textVerts, Vec2(115.f, 113.f), 12.f, "C/B Switch Light Saber Bullet Time", Rgba8(150, 150, 100, 255), 0.618f);
+	g_testFont->AddVertsForText2D(textVerts, Vec2(105.f, 30.f), 12.f, "   Space/A      J/Y       RT+X", Rgba8(180, 120, 100, 255), 0.618f);
+	if (m_waveState + 1 <= 5)
+	{
+		g_testFont->AddVertsForText2D(textVerts, Vec2(700.f, 700.f), 30.f, "MISSION  " + std::to_string(m_waveState + 1), Rgba8::HILDA, 0.618f);
+	}
+	else
+		g_testFont->AddVertsForText2D(textVerts, Vec2(700.f, 700.f), 30.f, " SUCCESS", Rgba8(0,150,200,255), 0.618f);
+	g_theRenderer->BindTexture(&g_testFont->GetTexture());
+	g_theRenderer->DrawVertexArray(textVerts);
 }
 void Game::RenderAttractMode() const
 {
@@ -646,13 +751,32 @@ void Game::RenderAttractMode() const
 	if ((orbitCenter + shipOriPos).y >= orbitCenter.y)
 	{
 		g_theRenderer->DrawVertexArray(NUM_SHIP_VERTS, playerShipIcon3);
-		DebugDrawHighCircle(200.f, orbitCenter, Rgba8(243, 243, 197));
+		//DebugDrawHighCircle(200.f, orbitCenter, Rgba8(243, 243, 197));
+		g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Moon.png"));
+		AABB2 texturedAABB2_menu(550.f, 150.f, 1050.f, 650.f);
+		std::vector<Vertex_PCU> moonVerts;
+		AddVertsForAABB2D(moonVerts, texturedAABB2_menu, Rgba8(255, 255, 255, 255), Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+		g_theRenderer->DrawVertexArray(moonVerts);
+		g_theRenderer->BindTexture(nullptr);
 	}
 	else
 	{
-		DebugDrawHighCircle(200.f, orbitCenter, Rgba8(243, 243, 197));
+		g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Moon.png"));
+		AABB2 texturedAABB2_menu(550.f, 150.f, 1050.f, 650.f);
+		std::vector<Vertex_PCU> moonVerts;
+		AddVertsForAABB2D(moonVerts, texturedAABB2_menu, Rgba8(255, 255, 255, 255), Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+		g_theRenderer->DrawVertexArray(moonVerts);
+		g_theRenderer->BindTexture(nullptr);
+
 		g_theRenderer->DrawVertexArray(NUM_SHIP_VERTS, playerShipIcon3);
 	}
+	std::vector<Vertex_PCU> textVerts;
+	g_testFont->AddVertsForText2D(textVerts, Vec2(115.f, 80.f),80.f, "Starship Gold",Rgba8(150,150,100,100),0.618f);
+	g_testFont->AddVertsForText2D(textVerts, Vec2(112.f, 78.f),80.f, "Starship Gold", Rgba8::HILDA, 0.618f);
+	g_testFont->AddVertsForText2D(textVerts, Vec2(1100.f, 90.f), 30.f, "Press Space/A to Start", Rgba8(243, 243, 197), 0.618f);
+	//g_testFont->AddVertsForText2D(textVerts, Vec2(250.f, 400.f), 15.f, "It's nice to have options!", Rgba8::RED, 0.6f);
+	g_theRenderer->BindTexture(&g_testFont->GetTexture());
+	g_theRenderer->DrawVertexArray(textVerts);
 }
 
 void Game::UpdateBullet(float deltaTime)
@@ -789,9 +913,9 @@ void Game::UpdateAttractMode(float deltaTime)
 
 	m_shipRevolutionDeg += SHIP_REVOLUTION_SPEED * deltaTime;
 	m_shipScale= RangeMap(-SinDegrees(m_shipRevolutionDeg), -1.f, 1.f, 8.f, 12.f);
-	m_at_shipColor = Rgba8(RangeMap(-SinDegrees(m_shipRevolutionDeg), -1.f, 1.f, 157.f, 44.f),
-		RangeMap(-SinDegrees(m_shipRevolutionDeg), -1.f, 1.f, 166.f, 46.f),
-		RangeMap(-SinDegrees(m_shipRevolutionDeg), -1.f, 1.f, 249.f, 124.f), 255);
+	m_at_shipColor = Rgba8((unsigned char)RangeMap(-SinDegrees(m_shipRevolutionDeg), -1.f, 1.f, 157.f, 44.f),
+		(unsigned char)RangeMap(-SinDegrees(m_shipRevolutionDeg), -1.f, 1.f, 166.f, 46.f),
+		(unsigned char)RangeMap(-SinDegrees(m_shipRevolutionDeg), -1.f, 1.f, 249.f, 124.f), 255);
 
 	if (g_theInput->IsKeyDown('N')|| g_theInput->IsKeyDown(0x20)||
 		g_theInput->GetController(0).GetButton(XboxButtonID::A).m_isPressed||
@@ -846,15 +970,16 @@ void Game::UpdateGameplayMode(float deltaTime)
 	CheckPlayerShipVsEnemies();
 	CheckExpBulletsVsEnemies();
 	CheckExpDebrisVSEnemies();
-	if (m_playerShip->m_isSaber && m_playerShip->m_magicPoint > MIN_SABER_MP)
+	if ((m_playerShip->m_isSaber||m_playerShip->m_isControllerSaber) && m_playerShip->m_magicPoint > MIN_SABER_MP)
 	{
 		CheckLightSaberVsEnemies();
 	}
 	
 	UpdateWorldCamera();
-	if (m_isAsteroidsClear && m_isBeetlesClear && m_isWaspsClear&&m_isShootWaspsClear)
+	if ( m_isBeetlesClear && m_isWaspsClear&&m_isShootWaspsClear)
 	{
-		m_waveState++;
+		if(!m_isWin)
+			m_waveState++;
 		if (m_waveState < 5)
 		{
 			GenerateEachWave(m_enemyNumInEachWaves[m_waveState]);
@@ -863,7 +988,8 @@ void Game::UpdateGameplayMode(float deltaTime)
 		{
 			//win
 			m_isWin = true;
-			m_winTime = GetCurrentTimeSeconds();
+			g_theAudio->StartSound(finalSuccess);
+			m_winTime = (float)GetCurrentTimeSeconds();
 		}
 	}
 	
@@ -919,7 +1045,7 @@ void Game::UpdateWorldCamera()
 		}
 		else
 		{
-			float range = RangeMap(shakeTime, 0.f, 1.f, 1.5f, 0.f);
+			float range = RangeMap((float)shakeTime, 0.f, 1.f, 1.5f, 0.f);
 			float x = m_rng->RollRandomFloatInRange(-range, range);
 			float y = m_rng->RollRandomFloatInRange(-range, range);
 			cameraTransDist = Vec2{ x,y };
@@ -936,7 +1062,7 @@ void Game::Translate2DToFollowedObj(Camera& worldCamera,const Vec2& aimPos)
 }
 void Game::UpdateQuitGameplayMode(float deltaTime)
 {
-
+	UNUSED(deltaTime);
 }
 void Game::UpdateCheatInput()
 {
@@ -1317,10 +1443,12 @@ void Game::TurretShootBullet(Turret& thisTurret)
 
 void Game::GenerateEachWave(EnemyNumInWave curWaveEnemyNum)
 {
+	g_theAudio->StartSound(newWave);
 	GenerateAsteroids(curWaveEnemyNum.numAsteroids);
 	GenerateBeetles(curWaveEnemyNum.numBeetles);
 	GenerateWasps(curWaveEnemyNum.numWasp);
 	GenerateShootWasps(curWaveEnemyNum.numShootWasp);
+	GenerateTurret(curWaveEnemyNum.numTurret);
 }
 void Game::GenerateAsteroids(int count)
 {
@@ -1430,11 +1558,24 @@ void Game::GenerateEachWasp(int index)
 	m_wasps[index]->m_orientationDegrees = direction.GetOrientationDegrees();
 	m_wasps[index]->m_velocity = Vec2::MakeFromPolarDegrees(m_wasps[index]->m_orientationDegrees, WASP_SPEED);
 }
+void Game::GenerateTurret(int count)
+{
+	for (int i = 0; i < count; i++)
+	{
+		GenerateEachTurret(i);
+	}
+}
+void Game::GenerateEachTurret(int index)
+{
+	float posX = m_rng->RollRandomFloatInRange(-180.f,380.f);
+	float posY = m_rng->RollRandomFloatInRange(-80.f, 180.f);
+	m_turret[index] = new Turret(this, posX, posY);
+}
 void Game::GenerateDebris(Vec2 const& position, Rgba8 color, int count, float minSpeed,float maxSpeed, 
 	float minRadius, float maxRadius,Vec2 const&  oriVelocity)
 {
 	int j = 0;
-	for (int i = 0; i < count; i++)
+  	for (int i = 0; i < count; i++)
 	{
 		for (; j < MAX_DEBRIS; )
 		{
@@ -1519,7 +1660,7 @@ void Game::GenerateBkgStar()
 		{
 			float x4 = m_rng->RollRandomFloatInRange(-400.f, 600.f);
 			float y4 = m_rng->RollRandomFloatInRange(-200.f, 300.f);
-			m_bkgStarsL4[i] = new BkgStar(this, Vec2(x2, y2), 4);
+			m_bkgStarsL4[i] = new BkgStar(this, Vec2(x4, y4), 4);
 		}
 	}
 }

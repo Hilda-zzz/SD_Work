@@ -29,9 +29,10 @@
 //-----------------------------------------------------------------------------------------------
 // Initialization code based on example from "FMOD Studio Programmers API for Windows"
 //
-AudioSystem::AudioSystem()
+AudioSystem::AudioSystem(AudioSystemConfig audioConfig)
 	: m_fmodSystem( nullptr )
 {
+	UNUSED(audioConfig);
 }
 
 

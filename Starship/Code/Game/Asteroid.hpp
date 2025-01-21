@@ -1,7 +1,7 @@
 #pragma once
-#include "Entity.hpp"
+#include "Game/Entity.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
-#include "GameCommon.hpp"
+#include "Game/GameCommon.hpp"
 class Asteroid :public Entity
 {
 public:

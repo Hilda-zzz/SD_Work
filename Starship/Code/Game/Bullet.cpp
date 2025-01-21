@@ -4,11 +4,9 @@
 #include "GameCommon.hpp"
 #include "App.hpp"
 #include "Engine/Core/VertexUtils.hpp"
-#include <Engine/Math/MathUtils.hpp>
+#include "Engine/Math/MathUtils.hpp"
 #include "Game.hpp"
 
-extern Renderer* g_theRenderer;
-//extern App* g_theApp;
 Bullet::Bullet(Game* game, float x, float y) : Entity(game, x, y)
 {
 	m_cosmeticRadius = BULLET_COSMETIC_RADIUS;

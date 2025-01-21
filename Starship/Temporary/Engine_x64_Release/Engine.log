@@ -1,4 +1,34 @@
-﻿  Camera.cpp
+﻿  AudioSystem.cpp
+  DevConsole.cpp
+  EngineCommon.cpp
+  EventSystem.cpp
+  Image.cpp
+  NamedStrings.cpp
+  Rgba8.cpp
+  TileHeatMap.cpp
+  Time.cpp
+  VertexUtils.cpp
+  XmlUtils.cpp
+  AnalogJoystick.cpp
+  InputSystem.cpp
+  XboxController.cpp
+  AABB2.cpp
+  FloatRange.cpp
+  IntVec2.cpp
+  Mat44.cpp
+  MathUtils.cpp
+  OBB2.cpp
+  Compiling...
+  Ray.cpp
+  RaycastUtils.cpp
+  Vec2.cpp
+  Vec3.cpp
+  Vec4.cpp
+  BitmapFont.cpp
   Renderer.cpp
-C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Renderer.cpp(78,40): warning C4100: 'camera': unreferenced formal parameter
+  SpriteAnimDefinition.cpp
+  SpriteDefinition.cpp
+  SpriteSheet.cpp
+  Texture.cpp
+  Window.cpp
   Engine.vcxproj -> C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Engine.lib

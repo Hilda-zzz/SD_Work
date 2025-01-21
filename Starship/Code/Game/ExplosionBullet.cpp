@@ -1,7 +1,7 @@
-#include "ExplosionBullet.hpp"
-#include <Engine/Core/VertexUtils.hpp>
-#include <Engine/Renderer/Renderer.hpp>
-extern Renderer* g_theRenderer;
+#include "Game/ExplosionBullet.hpp"
+#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+
 ExplosionBullet::ExplosionBullet(Game* game, float x, float y) : Entity(game, x, y)
 {
 	m_cosmeticRadius = EXPBULLET_COSMETIC_RADIUS;

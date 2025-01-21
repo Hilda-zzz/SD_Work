@@ -1,7 +1,7 @@
-#include "EnemyBullet.hpp"
-#include <Engine/Core/VertexUtils.hpp>
-#include <Engine/Renderer/Renderer.hpp>
-extern Renderer* g_theRenderer;
+#include "Game/EnemyBullet.hpp"
+#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+
 EnemyBullet::EnemyBullet(Game* game, float x, float y) : Entity(game, x, y)
 {
 	m_cosmeticRadius =	ENEMYBULLET_COSMETIC_RADIUS;

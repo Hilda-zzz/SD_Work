@@ -1,9 +1,9 @@
 #include "LaserExplosionCanon.hpp"
 #include "Game/Game.hpp"
-#include <Engine/Core/VertexUtils.hpp>
-#include <Engine/Renderer/Renderer.hpp>
+#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
-extern Renderer* g_theRenderer;
 LaserExplosionCanon::LaserExplosionCanon(Game* game, float x, float y, int level) : Entity(game, x, y)
 {
 	m_level = level;
@@ -12,6 +12,7 @@ LaserExplosionCanon::LaserExplosionCanon(Game* game, float x, float y, int level
 
 void LaserExplosionCanon::Update(float deltaTime)
 {
+	UNUSED(deltaTime);
 	m_orientationDegrees = m_game->m_playerShip->m_orientationDegrees;
 	m_position = m_game->m_playerShip->m_position;
 }

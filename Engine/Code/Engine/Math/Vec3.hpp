@@ -9,7 +9,7 @@ public:
 public:
 	Vec3() = default;
 	explicit Vec3(float initialX, float initialY,float initialZ);
-
+	void SetFromText(char const* text);
 	//accessors(const methods)
 	//The function will not modify the state of the object when being called
 	float GetLength() const;

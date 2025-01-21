@@ -6,6 +6,7 @@ struct AABB2
 public:
 	Vec2 m_mins;
 	Vec2 m_maxs;
+	static const AABB2 ZERO_TO_ONE;
 public:
 	~AABB2(){}
 	AABB2(){}

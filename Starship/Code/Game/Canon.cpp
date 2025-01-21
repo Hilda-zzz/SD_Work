@@ -1,10 +1,9 @@
-#include "Canon.hpp"
-#include <Engine/Core/VertexUtils.hpp>
-#include <Engine/Renderer/Renderer.hpp>
+#include "Game/Canon.hpp"
+#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/Renderer.hpp"
 #include "Game/Game.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 
-extern Renderer* g_theRenderer;
 
 Canon::Canon(Game* game, float x, float y, int level) : Entity(game, x, y)
 {

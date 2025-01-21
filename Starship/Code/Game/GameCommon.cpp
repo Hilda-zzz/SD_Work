@@ -1,8 +1,7 @@
-#include <Game/GameCommon.hpp>
-#include <Engine/Core/Vertex_PCU.hpp>
+#include "Game/GameCommon.hpp"
+#include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 
-extern Renderer*g_theRenderer;
 void DebugDrawLine(Vec2 const& start, Vec2 const& end, float width,Rgba8 color)
 {
 	Vec2 step_fwd = end - start;

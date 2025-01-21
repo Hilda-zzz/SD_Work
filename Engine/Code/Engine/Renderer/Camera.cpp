@@ -1,6 +1,5 @@
 
-#include <Engine/Renderer/Camera.hpp>
-#include <Game/GameCommon.hpp>
+#include "Engine/Renderer/Camera.hpp"
 
 Camera::Camera():m_bottomLeft(Vec2{0.f,0.f}), m_topRight(Vec2{ 0.f,0.f })
 {

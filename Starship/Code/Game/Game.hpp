@@ -12,7 +12,7 @@
 #include "ExplosionBullet.hpp"
 #include "ShootWasp.hpp"
 #include "EnemyBullet.hpp"
-#include <Engine/Audio/AudioSystem.hpp>
+#include "Engine/Audio/AudioSystem.hpp"
 #include "Turret.hpp"
 class BkgStar;
 
@@ -27,6 +27,7 @@ struct EnemyNumInWave
 	int numBeetles;
 	int numWasp;
 	int numShootWasp;
+	int numTurret;
 };
 
 enum EnemiesTypes
@@ -66,6 +67,7 @@ public:
 
 	//-----------------------------------------------------------------
 	void Update(float deltaSeconds);
+	void AdjustForPauseAndTimeDitortion(float& deltaSeconds);
 	void UpdateBullet(float deltaTime);
 	void UpdateEnmBullet(float deltaTime);
 	void UpdateExpBullet(float deltaTime);
@@ -105,6 +107,8 @@ public:
 	void GenerateEachBeetles(int index);
 	void GenerateWasps(int count);
 	void GenerateEachWasp(int index);
+	void GenerateTurret(int count);
+	void GenerateEachTurret(int index);
 	void GenerateDebris(Vec2 const& position, Rgba8 color, int count, float minSpeed,
 		float maxSpeed,float minRadius, float maxRadius,Vec2 const&  oriVelocity);
 	void GenerateExpDebris(Vec2 const& position, Rgba8 color, int count, float minSpeed,
@@ -127,6 +131,11 @@ public:
 	//-----------------------------------------------------------------
 	void ShakeScreen();
 	RandomNumberGenerator* m_rng;
+	//-----------------------------------------------------------------
+	bool m_isPause = false;
+	bool m_isSlow = false;
+	bool m_pauseAfterUpdate = false;
+	//-------------------------------------------------------------------
 
 	PlayerShip*		m_playerShip = nullptr;			
 	Asteroid*		m_asteroids[MAX_ASTEROIDS] = {};	
@@ -149,6 +158,9 @@ public:
 	bool m_isShootWaspsClear = true;
 
 	bool m_flagToReset = false;
+
+	bool m_isBulletTime = false;
+	float m_deltaTimeRatio = 1.f;
 
 	Camera* m_worldCamera;
 	Camera* m_screenCamera;
@@ -178,6 +190,16 @@ public:
 
 	SoundID playmodeBGM;
 	SoundID attrackmodeBGM;
+
+	//----new-------------
+	SoundID playerRespawn;
+	SoundID finalSuccess;
+	SoundID finalDefeat;
+	SoundID newWave;
+	SoundID bulletTimeStart;
+	SoundID setBulletTimeMove;
+	SoundID dash;
+	
 private:
 
 	bool isDebugMode = false;

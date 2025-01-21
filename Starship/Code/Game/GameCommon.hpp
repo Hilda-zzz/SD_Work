@@ -1,6 +1,20 @@
 #pragma once
-#include <Engine/Math/Vec2.hpp>
-#include <Engine/Core/Rgba8.hpp>
+#include "Engine/Math/Vec2.hpp"
+#include "Engine/Core/Rgba8.hpp"
+#include "App.hpp"
+class App;
+class InputSystem;
+class AudioSystem;
+class Renderer;
+class Window;
+class BitmapFont;
+
+extern App* g_theApp;
+extern InputSystem* g_theInput;
+extern Window* g_theWindow;
+extern Renderer* g_theRenderer;
+extern AudioSystem* g_theAudio;
+extern BitmapFont* g_testFont;
 
 constexpr int NUM_STARTING_ASTEROIDS = 6;
 constexpr int MAX_ASTEROIDS = 500;
@@ -12,7 +26,7 @@ constexpr int MAX_DEBRIS = 1000;
 constexpr int MAX_EXPBULLETS = 100;
 constexpr int MAX_EXPDEBRIS = 200;
 constexpr int MAX_SHOOTWASPS = 20;
-constexpr int MAX_TURRET = 20;
+constexpr int MAX_TURRET = 40;
 
 constexpr float WORLDSPACE_SIZE_TR_X = 400.f;
 constexpr float WORLDSPACE_SIZE_TR_Y = 200.f;

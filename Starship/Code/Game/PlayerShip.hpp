@@ -1,10 +1,10 @@
 #pragma once
-#include "Entity.hpp"
+#include "Game/Entity.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
-#include "GameCommon.hpp"
-#include "Canon.hpp"
-#include "LaserExplosionCanon.hpp"
-#include "LightSaber.hpp"
+#include "Game/GameCommon.hpp"
+#include "Game/Canon.hpp"
+#include "Game/LaserExplosionCanon.hpp"
+#include "Game/LightSaber.hpp"
 
 constexpr float  MIN_SABER_MP = 1;
 class PlayerShip:public Entity
@@ -56,10 +56,19 @@ private:
     bool m_isChangeState = false;
     float m_deadTime = 0.f;
     float m_thrustFraction;
-
+    float m_quickDashRadius =0.f;
     bool m_isPlaySaberSound = false;
+    float m_previousRightTrigger = 0.f;
 private:
     void BounceOffWall();
     void RespawnShip();
     void UpdateFromController(float deltaTime);
+    void TriggerBulletTime(float rightTrigger);
+    void TriggerQuickDash();
+    bool m_isTriggerQuickDash = false;
+    bool m_isStartQuickDash = false;
+    double m_startQuickDashTime = 0.0;
+    void RenderQuickDashUI() const;
+    void UpdateQuickDashUI(float leftMagnitute);
+    Vec2 m_previousVelocity;
 };

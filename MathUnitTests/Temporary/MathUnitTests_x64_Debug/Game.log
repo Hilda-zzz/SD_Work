@@ -1,4 +1,16 @@
-﻿  Game.vcxproj -> C:\p4\Personal\SD\MathUnitTests\Temporary\MathUnitTests_x64_Debug\MathUnitTests_Debug_x64.exe
+﻿  Main.cpp
+  UnitTests_Custom.cpp
+  UnitTests_MP1A1.cpp
+  UnitTests_MP1A2.cpp
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(668,16): warning C4189: 'MAX_DEVIATION_COUNT_LESS_THAN_7': local variable is initialized but not referenced
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(669,16): warning C4189: 'MAX_DEVIATION_COUNT_LESS_THAN_300': local variable is initialized but not referenced
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(670,16): warning C4189: 'MAX_DEVIATION_COUNT_IN_2_THRU_5': local variable is initialized but not referenced
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(671,16): warning C4189: 'MAX_DEVIATION_COUNT_IN_6_THRU_8': local variable is initialized but not referenced
+  UnitTests_MP1A3.cpp
+  UnitTests_MP1A4.cpp
+  UnitTests_MP1A7.cpp
+  Generating Code...
+  Game.vcxproj -> C:\p4\Personal\SD\MathUnitTests\Temporary\MathUnitTests_x64_Debug\MathUnitTests_Debug_x64.exe
   Copying MathUnitTests_Debug_x64.exe to C:\p4\Personal\SD\MathUnitTests\Run...
   C:\p4\Personal\SD\MathUnitTests\Temporary\MathUnitTests_x64_Debug\MathUnitTests_Debug_x64.exe -> C:\p4\Personal\SD\MathUnitTests\Run\MathUnitTests_Debug_x64.exe
   1 File(s) copied

@@ -1,7 +1,7 @@
 #include <Windows.h> 
 #include <Xinput.h>
 #include "XboxController.hpp"
-#include <Engine/Math/MathUtils.hpp>
+#include "Engine/Math/MathUtils.hpp"
 #pragma comment( lib, "xinput" ) 
 // Note: for Windows 7 and earlier support, use “xinput 9_1_0” explicitly instead
 
@@ -92,6 +92,15 @@ bool XboxController::WasButtonJustReleased(XboxButtonID buttonID) const
 	return false;
 }
 
+void XboxController::SetVibrates(int leftMotorSpeed, int rightMotorSpeed)
+{
+	XINPUT_VIBRATION xboxVibration = XINPUT_VIBRATION();
+	xboxVibration.wLeftMotorSpeed = (unsigned short)leftMotorSpeed;
+	xboxVibration.wRightMotorSpeed = (unsigned short)rightMotorSpeed;
+
+	XInputSetState(m_id, &xboxVibration);
+}
+
 void XboxController::Update()
 {
 	XINPUT_STATE xboxControllerState = {};
@@ -112,7 +121,7 @@ void XboxController::Update()
 		}
 
 		UpdateJoystick(m_leftStick, xboxControllerState.Gamepad.sThumbLX, xboxControllerState.Gamepad.sThumbLY);
-		UpdateJoystick(m_rightStick, xboxControllerState.Gamepad.sThumbLX, xboxControllerState.Gamepad.sThumbLY);
+		UpdateJoystick(m_rightStick, xboxControllerState.Gamepad.sThumbRX, xboxControllerState.Gamepad.sThumbRY);
 		UpdateTrigger(m_leftTrigger, xboxControllerState.Gamepad.bLeftTrigger);
 		UpdateTrigger(m_rightTrigger, xboxControllerState.Gamepad.bRightTrigger);
 		for (int i = 0; i< static_cast<int>(XboxButtonID::NUM)-4; i++)
@@ -155,6 +164,5 @@ void XboxController::UpdateTrigger(float& our_triggerValue, unsigned char rawVal
 
 void XboxController::UpdateButton(XboxButtonID buttonID, unsigned short buttonFlags, unsigned short buttonFlag)
 {
-	//bool isp= (buttonFlags & buttonFlag) == buttonFlag;
 	m_buttons[(int)buttonID].m_isPressed = (buttonFlags & buttonFlag) == buttonFlag;
 }

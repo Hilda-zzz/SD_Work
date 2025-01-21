@@ -1,11 +1,10 @@
-#include "ShootWasp.hpp"
-#include "Game.hpp"
-#include <Engine/Renderer/Renderer.hpp>
-#include <Engine/Core/VertexUtils.hpp>
-#include <Engine/Core/Time.hpp>
+#include "Game/ShootWasp.hpp"
+#include "Game/Game.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Core/Time.hpp"
 
-extern Renderer* g_theRenderer;
-extern AudioSystem* g_theAudio;
+
 ShootWasp::ShootWasp(Game* game, float x, float y) : Entity(game, x, y)
 {
 	m_orientationDegrees = 0;
@@ -69,6 +68,7 @@ void ShootWasp::Render() const
 
 void ShootWasp::Die()
 {
+	m_game->ShakeScreen();
 	m_game->GenerateDebris(m_position, Rgba8(100, 160, 60, 130), 8, 15.f, 35.f, 1.5f, 2.f, m_velocity);
 	m_isGarbage = true;
 }

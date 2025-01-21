@@ -1,11 +1,10 @@
-#include "Turret.hpp"
-#include <Engine/Math/MathUtils.hpp>
-#include "Game.hpp"
-#include <Engine/Core/Time.hpp>
-#include <Engine/Core/VertexUtils.hpp>
-#include <Engine/Renderer/Renderer.hpp>
-extern Renderer* g_theRenderer;
-extern AudioSystem* g_theAudio;
+#include "Game/Turret.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Game/Game.hpp"
+#include "Engine/Core/Time.hpp"
+#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+
 Turret::Turret(Game* game, float x, float y) : Entity(game, x, y)
 {
 	m_orientationDegrees = 0;
@@ -47,7 +46,7 @@ Turret::Turret(Game* game, float x, float y) : Entity(game, x, y)
 void Turret::Update(float deltaTime)
 {
 
-	m_position.y = m_oriPosition.y+ CosDegrees(GetCurrentTimeSeconds() * 300.f) * TURRET_FLOAT_SPEED * deltaTime;
+	m_position.y = m_oriPosition.y+ CosDegrees((float)GetCurrentTimeSeconds() * 300.f) * TURRET_FLOAT_SPEED * deltaTime;
 	
 	if (m_health <= 0)
 	{
@@ -56,7 +55,7 @@ void Turret::Update(float deltaTime)
 
 	if (m_isStaticState == true)
 	{
-		float curTime = GetCurrentTimeSeconds();
+		float curTime = (float)GetCurrentTimeSeconds();
 		if (curTime - m_startRotateTime >= m_staticTime)
 		{
 			m_isStaticState = false;
@@ -103,6 +102,7 @@ void Turret::Render() const
 
 void Turret::Die()
 {
+	m_game->ShakeScreen();
 	m_game->GenerateDebris(m_position, Rgba8(99, 43, 52, 130),
 		15, 15.f, 35.f, 1.5f, 2.0f, m_velocity);
 	m_isGarbage = true;

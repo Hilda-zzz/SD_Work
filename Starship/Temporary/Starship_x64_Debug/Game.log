@@ -1,9 +1,23 @@
-﻿  PlayerShip.cpp
-C:\p4\Personal\SD\Starship\Code\Game\PlayerShip.cpp(163,45): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\p4\Personal\SD\Starship\Code\Game\PlayerShip.cpp(164,45): warning C4244: 'argument': conversion from 'float' to 'unsigned char', possible loss of data
-C:\p4\Personal\SD\Starship\Code\Game\PlayerShip.cpp(177,20): warning C4305: '+=': truncation from 'double' to 'float'
-C:\p4\Personal\SD\Starship\Code\Game\PlayerShip.cpp(206,36): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\p4\Personal\SD\Starship\Code\Game\PlayerShip.cpp(210,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+﻿  App.cpp
+  Asteroid.cpp
+  Beetle.cpp
+  BkgStar.cpp
+  Bullet.cpp
+  Canon.cpp
+  Debris.cpp
+  EnemyBullet.cpp
+  Entity.cpp
+  ExplosionBullet.cpp
+  Game.cpp
+  GameCommon.cpp
+  LaserExplosionCanon.cpp
+  LightSaber.cpp
+  Main_Windows.cpp
+  PlayerShip.cpp
+  ShootWasp.cpp
+  Turret.cpp
+  Wasp.cpp
+  Generating Code...
   Game.vcxproj -> C:\p4\Personal\SD\Starship\Temporary\Starship_x64_Debug\Starship_Debug_x64.exe
   Copying Starship_Debug_x64.exe to C:\p4\Personal\SD\Starship\Run...
   C:\p4\Personal\SD\Starship\Temporary\Starship_x64_Debug\Starship_Debug_x64.exe -> C:\p4\Personal\SD\Starship\Run\Starship_Debug_x64.exe

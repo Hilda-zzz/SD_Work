@@ -1,14 +1,12 @@
-#include "Beetle.hpp"
+#include "Game/Beetle.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "GameCommon.hpp"
-#include "App.hpp"
+#include "Game/GameCommon.hpp"
+#include "Game/App.hpp"
 #include "Engine/Core/VertexUtils.hpp"
-#include <Engine/Math/MathUtils.hpp>
-#include "Game.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Game/Game.hpp"
 
-extern Renderer* g_theRenderer;
-extern AudioSystem* g_theAudio;
 constexpr int ORI_BEETLE_HP = 30;
 Beetle::Beetle(Game* game, float x, float y) : Entity(game,x,y)
 {

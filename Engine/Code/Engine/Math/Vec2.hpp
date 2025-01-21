@@ -7,14 +7,16 @@ struct Vec2
 public: // NOTE: this is one of the few cases where we break both the "m_" naming rule AND the avoid-public-members rule
 	float x = 0.f;
 	float y = 0.f;
-
+	static const  Vec2 ZERO;
+	static const  Vec2 ONE;
 public:
 	// Construction/Destruction
 	~Vec2() {}												// destructor (do nothing)
 	Vec2() {}												// default constructor (do nothing)
 	Vec2( Vec2 const& copyFrom );							// copy constructor (from another vec2)
 	explicit Vec2( float initialX, float initialY );		// explicit constructor (from x, y)
-	
+	void SetFromText(char const* text);
+
 	//static methods (e.g. creation func)
 	//Don’t need to access or modify instance members, so defining as static is suitable
 	//The purpose of the function is to return an indispensable value

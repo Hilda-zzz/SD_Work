@@ -1,7 +1,7 @@
 #pragma once
 #include "Engine/Core/Vertex_PCU.hpp"
-#include "GameCommon.hpp"
-#include "Game.hpp"
+#include "Game/GameCommon.hpp"
+#include "Game/Game.hpp"
 
 class BkgStar
 {

@@ -1,23 +1,30 @@
 #include "Engine/Math/Vec2.hpp"
-#include"MathUtils.hpp"
+#include "MathUtils.hpp"
+#include <Engine/Core/StringUtils.hpp>
 
+const Vec2 Vec2::ZERO = Vec2(0.f, 0.f);
+const Vec2 Vec2::ONE = Vec2(1.f, 1.f);
 Vec2 ori = Vec2(0, 0);
 //-----------------------------------------------------------------------------------------------
 Vec2::Vec2( Vec2 const& copy )
-	: x(123.f)
-	, y(456.f)
+	: x(copy.x)
+	, y(copy.y)
 {
-	x = copy.x;
-	y = copy.y;
 }
 
 //-----------------------------------------------------------------------------------------------
 Vec2::Vec2( float initialX, float initialY )
-	: x( 123.f )
-	, y( 456.f )
+	: x(initialX)
+	, y(initialY)
 {
-	x =initialX;
-	y = initialY;
+
+}
+
+void Vec2::SetFromText(char const* text)
+{
+	Strings result=SplitStringOnDelimiterIgnoreSpace(text,',');
+	x = (float)atof(result[0].c_str());
+	y = (float)atof(result[1].c_str());
 }
 
 //-----------------------------------------------------------------------------------------------

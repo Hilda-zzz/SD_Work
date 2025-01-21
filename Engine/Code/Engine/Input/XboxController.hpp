@@ -2,7 +2,7 @@
 #pragma once
 #include "AnalogJoystick.hpp"
 #include "KeyButtonState.hpp"
-#include <Engine/Input/XboxButtonID.hpp>
+#include "Engine/Input/XboxButtonID.hpp"
 class XboxController
 {
 	friend class InputSystem;
@@ -24,7 +24,7 @@ public:
 	bool IsButtongDown(XboxButtonID buttonID) const;
 	bool WasButtonJustPressed(XboxButtonID buttonID) const;
 	bool WasButtonJustReleased(XboxButtonID buttonID) const;
-
+	void SetVibrates(int leftMotorSpeed, int rightMotorSpeed);
 private:
 	void Update();
 	void Reset();
