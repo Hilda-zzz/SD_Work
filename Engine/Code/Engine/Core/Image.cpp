@@ -5,9 +5,10 @@
 
 Image::Image(char const* imageFilePath):m_imageFilePath(imageFilePath)
 {
-	int channels;
+	int originalChannels;
+	int desiredChannels = 4;
 	stbi_set_flip_vertically_on_load(1);
-	unsigned char* pixelData = stbi_load(imageFilePath, &m_dimensions.x, &m_dimensions.y, &channels, 0);
+	unsigned char* pixelData = stbi_load(imageFilePath, &m_dimensions.x, &m_dimensions.y, &originalChannels, desiredChannels);
 	if (pixelData == nullptr)
 	{
 		ERROR_AND_DIE("can not find the image");
@@ -19,7 +20,7 @@ Image::Image(char const* imageFilePath):m_imageFilePath(imageFilePath)
 	{
 		for (int j = 0; j < m_dimensions.y; j++)
 		{
-			int index = (m_dimensions.x * j + i) * channels;
+			int index = (m_dimensions.x * j + i) * desiredChannels;
 			Rgba8 curColor;
 			curColor.r = pixelData[index];
 			curColor.g = pixelData[index + 1];
@@ -30,6 +31,17 @@ Image::Image(char const* imageFilePath):m_imageFilePath(imageFilePath)
 	}
 
 	stbi_image_free(pixelData);
+}
+
+Image::Image(IntVec2 size, Rgba8 color)
+{
+	m_dimensions.x = size.x;
+	m_dimensions.y = size.y;
+	m_rgbaTexels.reserve(m_dimensions.x * m_dimensions.y);
+	for (int i = 0; i < m_dimensions.x * m_dimensions.y;i++)
+	{
+		m_rgbaTexels.push_back(color);
+	}
 }
 
 std::string const& Image::GetImageFilePath() const
@@ -52,4 +64,9 @@ void Image::SetTexelColor(IntVec2 const& texelCoords, Rgba8 const& newColor)
 {
 	int index = m_dimensions.x * texelCoords.y + texelCoords.x;
 	m_rgbaTexels[index] = newColor;
+}
+
+const void* Image::GetRawData() const
+{
+	return m_rgbaTexels.data();
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/IntVec2.hpp"
 class InputSystem;
 
 struct WindowConfig
@@ -23,6 +24,9 @@ public:
 	void* GetDisplayContext() const;
 	Vec2 GetNormalizedMouseUV() const;
 
+	void* GetHwnd() const;
+	IntVec2 GetClientDimensions() const;
+
 public:
 	static Window* s_mainWindow;
 	
@@ -35,4 +39,6 @@ private:
 	WindowConfig m_config;
 	void* m_displayContext = nullptr;
 	void* m_windowHandle = nullptr;
+
+	IntVec2 m_clientDimension;
 };

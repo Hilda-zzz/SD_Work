@@ -11,6 +11,7 @@
 #include "Engine/Renderer/SpriteAnimDefinition.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/Image.hpp"
 
 SoundPlaybackID bgm;
 SpriteSheet* g_terrianSpriteSheet=nullptr;
@@ -54,10 +55,12 @@ Game::Game()
 	Texture* gameOverTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/YouDiedScreen.png");
 	Texture* explosionAnimTexture= g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Explosion_5x5.png");
 	Texture* decoSpriteSheet = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Extras_4x4.png");
+	Texture* attractModeScreen = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/AttractScreen.png");
 	UNUSED(playerTankBaseTexture);
 	UNUSED(playerTankTopTexture);
 	UNUSED(gameOverTexture);
 	UNUSED(explosionAnimTexture);
+	UNUSED(attractModeScreen);
 
 	g_terrianSpriteSheet =new SpriteSheet(*tileMapTexture, IntVec2(8,8));
 	g_decoSpriteSheet = new SpriteSheet(*decoSpriteSheet, IntVec2(4, 4));
@@ -395,6 +398,8 @@ void Game::RenderAttractMode() const
 
 	g_theRenderer->BeginCamera(m_screenCamera);
 	//----------------------------------------------------------------------------------------------------------
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+	//g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
 	g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/AttractScreen.png"));
 	AABB2 texturedAABB2_menu(0.f, 0.f, screenCameraSizeX, screenCameraSizeY);
 	std::vector<Vertex_PCU> menuVerts;
@@ -406,33 +411,33 @@ void Game::RenderAttractMode() const
 	float delta_thickness = 8 * CosDegrees(200 *(float) GetCurrentTimeSeconds());
 	DebugDrawRing(15.f+ delta_thickness, 100.f+ delta_radius, Rgba8(0, 180, 100), Vec2(screenCameraSizeX * 0.5f, screenCameraSizeY * 0.5f));
 	//----------------------------------------------------------------------------------------------------------
-	std::vector<Vertex_PCU> textVerts;
-	g_testFont->AddVertsForText2D(textVerts, Vec2(100.f, 200.f), 30.f, "Hello, world");
-	g_testFont->AddVertsForText2D(textVerts, Vec2(250.f, 400.f), 15.f, "It's nice to have options!", Rgba8::RED, 0.6f);
-	g_theRenderer->BindTexture(&g_testFont->GetTexture());
-	g_theRenderer->DrawVertexArray(textVerts);
-	//----------------------------------------------------------------------------------------------------------
-	float aliX = abs(CosDegrees((float)GetCurrentTimeSeconds() * 50.f));
-	float aliY = abs(SinDegrees((float)GetCurrentTimeSeconds() * 50.f));
-	float cellHeight = 5.f + 30.f * abs(SinDegrees((float)GetCurrentTimeSeconds() * 50.f));
-	float tempY = 80.f + 60.f * abs(SinDegrees((float)GetCurrentTimeSeconds() * 50.f));
-	float tempX = 400.f + 600.f * abs(CosDegrees((float)GetCurrentTimeSeconds() * 50.f));
-	std::vector<Vertex_PCU> boxTextVerts;
-	AABB2 testTextBox = AABB2(Vec2(300.f, 300.f), Vec2(300.f+tempX, 300.f+tempY));
-	DebugDrawBox(Vec2(300.f, 300.f), Vec2(300.f + tempX, 300.f + tempY), Rgba8::HILDA);
-	g_testFont->AddVertsForTextInBox2D(boxTextVerts, "hello world\nMy Name is Hilda\nto be or not to be, that's a question.",
-		testTextBox, cellHeight, Rgba8::BLUE,1.0f,Vec2(aliX, aliY),SHRINK_TO_FIT);
-	g_theRenderer->BindTexture(&g_testFont->GetTexture());
-	g_theRenderer->DrawVertexArray(boxTextVerts);
-	//----------------------------------------------------------------------------------------------------------
-	SpriteDefinition curExplosionAniSpriteDef=g_explosionAnimDef_Slow->GetSpriteDefAtTime((float)GetCurrentTimeSeconds());
-	g_theRenderer->BindTexture(&curExplosionAniSpriteDef.GetTexture());
-	AABB2 texturedAABB2_ani(600.f, 100.f, 700.f,200.f);
-	std::vector<Vertex_PCU> aniVerts;
-	AddVertsForAABB2D(aniVerts, texturedAABB2_ani, Rgba8(255, 255, 255, 255), curExplosionAniSpriteDef.GetUVs().m_mins, curExplosionAniSpriteDef.GetUVs().m_maxs);
-	g_theRenderer->SetBlendMode(BlendMode::ADDITIVE);
-	g_theRenderer->DrawVertexArray(aniVerts);
-	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+	//std::vector<Vertex_PCU> textVerts;
+	//g_testFont->AddVertsForText2D(textVerts, Vec2(100.f, 200.f), 30.f, "Hello, world");
+	//g_testFont->AddVertsForText2D(textVerts, Vec2(250.f, 400.f), 15.f, "It's nice to have options!", Rgba8::RED, 0.6f);
+	//g_theRenderer->BindTexture(&g_testFont->GetTexture());
+	//g_theRenderer->DrawVertexArray(textVerts);
+	////----------------------------------------------------------------------------------------------------------
+	//float aliX = abs(CosDegrees((float)GetCurrentTimeSeconds() * 50.f));
+	//float aliY = abs(SinDegrees((float)GetCurrentTimeSeconds() * 50.f));
+	//float cellHeight = 5.f + 30.f * abs(SinDegrees((float)GetCurrentTimeSeconds() * 50.f));
+	//float tempY = 80.f + 60.f * abs(SinDegrees((float)GetCurrentTimeSeconds() * 50.f));
+	//float tempX = 400.f + 600.f * abs(CosDegrees((float)GetCurrentTimeSeconds() * 50.f));
+	//std::vector<Vertex_PCU> boxTextVerts;
+	//AABB2 testTextBox = AABB2(Vec2(300.f, 300.f), Vec2(300.f+tempX, 300.f+tempY));
+	//DebugDrawBox(Vec2(300.f, 300.f), Vec2(300.f + tempX, 300.f + tempY), Rgba8::HILDA);
+	//g_testFont->AddVertsForTextInBox2D(boxTextVerts, "hello world\nMy Name is Hilda\nto be or not to be, that's a question.",
+	//	testTextBox, cellHeight, Rgba8::BLUE,1.0f,Vec2(aliX, aliY),SHRINK_TO_FIT);
+	//g_theRenderer->BindTexture(&g_testFont->GetTexture());
+	//g_theRenderer->DrawVertexArray(boxTextVerts);
+	////----------------------------------------------------------------------------------------------------------
+	//SpriteDefinition curExplosionAniSpriteDef=g_explosionAnimDef_Slow->GetSpriteDefAtTime((float)GetCurrentTimeSeconds());
+	//g_theRenderer->BindTexture(&curExplosionAniSpriteDef.GetTexture());
+	//AABB2 texturedAABB2_ani(600.f, 100.f, 700.f,200.f);
+	//std::vector<Vertex_PCU> aniVerts;
+	//AddVertsForAABB2D(aniVerts, texturedAABB2_ani, Rgba8(255, 255, 255, 255), curExplosionAniSpriteDef.GetUVs().m_mins, curExplosionAniSpriteDef.GetUVs().m_maxs);
+	//g_theRenderer->SetBlendMode(BlendMode::ADDITIVE);
+	//g_theRenderer->DrawVertexArray(aniVerts);
+	//g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	//----------------------------------------------------------------------------------------------------------
 	g_theDevConsole->Render(texturedAABB2_menu,g_theRenderer);
 	//----------------------------------------------------------------------------------------------------------
@@ -482,6 +487,7 @@ void Game::RenderUI() const
 
 		if (m_isSuccess)
 		{
+			//g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
 			g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/VictoryScreen.jpg"));
 			AABB2 texturedAABB2_sheet(0.f, 0.f, screenCameraSizeX, screenCameraSizeY);
 			std::vector<Vertex_PCU> testVerts;

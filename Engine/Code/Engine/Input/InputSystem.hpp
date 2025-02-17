@@ -2,6 +2,9 @@
 
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Input/KeyButtonState.hpp"
+class NamedStrings;
+typedef NamedStrings EventArgs;
+
 extern unsigned char const KEYCODE_F1;
 extern unsigned char const KEYCODE_F2;
 extern unsigned char const KEYCODE_F3;
@@ -22,12 +25,21 @@ extern unsigned char const KEYCODE_SPACE;
 
 extern unsigned char const KEYCODE_LEFT_MOUSE;
 extern unsigned char const KEYCODE_RIGHT_MOUSE;
-extern unsigned char const KEYCODE_TILDE;
 extern unsigned char const KEYCODE_LEFTBRACKET;
 extern unsigned char const KEYCODE_RIGHTBRACKET;
 
+extern unsigned char const KEYCODE_TILDE;
+extern unsigned char const KEYCODE_ENTER;
+extern unsigned char const KEYCODE_BACKSPACE;
+extern unsigned char const KEYCODE_INSERT;
+extern unsigned char const KEYCODE_DELETE;
+extern unsigned char const KEYCODE_HOME;
+extern unsigned char const KEYCODE_END;
+
 constexpr int NUM_KEYCODES = 256;
 constexpr int NUM_XBOX_CONTROLLERS = 4;
+
+
 
 struct InputSystemConfig
 {
@@ -56,7 +68,8 @@ public:
 
 
 public:
-
+	static bool Event_KeyPressed(EventArgs& args);
+	static bool Event_KeyReleased(EventArgs& args);
 
 protected:
 	KeyButtonState m_keyStates[NUM_KEYCODES];

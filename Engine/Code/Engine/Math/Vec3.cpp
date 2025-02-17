@@ -201,3 +201,15 @@ Vec3 const Vec3::GetNormalized() const
 	}
 	return *this;
 }
+
+void Vec3::Normalized()
+{
+	float length = GetLength();
+	if (length > 0.0f)
+	{
+		float scale = 1.0f / length;
+		x *= scale;
+		y *= scale;
+		z *= scale;
+	}
+}

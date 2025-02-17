@@ -121,18 +121,20 @@ void Map::InitializeTileMapFromDef(MapDefinition const& mapDef)
 
 void Map::InitializeTileMapFromImage(std::string const& imagePath)
 {
-	Image testLevel = Image(imagePath.c_str());
-	m_dimensions = testLevel.GetDimensions();
+	Image* testLevel = g_theRenderer->CreateImageFromFile(imagePath.c_str());
+	m_dimensions = testLevel->GetDimensions();
 	m_tiles.reserve(m_dimensions.x * m_dimensions.y);
 	for (int rowIndex = 0; rowIndex < m_dimensions.y; rowIndex++)
 	{
 		for (int columnIndex = 0; columnIndex < m_dimensions.x; columnIndex++)
 		{
-			Rgba8 pixelColor=testLevel.GetTexelColor(IntVec2(columnIndex, rowIndex));
+			Rgba8 pixelColor=testLevel->GetTexelColor(IntVec2(columnIndex, rowIndex));
 			std::string thisTileType=GetTileTypeFromColor(pixelColor);
 			GenerateEachTile(columnIndex, rowIndex, thisTileType);
 		}
 	}
+	delete testLevel;
+	testLevel = nullptr;
 	AddVertsForAllTiles();
 	int maxSteps = PopulateDistanceField(*m_heatMapDistance, m_startCoords, 999999.f, true, false);
 	m_heatMapDistance->AddVertsForDebugDraw(m_heatmapVerts,

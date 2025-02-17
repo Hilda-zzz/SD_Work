@@ -25,7 +25,7 @@ public:
 
 	float GetTextWidth(float cellHeight, std::string const& text, float cellAspectScale = 1.f);
 
-	void AddVertsForTextInBox2D(std::vector<Vertex_PCU>& vertexArray, std::string const& text, AABB2 const& box, float cellHeight, Rgba8 const& tint = Rgba8::WHITE,
+	float AddVertsForTextInBox2D(std::vector<Vertex_PCU>& vertexArray, std::string const& text, AABB2 const& box, float cellHeight,Rgba8 const& tint = Rgba8::WHITE,
 		float cellAspectScale = 1.f, Vec2 const& alignment = Vec2(.5f, .5f), TextBoxMode mode = TextBoxMode::SHRINK_TO_FIT, int maxGlyphsToDraw = 99999999);
 
 protected:

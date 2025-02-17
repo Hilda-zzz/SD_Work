@@ -5,6 +5,7 @@
 #include "Engine/Core/Time.hpp"
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
+#include "Engine/Core/Image.hpp"
 Aries::Aries(EntityType type, EntityFaction faction):Entity(type,faction)
 {
 	m_cosmeticRadius = ARIES_COS_RADIUS;
@@ -19,8 +20,9 @@ Aries::Aries(EntityType type, EntityFaction faction):Entity(type,faction)
 	m_verts_body.reserve(6);
 	m_bodyBox = OBB2(Vec2(0.f, 0.f), body_direction, Vec2(0.6f, 0.6f));
 	AddVertsForOBB2D(m_verts_body, m_bodyBox, Rgba8(255, 255, 255, 255));
-	m_texAriesBase = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/EnemyAries.png");
 
+	//Image ariesImg = Image("Data/Images/EnemyAries.png");
+	m_texAriesBase = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/EnemyAries.png");
 	m_isPushedByEntities = true;
 	m_doesPushEntities = true;
 	m_isPushedByWalls = true;

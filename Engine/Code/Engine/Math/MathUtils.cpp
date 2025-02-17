@@ -2,6 +2,7 @@
 #include <cmath> 
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/LineSegment2.hpp"
 #include "Engine/Math/OBB2.hpp"
@@ -88,9 +89,26 @@ float DotProduct2D(Vec2 const& a, Vec2 const& b)
 	return a.x*b.x+a.y*b.y;
 }
 
+float DotProduct3D(Vec3 const& a, Vec3 const& b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+float DotProduct4D(Vec4 const& a, Vec4 const& b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
 float CrossProduct2D(Vec2 const& a, Vec2 const& b)
 {
 	return a.x*b.y-a.y*b.x;
+}
+
+Vec3 CrossProduct3D(Vec3 const& a, Vec3 const& b)
+{
+	return Vec3(a.y * b.z - a.z * b.y,
+		a.z * b.x - a.x * b.z,
+		a.x * b.y - a.y * b.x);
 }
 
 //?
@@ -673,10 +691,18 @@ int RoundDownToInt(float value)
 
 float NormalizeByte(unsigned char uc)
 {
-	return static_cast<float>(uc) / 255.0f;
+	if (uc == (unsigned char)255)
+		return 1.f;
+	else if (uc == (unsigned char)0)
+		return 0.f;
+	else
+		return static_cast<float>(uc) / 255.0f;
 }
 
 float DenormalizeByte(float f)
 {
-	return f * 255.0f;
+	if (f == 1.f)
+		return 255.f;
+	else
+		return (float)RoundDownToInt(f * 256.f);
 }

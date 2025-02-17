@@ -8,6 +8,8 @@
 #include "Game.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Time.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include <Engine/Core/ErrorWarningAssert.hpp>
 
 
 //Rgba8 shipOriColor = Rgba8(102, 153, 204, 255);
@@ -130,7 +132,7 @@ void PlayerShip::Update(float deltaTime)
 		if (m_velocity.GetLength() > 0)
 		{
 			Vec2 deltaVelocity = -m_velocity;
-			deltaVelocity.SetLength(0.02f);
+			deltaVelocity.SetLength(0.1f * deltaTime);
 			m_velocity += deltaVelocity;
 		}
 		BounceOffWall();

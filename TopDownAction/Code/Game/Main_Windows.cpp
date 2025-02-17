@@ -1,0 +1,22 @@
+#define WIN32_LEAN_AND_MEAN		
+#include <windows.h>			
+#include "Game/App.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+
+extern App* g_theApp;
+
+int WINAPI WinMain( HINSTANCE applicationInstanceHandle, HINSTANCE, LPSTR commandLineString, int )
+{
+	UNUSED( commandLineString );
+	UNUSED(applicationInstanceHandle);
+
+	g_theApp = new App();
+	g_theApp->Startup();
+	g_theApp->RunMainLoop();
+	g_theApp->Shutdown();
+	delete g_theApp;
+	g_theApp = nullptr;
+	return 0;
+}
+
+

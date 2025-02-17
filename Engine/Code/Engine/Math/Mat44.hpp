@@ -26,6 +26,8 @@ public:
 	static Mat44 const MakeZRotationDegrees(float rotationDegreesAboutZ);
 	static Mat44 const MakeYRotationDegrees(float rotationDegreesAboutY);
 	static Mat44 const MakeXRotationDegrees(float rotationDegreesAboutX);
+	static Mat44 const MakeOrthoProjection(float left, float right, float bottom, float top,float zNear,float zFar);
+	static Mat44 const MakePerspectiveProjection(float fovYDegrees, float aspect, float zNear, float zFar);
 
 	Vec2 const TransformVectorQuantity2D(Vec2 const& vectorQuantityXY) const;
 	Vec3 const TransformVectorQuantity3D(Vec3 const& vectorQuantityXYZ) const;
@@ -50,6 +52,7 @@ public:
 	Vec4 const		GetJBasis4D() const;
 	Vec4 const		GetKBasis4D() const;
 	Vec4 const		GetTranslation4D() const;
+	Mat44 const     GetOrthonormalInverse() const;
 
 	void SetTranslation2D(Vec2 const& translationXY);
 	void SetTranslation3D(Vec3 const& translationXYZ);
@@ -58,6 +61,8 @@ public:
 	void SetIJK3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D);
 	void SetIJKT3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D,Vec3 const& translationXYZ);
 	void SetIJKT4D(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kBasis4D, Vec4 const& translation4D);
+	void Transpose();
+	void Orthonormalize_XFwd_YLeft_ZUp();
 
 	void Append(Mat44 const& appendThis);
 	void AppendZRotation(float degreesRotationAboutZ);

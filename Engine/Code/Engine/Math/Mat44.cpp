@@ -171,6 +171,36 @@ Mat44 const Mat44::MakeXRotationDegrees(float rotationDegreesAboutX)
 	return mat;
 }
 
+Mat44 const Mat44::MakeOrthoProjection(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+	Mat44 mat = Mat44();
+	mat.m_values[Ix] = 2.f / (right - left);
+	mat.m_values[Jy] = 2.f / (top - bottom);
+	mat.m_values[Kz] = 1.f / (zFar - zNear);
+
+	mat.m_values[Tx] = -(right + left) / (right - left);
+	mat.m_values[Ty] = -(top + bottom) / (top - bottom);
+	mat.m_values[Tz] = -zNear / (zFar - zNear);
+
+	return mat;
+}
+
+Mat44 const Mat44::MakePerspectiveProjection(float fovYDegrees, float aspect, float zNear, float zFar)
+{
+	Mat44 mat = Mat44();
+	float Sh = 2.0f * (SinDegrees(fovYDegrees * 0.5f) / CosDegrees(fovYDegrees * 0.5f));
+	float Sw = Sh * aspect;
+
+	mat.m_values[Ix] = 2.0f / Sw;
+	mat.m_values[Jy] = 2.0f / Sh;
+	mat.m_values[Kz] = zFar / (zFar - zNear);
+	mat.m_values[Tz] = -zFar * zNear / (zFar - zNear);
+	mat.m_values[Kw] = 1.0f;
+	mat.m_values[Tw] = 0.0f;
+
+	return mat;
+}
+
 Vec2 const Mat44::TransformVectorQuantity2D(Vec2 const& vectorQuantityXY) const  //w = 0
 {
 	float Px = m_values[Ix] * vectorQuantityXY.x + m_values[Jx] * vectorQuantityXY.y;
@@ -273,6 +303,40 @@ Vec4 const Mat44::GetKBasis4D() const
 Vec4 const Mat44::GetTranslation4D() const
 {
 	return Vec4(m_values[Tx], m_values[Ty], m_values[Tz], m_values[Tw]);
+}
+
+Mat44 const Mat44::GetOrthonormalInverse() const
+{
+	Mat44 inverse;
+	inverse.m_values[Ix] = m_values[Ix];
+	inverse.m_values[Iy] = m_values[Jx];
+	inverse.m_values[Iz] = m_values[Kx];
+
+	inverse.m_values[Jx] = m_values[Iy];
+	inverse.m_values[Jy] = m_values[Jy];
+	inverse.m_values[Jz] = m_values[Ky];
+
+	inverse.m_values[Kx] = m_values[Iz];
+	inverse.m_values[Ky] = m_values[Jz];
+	inverse.m_values[Kz] = m_values[Kz];
+	
+	inverse.m_values[Tx] = -(m_values[Ix] * m_values[Tx] +
+		m_values[Iy] * m_values[Ty] +
+		m_values[Iz] * m_values[Tz]);
+
+	inverse.m_values[Ty] = -(m_values[Jx] * m_values[Tx] +
+		m_values[Jy] * m_values[Ty] +
+		m_values[Jz] * m_values[Tz]);
+
+	inverse.m_values[Tz] = -(m_values[Kx] * m_values[Tx] +
+		m_values[Ky] * m_values[Ty] +
+		m_values[Kz] * m_values[Tz]);
+
+	inverse.m_values[Iw] = 0.f;
+	inverse.m_values[Jw] = 0.f;
+	inverse.m_values[Kw] = 0.f;
+	inverse.m_values[Tw] = 1.0f;
+	return inverse;
 }
 
 void Mat44::SetTranslation2D(Vec2 const& translationXY)
@@ -383,6 +447,55 @@ void Mat44::SetIJKT4D(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kB
 	m_values[Ty] = translation4D.y;
 	m_values[Tz] = translation4D.z;
 	m_values[Tw] = translation4D.w;
+}
+
+void Mat44::Transpose()
+{
+	Mat44 transpose;
+
+	transpose.m_values[Ix] = m_values[Ix];    
+	transpose.m_values[Iy] = m_values[Jx];    
+	transpose.m_values[Iz] = m_values[Kx];    
+	transpose.m_values[Iw] = m_values[Tx];    
+
+	transpose.m_values[Jx] = m_values[Iy];    
+	transpose.m_values[Jy] = m_values[Jy];    
+	transpose.m_values[Jz] = m_values[Ky];    
+	transpose.m_values[Jw] = m_values[Ty];    
+
+	transpose.m_values[Kx] = m_values[Iz];    
+	transpose.m_values[Ky] = m_values[Jz];    
+	transpose.m_values[Kz] = m_values[Kz];    
+	transpose.m_values[Kw] = m_values[Tz];    
+
+	transpose.m_values[Tx] = m_values[Iw];    
+	transpose.m_values[Ty] = m_values[Jw];    
+	transpose.m_values[Tz] = m_values[Kw];    
+	transpose.m_values[Tw] = m_values[Tw];    
+
+	for (int i = 0; i < 15; i++)
+	{
+		m_values[i] = transpose.m_values[i];
+	}
+}
+
+void Mat44::Orthonormalize_XFwd_YLeft_ZUp()
+{
+	Vec3 i= Vec3(m_values[Ix], m_values[Iy], m_values[Iz]);
+	i.Normalized();
+	Vec3 k = Vec3(m_values[Kx], m_values[Ky], m_values[Kz]);
+	Vec3 ki = i * DotProduct3D(i, k);
+	k -= ki;
+	k.Normalized();
+
+	Vec3 j = Vec3(m_values[Jx], m_values[Jy], m_values[Jz]);
+	Vec3 ji= i * DotProduct3D(j, i);
+	Vec3 jk = k * DotProduct3D(j, k);
+	j -= ji; j -= jk;
+	j.Normalized();
+
+	SetIJK3D(i, j, k);
+	
 }
 
 void Mat44::Append(Mat44 const& appendThis)

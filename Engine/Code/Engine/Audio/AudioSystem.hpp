@@ -46,8 +46,8 @@ public:
 	virtual void				ValidateResult( FMOD_RESULT result );
 
 protected:
-	FMOD::System*						m_fmodSystem;
 	std::map< std::string, SoundID >	m_registeredSoundIDs;
 	std::vector< FMOD::Sound* >			m_registeredSounds;
+	FMOD::System* m_fmodSystem;
 };
 

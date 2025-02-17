@@ -1,7 +1,7 @@
 #include <Windows.h> 
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-
+#include "Engine/Core/EventSystem.hpp"
 unsigned char const KEYCODE_F1		= VK_F1;
 unsigned char const KEYCODE_F2		= VK_F2;
 unsigned char const KEYCODE_F3		= VK_F3;
@@ -26,6 +26,17 @@ unsigned char const KEYCODE_RIGHT_MOUSE		= VK_RBUTTON;
 unsigned char const KEYCODE_TILDE			= 0xC0;
 unsigned char const KEYCODE_LEFTBRACKET		= 0xDB;
 unsigned char const KEYCODE_RIGHTBRACKET	= 0xDD;
+unsigned char const KEYCODE_ENTER			= VK_RETURN;
+unsigned char const KEYCODE_BACKSPACE		= VK_BACK; 
+unsigned char const KEYCODE_INSERT			= VK_INSERT;
+unsigned char const KEYCODE_DELETE			= VK_DELETE;
+unsigned char const KEYCODE_HOME			= VK_HOME;
+unsigned char const KEYCODE_END				= VK_END;
+
+
+extern InputSystem* g_theInput;
+
+
 InputSystem::InputSystem(InputSystemConfig inputConfig)
 {
 	UNUSED(inputConfig);
@@ -46,6 +57,8 @@ InputSystem::~InputSystem()
 
 void InputSystem::Startup()
 {
+	g_theEventSystem->SubscribeEventCallbackFuction("KeyPressed", InputSystem::Event_KeyPressed);
+	g_theEventSystem->SubscribeEventCallbackFuction("KeyReleased", InputSystem::Event_KeyReleased);
 }
 
 void InputSystem::Shutdown()
@@ -122,3 +135,26 @@ XboxController& InputSystem::GetControllerAndSet(int controllerID)
 {
 	return m_controllers[controllerID];
 }
+
+bool InputSystem::Event_KeyPressed(EventArgs& args)
+{
+	//if (!g_theInput)
+	//{
+	//	return false;
+	//}
+	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
+	g_theInput->HandleKeyPressed(keyCode);
+	return true;
+}
+
+bool InputSystem::Event_KeyReleased(EventArgs& args)
+{
+	//if (!g_theInput)
+	//{
+	//	return false;
+	//}
+	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
+	g_theInput->HandleKeyReleased(keyCode);
+	return true;
+}
+

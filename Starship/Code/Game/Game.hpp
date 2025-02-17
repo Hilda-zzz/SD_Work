@@ -15,7 +15,7 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Turret.hpp"
 class BkgStar;
-
+class Clock;
 //for att mode
 constexpr float ORBIT_LEN = 500.f;
 constexpr float	SHIP_REVOLUTION_SPEED = 30.f;
@@ -66,8 +66,8 @@ public:
 	void RenderAttractMode() const;
 
 	//-----------------------------------------------------------------
-	void Update(float deltaSeconds);
-	void AdjustForPauseAndTimeDitortion(float& deltaSeconds);
+	void Update();
+	void AdjustForPauseAndTimeDitortion();
 	void UpdateBullet(float deltaTime);
 	void UpdateEnmBullet(float deltaTime);
 	void UpdateExpBullet(float deltaTime);
@@ -132,11 +132,15 @@ public:
 	void ShakeScreen();
 	RandomNumberGenerator* m_rng;
 	//-----------------------------------------------------------------
-	bool m_isPause = false;
-	bool m_isSlow = false;
-	bool m_pauseAfterUpdate = false;
+	//bool m_isPause = false;
+	//bool m_isSlow = false;
+	//bool m_pauseAfterUpdate = false;
+	float m_previousTimeScale = 1.f;
 	//-------------------------------------------------------------------
+	static bool Event_AdjustTimeScale(EventArgs& args);
+	static bool Event_PrintKeyToDevConsole(EventArgs& args);
 
+	Clock* m_gameClock = nullptr;
 	PlayerShip*		m_playerShip = nullptr;			
 	Asteroid*		m_asteroids[MAX_ASTEROIDS] = {};	
 	Bullet*			m_bullets[MAX_BULLETS] = {};

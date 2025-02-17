@@ -12,7 +12,7 @@ int WINAPI WinMain( HINSTANCE applicationInstanceHandle, HINSTANCE, LPSTR comman
 	UNUSED( commandLineString );
 	UNUSED(applicationInstanceHandle);
 
-	Image testImage = Image("Data/Images/Terrain_8x8.png");
+	//Image testImage = Image("Data/Images/Terrain_8x8.png");
 
 	g_theApp = new App();
 	g_theApp->Startup();

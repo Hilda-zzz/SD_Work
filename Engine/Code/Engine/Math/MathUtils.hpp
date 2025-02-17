@@ -3,6 +3,7 @@
 
 struct Vec2;
 struct Vec3;
+struct Vec4;
 struct IntVec2;
 class OBB2;
 class LineSegment2;
@@ -81,7 +82,10 @@ void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const 
 
 //dot and cross
 float DotProduct2D(Vec2 const& a, Vec2 const& b);
+float DotProduct3D(Vec3 const& a, Vec3 const& b);
+float DotProduct4D(Vec4 const& a, Vec4 const& b);
 float CrossProduct2D(Vec2 const& a, Vec2 const& b);
+Vec3 CrossProduct3D(Vec3 const& a, Vec3 const& b);
 
 float GetDistance2DInt(IntVec2 const& positionA, IntVec2 const& positionB);
 

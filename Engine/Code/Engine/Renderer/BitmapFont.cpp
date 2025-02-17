@@ -32,7 +32,7 @@ float BitmapFont::GetTextWidth(float cellHeight, std::string const& text, float 
 	return cellHeight*cellAspectScale*text.length();
 }
 
-void BitmapFont::AddVertsForTextInBox2D(std::vector<Vertex_PCU>& vertexArray, std::string const& text, 
+float BitmapFont::AddVertsForTextInBox2D(std::vector<Vertex_PCU>& vertexArray, std::string const& text, 
 	AABB2 const& box, float cellHeight, Rgba8 const& tint, float cellAspectScale, 
 	Vec2 const& alignment, TextBoxMode mode, int maxGlyphsToDraw)
 {
@@ -95,6 +95,7 @@ void BitmapFont::AddVertsForTextInBox2D(std::vector<Vertex_PCU>& vertexArray, st
 			textCount++;
 		}
 	}
+	return width;
 }
 
 float BitmapFont::GetGlyphAspect(int glyphUnicode) const

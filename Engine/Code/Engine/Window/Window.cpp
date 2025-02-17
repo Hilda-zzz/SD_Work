@@ -5,7 +5,10 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
+
 Window* Window::s_mainWindow = nullptr;
+
+Window* g_theWindow = nullptr;
 
 LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessageCode, WPARAM wParam, LPARAM lParam)
 {
@@ -18,68 +21,78 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 
 	switch (wmMessageCode)
 	{
-		// App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
+
 	case WM_CLOSE:
 	{
-		//#todo: fire event "quit", in app.h a standalone func bool OnQuitEvent(),g_theApp->handle quit(), in app constructor subscribe 
-		//ERROR_AND_DIE("WM_CLOSE(clicking x) not yet support");
 		g_theEventSystem->FireEvent("CloseWindow");
-		//g_theInput->HandleQuitRequested();
-		//return 0; // "Consumes" this message (tells Windows "okay, we handled it")
+		return 0; 
 	}
 
 	// Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
 	case WM_KEYDOWN:
 	{
-		//g_theInput->HandleKeyPressed(asKey);
-		if (input)
-		{
-			unsigned char asKey = (unsigned char)wParam;
-			input->HandleKeyPressed(asKey);
-		}
-		break;
+		EventArgs args;
+		args.SetValue("KeyCode", Stringf("%d", (unsigned char)wParam));
+		g_theEventSystem->FireEvent("KeyPressed", args);
+		return 0;
 	}
 
 	case WM_KEYUP:
 	{
-		//g_theInput->HandleKeyReleased(asKey);
-		if (input)
-		{
-			unsigned char asKey = (unsigned char)wParam;
-			input->HandleKeyReleased(asKey);
-		}
-		break;
+		EventArgs args;
+		args.SetValue("KeyCode", Stringf("%d", (unsigned char)wParam));
+		g_theEventSystem->FireEvent("KeyReleased", args);
+		return 0;
 	}
 	case WM_LBUTTONDOWN:
 	{
-		if (input)
+	/*	if (input)
 		{
 			input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
-		}
+		}*/
+		EventArgs args;
+		args.SetValue("KeyCode", Stringf("%d", KEYCODE_LEFT_MOUSE));
+		g_theEventSystem->FireEvent("KeyPressed", args);
 		return 0;
 	}
 	case WM_LBUTTONUP:
 	{
-		if (input)
+	/*	if (input)
 		{
 			input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
-		}
+		}*/
+		EventArgs args;
+		args.SetValue("KeyCode", Stringf("%d", KEYCODE_LEFT_MOUSE));
+		g_theEventSystem->FireEvent("KeyPressed", args);
 		return 0;
 	}
 	case WM_RBUTTONDOWN:
 	{
-		if (input)
+		/*if (input)
 		{
 			input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
-		}
+		}*/
+		EventArgs args;
+		args.SetValue("KeyCode", Stringf("%d", KEYCODE_RIGHT_MOUSE));
+		g_theEventSystem->FireEvent("KeyPressed", args);
 		return 0;
 	}
 	case WM_RBUTTONUP:
 	{
-		if (input)
+		/*if (input)
 		{
 			input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
-		}
+		}*/
+		EventArgs args;
+		args.SetValue("KeyCode", Stringf("%d", KEYCODE_RIGHT_MOUSE));
+		g_theEventSystem->FireEvent("KeyPressed", args);
+		return 0;
+	}
+	case WM_CHAR:
+	{
+		EventArgs args;
+		args.SetValue("CharInput", Stringf("%d", (char)wParam));
+		g_theEventSystem->FireEvent("CharInput", args);
 		return 0;
 	}
 	}
@@ -106,7 +119,7 @@ void Window::RunMessagePump()
 	}
 }
 
-Window::Window(WindowConfig windowConfig):m_config(windowConfig)
+Window::Window(WindowConfig windowConfig):m_config(windowConfig),m_clientDimension(IntVec2(0,0))
 {
 	s_mainWindow = this;
 }
@@ -118,6 +131,7 @@ Window::~Window()
 void Window::Startup()
 {
 	CreateOSWindow();
+
 }
 
 void Window::BeginFrame()
@@ -155,6 +169,16 @@ Vec2 Window::GetNormalizedMouseUV() const
 	float cursorX = static_cast<float>(cursorCoords.x) / static_cast<float>(clientRect.right);
 	float cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
 	return Vec2(cursorX, 1.f - cursorY);
+}
+
+void* Window::GetHwnd() const
+{
+	return m_windowHandle;
+}
+
+IntVec2 Window::GetClientDimensions() const
+{
+	return m_clientDimension;
 }
 
 void Window::CreateOSWindow()
@@ -211,6 +235,10 @@ void Window::CreateOSWindow()
 	clientRect.right = clientRect.left + (int)clientWidth;
 	clientRect.top = (int)clientMarginY;
 	clientRect.bottom = clientRect.top + (int)clientHeight;
+
+	//Store Client Dimension
+	m_clientDimension.x = (int)clientWidth;
+	m_clientDimension.y = (int)clientHeight;
 
 	// Calculate the outer dimensions of the physical window, including frame et. al.
 	RECT windowRect = clientRect;

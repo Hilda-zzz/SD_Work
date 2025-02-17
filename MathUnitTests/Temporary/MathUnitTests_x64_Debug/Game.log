@@ -1,6 +1,4 @@
 ﻿  Main.cpp
-  UnitTests_Custom.cpp
-  UnitTests_MP1A1.cpp
   UnitTests_MP1A2.cpp
 C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(668,16): warning C4189: 'MAX_DEVIATION_COUNT_LESS_THAN_7': local variable is initialized but not referenced
 C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(669,16): warning C4189: 'MAX_DEVIATION_COUNT_LESS_THAN_300': local variable is initialized but not referenced
@@ -9,6 +7,13 @@ C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(671,16): warning C
   UnitTests_MP1A3.cpp
   UnitTests_MP1A4.cpp
   UnitTests_MP1A7.cpp
+  UnitTests_MP2A1.cpp
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP2A1.cpp(59,19): warning C4244: 'initializing': conversion from 'float' to 'unsigned char', possible loss of data
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP2A1.cpp(60,21): warning C4244: 'initializing': conversion from 'float' to 'unsigned char', possible loss of data
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP2A1.cpp(86,28): warning C4244: 'initializing': conversion from 'float' to 'unsigned char', possible loss of data
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP2A1.cpp(143,28): warning C4244: 'initializing': conversion from 'float' to 'unsigned char', possible loss of data
+C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP2A1.cpp(156,24): warning C4244: 'initializing': conversion from 'float' to 'unsigned char', possible loss of data
+  UnitTests_MP2A2.cpp
   Generating Code...
   Game.vcxproj -> C:\p4\Personal\SD\MathUnitTests\Temporary\MathUnitTests_x64_Debug\MathUnitTests_Debug_x64.exe
   Copying MathUnitTests_Debug_x64.exe to C:\p4\Personal\SD\MathUnitTests\Run...

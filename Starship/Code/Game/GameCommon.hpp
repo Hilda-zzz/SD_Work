@@ -15,6 +15,7 @@ extern Window* g_theWindow;
 extern Renderer* g_theRenderer;
 extern AudioSystem* g_theAudio;
 extern BitmapFont* g_testFont;
+extern Game* g_theGame;
 
 constexpr int NUM_STARTING_ASTEROIDS = 6;
 constexpr int MAX_ASTEROIDS = 500;

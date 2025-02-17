@@ -5,19 +5,25 @@
 #include "Engine/Core/Time.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Window/Window.hpp"
-#include "Game/GameCommon.hpp"
+#include "ThirdParty/TinyXML2/tinyxml2.h"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/Clock.hpp"
 
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
 Camera*			g_theCamera = nullptr;
 InputSystem*	g_theInput = nullptr;
 AudioSystem*	g_theAudio = nullptr;
-Window*			g_theWindow = nullptr;
+Game*			g_theGame = nullptr;
+bool			g_isDebugDraw = false;
+Clock*			g_systemClock = nullptr;
 
 App::~App()
 {
-	delete m_theGame;
-	m_theGame = nullptr;
+	delete g_theGame;
+	g_theGame = nullptr;
 }
 
 App::App()
@@ -27,42 +33,58 @@ App::App()
 
 void App::Startup()
 {
+	EventSystemConfig eventSystemConfig;
+	g_theEventSystem = new EventSystem(eventSystemConfig);
+
 	InputSystemConfig inputConfig;
 	g_theInput = new InputSystem(inputConfig);
-	
+
 	WindowConfig windowConfig;
 	windowConfig.m_inputSystem = g_theInput;
 	windowConfig.m_aspectRatio = 2.f;
-	windowConfig.m_windowTitle = "Starship:Gold";
+	windowConfig.m_windowTitle = "Protogame2D";
 	g_theWindow = new Window(windowConfig);
 
 	RendererConfig rendererConfig;
 	rendererConfig.m_window = g_theWindow;
-    g_theRenderer = new Renderer(rendererConfig);
-   
+	g_theRenderer = new Renderer(rendererConfig);
+
+	g_systemClock = new Clock();
+	DevConsoleConfig devConsoleConfig("Data/Fonts/SquirrelFixedFont", 0.7f, 45.f);
+	g_theDevConsole = new DevConsole(devConsoleConfig);
+
 	AudioSystemConfig audioConfig;
 	g_theAudio = new AudioSystem(audioConfig);
-	
-	g_theInput->Startup();
+
+	g_theEventSystem->Startup();
 	g_theWindow->Startup();
 	g_theRenderer->Startup();
+	g_theDevConsole->Startup();
+	g_theInput->Startup();
 	g_theAudio->Startup();
 
-	m_theGame = new Game();
+	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
+
+	g_theGame = new Game();
 }
 
 void App::Shutdown()
 {
-	delete m_theGame;
-	m_theGame = nullptr;
+	delete g_theGame;
+	g_theGame = nullptr;
 
 	g_theAudio->Shutdown();
+	g_theDevConsole->Shutdown();
 	g_theRenderer->Shutdown();
 	g_theWindow->Shutdown();
 	g_theInput->Shutdown();
+	g_theEventSystem->Shutdown();
 
 	delete g_theAudio;
 	g_theAudio = nullptr;
+
+	delete g_theDevConsole;
+	g_theDevConsole = nullptr;
 
 	delete g_theRenderer;
 	g_theRenderer = nullptr;
@@ -72,17 +94,20 @@ void App::Shutdown()
 
 	delete g_theInput;
 	g_theInput = nullptr;
+
+	delete  g_theEventSystem;
+	g_theEventSystem = nullptr;
 }
 
 void App::RunFrame()
 {
-	float timeNow = static_cast<float>(GetCurrentTimeSeconds());
-	float deltaTime = timeNow - m_timeLastFrameStart;
-	m_timeLastFrameStart = timeNow;
+	//float timeNow = static_cast<float>(GetCurrentTimeSeconds());
+	//float deltaTime = timeNow - m_timeLastFrameStart;
+	//m_timeLastFrameStart = timeNow;
 	BeginFrame();
-	if (deltaTime > 0.1f)
-		deltaTime = 0.1f;
-	Update(deltaTime);
+	//if (deltaTime > 0.1f)
+	//	deltaTime = 0.1f;
+	Update();
 	Render();
 	EndFrame();
 }
@@ -103,37 +128,46 @@ void App::HandleQuitRequested()
 
 void App::BeginFrame()
 {
+	g_theEventSystem->BeginFrame();
 	g_theInput->BeginFrame();
 	g_theWindow->BeginFrame();
 	g_theRenderer->BeginFrame();
+	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
+	Clock::TickSystemClock();
 }
 
-void App::Update(float deltaSeconds)
+void App::Update()
 {
 	if (g_theInput->WasKeyJustPressed(0x77))
 	{
-		delete m_theGame;
-		m_theGame = nullptr;
-		m_theGame = new Game();
+		delete g_theGame;
+		g_theGame = nullptr;
+		g_theGame = new Game();
 	}
-	m_theGame->Update(deltaSeconds);
+	g_theGame->Update();
 }
 
 void App::Render()  const
 {
 	g_theRenderer->ClearScreen(Rgba8(0, 0, 0, 255));
-	m_theGame->Renderer();
+
+	g_theGame->Renderer();
 }
 
 void App::EndFrame()
 {
 	g_theAudio->EndFrame();
+	g_theDevConsole->EndFrame();
 	g_theRenderer->EndFrame();
 	g_theWindow->EndFrame();
 	g_theInput->EndFrame();
+	g_theEventSystem->EndFrame();
 }
 
-
-
-
+bool OnQuitEvent(EventArgs& args)
+{
+	UNUSED(args);
+	g_theApp->HandleQuitRequested();
+	return true;
+}

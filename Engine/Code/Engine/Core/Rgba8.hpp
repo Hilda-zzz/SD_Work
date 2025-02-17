@@ -22,6 +22,7 @@ public:
 	Rgba8();
 	explicit Rgba8(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);
 	void SetFromText(char const* text);
+	void GetAsFloats(float* colorAsFloats) const;
 
 	bool		operator==(Rgba8 const& compare) const;
 };

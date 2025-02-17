@@ -1,58 +1,446 @@
-#pragma comment(lib, "OpenGL32.lib")
 #include "Engine/Renderer/Renderer.hpp"
-#include <windows.h>
-#include <gl/gl.h>	
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
 #include "ThirdParty/stb/stb_image.h"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Renderer/VertexBuffer.hpp"
+#include "Engine/Renderer/Shader.hpp"
+#include "Engine/Core/FileUtils.hpp"
+#include "Engine/Renderer/DefaultShader.hpp"
+#include "Engine/Renderer/ConstantBuffer.hpp"
+#include "Engine/Core/Image.hpp"
+//-------------------------------------------------------------
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <d3d11.h>
+#include <d3dcompiler.h>
+#include <dxgi.h>
 
-//extern HDC g_displayDeviceContext;				// ...becomes void* Window::m_displayContext
+#pragma comment(lib,"d3d11.lib")
+#pragma comment(lib,"dxgi.lib")
+#pragma comment(lib,"d3dcompiler.lib")
+//-------------------------------------------------------------
+#if defined(_DEBUG)
+#define ENGINE_DEBUG_RENDER
+#endif
 
-//extern HGLRC g_openGLRenderingContext ;			// ...becomes void* Renderer::m_apiRenderingContext
+#if defined(ENGINE_DEBUG_RENDER)
+void* m_dxgiDebug = nullptr;
+void* m_dxgiDebugModule = nullptr;
+#endif
+
+#if defined(ENGINE_DEBUG_RENDER)
+#include <dxgidebug.h>
+#pragma  comment(lib,"dxguid.lib")
+#pragma comment(lib,"dxguid.lib")
+#endif
+//-------------------------------------------------------------
+#define DX_SAFE_RELEASE(dxObject)			\
+{											\
+	if ((dxObject) != nullptr)				\
+	{										\
+		(dxObject)->Release();				\
+		(dxObject)=nullptr;					\
+	}										\
+}
+//-------------------------------------------------------------
+#if defined(OPAQUE)
+#undef OPAQUE
+#endif
+//-------------------------------------------------------------
+struct CameraConstants
+{
+	float OrthoMinX;
+	float OrthoMinY;
+	float OrthoMinZ;
+	float OrthoMaxX;
+	float OrthoMaxY;
+	float OrthoMaxZ;
+	float pad0;
+	float pad1;
+};
+static const int k_cameraConstantsSlot = 2;
+//-------------------------------------------------------------
+BitmapFont* g_testFont = nullptr;
 
 Renderer::Renderer(RendererConfig rendererConfig):m_config(rendererConfig)
 {
-
+	
 }
 
 Renderer::~Renderer()
 {
-	for (Texture* texture :m_loadedTextures)
+	
+}
+
+void Renderer::Startup()
+{
+	//create debug module
+#if defined(ENGINE_DEBUG_RENDER)
+	m_dxgiDebugModule = (void*)::LoadLibraryA("dxgidebug.dll");
+	if (m_dxgiDebugModule == nullptr)
 	{
-		delete texture;
+		ERROR_AND_DIE("could not lead load dxgidebug.dll");
+	}
+
+	typedef HRESULT(WINAPI* GetDebugModuleCB)(REFIID, void**);
+	((GetDebugModuleCB)::GetProcAddress((HMODULE)m_dxgiDebugModule, "DXGIGetDebugInterface"))
+		(__uuidof(IDXGIDebug), &m_dxgiDebug);
+
+	if (m_dxgiDebug == nullptr)
+	{
+		ERROR_AND_DIE("Could not load debug module")
+	}
+#endif
+
+	unsigned int deviceFlags = 0;
+#if defined(ENGINE_DEBUG_RENDER)
+	deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+	m_desiredBlendMode = BlendMode::ALPHA;
+	m_desiredSamplerMode = SamplerMode::POINT_CLAMP;
+
+	//create device and swap chain
+	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+	swapChainDesc.BufferDesc.Width = g_theWindow->GetClientDimensions().x;
+	swapChainDesc.BufferDesc.Height = g_theWindow->GetClientDimensions().y;
+	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapChainDesc.SampleDesc.Count = 1;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.BufferCount = 2;
+	swapChainDesc.OutputWindow = (HWND)g_theWindow->GetHwnd();
+	swapChainDesc.Windowed = true;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	//---------------------------------------------------------
+	//Call D3D11CreateDeviceAndSwapChain.
+	HRESULT hr;
+	hr = D3D11CreateDeviceAndSwapChain(
+		nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, deviceFlags, nullptr, 0, D3D11_SDK_VERSION, &swapChainDesc,
+		&m_swapChain, &m_device, nullptr, &m_deviceContext);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Couldn't create D3D 11 device and swap chain.");
+	}
+	//---------------------------------------------------------
+	//save back buffer view
+	//get back buffer texture
+	ID3D11Texture2D* backBuffer;
+	hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could not get swap chain buffer.");
+	}
+
+	hr = m_device->CreateRenderTargetView(backBuffer, NULL, &m_renderTargetView);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could create render target view for swap chain buffer.");
+	}
+
+	backBuffer->Release();
+
+	//--------------------------------------------------------------------------------
+	//m_currentShader =CreateShader("Default", g_shaderSource);
+	m_defaultShader = CreateShaderFromSource("Default", g_shaderSource);
+	BindShader(m_defaultShader);
+	//--------------------------------------------------------------------------------
+	m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
+
+	//---------------------------------------------------------
+	//Set rasterizer state
+	D3D11_RASTERIZER_DESC rasterizerDesc = {};
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_NONE;
+	rasterizerDesc.FrontCounterClockwise = false;
+	rasterizerDesc.DepthBias = 0;
+	rasterizerDesc.DepthBiasClamp = 0;
+	rasterizerDesc.SlopeScaledDepthBias = 0.f;
+	rasterizerDesc.DepthClipEnable = true;
+	rasterizerDesc.ScissorEnable = false;
+	rasterizerDesc.MultisampleEnable = false;
+	rasterizerDesc.AntialiasedLineEnable = true;
+
+	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerState);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could not create rasterizer state.");
+	}
+
+	m_deviceContext->RSSetState(m_rasterizerState);
+	//---------------------------------------------------------
+
+	m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
+
+	//---------------------------------------------------------
+	// OPAQUE
+	D3D11_BLEND_DESC blendDesc = {};
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = blendDesc.RenderTarget[0].SrcBlend;
+	blendDesc.RenderTarget[0].DestBlendAlpha = blendDesc.RenderTarget[0].DestBlend;
+	blendDesc.RenderTarget[0].BlendOpAlpha = blendDesc.RenderTarget[0].BlendOp;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[(int)(BlendMode::OPAQUE)]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateBlendState for BlendMode::OPAQUE failed.");
+	}
+
+	// ALPHA
+	blendDesc = {};
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[(int)BlendMode::ALPHA]);
+	if (FAILED(hr)) { ERROR_AND_DIE("ALPHA blend state creation failed"); }
+
+	// ADDITIVE
+	blendDesc = {};
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[(int)BlendMode::ADDITIVE]);
+	if (FAILED(hr)) { ERROR_AND_DIE("ADDITIVE blend state creation failed"); }
+	//---------------------------------------------------------
+	Image defaultImage = Image(IntVec2(2, 2), Rgba8::WHITE);
+	m_defaultTexture = CreateTextureFromImage(defaultImage);
+	BindTexture(nullptr);
+	//---------------------------------------------------------
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[(int)SamplerMode::POINT_CLAMP]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateSamplerState for SamplerMode::Point_Clamp failed.");
+	}
+
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[(int)SamplerMode::BILINEAR_WRAP]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateSamplerState for SamplerMode::BILINEAR_WRAP failed.");
+	}
+
+	m_samplerState = m_samplerStates[(int)m_desiredSamplerMode];
+	m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+
+	g_testFont =CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+}
+
+void Renderer::BeginFrame()
+{
+	//Set render target
+	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
+}
+
+void Renderer::EndFrame()
+{
+	if (m_config.m_window)
+	{
+		//present
+		HRESULT hr;
+		hr = m_swapChain->Present(0, 0);
+		if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
+		{
+			ERROR_AND_DIE("Device has been lost, spplication will now terminate.");
+		}
 	}
 }
 
-void Renderer::CreateRenderingContext()
+void Renderer::Shutdown()
 {
-	// Creates an OpenGL rendering context (RC) and binds it to the current window's device context (DC)
-	PIXELFORMATDESCRIPTOR pixelFormatDescriptor;
-	memset(&pixelFormatDescriptor, 0, sizeof(pixelFormatDescriptor));
-	pixelFormatDescriptor.nSize = sizeof(pixelFormatDescriptor);
-	pixelFormatDescriptor.nVersion = 1;
-	pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
-	pixelFormatDescriptor.cColorBits = 24;
-	pixelFormatDescriptor.cDepthBits = 24;
-	pixelFormatDescriptor.cAccumBits = 0;
-	pixelFormatDescriptor.cStencilBits = 8;
+	DX_SAFE_RELEASE(m_rasterizerState);
+	DX_SAFE_RELEASE(m_renderTargetView);
+	DX_SAFE_RELEASE(m_swapChain);
+	DX_SAFE_RELEASE(m_deviceContext);
+	DX_SAFE_RELEASE(m_device);
 
-	// These two OpenGL-like functions (wglCreateContext and wglMakeCurrent) will remain here for now.
-	HDC displayContext = static_cast<HDC>(m_config.m_window->GetDisplayContext());
-	int pixelFormatCode = ChoosePixelFormat(displayContext, &pixelFormatDescriptor);
-	SetPixelFormat(displayContext, pixelFormatCode, &pixelFormatDescriptor);
-	HGLRC g_openGLRenderingContext = wglCreateContext(displayContext);
-	wglMakeCurrent(displayContext, g_openGLRenderingContext);
+	//---------------------------------------------------------
+	for (Shader* shader : m_loadedShaders)
+	{
+		delete shader;
+	}
 
-	// #SD1ToDo: move all OpenGL functions (including those below) to Renderer.cpp (only!)
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	delete m_immediateVBO;
+	m_immediateVBO = nullptr;
+
+	delete m_cameraCBO;
+	m_cameraCBO = nullptr;
+
+	for (int i = 0; i < (int)BlendMode::COUNT; i++)
+	{
+		DX_SAFE_RELEASE(m_blendStates[i]);
+	}
+	//DX_SAFE_RELEASE(m_blendState);
+
+	for (int i = 0; i < (int)SamplerMode::COUNT; i++)
+	{
+		DX_SAFE_RELEASE(m_samplerStates[i]);
+	}
+
+	for (BitmapFont* bitFont : m_loadedFonts)
+	{
+		delete bitFont;
+		bitFont = nullptr;
+	}
+	for (Texture* texture : m_loadedTextures)
+	{
+		delete texture;
+	}
+
+#if defined(ENGINE_DEBUG_RENDER)
+	((IDXGIDebug*)m_dxgiDebug)->ReportLiveObjects(
+		DXGI_DEBUG_ALL,
+		(DXGI_DEBUG_RLO_FLAGS)(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL)
+	);
+
+	((IDXGIDebug*)m_dxgiDebug)->Release();
+	m_dxgiDebug = nullptr;
+
+	::FreeLibrary((HMODULE)m_dxgiDebugModule);
+	m_dxgiDebugModule = nullptr;
+#endif
+
+}
+//-------------------------------------------------------------
+
+void Renderer::ClearScreen(const Rgba8& clearColor)
+{
+	float colorAsFloats[4];
+	clearColor.GetAsFloats(colorAsFloats);
+	m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
 }
 
-Texture* Renderer::GetTextureForFileName(char const* imageFilePath)
+void Renderer::BeginCamera(const Camera& camera)
+{
+	//Set viewport
+	D3D11_VIEWPORT viewport = {};
+	viewport.TopLeftX = 0.f;
+	viewport.TopLeftY = 0.f;
+	viewport.Width = (float)g_theWindow->GetClientDimensions().x;
+	viewport.Height = (float)g_theWindow->GetClientDimensions().y;
+	viewport.MinDepth = 0.f;
+	viewport.MaxDepth = 1.f;
+
+	m_deviceContext->RSSetViewports(1, &viewport);
+
+	CameraConstants camConstants;
+	camConstants.OrthoMinX = camera.GetOrthoBottomLeft().x;
+	camConstants.OrthoMinY = camera.GetOrthoBottomLeft().y;
+	camConstants.OrthoMinZ = 0.f;
+	camConstants.OrthoMaxX = camera.GetOrthoTopRight().x;
+	camConstants.OrthoMaxY = camera.GetOrthoTopRight().y;
+	camConstants.OrthoMaxZ = 1.f;
+	CopyCPUToGPU(&camConstants, sizeof(CameraConstants), m_cameraCBO);
+	BindConstantBuffer(k_cameraConstantsSlot, m_cameraCBO);
+}
+
+void Renderer::EndCamera(const Camera& camera)
+{
+	UNUSED(camera);
+}
+
+void Renderer::DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs)
+{
+	CopyCPUToGPU(vertexs, numVertexs, m_immediateVBO);
+	DrawVertexBuffer(m_immediateVBO, numVertexs);
+}
+
+void Renderer::DrawVertexArray(const std::vector<Vertex_PCU>& vertexs)
+{
+	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), m_immediateVBO);
+	DrawVertexBuffer(m_immediateVBO, (int)vertexs.size());
+}
+//-------------------------------------------------------------
+
+Image* Renderer::CreateImageFromFile(char const* imagePath)
+{
+	Image* newImage = new Image(imagePath);
+	return newImage;
+}
+
+Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
+{
+	// See if we already have this texture previously loaded
+	Texture* existingTexture = GetTextureFromFileName(imageFilePath); // You need to write this
+	if (existingTexture)
+	{
+		return existingTexture;
+	}
+
+	Image curTexImg = Image(imageFilePath);
+	// Never seen this texture before!  Let's load it.
+	//Texture* newTexture = CreateTextureFromFile(imageFilePath);
+	Texture* newTexture = CreateTextureFromImage(imageFilePath);
+	return newTexture;
+}
+
+Texture* Renderer::CreateTextureFromImage(const Image& image)
+{
+	// Check if the load was successful
+	GUARANTEE_OR_DIE(image.GetRawData(), Stringf("CreateTextureFromImage failed for \"%s\" - texelData was null!", image.GetImageFilePath().c_str()));
+	//GUARANTEE_OR_DIE(bytesPerTexel >= 3 && bytesPerTexel <= 4, Stringf("CreateTextureFromData failed for \"%s\" - unsupported BPP=%i (must be 3 or 4)", name, bytesPerTexel));
+	GUARANTEE_OR_DIE(image.GetDimensions().x > 0 && image.GetDimensions().y > 0, Stringf("CreateTextureFromData failed for \"%s\" - illegal texture dimensions (%i x %i)", image.GetImageFilePath().c_str(), image.GetDimensions().x, image.GetDimensions().y));
+
+	Texture* newTexture = new Texture();
+	newTexture->m_name = image.GetImageFilePath();
+	newTexture->m_dimensions = image.GetDimensions();
+
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = image.GetDimensions().x;
+	textureDesc.Height = image.GetDimensions().y;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+	D3D11_SUBRESOURCE_DATA textureData;
+	textureData.pSysMem = image.GetRawData();
+	textureData.SysMemPitch = 4 * image.GetDimensions().x;
+
+	HRESULT hr;
+	hr = m_device->CreateTexture2D(&textureDesc, &textureData, &newTexture->m_texture);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE(Stringf("CreateTextureFromImage failed for image file \"%s\".", image.GetImageFilePath().c_str()));
+	}
+
+	hr = m_device->CreateShaderResourceView(newTexture->m_texture, NULL, &newTexture->m_shaderResourceView);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()));
+	}
+
+	m_loadedTextures.push_back(newTexture);
+	return newTexture;
+}
+
+Texture* Renderer::GetTextureFromFileName(char const* imageFilePath)
 {
 	for (int i = 0; i < static_cast<int>(m_loadedTextures.size()); i++)
 	{
@@ -64,228 +452,16 @@ Texture* Renderer::GetTextureForFileName(char const* imageFilePath)
 	return nullptr;
 }
 
-BitmapFont* Renderer::GetBitmapFontFromFileName(char const* imageFilePath)
-{
-	for (int i = 0; i < static_cast<int>(m_loadedFonts.size()); i++)
-	{
-		if (m_loadedFonts[i]->GetTexture().m_name == imageFilePath)
-		{
-			return m_loadedFonts[i];
-		}
-	}
-	return nullptr;
-}
-
-void Renderer::SetBlendMode(BlendMode blendMode)
-{
-	if (blendMode == BlendMode::ALPHA) // enum class BlendMode, defined near top of Renderer.hpp
-	{
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-	else if (blendMode == BlendMode::ADDITIVE)
-	{
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	}
-	else
-	{
-		ERROR_AND_DIE(Stringf("Unknown / unsupported blend mode #%i", blendMode));
-	}
-}
-
-
-void Renderer::Startup()
-{
-	CreateRenderingContext();
-}
-
-void Renderer::BeginFrame()
-{
-
-}
-
-void Renderer::EndFrame()
-{
-	if (m_config.m_window)
-	{
-		HDC displayContext = static_cast<HDC>(m_config.m_window->GetDisplayContext());
-		SwapBuffers(displayContext);
-	}
-}	
-
-void Renderer::Shutdown()
-{
-
-}
-
-//void Renderer::BeginView()
-//{
-//	// Establish a 2D (orthographic) drawing coordinate system: (0,0) bottom-left to (10,10) top-right
-//	// #SD1ToDo: This will be replaced by a call to g_renderer->BeginView( m_worldView ); or similar
-//	glLoadIdentity();
-//	//glOrtho(0.f, 10.f, 0.f, 10.f, 0.f, 1.f); // arguments are: xLeft, xRight, yBottom, yTop, zNear, zFar
-//	glOrtho(0.f, 200.f, 0.f, 100.f, 0.f, 1.f);
-//
-//	//Replace by camera??
-//}
-
-void Renderer::ClearScreen(const Rgba8& clearColor)
-{
-	glClearColor(clearColor.r/255.f, clearColor.g/255.f, clearColor.b/255.f, clearColor.a/255.f);
-	glClear(GL_COLOR_BUFFER_BIT); // ALWAYS clear the screen at the top of each frame's Render()!
-}
-
-void Renderer::BeginCamera(const Camera& camera)
-{
-	glLoadIdentity();
-	glOrtho(camera.GetOrthoBottomLeft().x, camera.GetOrthoTopRight().x,
-		camera.GetOrthoBottomLeft().y,camera.GetOrthoTopRight().y, 0.f, 1.f);
-}
-
-void Renderer::EndCamera(const Camera& camera)
-{
-	UNUSED(camera);
-}
-
-
-void Renderer::DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs)
-{
-	glBegin(GL_TRIANGLES);
-	{
-		for (int i = 0; i < numVertexs; i++)
-		{
-			Rgba8 const& color = vertexs[i].m_color;
-			Vec3 const& pos = vertexs[i].m_position;
-			Vec2 const& uvCoord = vertexs[i].m_uvTexCoords;
-			glColor4ub(color.r, color.g, color.b, color.a);
-			glTexCoord2f(uvCoord.x, uvCoord.y);
-			glVertex2f(pos.x,pos.y);
-		}
-	}
-	glEnd();
-}
-
-void Renderer::DrawVertexArray(const std::vector<Vertex_PCU>& vertexs)
-{
-	glBegin(GL_TRIANGLES);
-	{
-		for (int i = 0; i < (int)vertexs.size(); i++)
-		{
-			Rgba8 const& color = vertexs[i].m_color;
-			Vec3 const& pos = vertexs[i].m_position;
-			Vec2 const& uv = vertexs[i].m_uvTexCoords;
-
-			glColor4ub(color.r, color.g, color.b, color.a);
-			glTexCoord2f(uv.x, uv.y);
-			glVertex2f(pos.x, pos.y);
-		}
-	}
-	glEnd();
-}
-
-Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData)
-{
-	// Check if the load was successful
-	GUARANTEE_OR_DIE(texelData, Stringf("CreateTextureFromData failed for \"%s\" - texelData was null!", name));
-	GUARANTEE_OR_DIE(bytesPerTexel >= 3 && bytesPerTexel <= 4, Stringf("CreateTextureFromData failed for \"%s\" - unsupported BPP=%i (must be 3 or 4)", name, bytesPerTexel));
-	GUARANTEE_OR_DIE(dimensions.x > 0 && dimensions.y > 0, Stringf("CreateTextureFromData failed for \"%s\" - illegal texture dimensions (%i x %i)", name, dimensions.x, dimensions.y));
-
-	Texture* newTexture = new Texture();
-	newTexture->m_name = name; // NOTE: m_name must be a std::string, otherwise it may point to temporary data!
-	newTexture->m_dimensions = dimensions;
-
-	// Enable OpenGL texturing
-	glEnable(GL_TEXTURE_2D);
-
-	// Tell OpenGL that our pixel data is single-byte aligned
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	// Ask OpenGL for an unused texName (ID number) to use for this texture
-	glGenTextures(1, (GLuint*)&newTexture->m_openglTextureID);
-
-	// Tell OpenGL to bind (set) this as the currently active texture
-	glBindTexture(GL_TEXTURE_2D, newTexture->m_openglTextureID);
-
-	// Set texture clamp vs. wrap (repeat) default settings
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // GL_CLAMP or GL_REPEAT
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // GL_CLAMP or GL_REPEAT
-
-	// Set magnification (texel > pixel) and minification (texel < pixel) filters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // one of: GL_NEAREST, GL_LINEAR
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // one of: GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR
-
-	// Pick the appropriate OpenGL format (RGB or RGBA) for this texel data
-	GLenum bufferFormat = GL_RGBA; // the format our source pixel data is in; any of: GL_RGB, GL_RGBA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, ...
-	if (bytesPerTexel == 3)
-	{
-		bufferFormat = GL_RGB;
-	}
-	GLenum internalFormat = bufferFormat; // the format we want the texture to be on the card; technically allows us to translate into a different texture format as we upload to OpenGL
-
-	// Upload the image texel data (raw pixels bytes) to OpenGL under the currently-bound OpenGL texture ID
-	glTexImage2D(			// Upload this pixel data to our new OpenGL texture
-		GL_TEXTURE_2D,		// Creating this as a 2d texture
-		0,					// Which mipmap level to use as the "root" (0 = the highest-quality, full-res image), if mipmaps are enabled
-		internalFormat,		// Type of texel format we want OpenGL to use for this texture internally on the video card
-		dimensions.x,		// Texel-width of image; for maximum compatibility, use 2^N + 2^B, where N is some integer in the range [3,11], and B is the border thickness [0,1]
-		dimensions.y,		// Texel-height of image; for maximum compatibility, use 2^M + 2^B, where M is some integer in the range [3,11], and B is the border thickness [0,1]
-		0,					// Border size, in texels (must be 0 or 1, recommend 0)
-		bufferFormat,		// Pixel format describing the composition of the pixel data in buffer
-		GL_UNSIGNED_BYTE,	// Pixel color components are unsigned bytes (one byte per color channel/component)
-		texelData);		// Address of the actual pixel data bytes/buffer in system memory
-
-	m_loadedTextures.push_back(newTexture);
-	return newTexture;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 void Renderer::BindTexture(Texture* texture)
 {
 	if (texture)
 	{
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texture->m_openglTextureID);
+		m_deviceContext->PSSetShaderResources(0, 1, &texture->m_shaderResourceView);
 	}
 	else
 	{
-		glDisable(GL_TEXTURE_2D);
+		m_deviceContext->PSSetShaderResources(0, 1, &m_defaultTexture->m_shaderResourceView);
 	}
-}
-
-Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
-{
-	// See if we already have this texture previously loaded
-	Texture* existingTexture = GetTextureForFileName(imageFilePath); // You need to write this
-	if (existingTexture)
-	{
-		return existingTexture;
-	}
-
-	// Never seen this texture before!  Let's load it.
-	Texture* newTexture = CreateTextureFromFile(imageFilePath);
-	return newTexture;
-}
-
-
-//------------------------------------------------------------------------------------------------
-Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
-{
-	IntVec2 dimensions = IntVec2::ZERO;		// This will be filled in for us to indicate image width & height
-	int bytesPerTexel = 0;					// ...and how many color components the image had (e.g. 3=RGB=24bit, 4=RGBA=32bit)
-
-	// Load (and decompress) the image RGB(A) bytes from a file on disk into a memory buffer (array of bytes)
-	stbi_set_flip_vertically_on_load(1); // We prefer uvTexCoords has origin (0,0) at BOTTOM LEFT
-	unsigned char* texelData = stbi_load(imageFilePath, &dimensions.x, &dimensions.y, &bytesPerTexel, 0);
-
-	// Check if the load was successful
-	GUARANTEE_OR_DIE(texelData, Stringf("Failed to load image \"%s\"", imageFilePath));
-
-	Texture* newTexture = CreateTextureFromData(imageFilePath, dimensions, bytesPerTexel, texelData);
-
-	// Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
-	stbi_image_free(texelData);
-
-	return newTexture;
 }
 
 BitmapFont* Renderer::CreateOrGetBitmapFont(char const* imageFilePath)
@@ -307,7 +483,256 @@ BitmapFont* Renderer::CreateBitmapFont(char const* imageFilePath)
 {
 	std::string pathWithExtension = imageFilePath;
 	pathWithExtension += ".png";
-	Texture* texture=CreateOrGetTextureFromFile(pathWithExtension.c_str());
-	BitmapFont* newFont= new BitmapFont(imageFilePath, *texture, IntVec2(16, 16));
+	//Texture* texture=CreateOrGetTextureFromFile(pathWithExtension.c_str());
+
+	//Image img(pathWithExtension.c_str());
+	Texture* texture = CreateOrGetTextureFromFile(pathWithExtension.c_str());
+	BitmapFont* newFont = new BitmapFont(imageFilePath, *texture, IntVec2(16, 16));
 	return newFont;
 }
+
+BitmapFont* Renderer::GetBitmapFontFromFileName(char const* imageFilePath)
+{
+	for (int i = 0; i < static_cast<int>(m_loadedFonts.size()); i++)
+	{
+		if (m_loadedFonts[i]->GetTexture().m_name == imageFilePath)
+		{
+			return m_loadedFonts[i];
+		}
+	}
+	return nullptr;
+}
+//-------------------------------------------------------------
+
+void Renderer::SetBlendMode(BlendMode blendMode)
+{
+	m_desiredBlendMode = blendMode;
+}
+
+void Renderer::SetSamplerMode(SamplerMode samplerMode)
+{
+	m_desiredSamplerMode = samplerMode;
+}
+//-------------------------------------------------------------
+
+Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* shaderSource)
+{
+	ShaderConfig config =ShaderConfig("defaultConfig");
+	m_currentShader = new Shader(config);
+	CompileShaderToByteCode(m_vertexShaderByteCode,shaderName,shaderSource, "VertexMain", "vs_5_0");
+	HRESULT hr;
+	hr = m_device->CreateVertexShader(
+		m_vertexShaderByteCode.data(),
+		m_vertexShaderByteCode.size(),
+		NULL, &m_currentShader->m_vertexShader
+	);
+
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE(Stringf("Could not create vertex shader."));
+	}
+
+	CompileShaderToByteCode(m_pixelShaderByteCode, shaderName, shaderSource, "PixelMain", "ps_5_0");
+
+	hr = m_device->CreatePixelShader(
+		m_pixelShaderByteCode.data(),
+		m_pixelShaderByteCode.size(),
+		NULL, &m_currentShader->m_pixelShader
+	);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE(Stringf("Could not create pixel shader."));
+	}
+
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,
+			0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"COLOR",0,DXGI_FORMAT_R8G8B8A8_UNORM,
+			0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,
+			0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+	};
+	UINT numElements = ARRAYSIZE(inputElementDesc);
+	hr = m_device->CreateInputLayout(
+		inputElementDesc, numElements,
+		m_vertexShaderByteCode.data(),
+		m_vertexShaderByteCode.size(),
+		&m_currentShader->m_inputLayout
+	);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could not reate vertex layout");
+	}
+
+	m_loadedShaders.push_back(m_currentShader);
+	return m_currentShader;
+}
+
+Shader* Renderer::CreateShaderFromFile(char const* shaderName)
+{
+	std::string shaderPath = "Data/Shaders/"+std::string(shaderName)+".hlsl";
+	std::string outShaderString;
+	FileReadToString(outShaderString,shaderPath);
+	return CreateShaderFromSource(shaderName, outShaderString.c_str());
+}
+
+bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name, char const* source, char const* enetryPoint, char const* target)
+{
+	bool result=false;
+
+	DWORD shaderFlags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+#if defined(ENGINE_DEBUG_RENDER)
+	shaderFlags = D3DCOMPILE_DEBUG;
+	shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+	shaderFlags |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
+#endif
+	ID3DBlob* shaderBlob = NULL;
+	ID3DBlob* errorBlob = NULL;
+
+	HRESULT hr;
+	hr = D3DCompile(
+		source, strlen(source),
+		name, nullptr, nullptr,
+		enetryPoint, target, shaderFlags,
+		0, &shaderBlob, &errorBlob);
+	if (SUCCEEDED(hr))
+	{
+		outByteCode.resize(shaderBlob->GetBufferSize());
+		memcpy(
+			outByteCode.data(),
+			shaderBlob->GetBufferPointer(),
+			shaderBlob->GetBufferSize()
+		);
+		result = true;
+	}
+	else
+	{
+		if (errorBlob != NULL)
+		{
+			DebuggerPrintf((char*)errorBlob->GetBufferPointer());
+		}
+		ERROR_AND_DIE(Stringf("Could not compile vertex shader."));
+		//result = false;
+	}
+
+	shaderBlob->Release();
+	if (errorBlob != NULL)
+	{
+		errorBlob->Release();
+	}
+
+	return result;
+}
+
+void Renderer::BindShader(Shader* shader)
+{
+	if (shader == nullptr)
+		shader = m_defaultShader;
+	m_deviceContext->IASetInputLayout(shader->m_inputLayout);
+	m_deviceContext->VSSetShader(shader->m_vertexShader, nullptr, 0);
+	m_deviceContext->PSSetShader(shader->m_pixelShader, nullptr, 0);
+}
+//-------------------------------------------------------------
+
+VertexBuffer* Renderer::CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride)
+{
+	VertexBuffer* curVertexBuffer =new VertexBuffer(m_device, verticeCount, stride);
+	return curVertexBuffer;
+}
+
+void Renderer::CopyCPUToGPU(const void* data, unsigned int verticeCount, VertexBuffer* vbo)
+{
+ 	//if (vbo->GetVerticeCount() < verticeCount)
+ 	//{
+		if (verticeCount == 0) {
+			return;
+		}
+		vbo->Resize(verticeCount);
+ 	//}
+
+	//Copy vertices
+	D3D11_MAPPED_SUBRESOURCE resource;
+	m_deviceContext->Map(vbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	memcpy(resource.pData, data, verticeCount * vbo->m_stride);
+	m_deviceContext->Unmap(vbo->m_buffer, 0);
+}
+
+void Renderer::BindVertextBuffer(VertexBuffer* vbo)
+{
+	UINT stride = vbo->GetStride();
+	UINT startOffset = 0;
+	m_deviceContext->IASetVertexBuffers(0, 1, &vbo->m_buffer, &stride, &startOffset);
+	m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void Renderer::DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount)
+{
+	SetStateIfChanged();
+
+	BindVertextBuffer(vbo);
+	//Draw
+	m_deviceContext->Draw(vertexCount, 0);
+}
+
+ConstantBuffer* Renderer::CreateConstantBuffer(const unsigned int size)
+{
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc.ByteWidth = (UINT)size;
+	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	ConstantBuffer* cbo = new ConstantBuffer(size);
+
+	HRESULT hr;
+	hr=m_device->CreateBuffer(&bufferDesc,nullptr,&cbo->m_buffer);
+
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could not create constant vertex buffer");
+	}
+	return cbo;
+}
+
+void Renderer::CopyCPUToGPU(const void* data, unsigned int size, ConstantBuffer* cbo)
+{
+	//Copy vertices
+	D3D11_MAPPED_SUBRESOURCE resource;
+	m_deviceContext->Map(cbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	memcpy(resource.pData, data, size);
+	m_deviceContext->Unmap(cbo->m_buffer, 0);
+}
+
+void Renderer::BindConstantBuffer(int slot, ConstantBuffer* cbo)
+{
+	m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
+	m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);
+}
+//-------------------------------------------------------------
+void Renderer::SetStateIfChanged()
+{
+	ID3D11BlendState* desiredState = m_blendStates[(int)m_desiredBlendMode];
+	if (desiredState != m_blendState)
+	{
+		m_blendState = desiredState;
+		float blendFactor[4] = { 0.0f,0.0f,0.0f,0.0f };
+		UINT sampleMask = 0xffffffff;
+		m_deviceContext->OMSetBlendState(m_blendState, blendFactor, sampleMask);
+	}
+
+	if (m_samplerStates[(int)m_desiredSamplerMode] != m_samplerState)
+	{
+		m_samplerState = m_samplerStates[(int)m_desiredSamplerMode];
+		m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+

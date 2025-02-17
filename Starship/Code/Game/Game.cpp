@@ -10,17 +10,20 @@
 #include "Engine/Core/Time.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Renderer/Camera.hpp"
+#include "Engine/Core/Clock.hpp"
 //extern App*			g_theApp;
 //extern InputSystem* g_theInput;
 //extern Renderer*	g_theRenderer;
 //extern AudioSystem* g_theAudio;
-BitmapFont* g_testFont = nullptr;
+//BitmapFont* g_testFont = nullptr;
 
 SoundPlaybackID bgm;
 
 Game::Game()
 {
-	g_testFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+	m_gameClock = new Clock();
 
 	clickSound = g_theAudio->CreateOrGetSound("Data/Audio/Click.mp3");
 	playerNormalShootSound= g_theAudio->CreateOrGetSound("Data/Audio/Laser_Shoot49.mp3");
@@ -74,6 +77,32 @@ Game::Game()
 	m_screenCamera->SetOrthoView(Vec2{ 0.f,0.f }, Vec2{ 1600.f,800.f });
 
 	bgm= g_theAudio->StartSound(attrackmodeBGM,true);
+
+	g_theEventSystem->SubscribeEventCallbackFuction("TimeScale", Game::Event_AdjustTimeScale,true);
+// 	g_theEventSystem->SubscribeEventCallbackFuction("PrintKeyToDevConsole", Game::Event_PrintKeyToDevConsole, true);
+// 	g_theEventSystem->FireEvent("PrintKeyToDevConsole");
+
+	std::string logString = "\
+		N / space	enter the play mode / respawn player ship\n\
+		esc		quit play mode / quit the game\n\
+		S / F 		rotate\n\
+		E 			thrust\n\
+		space 		shoot\n\
+		C		change weapon\n\
+		J		light saber\n\
+		I		add an asteroid\n\
+		F1 		developer mode\n\
+		F8 		restart the game\n\
+		P		pause the game\n\
+		T		slow the game\n\
+		O		update the game by each frame\n\
+		K		kill all enemies of this wave\n\
+		1		enter wave 1\n\
+		2		enter wave 2\n\
+		3		enter wave 3\n\
+		4		enter wave 4\n\
+		5		enter wave 5";
+	g_theDevConsole->AddLine(DevConsole::EVENT_FEEDBACK, logString);
 }
 
 Game::~Game()
@@ -152,6 +181,9 @@ Game::~Game()
 	m_worldCamera = nullptr;
 	delete m_screenCamera;
 	m_screenCamera = nullptr;
+
+	delete m_gameClock;
+	m_gameClock = nullptr;
 }
 
 void Game::InitGameplay()
@@ -255,9 +287,22 @@ void Game::ResetGameplayBackToAttractMode()
 	m_turret[0] = nullptr;
 }
 
-void Game::Update(float deltaSeconds)
+void Game::Update()
 {
-	AdjustForPauseAndTimeDitortion(deltaSeconds);
+	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
+	if (g_theInput->WasKeyJustPressed(KEYCODE_TILDE))
+	{
+		if (g_theDevConsole->GetMode() == HIDDEN)
+		{
+			g_theDevConsole->SetMode(OPEN_FULL);
+		}
+		else
+		{
+			g_theDevConsole->SetMode(HIDDEN);
+		}
+	}
+
+	AdjustForPauseAndTimeDitortion();
 	if (!m_isArractMode)
 	{
 		if (m_isBulletTime)
@@ -273,35 +318,31 @@ void Game::Update(float deltaSeconds)
 
 }
 
-void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
+void Game::AdjustForPauseAndTimeDitortion()
 {
 	if (g_theInput->WasKeyJustPressed('P'))
 	{
-		m_isPause = !m_isPause;
+		m_gameClock->TogglePause();
 	}
 
-	m_isSlow = g_theInput->IsKeyDown('T');
+	if (g_theInput->WasKeyJustPressed('T'))
+	{
+		m_previousTimeScale = (float)m_gameClock->GetTimeScale();
+	}
+
+	if (g_theInput->IsKeyDown('T'))
+	{
+		m_gameClock->SetTimeScale(0.1f);
+	}
+	
+	if(g_theInput->WasKeyJustReleased('T'))
+	{
+		m_gameClock->SetTimeScale(m_previousTimeScale);
+	}
 
 	if (g_theInput->WasKeyJustPressed('O'))
 	{
-		m_isPause = false;
-		m_pauseAfterUpdate = true;
-	}
-
-	//--------------------------------------------------------------------------------------
-
-	if (m_isPause)
-	{
-		deltaSeconds = 0.f;
-	}
-	if (m_isSlow)
-	{
-		deltaSeconds *= 0.10f;
-	}
-	if (m_pauseAfterUpdate)
-	{
-		m_isPause = true;
-		m_pauseAfterUpdate = false;
+		m_gameClock->StepSingleFrame();
 	}
 }
 
@@ -330,24 +371,35 @@ void Game::Renderer() const
 		}
 		g_theRenderer->BeginCamera(*m_screenCamera);
 		RenderUI();
+		g_theDevConsole->Render(AABB2(m_screenCamera->GetOrthoBottomLeft(), m_screenCamera->GetOrthoTopRight()), g_theRenderer);
+
 	}
 	else
 	{
 		g_theRenderer->BindTexture(nullptr);
 		g_theRenderer->BeginCamera(*m_screenCamera);
 		RenderAttractMode();
+		g_theDevConsole->Render(AABB2(m_screenCamera->GetOrthoBottomLeft(), m_screenCamera->GetOrthoTopRight()), g_theRenderer);
 	}
 }
 void Game::RenderBkg() const
 {
-	for (int i = 0; i < 1000; i++)
+	//double start = GetCurrentTimeSeconds();
+	int i = 0;
+	for (i = 0; i < 1000; i++)
 	{
 		m_bkgStarsL1[i]->Render();
-		m_bkgStarsL2[i]->Render();
-		if (i < 300)
-			m_bkgStarsL4[i]->Render();
 	}
-
+	for (i = 0; i < 1000; i++)
+	{
+		m_bkgStarsL2[i]->Render();
+	}
+	for (i = 0; i < 300; i++)
+	{
+		m_bkgStarsL4[i]->Render();
+	}
+	//double end = GetCurrentTimeSeconds();
+	//DebuggerPrintf(Stringf("%.5f\n", end - start).c_str());
 }
 void Game::RenderBullet()const
 {
@@ -928,7 +980,7 @@ void Game::UpdateAttractMode(float deltaTime)
 
 	if (g_theInput->WasKeyJustPressed(27))
 	{
-		g_theApp->m_isQuitting = true;
+		g_theEventSystem->FireEvent("CloseWindow");
 	}
 }
 void Game::UpdateGameplayMode(float deltaTime)
@@ -2200,6 +2252,40 @@ void Game::ShakeScreen()
 {
 	m_isShakeScreen = true;
 	m_startShakeTime = GetCurrentTimeSeconds();
+}
+
+bool Game::Event_AdjustTimeScale(EventArgs& args)
+{
+	float timeScale = args.GetValue("Scale", 1.f);
+	g_theGame->m_gameClock->SetTimeScale(timeScale);
+	return true;
+}
+
+bool Game::Event_PrintKeyToDevConsole(EventArgs& args)
+{
+	UNUSED(args);
+ 	std::string logString = "\
+		N / space	enter the play mode / respawn player ship\n\
+		esc		quit play mode / quit the game\n\
+		S / F 		rotate\n\
+		E 			thrust\n\
+		space 		shoot\n\
+		C		change weapon\n\
+		J		light saber\n\
+		I		add an asteroid\n\
+		F1 		developer mode\n\
+		F8 		restart the game\n\
+		P		pause the game\n\
+		T		slow the game\n\
+		O		update the game by each frame\n\
+		K		kill all enemies of this wave\n\
+		1		enter wave 1\n\
+		2		enter wave 2\n\
+		3		enter wave 3\n\
+		4		enter wave 4\n\
+		5		enter wave 5";
+	g_theDevConsole->AddLine(DevConsole::EVENT_FEEDBACK, logString); 
+	return true;
 }
 
 

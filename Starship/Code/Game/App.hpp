@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "Engine/Math/Vec2.hpp"
-
+#include "Engine/Core/EventSystem.hpp"
 class Game;
 
 class App
@@ -18,12 +18,12 @@ public:
 	bool m_isQuitting = false;
 	
 private:
-	void Update(float deltaSeconds);
+	void Update();
 	void BeginFrame();
 	void Render() const;
 	void EndFrame();
 
 private:
-	Game* m_theGame;
 	float m_timeLastFrameStart=0;
 };
+bool OnQuitEvent(EventArgs& args);

@@ -1,49 +1,30 @@
-﻿  tinyxml2.cpp
-  AudioSystem.cpp
-  DevConsole.cpp
-  EngineCommon.cpp
-  ErrorWarningAssert.cpp
+﻿  DevConsole.cpp
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(228,81): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(256,81): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(263,83): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(288,83): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(311,43): warning C4100: 'args': unreferenced formal parameter
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(317,42): warning C4100: 'args': unreferenced formal parameter
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(327,42): warning C4100: 'args': unreferenced formal parameter
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(396,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(397,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(399,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(400,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(401,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(402,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(403,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp(404,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
   EventSystem.cpp
-  Image.cpp
   TileHeatMap.cpp
-  NamedStrings.cpp
-  Rgba8.cpp
-  StringUtils.cpp
-  Time.cpp
   VertexUtils.cpp
   Vertex_PCU.cpp
-  XmlUtils.cpp
-  AnalogJoystick.cpp
-  InputSystem.cpp
-  KeyButtonState.cpp
-  XboxController.cpp
-  AABB2.cpp
-  Generating Code...
-  Compiling...
-  Capsule2.cpp
-  FloatRange.cpp
-  IntRange.cpp
-  IntVec2.cpp
-  LineSegment2.cpp
+  AABB3.cpp
+  EulerAngles.cpp
   Mat44.cpp
   MathUtils.cpp
-  OBB2.cpp
-  RandomNumberGenerator.cpp
-  Ray.cpp
-  RaycastUtils.cpp
-  Triangle2.cpp
-  Vec4.cpp
-  Vec2.cpp
   Vec3.cpp
   BitmapFont.cpp
-  Camera.cpp
   Renderer.cpp
-  SpriteAnimDefinition.cpp
-  SpriteDefinition.cpp
-  Generating Code...
-  Compiling...
-  SpriteSheet.cpp
-  Texture.cpp
-  Window.cpp
+  VertexBuffer.cpp
   Generating Code...
   Engine.vcxproj -> C:\p4\Personal\SD\MathUnitTests\Temporary\Engine_x64_Debug\Engine.lib

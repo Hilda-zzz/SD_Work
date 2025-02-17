@@ -36,6 +36,14 @@ void Rgba8::SetFromText(char const* text)
 	}
 }
 
+void Rgba8::GetAsFloats(float* colorAsFloats) const
+{
+	colorAsFloats[0] = NormalizeByte(r);
+	colorAsFloats[1] = NormalizeByte(g);
+	colorAsFloats[2] = NormalizeByte(b);
+	colorAsFloats[3] = NormalizeByte(a);
+}
+
 bool Rgba8::operator==(Rgba8 const& compare) const
 {
 	if (r == compare.r && g == compare.g && b == compare.b && a == compare.a)

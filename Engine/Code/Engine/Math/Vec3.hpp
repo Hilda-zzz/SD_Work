@@ -24,7 +24,7 @@ public:
 	Vec3 const GetRotatedAboutZDegrees(float deltaDegrees) const;
 	Vec3 const GetClamped(float maxLength) const;
 	Vec3 const GetNormalized() const;
-
+	void Normalized();
 	// Operators (const)
 	bool		operator==(Vec3 const& compare) const;		// vec2 == vec2
 	bool		operator!=(Vec3 const& compare) const;		// vec2 != vec2

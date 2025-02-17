@@ -9,13 +9,12 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/DevConsole.hpp"
 
-
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
 Camera*			g_theCamera = nullptr;
 InputSystem*	g_theInput = nullptr;
 AudioSystem*	g_theAudio = nullptr;
-Window*			g_theWindow = nullptr;
+//Window*			g_theWindow = nullptr;
 Game*			g_theGame = nullptr;
 
 BitmapFont* g_testFont = nullptr;
@@ -26,7 +25,7 @@ App::~App()
 	delete g_theGame;
 	g_theGame = nullptr;
 
-	delete g_testFont;
+	//delete g_testFont;
 }
 
 App::App()
@@ -159,7 +158,7 @@ void App::Update(float deltaSeconds)
 
 void App::Render()  const
 {
-	g_theRenderer->ClearScreen(Rgba8(0, 0, 0, 255));
+	g_theRenderer->ClearScreen(Rgba8(1, 1, 1, 255));
 	g_theGame->Renderer();
 }
 

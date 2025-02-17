@@ -3,23 +3,33 @@
   "WorkspaceRootPath": "C:\\p4\\Personal\\SD\\Starship\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\App.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\Renderer.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\DevConsole.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\StringUtils.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\DefaultShader.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\Renderer.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\ConstantBuffer.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\DevConsole.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\PlayerShip.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\PlayerShip.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Game.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -30,12 +40,59 @@
       "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\Game.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\PlayerShip.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\DevConsole.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\PlayerShip.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\App.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\EventSystem.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Timer.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Timer.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Clock.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Clock.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\EventSystem.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Window\\Window.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Window\\Window.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\BkgStar.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\BkgStar.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\ErrorWarningAssert.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\App.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\GameCommon.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\GameCommon.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\StringUtils.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8818D7D8-239E-4F39-95A6-4350727BA273}|..\\Engine\\Code\\Engine\\Engine.vcxproj|C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Canon.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -84,6 +141,12 @@
     {
       "AbsoluteMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Wasp.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{F0FD9508-42F6-4762-B12D-50B97B918F81}|Code\\Game\\Game.vcxproj|solutionrelative:Code\\Game\\Wasp.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\vector||{3B902123-F8A7-4915-9F01-361F908088D0}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\algorithm||{3B902123-F8A7-4915-9F01-361F908088D0}|"
     }
   ],
   "DocumentGroupContainers": [
@@ -93,7 +156,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 7,
           "Children": [
             {
               "$type": "Bookmark",
@@ -101,55 +164,63 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "App.cpp",
-              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.cpp",
-              "RelativeDocumentMoniker": "Code\\Game\\App.cpp",
-              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.cpp [Read Only]",
-              "RelativeToolTip": "Code\\Game\\App.cpp [Read Only]",
-              "ViewState": "AQIAACEAAAAAAAAAAAAAAAAAAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-12-13T04:25:50.997Z",
-              "EditorCaption": " [Read Only]"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "StringUtils.hpp",
-              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\StringUtils.hpp",
-              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\StringUtils.hpp",
-              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\StringUtils.hpp [Read Only]",
-              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\StringUtils.hpp [Read Only]",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAoAAAAZAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-12-13T04:18:28.584Z",
-              "EditorCaption": " [Read Only]"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "NamedStrings.hpp",
-              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp",
-              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp",
-              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp [Read Only]",
-              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp [Read Only]",
+              "Title": "ConstantBuffer.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\ConstantBuffer.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Renderer\\ConstantBuffer.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\ConstantBuffer.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Renderer\\ConstantBuffer.hpp [Read Only]",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-12-13T04:18:12.666Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2025-02-16T05:05:04.355Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "NamedStrings.cpp",
-              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp",
-              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp",
-              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp [Read Only]",
-              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp [Read Only]",
-              "ViewState": "AQIAAHIAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Title": "Renderer.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\Renderer.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Renderer\\Renderer.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\Renderer.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Renderer\\Renderer.hpp [Read Only]",
+              "ViewState": "AQIAAGMAAAAAAAAAAAAAAHIAAAAUAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-16T05:03:31.427Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "VertexBuffer.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.cpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.cpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.cpp [Read Only]",
+              "ViewState": "AQIAACkAAAAAAAAAAAAlwDkAAAASAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-12-13T04:18:11.998Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2025-02-16T04:45:53.678Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "PlayerShip.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.cpp",
+              "RelativeDocumentMoniker": "Code\\Game\\PlayerShip.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.cpp [Read Only]",
+              "RelativeToolTip": "Code\\Game\\PlayerShip.cpp [Read Only]",
+              "ViewState": "AQIAAIAAAAAAAAAAAAAAAIIAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-12-11T04:36:28.656Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Game.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Game.cpp",
+              "RelativeDocumentMoniker": "Code\\Game\\Game.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Game.cpp [Read Only]",
+              "RelativeToolTip": "Code\\Game\\Game.cpp [Read Only]",
+              "ViewState": "AQIAAHwBAAAAAAAAAAAAwIgBAAAVAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-12-11T04:32:15.727Z"
             },
             {
               "$type": "Document",
@@ -159,65 +230,303 @@
               "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\DevConsole.cpp",
               "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\DevConsole.cpp [Read Only]",
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\DevConsole.cpp [Read Only]",
-              "ViewState": "AQIAADMAAAAAAAAAAAD4vz4AAAAMAAAA",
+              "ViewState": "AQIAAIcAAAAAAAAAAAAQwIsBAAACAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-12-13T04:14:09.79Z",
               "EditorCaption": " [Read Only]"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 0,
+              "Title": "Renderer.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\Renderer.cpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Renderer\\Renderer.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\Renderer.cpp",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Renderer\\Renderer.cpp",
+              "ViewState": "AQIAAHYCAAAAAAAAAAAAwIoCAAAEAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-02-16T04:21:15.041Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DefaultShader.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\DefaultShader.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Renderer\\DefaultShader.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\DefaultShader.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Renderer\\DefaultShader.hpp [Read Only]",
+              "ViewState": "AQIAACcAAAAAAAAAAAAAADQAAAAfAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-16T05:06:08.291Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
               "Title": "DevConsole.hpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\DevConsole.hpp",
               "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\DevConsole.hpp",
               "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\DevConsole.hpp [Read Only]",
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\DevConsole.hpp [Read Only]",
-              "ViewState": "AQIAABkAAAAAAAAAAAAkwCsAAAALAAAA",
+              "ViewState": "AQIAAB4AAAAAAAAAAAAvwCkAAAAOAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-12-13T04:13:57.908Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2024-12-13T04:13:57.908Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "PlayerShip.cpp",
-              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.cpp",
-              "RelativeDocumentMoniker": "Code\\Game\\PlayerShip.cpp",
-              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.cpp [Read Only]",
-              "RelativeToolTip": "Code\\Game\\PlayerShip.cpp [Read Only]",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAFMBAAAnAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-12-11T04:36:28.656Z"
+              "DocumentIndex": 5,
+              "Title": "PlayerShip.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.hpp",
+              "RelativeDocumentMoniker": "Code\\Game\\PlayerShip.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.hpp [Read Only]",
+              "RelativeToolTip": "Code\\Game\\PlayerShip.hpp [Read Only]",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAEgAAAAcAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2024-12-10T20:58:23.377Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 10,
               "Title": "Game.hpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Game.hpp",
               "RelativeDocumentMoniker": "Code\\Game\\Game.hpp",
               "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Game.hpp [Read Only]",
               "RelativeToolTip": "Code\\Game\\Game.hpp [Read Only]",
-              "ViewState": "AQIAAFEAAAAAAAAAAAAiwGYAAAAWAAAA",
+              "ViewState": "AQIAACwAAAAAAAAAAAAAwDQAAAAMAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-12-11T04:35:32.312Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2024-12-11T04:35:32.312Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "Game.cpp",
-              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Game.cpp",
-              "RelativeDocumentMoniker": "Code\\Game\\Game.cpp",
-              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Game.cpp [Read Only]",
-              "RelativeToolTip": "Code\\Game\\Game.cpp [Read Only]",
-              "ViewState": "AQIAAKcFAAAAAAAAAAAkwNsFAAAeAAAA",
+              "DocumentIndex": 8,
+              "Title": "VertexBuffer.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Renderer\\VertexBuffer.hpp [Read Only]",
+              "ViewState": "AQIAAAEAAAAAAAAAAAAuwBAAAAAOAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-16T04:54:36.748Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 41,
+              "Title": "algorithm",
+              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\algorithm",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\algorithm",
+              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\algorithm",
+              "RelativeToolTip": "..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\algorithm",
+              "ViewState": "AQIAANANAAAAAAAAAAAvwOANAAAXAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-02-15T21:34:37.254Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "EventSystem.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\EventSystem.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\EventSystem.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\EventSystem.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\EventSystem.hpp [Read Only]",
+              "ViewState": "AQIAABIAAAAAAAAAAAAcwCgAAAAvAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-15T20:55:57.936Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "App.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.cpp",
+              "RelativeDocumentMoniker": "Code\\Game\\App.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.cpp [Read Only]",
+              "RelativeToolTip": "Code\\Game\\App.cpp [Read Only]",
+              "ViewState": "AQIAAGAAAAAAAAAAAAAAAG8AAAAMAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-12-11T04:32:15.727Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2024-12-13T04:25:50.997Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 14,
+              "Title": "Timer.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Timer.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\Timer.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Timer.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\Timer.hpp [Read Only]",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAAWAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-16T02:55:25.889Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "Timer.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Timer.cpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\Timer.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Timer.cpp",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\Timer.cpp",
+              "ViewState": "AQIAABcAAAAAAAAAAAAvwCcAAAAgAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-02-16T02:55:14.459Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "Clock.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Clock.cpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\Clock.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Clock.cpp",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\Clock.cpp",
+              "ViewState": "AQIAAF0AAAAAAAAAAAAvwG0AAAAzAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-02-14T05:09:14.827Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "Clock.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Clock.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\Clock.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\Clock.hpp",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\Clock.hpp",
+              "ViewState": "AQIAAAYAAAAAAAAAAAAnwBkAAAAHAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-14T05:09:20.741Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "Window.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Window\\Window.cpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Window\\Window.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Window\\Window.cpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Window\\Window.cpp [Read Only]",
+              "ViewState": "AQIAABoAAAAAAAAAAAAUwFoAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-02-14T22:56:53.678Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "EventSystem.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\EventSystem.cpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\EventSystem.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\EventSystem.cpp",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\EventSystem.cpp",
+              "ViewState": "AQIAABIAAAAAAAAAAAAcwCEAAAAvAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-02-15T21:37:07.358Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "BkgStar.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\BkgStar.cpp",
+              "RelativeDocumentMoniker": "Code\\Game\\BkgStar.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\BkgStar.cpp [Read Only]",
+              "RelativeToolTip": "Code\\Game\\BkgStar.cpp [Read Only]",
+              "ViewState": "AQIAAC4AAAAAAAAAAAAcwEwAAAAUAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-02-15T23:10:38.824Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "Window.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Window\\Window.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Window\\Window.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Window\\Window.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Window\\Window.hpp [Read Only]",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-15T22:06:47.934Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "ErrorWarningAssert.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\ErrorWarningAssert.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\ErrorWarningAssert.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\ErrorWarningAssert.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\ErrorWarningAssert.hpp [Read Only]",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAAB0AAAATAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-15T22:30:26.946Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "App.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.hpp",
+              "RelativeDocumentMoniker": "Code\\Game\\App.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\App.hpp [Read Only]",
+              "RelativeToolTip": "Code\\Game\\App.hpp [Read Only]",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAwAAAALAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-14T04:42:46.386Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "GameCommon.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\GameCommon.hpp",
+              "RelativeDocumentMoniker": "Code\\Game\\GameCommon.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\GameCommon.hpp",
+              "RelativeToolTip": "Code\\Game\\GameCommon.hpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABEAAAAXAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-14T23:02:01.645Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "NamedStrings.cpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\NamedStrings.cpp [Read Only]",
+              "ViewState": "AQIAACkAAAAAAAAAAAAcwDgAAAAXAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-12-13T04:18:11.998Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 40,
+              "Title": "vector",
+              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\vector",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\vector",
+              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\vector",
+              "RelativeToolTip": "..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\vector",
+              "ViewState": "AQIAAFMDAAAAAAAAAAAUwGIDAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-02-14T21:51:13.813Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "NamedStrings.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\NamedStrings.hpp [Read Only]",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2024-12-13T04:18:12.666Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "StringUtils.hpp",
+              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\StringUtils.hpp",
+              "RelativeDocumentMoniker": "..\\Engine\\Code\\Engine\\Core\\StringUtils.hpp",
+              "ToolTip": "C:\\p4\\Personal\\SD\\Engine\\Code\\Engine\\Core\\StringUtils.hpp [Read Only]",
+              "RelativeToolTip": "..\\Engine\\Code\\Engine\\Core\\StringUtils.hpp [Read Only]",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAoAAAAZAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2024-12-13T04:18:28.584Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
               "Title": "Canon.cpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Canon.cpp",
               "RelativeDocumentMoniker": "Code\\Game\\Canon.cpp",
@@ -229,7 +538,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 30,
               "Title": "Debris.cpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Debris.cpp",
               "RelativeDocumentMoniker": "Code\\Game\\Debris.cpp",
@@ -241,7 +550,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 31,
               "Title": "Debris.hpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Debris.hpp",
               "RelativeDocumentMoniker": "Code\\Game\\Debris.hpp",
@@ -253,7 +562,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 33,
               "Title": "EnemyBullet.cpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\EnemyBullet.cpp",
               "RelativeDocumentMoniker": "Code\\Game\\EnemyBullet.cpp",
@@ -265,19 +574,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "PlayerShip.hpp",
-              "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.hpp",
-              "RelativeDocumentMoniker": "Code\\Game\\PlayerShip.hpp",
-              "ToolTip": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\PlayerShip.hpp [Read Only]",
-              "RelativeToolTip": "Code\\Game\\PlayerShip.hpp [Read Only]",
-              "ViewState": "AQIAACoAAAAAAAAAAAAAADwAAAAnAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-12-10T20:58:23.377Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 29,
               "Title": "Canon.hpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Canon.hpp",
               "RelativeDocumentMoniker": "Code\\Game\\Canon.hpp",
@@ -289,7 +586,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 32,
               "Title": "EnemyBullet.hpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\EnemyBullet.hpp",
               "RelativeDocumentMoniker": "Code\\Game\\EnemyBullet.hpp",
@@ -301,7 +598,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 35,
               "Title": "ExplosionBullet.hpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\ExplosionBullet.hpp",
               "RelativeDocumentMoniker": "Code\\Game\\ExplosionBullet.hpp",
@@ -313,7 +610,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 34,
               "Title": "ExplosionBullet.cpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\ExplosionBullet.cpp",
               "RelativeDocumentMoniker": "Code\\Game\\ExplosionBullet.cpp",
@@ -325,7 +622,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 21,
+              "DocumentIndex": 39,
               "Title": "Wasp.cpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Wasp.cpp",
               "RelativeDocumentMoniker": "Code\\Game\\Wasp.cpp",
@@ -337,7 +634,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 38,
               "Title": "Turret.hpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Turret.hpp",
               "RelativeDocumentMoniker": "Code\\Game\\Turret.hpp",
@@ -349,7 +646,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 37,
               "Title": "Turret.cpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\Turret.cpp",
               "RelativeDocumentMoniker": "Code\\Game\\Turret.cpp",
@@ -361,7 +658,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 36,
               "Title": "ShootWasp.cpp",
               "DocumentMoniker": "C:\\p4\\Personal\\SD\\Starship\\Code\\Game\\ShootWasp.cpp",
               "RelativeDocumentMoniker": "Code\\Game\\ShootWasp.cpp",

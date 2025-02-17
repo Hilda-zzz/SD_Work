@@ -4,7 +4,9 @@
 
 class DevConsole;
 class EventSystem;
+class Window;
 
 extern NamedStrings g_gameConfigBlackboard;
 extern DevConsole*  g_theDevConsole;
 extern EventSystem* g_theEventSystem;
+extern Window* g_theWindow;
