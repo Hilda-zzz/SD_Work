@@ -1,2 +1,32 @@
-﻿  Renderer.cpp
+﻿  Clock.cpp
+  DebugRenderSystem.cpp
+  DevConsole.cpp
+  EventSystem.cpp
+  TileHeatMap.cpp
+  Rgba8.cpp
+  Timer.cpp
+  VertexUtils.cpp
+  Vertex_PCU.cpp
+  AnalogJoystick.cpp
+  InputSystem.cpp
+  XboxController.cpp
+  AABB2.cpp
+  AABB3.cpp
+  EulerAngles.cpp
+  IntVec2.cpp
+  Mat44.cpp
+  MathUtils.cpp
+  OBB2.cpp
+  RaycastUtils.cpp
+  Generating Code...
+  Compiling...
+  Vec2.cpp
+  Vec3.cpp
+  BitmapFont.cpp
+  Camera.cpp
+  Renderer.cpp
+  SpriteAnimDefinition.cpp
+  VertexBuffer.cpp
+  Window.cpp
+  Generating Code...
   Engine.vcxproj -> C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\Engine.lib

@@ -1,6 +1,7 @@
 #include "BitmapFont.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Math/Mat44.hpp"
 BitmapFont::BitmapFont(char const* fontFilePathNameWithNoExtension, Texture& fontTexture,IntVec2 const& layout)
 	:m_fontFilePathNameWithNoExtension(fontFilePathNameWithNoExtension),
 	m_fontGlyphsSpriteSheet(fontTexture,layout)
@@ -96,6 +97,22 @@ float BitmapFont::AddVertsForTextInBox2D(std::vector<Vertex_PCU>& vertexArray, s
 		}
 	}
 	return width;
+}
+
+void BitmapFont::AddVertsForText3DAtOriginXForward(std::vector<Vertex_PCU>& verts, float cellHeight, std::string const& text, Rgba8 const& tint, float cellAspect, Vec2 const& alignment, int maxGlyphsToDraw)
+{
+	UNUSED(maxGlyphsToDraw);
+	AddVertsForText2D(verts, Vec2::ZERO, cellHeight, text, tint, cellAspect);
+
+	AABB2 textBox = GetVertexBounds2D(verts);
+	float width = textBox.GetDimensions().x;
+	float height = textBox.GetDimensions().y;
+
+	Mat44 transform = Mat44(Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 1.f), Vec3(1.f, 0.f, 0.f), Vec3(0.f, 0.f, 0.f));
+	TransformVertexArray3D(verts, transform);
+
+	Mat44 translate = Mat44::MakeTranslation3D(Vec3(0.f, -width*alignment.x, -height*alignment.y));
+	TransformVertexArray3D(verts, translate);
 }
 
 float BitmapFont::GetGlyphAspect(int glyphUnicode) const

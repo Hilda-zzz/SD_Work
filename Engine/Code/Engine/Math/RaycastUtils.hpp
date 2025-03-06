@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Ray.hpp"
+#include "Engine/Math/AABB2.hpp"
 struct RaycastResult2D
 {
 public:
@@ -21,4 +22,7 @@ public:
 RaycastResult2D RaycastVsDisc2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist,
 	Vec2 discCenter, float discRadius);
 
+RaycastResult2D RaycastVsLineSegment2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist,
+	Vec2 const& lineStart, Vec2 const& lineEnd);
 
+RaycastResult2D RaycastVsAABB2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist,AABB2 const& box);

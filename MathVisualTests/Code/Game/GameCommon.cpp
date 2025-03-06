@@ -23,6 +23,7 @@ void DebugDrawLine(Vec2 const& start, Vec2 const& end, float width,Rgba8 color)
 	vertices[3] = Vertex_PCU(Vec3(EL.x, EL.y, 0.f), color, Vec2(0.f, 0.f));
 	vertices[4] = Vertex_PCU(Vec3(SR.x, SR.y, 0.f), color, Vec2(0.f, 0.f)); 
 	vertices[5] = Vertex_PCU(Vec3(ER.x, ER.y, 0.f), color, Vec2(0.f, 0.f));
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(6, vertices);
 }
 
@@ -65,6 +66,7 @@ void DebugDrawCircle(float radius, Vec2 ori,Rgba8 color)
 		i += 3;
 		j += 1;
 	}
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(48, vertices);
 }
 

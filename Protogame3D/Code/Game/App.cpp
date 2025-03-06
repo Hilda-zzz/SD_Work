@@ -10,11 +10,11 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Clock.hpp"
+#include <Engine/Core/DebugRenderSystem.hpp>
 //#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
-Camera*			g_theCamera = nullptr;
 InputSystem*	g_theInput = nullptr;
 AudioSystem*	g_theAudio = nullptr;
 Game*			g_theGame = nullptr;
@@ -47,7 +47,7 @@ void App::Startup()
 	WindowConfig windowConfig;
 	windowConfig.m_inputSystem = g_theInput;
 	windowConfig.m_aspectRatio = 2.f;
-	windowConfig.m_windowTitle = "Protogame2D";
+	windowConfig.m_windowTitle = "Protogame3D";
 	g_theWindow = new Window(windowConfig);
 	
 	RendererConfig rendererConfig;
@@ -60,9 +60,10 @@ void App::Startup()
 
 	AudioSystemConfig audioConfig;
 	g_theAudio = new AudioSystem(audioConfig);
-	
 
-	g_theGame = new Game();
+	DebugRenderConfig debugRenderConfig;
+	debugRenderConfig.m_fontName = "Data/Fonts/SquirrelFixedFont";
+	debugRenderConfig.m_renderer=g_theRenderer;
 
 	g_theEventSystem->Startup();
 	g_theWindow->Startup();
@@ -70,8 +71,11 @@ void App::Startup()
 	g_theDevConsole->Startup();
 	g_theInput->Startup();
 	g_theAudio->Startup();
+	DebugRenderSystemStartup(debugRenderConfig);
 
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
+
+	g_theGame = new Game();
 }
 
 void App::Shutdown()
@@ -79,6 +83,7 @@ void App::Shutdown()
 	delete g_theGame;
 	g_theGame = nullptr;
 
+	DebugRenderSystemShutdown();
 	g_theAudio->Shutdown();
 	g_theDevConsole->Shutdown();
 	g_theRenderer->Shutdown();
@@ -103,6 +108,9 @@ void App::Shutdown()
 
 	delete  g_theEventSystem;
 	g_theEventSystem = nullptr;
+
+	delete g_systemClock;
+	g_systemClock = nullptr;
 }
 
 void App::RunFrame()
@@ -135,11 +143,30 @@ void App::BeginFrame()
 	g_theRenderer->BeginFrame();
 	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
+	DebugRenderBeginFrame();
 	Clock::TickSystemClock();
 }
 
 void App::Update()
 {
+	if (g_theWindow->IsFocus())
+	{
+		if (!g_theGame->m_isAttractMode&&!g_theGame->m_isDevConsole)
+		{
+			g_theInput->SetCursorMode(CursorMode::FPS);
+			g_theWindow->SetCursorVisible(false);
+		}
+		else
+		{
+			g_theInput->SetCursorMode(CursorMode::POINTER);
+			g_theWindow->SetCursorVisible(true);
+		}
+	}
+	else
+	{
+		g_theInput->SetCursorMode(CursorMode::POINTER);
+		g_theWindow->SetCursorVisible(true);
+	}
 	if (g_theInput->WasKeyJustPressed(0x77))
 	{
 		delete g_theGame;
@@ -151,12 +178,13 @@ void App::Update()
 
 void App::Render()  const
 {
-	g_theRenderer->ClearScreen(Rgba8::HILDA);
+	g_theRenderer->ClearScreen(Rgba8(100,100,100,255));
 	g_theGame->Renderer();
 }
 
 void App::EndFrame()
 {
+	DebugRenderEndFrame();
 	g_theAudio->EndFrame();
 	g_theDevConsole->EndFrame();
 	g_theRenderer->EndFrame();

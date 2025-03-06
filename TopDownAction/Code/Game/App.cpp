@@ -9,6 +9,8 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/Clock.hpp"
+//#include "Game/EngineBuildPreferences.hpp"
 
 App* g_theApp = nullptr;
 Renderer* g_theRenderer = nullptr;
@@ -17,8 +19,8 @@ InputSystem* g_theInput = nullptr;
 AudioSystem* g_theAudio = nullptr;
 Game* g_theGame = nullptr;
 bool			g_isDebugDraw = false;
+Clock* g_systemClock = nullptr;
 
-BitmapFont* g_testFont = nullptr;
 
 
 App::~App()
@@ -34,34 +36,39 @@ App::App()
 
 void App::Startup()
 {
+	//LoadingGameConfig("Data/Definitions/GameConfig.xml");
+
 	EventSystemConfig eventSystemConfig;
 	g_theEventSystem = new EventSystem(eventSystemConfig);
-	g_theEventSystem->Startup();
 
 	InputSystemConfig inputConfig;
 	g_theInput = new InputSystem(inputConfig);
-	g_theInput->Startup();
 
 	WindowConfig windowConfig;
 	windowConfig.m_inputSystem = g_theInput;
 	windowConfig.m_aspectRatio = 2.f;
-	windowConfig.m_windowTitle = "Protogame2D";
+	windowConfig.m_windowTitle = "TopDownActionHMlike";
 	g_theWindow = new Window(windowConfig);
-	g_theWindow->Startup();
 
 	RendererConfig rendererConfig;
 	rendererConfig.m_window = g_theWindow;
 	g_theRenderer = new Renderer(rendererConfig);
-	g_theRenderer->Startup();
 
-	g_testFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
-	DevConsoleConfig devConsoleConfig(g_testFont, 1.f, 29.5f);
-	g_theDevConsole = new DevConsole(devConsoleConfig); 
-	g_theDevConsole->Startup();
+	g_systemClock = new Clock();
+	DevConsoleConfig devConsoleConfig("Data/Fonts/SquirrelFixedFont", 0.7f, 45.f);
+	g_theDevConsole = new DevConsole(devConsoleConfig);
 
 	AudioSystemConfig audioConfig;
 	g_theAudio = new AudioSystem(audioConfig);
+
+	g_theEventSystem->Startup();
+	g_theWindow->Startup();
+	g_theRenderer->Startup();
+	g_theDevConsole->Startup();
+	g_theInput->Startup();
 	g_theAudio->Startup();
+
+	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
 
 	g_theGame = new Game();
 }
@@ -99,13 +106,8 @@ void App::Shutdown()
 
 void App::RunFrame()
 {
-	float timeNow = static_cast<float>(GetCurrentTimeSeconds());
-	float deltaTime = timeNow - m_timeLastFrameStart;
-	m_timeLastFrameStart = timeNow;
 	BeginFrame();
-	if (deltaTime > 0.1f)
-		deltaTime = 0.1f;
-	Update(deltaTime);
+	Update();
 	Render();
 	EndFrame();
 }
@@ -132,9 +134,10 @@ void App::BeginFrame()
 	g_theRenderer->BeginFrame();
 	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
+	Clock::TickSystemClock();
 }
 
-void App::Update(float deltaSeconds)
+void App::Update()
 {
 	if (g_theInput->WasKeyJustPressed(0x77))
 	{
@@ -142,12 +145,12 @@ void App::Update(float deltaSeconds)
 		g_theGame = nullptr;
 		g_theGame = new Game();
 	}
-	g_theGame->Update(deltaSeconds);
+	g_theGame->Update();
 }
 
 void App::Render()  const
 {
-	g_theRenderer->ClearScreen(Rgba8::BLACK);
+	g_theRenderer->ClearScreen(Rgba8::HILDA);
 	g_theGame->Renderer();
 }
 

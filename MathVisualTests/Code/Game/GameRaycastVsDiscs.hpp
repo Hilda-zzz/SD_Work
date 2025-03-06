@@ -4,16 +4,21 @@
 #include "RaycastAtrrow.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "DiscObstacle.hpp"
+
+class Clock;
+
 class GameRaycastVsDiscs :public Game
 {
 public:
 	GameRaycastVsDiscs();
 	~GameRaycastVsDiscs();
-	void Update(float deltaTime) override;
-	void UpdateKeyboardInput(float deltaTime);
+	void Update() override;
 	void Renderer() const override;
 	void RerandomDiscs();
 	void UpdateCamera(float deltaTime) override;
+
+	Clock* m_gameClock = nullptr;
+
 private:
 	Camera m_screenCamera;
 	RaycastResult2D m_final_result;

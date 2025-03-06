@@ -33,6 +33,7 @@ DevConsole::~DevConsole()
 
 void DevConsole::Startup()
 {
+	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
 	m_font = g_theRenderer->CreateOrGetBitmapFont(m_config.m_fontName.c_str());
 	m_lines.reserve(1000);
 	m_inputText.reserve(50);
@@ -334,15 +335,21 @@ bool DevConsole::Command_Quit(EventArgs& args)
 
 void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont& font, float fontAspect) const
 {
+	renderer.SetModelConstants();
+	renderer.SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+	renderer.SetBlendMode(BlendMode::ALPHA);
+	renderer.SetSamplerMode(SamplerMode::POINT_CLAMP);
+
 	//bkg
 	renderer.BindTexture(nullptr);
+	//renderer.set
 	Vertex_PCU bkgVertices[6];
 	bkgVertices[0] = Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
-	bkgVertices[1] = Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_maxs.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
+	bkgVertices[1] = Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_mins.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
 	bkgVertices[2] = Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
 	bkgVertices[3] = Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
-	bkgVertices[4] = Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_mins.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
-	bkgVertices[5] = Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
+	bkgVertices[4] = Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
+	bkgVertices[5] = Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_maxs.y, 0.f), DevConsole::BKG, Vec2(0.f, 0.f));
 	renderer.DrawVertexArray(6, bkgVertices);
 
 	//cur input line
@@ -402,11 +409,12 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 	float pointStartX = curBotLeftX +m_insertionPointPosition * inputTextEachWidth;
 	float pointEndX = curBotLeftX + m_insertionPointPosition * inputTextEachWidth + 2.f;
 	Vertex_PCU pointVertices[6];
+
 	pointVertices[0] = Vertex_PCU(Vec3(pointStartX, 2.f, 0.f), curPointerColor, Vec2(0.f, 0.f));
-	pointVertices[1] = Vertex_PCU(Vec3(pointStartX, cellHeight, 0.f), curPointerColor, Vec2(0.f, 0.f));
+	pointVertices[1] = Vertex_PCU(Vec3(pointEndX, 2.f, 0.f), curPointerColor, Vec2(0.f, 0.f));
 	pointVertices[2] = Vertex_PCU(Vec3(pointEndX, cellHeight, 0.f), curPointerColor, Vec2(0.f, 0.f));
 	pointVertices[3] = Vertex_PCU(Vec3(pointStartX, 2.f, 0.f), curPointerColor, Vec2(0.f, 0.f));
-	pointVertices[4] = Vertex_PCU(Vec3(pointEndX, 2.f, 0.f), curPointerColor, Vec2(0.f, 0.f));
-	pointVertices[5] = Vertex_PCU(Vec3(pointEndX, cellHeight, 0.f), curPointerColor, Vec2(0.f, 0.f));
+	pointVertices[4] = Vertex_PCU(Vec3(pointEndX, cellHeight, 0.f), curPointerColor, Vec2(0.f, 0.f));
+	pointVertices[5] = Vertex_PCU(Vec3(pointStartX, cellHeight, 0.f), curPointerColor, Vec2(0.f, 0.f));
 	renderer.DrawVertexArray(6, pointVertices);
 }

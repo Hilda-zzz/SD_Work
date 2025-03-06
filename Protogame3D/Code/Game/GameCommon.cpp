@@ -42,12 +42,13 @@ void DebugDrawRing(float thickness,float innerRadius,Rgba8 color,Vec2 ori)
 		vertices[i + 2] = Vertex_PCU(Vec3(InnerSecond.x, InnerSecond.y, 0.f), color, Vec2(0.f, 0.f));
 
 		vertices[i + 3] = Vertex_PCU(Vec3(InnerSecond.x, InnerSecond.y, 0.f), color, Vec2(0.f, 0.f));
-		vertices[i + 4] = Vertex_PCU(Vec3(OuterSecond.x, OuterSecond.y, 0.f), color, Vec2(0.f, 0.f));
-		vertices[i + 5] = Vertex_PCU(Vec3(OuterFirst.x, OuterFirst.y, 0.f), color, Vec2(0.f, 0.f));
+		vertices[i + 4] = Vertex_PCU(Vec3(OuterFirst.x, OuterFirst.y,  0.f), color, Vec2(0.f, 0.f));
+		vertices[i + 5] = Vertex_PCU(Vec3(OuterSecond.x, OuterSecond.y, 0.f), color, Vec2(0.f, 0.f));
 
 		i += 6;
 		j += 1;
 	}
+	g_theRenderer->SetModelConstants();
 	g_theRenderer->DrawVertexArray(96, vertices);
 }
 

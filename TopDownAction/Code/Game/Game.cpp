@@ -4,21 +4,40 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/FileUtils.hpp"
+#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/Clock.hpp"
+#include "Game/Player.hpp"
 extern bool g_isDebugDraw;
 
 Game::Game()
 {
-
+	m_gameClock = new Clock();
+	m_player = new Player(Vec2(100.f,50.f));
 }
 
 Game::~Game()
 {
+	delete m_player;
+	m_player = nullptr;
+	delete m_gameClock;
+	m_gameClock = nullptr;
 }
 
-
-void Game::Update(float deltaSeconds)
+void Game::Update()
 {
+	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
 	UpdateCamera(deltaSeconds);
+	if (g_theInput->WasKeyJustPressed(KEYCODE_TILDE))
+	{
+		if (g_theDevConsole->GetMode() == HIDDEN)
+		{
+			g_theDevConsole->SetMode(OPEN_FULL);
+		}
+		else
+		{
+			g_theDevConsole->SetMode(HIDDEN);
+		}
+	}
 	if (m_isAttractMode)
 	{
 		UpdateAttractMode(deltaSeconds);
@@ -35,9 +54,11 @@ void Game::Renderer() const
 		RenderAttractMode();
 		return;
 	}
-	g_theRenderer->BeginCamera(m_screenCamera);
-	RenderUI();
-	g_theRenderer->EndCamera(m_screenCamera);
+	else
+	{
+		RenderGameMode();
+		return;
+	}
 }
 
 void Game::UpdateAttractMode(float deltaTime)
@@ -47,7 +68,7 @@ void Game::UpdateAttractMode(float deltaTime)
 	{
 		g_theApp->m_isQuitting = true;
 	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
+	if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE) || g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
 	{
 		m_isAttractMode = false;
 	}
@@ -60,6 +81,7 @@ void Game::UpdateGameplayMode(float deltaTime)
 	{
 		m_isAttractMode = true;
 	}
+	m_player->Update(deltaTime);
 }
 
 void Game::UpdateDeveloperCheats(float deltaTime)
@@ -75,7 +97,8 @@ void Game::UpdateDeveloperCheats(float deltaTime)
 void Game::UpdateCamera(float deltaTime)
 {
 	UNUSED(deltaTime);
-	m_screenCamera.SetOrthoView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
+	m_screenCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
+	m_gameCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(200.f, 100.f));
 }
 
 void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
@@ -92,9 +115,7 @@ void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
 		m_isPause = false;
 		m_pauseAfterUpdate = true;
 	}
-
 	//--------------------------------------------------------------------------------------
-
 	if (m_isPause)
 	{
 		deltaSeconds = 0.f;
@@ -114,7 +135,20 @@ void Game::RenderAttractMode() const
 {
 	g_theRenderer->BeginCamera(m_screenCamera);
 	g_theRenderer->BindTexture(nullptr);
-	DebugDrawRing(4.f, 20.f, Rgba8(0, 180, 100), Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
+	DebugDrawRing(4.f, 20.f, Rgba8::WHITE, Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
+	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
+	g_theRenderer->EndCamera(m_screenCamera);
+}
+
+void Game::RenderGameMode() const
+{
+	g_theRenderer->BeginCamera(m_gameCamera);
+	m_player->Render();
+	g_theRenderer->EndCamera(m_gameCamera);
+
+	g_theRenderer->BeginCamera(m_screenCamera);
+	//RenderUI();
+	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
@@ -129,6 +163,9 @@ void Game::RenderDebugMode()const
 {
 
 }
+
+
+
 
 
 

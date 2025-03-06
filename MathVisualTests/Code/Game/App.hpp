@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Core/EventSystem.hpp"
+#include "Game/Game.hpp"
 
-class Game;
 
 class App
 {
@@ -18,7 +19,7 @@ public:
 	bool m_isQuitting = false;
 	
 private:
-	void Update(float deltaSeconds);
+	void Update();
 	void BeginFrame();
 	void Render() const;
 	void EndFrame();
@@ -26,4 +27,6 @@ private:
 private:
 	Game* m_theGame;
 	float m_timeLastFrameStart=0;
+	GameMode m_curGameMode = GAME_MODE_NEAREST_POINT;
 };
+bool OnQuitEvent(EventArgs& args);

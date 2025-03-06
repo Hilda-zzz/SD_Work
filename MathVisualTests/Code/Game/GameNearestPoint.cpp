@@ -1,13 +1,14 @@
 #include "GameNearestPoint.hpp"
-
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Window/Window.hpp"
 #include "App.hpp"
-#include <Engine/Core/VertexUtils.hpp>
+#include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/AABB2.hpp"
-#include <Engine/Math/MathUtils.hpp>
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/Clock.hpp"
+#include "Engine/Renderer/BitmapFont.hpp"
 
 constexpr float AIMP_SPEED = 180.f;
 Rgba8 NORMAL_COLOR = Rgba8(0, 100, 225, 255);
@@ -15,28 +16,28 @@ Rgba8 BRIGHT_COLOR = Rgba8(150, 100, 225, 255);
 
 GameNearestPoint::GameNearestPoint()
 {
+	m_gameClock = new Clock();
 	ReRandomObject();
-	//aimp
+	//aim point position
 	m_aimP_pos = Vec2(800.f, 400.f);
 }
 
 GameNearestPoint::~GameNearestPoint()
-
 {
+	g_systemClock->RemoveChild(m_gameClock);
+	delete m_gameClock;
+	m_gameClock = nullptr;
 }
 
-void GameNearestPoint::Update(float deltaTime)
+void GameNearestPoint::Update()
 {
+	float deltaTime = (float)m_gameClock->GetDeltaSeconds();
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
 	{
 		g_theApp->m_isQuitting = true;
 		return;
 	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
-	{
-		g_theApp->ChangeGameMode(GAME_MODE_RAYCAST_VS_DISCS);
-		return;
-	}
+
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F8))
 	{
 		ReRandomObject();
@@ -60,6 +61,7 @@ void GameNearestPoint::Renderer() const
 
 	RenderBasicShape();
 	
+	g_theRenderer->SetModelConstants();
 	Vec2 np_disc = GetNearestPointOnDisc2D(m_aimP_pos, m_disc_pos, m_disc_radius);
 	DebugDrawLine(np_disc, m_aimP_pos, 2, Rgba8(255, 255, 255, 30));
 	DebugDrawCircle(5.f, np_disc, Rgba8(200, 100, 0));
@@ -89,13 +91,21 @@ void GameNearestPoint::Renderer() const
 	DebugDrawCircle(5.f, np_triangle, Rgba8(200, 100, 0));
 
 	DebugDrawCircle(2.f, m_aimP_pos, Rgba8(255, 255, 255));
+
+	std::vector<Vertex_PCU> title;
+	BitmapFont* font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+	font->AddVertsForTextInBox2D(title, "Mode (F6/F7 for prev/next): Nearest Point",AABB2(Vec2(10.f,770.f),Vec2(1600.f,790.f)),15.f,Rgba8(200,200,0),0.7f,Vec2(0.f,0.f));
+	font->AddVertsForTextInBox2D(title, "F8 to randomize; LMB/RMB set ray start/end; ESDF move start, IJKL move end, arrows move ray,hold T=slow", AABB2(Vec2(10.f, 745.f), Vec2(1600.f, 765.f)), 15.f, Rgba8(0,200,200), 0.7f, Vec2(0.f, 0.f));
+	g_theRenderer->BindTexture(&font->GetTexture());
+	g_theRenderer->DrawVertexArray(title);
+
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
 void GameNearestPoint::UpdateCamera(float deltaTime)
 {
 	UNUSED(deltaTime);
-	m_screenCamera.SetOrthoView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
+	m_screenCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
 }
 
 void GameNearestPoint::UpdateInput(float deltaTime)
@@ -130,6 +140,9 @@ void GameNearestPoint::UpdateInput(float deltaTime)
 
 void GameNearestPoint::RenderBasicShape() const
 {
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->BindTexture(nullptr);
+
 	std::vector<Vertex_PCU> disc_verts;
 	AddVertsForDisc2D(disc_verts, m_disc_pos, m_disc_radius, m_disc_color);
 	g_theRenderer->DrawVertexArray(disc_verts);

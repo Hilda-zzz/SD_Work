@@ -18,7 +18,7 @@ public:
 	bool m_isQuitting = false;
 	
 private:
-	void Update(float deltaSeconds);
+	void Update();
 	void BeginFrame();
 	void Render() const;
 	void EndFrame();

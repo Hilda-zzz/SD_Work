@@ -3,10 +3,16 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
 
+class Clock;
+class RaycastArrow;
+
 enum GameMode
 {
 	GAME_MODE_NEAREST_POINT,
-	GAME_MODE_RAYCAST_VS_DISCS
+	GAME_MODE_RAYCAST_VS_DISCS,
+	GAME_MODE_RAYCAST_VS_LINESEG,
+	GAME_MODEE_RAYCAST_VS_AABB2D,
+	COUNT
 };
 
 class Game
@@ -15,12 +21,13 @@ public:
 	Game();
 	virtual ~Game() = default;
 
-	virtual void Update(float deltaSeconds)=0;
+	virtual void Update()=0;
 	virtual void Renderer() const=0;
 	virtual void UpdateCamera(float deltaTime)=0;
 
 protected:
 	void UpdateDeveloperCheats(float& deltaTime);
+	void UpdateKBInputForRaycastMode(float& deltaTime,RaycastArrow& arrow,float speed);
 	void AdjustForPauseAndTimeDitortion(float& deltaSeconds);
 
 public:

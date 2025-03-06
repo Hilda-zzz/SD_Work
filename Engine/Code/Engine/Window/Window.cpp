@@ -63,7 +63,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 		}*/
 		EventArgs args;
 		args.SetValue("KeyCode", Stringf("%d", KEYCODE_LEFT_MOUSE));
-		g_theEventSystem->FireEvent("KeyPressed", args);
+		g_theEventSystem->FireEvent("KeyReleased", args);
 		return 0;
 	}
 	case WM_RBUTTONDOWN:
@@ -85,7 +85,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 		}*/
 		EventArgs args;
 		args.SetValue("KeyCode", Stringf("%d", KEYCODE_RIGHT_MOUSE));
-		g_theEventSystem->FireEvent("KeyPressed", args);
+		g_theEventSystem->FireEvent("KeyReleased", args);
 		return 0;
 	}
 	case WM_CHAR:
@@ -171,6 +171,16 @@ Vec2 Window::GetNormalizedMouseUV() const
 	return Vec2(cursorX, 1.f - cursorY);
 }
 
+Vec2 Window::GetMousePixelPos() const
+{
+	HWND windowHandle = static_cast<HWND>(m_windowHandle);
+	POINT cursorCoords;
+	//RECT clientRect;
+	::GetCursorPos(&cursorCoords);
+	::ScreenToClient(windowHandle, &cursorCoords);
+	return Vec2((float)cursorCoords.x,(float)cursorCoords.y);
+}
+
 void* Window::GetHwnd() const
 {
 	return m_windowHandle;
@@ -179,6 +189,81 @@ void* Window::GetHwnd() const
 IntVec2 Window::GetClientDimensions() const
 {
 	return m_clientDimension;
+}
+
+bool Window::IsFocus()
+{
+	HWND window = GetActiveWindow();
+	if (window == m_windowHandle)
+	{
+		return true;
+	}
+	else 
+		return false;
+}
+
+bool Window::IsCursorVisible()
+{
+	CURSORINFO cursorInfo;
+	cursorInfo.cbSize = sizeof(CURSORINFO);
+
+	if (GetCursorInfo(&cursorInfo))
+	{
+		return (cursorInfo.flags & CURSOR_SHOWING) != 0;
+	}
+	return true;
+}
+
+void Window::SetCursorVisible(bool aimState)
+{
+	bool curState = IsCursorVisible();
+	if (aimState == curState)
+	{
+		return;
+	}
+	if (aimState)
+	{
+		while (true)
+		{
+			if (::ShowCursor(aimState) >=  0)
+			{
+				break;
+			}
+		}
+	}
+	else
+	{
+		while (true)
+		{
+			if (::ShowCursor(aimState) < 0)
+			{
+				break;
+			}
+		}
+	}
+}
+
+bool Window::SetCursorPosisiotn(int x, int y)
+{
+	if (IsFocus())
+	{
+		// Convert to screen coordinates for SetCursorPos
+		POINT aimPoint = { x, y};
+		::ClientToScreen(static_cast<HWND>(m_windowHandle), &aimPoint);
+		::SetCursorPos(aimPoint.x, aimPoint.y);
+		return true;
+	}
+	return false;
+}
+
+IntVec2 Window::GetClientRectCenterPos()
+{
+	RECT clientRect;
+	::GetClientRect(static_cast<HWND>(m_windowHandle), &clientRect);
+	int centerX = (clientRect.right - clientRect.left) / 2;
+	int centerY = (clientRect.bottom - clientRect.top) / 2;
+	return IntVec2(centerX, centerY);
+	
 }
 
 void Window::CreateOSWindow()

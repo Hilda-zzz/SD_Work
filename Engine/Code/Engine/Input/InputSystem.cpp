@@ -2,6 +2,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Window/Window.hpp"
 unsigned char const KEYCODE_F1		= VK_F1;
 unsigned char const KEYCODE_F2		= VK_F2;
 unsigned char const KEYCODE_F3		= VK_F3;
@@ -32,10 +33,11 @@ unsigned char const KEYCODE_INSERT			= VK_INSERT;
 unsigned char const KEYCODE_DELETE			= VK_DELETE;
 unsigned char const KEYCODE_HOME			= VK_HOME;
 unsigned char const KEYCODE_END				= VK_END;
+unsigned char const KEYCODE_LEFT_SHIFT = VK_SHIFT;
 
 
 extern InputSystem* g_theInput;
-
+//extern Window* g_theWindow;
 
 InputSystem::InputSystem(InputSystemConfig inputConfig)
 {
@@ -71,6 +73,35 @@ void InputSystem::BeginFrame()
 	{
 		m_controllers[i].Update();
 	}
+	//-------------------------------------------------------------
+	m_lastCursorPos = m_curCursorPos;
+	m_curCursorPos = Window::s_mainWindow->GetMousePixelPos();
+
+	bool curVisible= Window::s_mainWindow->IsCursorVisible();
+	if (m_cursorMode == CursorMode::FPS)
+	{
+		if (curVisible)
+		{
+			Window::s_mainWindow->SetCursorVisible(false);
+		}
+		IntVec2 clientDimensions = Window::s_mainWindow->GetClientDimensions();
+
+		Vec2 rawDelta = m_curCursorPos - m_lastCursorPos;
+		m_cursorClientDelta.x = rawDelta.x / (float)clientDimensions.x;
+		m_cursorClientDelta.y = rawDelta.y / (float)clientDimensions.y;
+
+		IntVec2 clientCenter = Window::s_mainWindow->GetClientRectCenterPos();
+		Window::s_mainWindow->SetCursorPosisiotn(clientCenter.x, clientCenter.y);
+	}
+	else
+	{
+		if (!curVisible)
+		{
+			Window::s_mainWindow->SetCursorVisible(true);
+		}
+		m_cursorClientDelta = Vec2::ZERO;
+	}
+	m_curCursorPos = Window::s_mainWindow->GetMousePixelPos();
 }
 
 void InputSystem::EndFrame()
@@ -136,12 +167,30 @@ XboxController& InputSystem::GetControllerAndSet(int controllerID)
 	return m_controllers[controllerID];
 }
 
+void InputSystem::SetCursorMode(CursorMode cursorMode)
+{
+	m_cursorMode = cursorMode;
+}
+
+Vec2 InputSystem::GetCursorClientDelta() const
+{
+	if (m_cursorMode == CursorMode::FPS)
+	{
+		return m_cursorClientDelta;
+	}
+	else
+	{
+		return Vec2::ZERO;
+	}
+}
+
+Vec2 InputSystem::GetCursorClientPosition() const
+{
+	return g_theWindow->GetMousePixelPos();
+}
+
 bool InputSystem::Event_KeyPressed(EventArgs& args)
 {
-	//if (!g_theInput)
-	//{
-	//	return false;
-	//}
 	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
 	g_theInput->HandleKeyPressed(keyCode);
 	return true;
@@ -149,10 +198,6 @@ bool InputSystem::Event_KeyPressed(EventArgs& args)
 
 bool InputSystem::Event_KeyReleased(EventArgs& args)
 {
-	//if (!g_theInput)
-	//{
-	//	return false;
-	//}
 	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
 	g_theInput->HandleKeyReleased(keyCode);
 	return true;

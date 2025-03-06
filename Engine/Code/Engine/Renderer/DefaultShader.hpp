@@ -16,41 +16,27 @@ struct v2p_t
 
 cbuffer CameraConstants : register(b2)
 {
-	float OrthoMinX;
-	float OrthoMinY;
-	float OrthoMinZ;
-	float OrthoMaxX;
-	float OrthoMaxY;
-	float OrthoMaxZ;
-	float pad0;
-	float pad1;
+	float4x4 WorldToCameraTransform;
+	float4x4 CameraToRenderTransform;
+	float4x4 RenderToClipTransform;
+}
+
+cbuffer ModelConstants : register(b3)
+{
+	float4x4 ModelToWorldTransform;
+	float4 ModelColor;
 }
 
 Texture2D diffuseTexture : register(t0);
 SamplerState diffuseSampler : register(s0);
 
-float RangeMap(float inValue, float inStart, float inEnd, float outStart, float outEnd)
-{
-	float t;
-
-	if (inEnd != inStart)
-	{
-		t= (inValue - inStart) / (inEnd - inStart);
-	}
-	else
-		t=0.0f;
-	return outStart + (outEnd - outStart) * t;
-}
-
 v2p_t VertexMain(vs_input_t input)
 {
 	float4 localPosition=float4(input.localPosition,1);
-
-	float4 clipPosition;
-	clipPosition.x=RangeMap(localPosition.x,OrthoMinX,OrthoMaxX,-1.0f,1.0f);
-	clipPosition.y=RangeMap(localPosition.y,OrthoMinY,OrthoMaxY,-1.0f,1.0f);
-	clipPosition.z=RangeMap(localPosition.z,OrthoMinZ,OrthoMaxZ,0.0f,1.0f);
-	clipPosition.w=localPosition.w;
+	float4 worldPosition=mul(ModelToWorldTransform,localPosition);
+	float4 camPosition=mul(WorldToCameraTransform,worldPosition);
+	float4 renderPosition=mul(CameraToRenderTransform,camPosition);
+	float4 clipPosition=mul(RenderToClipTransform,renderPosition);
 
 	v2p_t v2p;
 	v2p.position = clipPosition;
@@ -63,7 +49,7 @@ float4 PixelMain(v2p_t input) : SV_Target0
 {
 	float4 textureColor = diffuseTexture.Sample(diffuseSampler, input.uv);
 	float4 vertexColor=input.color;
-	float4 color = textureColor*vertexColor;
+	float4 color = textureColor*vertexColor*ModelColor;
 	clip(color.a-0.01f);
 	return float4(color);
 }

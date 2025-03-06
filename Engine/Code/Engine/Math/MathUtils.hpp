@@ -1,6 +1,6 @@
 # pragma once
 #include "Engine/Math/AABB2.hpp"
-
+#include "Engine/Math/Mat44.hpp"
 struct Vec2;
 struct Vec3;
 struct Vec4;
@@ -10,6 +10,18 @@ class LineSegment2;
 class Capsule2;
 class Triangle2;
 class FloatRange;
+
+enum class BillboardType
+{
+	NONE=-1,
+	WORLD_UP_FACING,
+	WORLD_UP_OPPOSING,
+	FULL_FACING,
+	FULL_OPPOSING,
+	COUNT
+};
+
+
 //Clamp and lerp
 float GetClamped(float value, float minValue, float maxValue);
 float GetClampedZeroToOne(float value);
@@ -67,6 +79,7 @@ Vec2 const GetNearestPointOnTriangle2D(Vec2 const& referencePosition, Triangle2 
 //Geomertric query utilities
 bool DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB);
 bool DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB);
+bool DoAABB2Overlap(AABB2 const& box1, AABB2 const& box2);
 bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
 bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius);
@@ -92,4 +105,9 @@ float GetDistance2DInt(IntVec2 const& positionA, IntVec2 const& positionB);
 float NormalizeByte(unsigned char uc);
 float DenormalizeByte(float f);
 
+Mat44 GetLookAtMatrix(const Vec3& pos, const Vec3& target);
 
+Mat44 GetBillboardMatrix(BillboardType billboardType,
+	Mat44 const& targetMatrix,Vec3 const& targetPos,
+	const Vec3& billboardPosition,
+	const Vec2& billboardScale = Vec2(1.f, 1.f));

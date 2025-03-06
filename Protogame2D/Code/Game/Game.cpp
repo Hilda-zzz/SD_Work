@@ -90,7 +90,7 @@ void Game::UpdateDeveloperCheats(float deltaTime)
 void Game::UpdateCamera(float deltaTime)
 {
 	UNUSED(deltaTime);
-	m_screenCamera.SetOrthoView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
+	m_screenCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
 }
 
 void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
@@ -129,7 +129,7 @@ void Game::RenderAttractMode() const
 {
 	g_theRenderer->BeginCamera(m_screenCamera);
 	g_theRenderer->BindTexture(nullptr);
-	DebugDrawRing(4.f, 20.f, Rgba8::WHITE,Vec2(SCREEN_SIZE_X*0.5f,SCREEN_SIZE_Y*0.5f));
+	DebugDrawRing(4.f, 20.f, Rgba8::WHITE, Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 }

@@ -187,6 +187,9 @@
     <ClCompile Include="Core\Timer.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\DebugRenderSystem.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -370,6 +373,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Timer.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DebugRenderSystem.hpp">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

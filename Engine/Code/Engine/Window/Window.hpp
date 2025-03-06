@@ -23,9 +23,22 @@ public:
 	WindowConfig const& GetConfig() const;
 	void* GetDisplayContext() const;
 	Vec2 GetNormalizedMouseUV() const;
-
+	Vec2 GetMousePixelPos() const;
 	void* GetHwnd() const;
 	IntVec2 GetClientDimensions() const;
+	
+	bool IsFocus();
+	bool IsCursorVisible();
+	void SetCursorVisible(bool aimState);
+	bool SetCursorPosisiotn(int x, int y);
+	IntVec2 GetClientRectCenterPos();
+	//-----------------------------------------
+
+	//bool SetCursorPos(int X, int Y);
+	//bool GetCursorPos(LPPOINT lpPoint);
+	//bool GetCursorInfo(PCURSORINFO pci);
+	//bool ClientToScreen(HWND hWnd, LPPOINT lpPoint);
+	//bool ScreenToClient(HWND hWnd, LPPOINT lpPoint);
 
 public:
 	static Window* s_mainWindow;

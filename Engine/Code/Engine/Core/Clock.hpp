@@ -27,16 +27,16 @@ public:
 	int		GetFrameCount() const;
 
 public:
-	static Clock& GetSystemClock();			//?
-	static void TickSystemClock();			//?
 	static const Clock s_systemClock;
-protected:
-	void Tick();							//?
 
-	void Advance(double deltaTimeSeconds);
-
+	static Clock& GetSystemClock();
+	static void TickSystemClock();
 	void AddChild(Clock* childClock);
-	void RemoveChild(Clock* childClock);	//?
+	void RemoveChild(Clock* childClock);
+
+protected:
+	void Tick();
+	void Advance(double deltaTimeSeconds);
 
 protected:
 	Clock* m_parent = nullptr;

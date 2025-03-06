@@ -70,11 +70,11 @@ Game::Game()
 	m_enemyNumInEachWaves[4] = EnemyNumInWave{ 20,4,6,6,3 };
 
 	m_worldCamera = new Camera();
-	m_worldCamera->SetOrthoView(Vec2{ 0.f,0.f }, Vec2{ 200.f,100.f });
+	m_worldCamera->SetOrthographicView(Vec2{ 0.f,0.f }, Vec2{ 200.f,100.f });
 	m_oriWorldScreenBL = m_worldCamera->GetOrthoBottomLeft();
 	m_oriWorldScreenTR = m_worldCamera->GetOrthoTopRight();
 	m_screenCamera = new Camera();
-	m_screenCamera->SetOrthoView(Vec2{ 0.f,0.f }, Vec2{ 1600.f,800.f });
+	m_screenCamera->SetOrthographicView(Vec2{ 0.f,0.f }, Vec2{ 1600.f,800.f });
 
 	bgm= g_theAudio->StartSound(attrackmodeBGM,true);
 
@@ -1110,7 +1110,7 @@ void Game::Translate2DToFollowedObj(Camera& worldCamera,const Vec2& aimPos)
 {
 	Vec2 blTrans = Vec2(-WORLD_CENTER_X, -WORLD_CENTER_Y)+aimPos;
 	Vec2 trTrans = Vec2(WORLD_CENTER_X, WORLD_CENTER_Y) + aimPos;
-	worldCamera.SetOrthoView(blTrans, trTrans);
+	worldCamera.SetOrthographicView(blTrans, trTrans);
 }
 void Game::UpdateQuitGameplayMode(float deltaTime)
 {

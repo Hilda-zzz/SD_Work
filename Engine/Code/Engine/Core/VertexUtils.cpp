@@ -2,6 +2,9 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Vertex_PCU.hpp"
+#include "Engine/Math/AABB3.hpp"
+#include "EngineCommon.hpp"
+#include "Engine/Math/Mat44.hpp"
 constexpr int DISCS_SLICES_COUNT = 64;
 constexpr int SEMICIRCLE_SLICES_COUNT = 16;
 void TransformVertexArrayXY3D(int numVerts, Vertex_PCU* verts, float uniformScaleXY, 
@@ -21,6 +24,14 @@ void TransformVertexArrayXY3D(int numVerts, std::vector<Vertex_PCU>& verts, floa
 	{
 		TransformPositionXY3D(verts[i].m_position, uniformScaleXY,
 			rotationDegreesAboutZ, translationXY);
+	}
+}
+
+void TransformVertexArray3D(std::vector<Vertex_PCU>& verts, const Mat44& transform)
+{
+	for (Vertex_PCU& vert : verts)
+	{
+		vert.m_position=transform.TransformPosition3D(vert.m_position);
 	}
 }
 
@@ -175,6 +186,271 @@ void AddVertsForArrow2D(std::vector<Vertex_PCU>& verts, Vec2 tailPos, Vec2 tipPo
 	AddVertsForLinSegment2D(verts, rightArrow, tipPos, lineThickness, color);
 }
 
-//void AddVertsForLinSegment2D(std::vector<Vertex_PCU>& verts, LineSegment2 const& lineSegment, float thickness, Rgba8 const& color)
-//{
-//}
+void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft, const Rgba8& color, const AABB2& UVs)
+{
+	verts.push_back(Vertex_PCU(Vec3(bottomLeft.x, bottomLeft.y, bottomLeft.z), color, UVs.m_mins));                    
+	verts.push_back(Vertex_PCU(Vec3(bottomRight.x, bottomRight.y, bottomRight.z), color, Vec2(UVs.m_maxs.x,UVs.m_mins.y)));			   
+	verts.push_back(Vertex_PCU(Vec3(topRight.x, topRight.y, topRight.z), color, UVs.m_maxs));					  
+
+	verts.push_back(Vertex_PCU(Vec3(bottomLeft.x, bottomLeft.y, bottomLeft.z), color, UVs.m_mins));				 
+	verts.push_back(Vertex_PCU(Vec3(topRight.x, topRight.y, topRight.z), color, UVs.m_maxs));					
+	verts.push_back(Vertex_PCU(Vec3(topLeft.x, topLeft.y, topLeft.z), color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));						  
+}
+
+void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, const AABB3& bounds, const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 mins = bounds.m_mins;
+	Vec3 maxs = bounds.m_maxs;
+	Vec2 uvMins = UVs.m_mins;
+	Vec2 uvMaxs = UVs.m_maxs;
+
+	// X
+	AddVertsForQuad3D(verts,
+		Vec3(maxs.x, mins.y, mins.z),  
+		Vec3(maxs.x, maxs.y, mins.z),  
+		Vec3(maxs.x, maxs.y, maxs.z),  
+		Vec3(maxs.x, mins.y, maxs.z),  
+		color, AABB2(uvMins,uvMaxs));
+
+	// -X
+	AddVertsForQuad3D(verts,
+		Vec3(mins.x, maxs.y, mins.z),  
+		Vec3(mins.x, mins.y, mins.z),  
+		Vec3(mins.x, mins.y, maxs.z), 
+		Vec3(mins.x, maxs.y, maxs.z), 
+		color, AABB2(uvMins, uvMaxs));
+
+	// Y
+	AddVertsForQuad3D(verts,
+		Vec3(maxs.x, maxs.y, mins.z),  
+		Vec3(mins.x, maxs.y, mins.z),  
+		Vec3(mins.x, maxs.y, maxs.z), 
+		Vec3(maxs.x, maxs.y, maxs.z),  
+		color, AABB2(uvMins, uvMaxs));
+
+	// -Y
+	AddVertsForQuad3D(verts,
+		Vec3(mins.x, mins.y, mins.z),  
+		Vec3(maxs.x, mins.y, mins.z),  
+		Vec3(maxs.x, mins.y, maxs.z),  
+		Vec3(mins.x, mins.y, maxs.z),  
+		color, AABB2(uvMins, uvMaxs));
+
+	// Z
+	AddVertsForQuad3D(verts,
+		Vec3(maxs.x, mins.y, maxs.z),  
+		Vec3(maxs.x, maxs.y, maxs.z),  
+		Vec3(mins.x, maxs.y, maxs.z),  
+		Vec3(mins.x, mins.y, maxs.z),  
+		color,AABB2(uvMins, uvMaxs));
+
+	// -Z
+	AddVertsForQuad3D(verts,
+		Vec3(maxs.x, mins.y, mins.z),
+		Vec3(mins.x, mins.y, mins.z),
+		Vec3(mins.x, maxs.y, mins.z),
+		Vec3(maxs.x, maxs.y, mins.z),
+		color, AABB2(uvMins, uvMaxs));
+}
+
+void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius, const Rgba8& color, const AABB2& UVs, int numSlices, int numStacks)
+{
+	UNUSED(center);
+	std::vector<Vec3>	sphereVerts;
+	sphereVerts.reserve(numSlices * (numStacks - 1) + 2);
+	sphereVerts.push_back(Vec3(0.f, 0.f, -radius));
+	float eachLongitude = 360.f / numSlices;
+	float eachLatitude= 180.f / numStacks;
+	for (int curStack = 0; curStack < numStacks - 1; curStack++)
+	{
+		float curLatitude= -90.f + (curStack + 1) * eachLatitude;
+		for (int curSlice = 0; curSlice < numSlices; curSlice++)
+		{
+			float curLongitude = curSlice * eachLongitude;
+			sphereVerts.push_back(Vec3::MakeFromPolarDegrees(curLatitude, curLongitude, radius));
+		}
+	}
+	sphereVerts.push_back(Vec3(0.f, 0.f, radius));
+
+
+	float eachUVHeight = (1.f / numStacks)*UVs.GetDimensions().y;
+	float eachUVWidth = 1.f / numSlices * UVs.GetDimensions().x;
+	//east
+	for (int curSlice = 0; curSlice < numSlices; curSlice++) 
+	{
+		int tl = 1 + curSlice;
+		int tr = 1 + (curSlice + 1) ;
+
+		Vec2 blUV = UVs.m_mins+Vec2(curSlice * eachUVWidth, eachUVHeight);
+		Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, eachUVHeight);
+
+		AddVertsForQuad3D(verts, sphereVerts[0], sphereVerts[0], sphereVerts[tr], sphereVerts[tl], color, AABB2(blUV, trUV));
+	}
+	//mid
+	for (int curStack = 0; curStack < numStacks - 2; curStack++)
+	{
+		for (int curSlice = 0; curSlice < numSlices; curSlice++)
+		{
+			int baseIndex = 1 + curStack * numSlices; 
+			int bl = baseIndex + curSlice;
+			int br = baseIndex + ((curSlice + 1) % numSlices);
+			int tl = bl + numSlices;
+			int tr = br + numSlices;
+
+			Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, (curStack + 1) * eachUVHeight);
+			Vec2 trUV = UVs.m_mins + Vec2(((curSlice + 1)) * eachUVWidth, (curStack + 2) * eachUVHeight);
+			AddVertsForQuad3D(verts, sphereVerts[bl], sphereVerts[br], sphereVerts[tr], sphereVerts[tl],color, AABB2(blUV, trUV));
+		}
+	}
+
+	//north
+	int northPole = (int)sphereVerts.size() - 1;
+	int lastRingStart = northPole - numSlices;
+	for (int curSlice = 0; curSlice < numSlices; curSlice++)
+	{
+		int bl = lastRingStart + curSlice;
+		int br = lastRingStart + (curSlice + 1) % numSlices;
+
+		Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, (numStacks - 1) * eachUVHeight);
+		Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, numStacks * eachUVHeight);
+
+		AddVertsForQuad3D(verts, sphereVerts[bl], sphereVerts[br], sphereVerts[northPole], sphereVerts[northPole], color, AABB2(blUV, trUV));
+	}
+}
+
+void AddVertsForCylinder3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius, const Rgba8 color, const AABB2& UVs, int numSlices)
+{
+	float height = (end - start).GetLength();
+
+	Vec3 localStart(0.0f, 0.0f, 0.f);
+	Vec3 localEnd(0.f, 0.f, height);
+
+	std::vector<Vec3> bottomCircle;
+	std::vector<Vec3> topCircle;
+	for (int i = 0; i < numSlices; i++)
+	{
+		float x = radius * CosDegrees(i*360.f / numSlices);
+		float y = radius * SinDegrees(i*360.f / numSlices);
+		bottomCircle.push_back(Vec3(x, y, 0.f));
+		topCircle.push_back(Vec3(x, y, height));
+	}
+
+	//side
+	float eachUVWidth = (1.f / numSlices) * UVs.GetDimensions().x;
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1)%numSlices ;
+		Vec2 blUV = UVs.m_mins + Vec2(i * eachUVWidth, 0.f);
+		Vec2 trUV = blUV + Vec2(eachUVWidth, UVs.GetDimensions().y);
+		AddVertsForQuad3D(verts, bottomCircle[i], bottomCircle[nextI], topCircle[nextI], topCircle[i], color, AABB2(blUV, trUV));
+	}
+
+	//bot
+	Vec2 uvCenter = Vec2(UVs.GetCenter().x, UVs.GetCenter().y);
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+		
+		float u1 = (UVs.GetDimensions().x / 2.f) * CosDegrees((numSlices - i) * 360.f / numSlices);
+		float v1 = (UVs.GetDimensions().y / 2.f) * SinDegrees((numSlices - i) * 360.f / numSlices);
+		float u2 = (UVs.GetDimensions().x / 2.f) * CosDegrees((numSlices - i - 1) * 360.f / numSlices);
+		float v2 = (UVs.GetDimensions().y / 2.f) * SinDegrees((numSlices - i - 1) * 360.f / numSlices);
+		verts.push_back(Vertex_PCU(localStart, color, uvCenter));
+		verts.push_back(Vertex_PCU(bottomCircle[nextI], color, uvCenter + Vec2(u2, v2)));
+		verts.push_back(Vertex_PCU(bottomCircle[i], color, uvCenter + Vec2(u1, v1)));
+	}
+
+	//top
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+		float u1 = (UVs.GetDimensions().x / 2.f) * CosDegrees(i * 360.f / numSlices);
+		float v1 = (UVs.GetDimensions().y / 2.f) * SinDegrees(i * 360.f / numSlices);
+		float u2 = (UVs.GetDimensions().x / 2.f) * CosDegrees((i + 1) * 360.f / numSlices);
+		float v2 = (UVs.GetDimensions().y / 2.f) * SinDegrees((i + 1) * 360.f / numSlices);
+		verts.push_back(Vertex_PCU(localEnd, color, uvCenter));
+		verts.push_back(Vertex_PCU(topCircle[i], color, uvCenter + Vec2(u1, v1)));
+		verts.push_back(Vertex_PCU(topCircle[nextI], color, uvCenter + Vec2(u2, v2)));
+	}
+
+	Mat44 rotateMat = Mat44::MakeYRotationDegrees(90.f);
+	TransformVertexArray3D(verts, rotateMat);
+	Mat44 lookAtMatrix = GetLookAtMatrix(start, end);
+	TransformVertexArray3D(verts, lookAtMatrix);
+}
+
+
+void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius, const Rgba8 color, const AABB2& UVs, int numSlices)
+{
+	float height = (end - start).GetLength();
+
+	Vec3 localStart(0.0f, 0.0f, 0.f);
+	Vec3 localEnd(0.f, 0.f, height);
+
+	std::vector<Vec3> bottomCircle;
+	for (int i = 0; i < numSlices; i++)
+	{
+		float x = radius * CosDegrees(i * 360.f / numSlices);
+		float y = radius * SinDegrees(i * 360.f / numSlices);
+		bottomCircle.push_back(Vec3(x, y, 0.f));
+	}
+
+	//side
+	//float eachUVWidth = (1.f / numSlices) * UVs.GetDimensions().x;
+	Vec2 uvCenter = Vec2(UVs.GetCenter().x, UVs.GetCenter().y);
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+		float u1 = (UVs.GetDimensions().x / 2.f) * CosDegrees(i * 360.f / numSlices);
+		float v1 = (UVs.GetDimensions().y / 2.f) * SinDegrees(i * 360.f / numSlices);
+		float u2 = (UVs.GetDimensions().x / 2.f) * CosDegrees((i + 1) * 360.f / numSlices);
+		float v2 = (UVs.GetDimensions().y / 2.f) * SinDegrees((i + 1) * 360.f / numSlices);
+		verts.push_back(Vertex_PCU(bottomCircle[i], color, uvCenter + Vec2(u1, v1)));
+		verts.push_back(Vertex_PCU(bottomCircle[nextI], color, uvCenter + Vec2(u2, v2)));
+		verts.push_back(Vertex_PCU(localEnd, color, uvCenter));
+		
+	}
+
+	//bot
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+		float u1 = (UVs.GetDimensions().x / 2.f) * CosDegrees((numSlices - i) * 360.f / numSlices);
+		float v1 = (UVs.GetDimensions().y / 2.f) * SinDegrees((numSlices - i) * 360.f / numSlices);
+		float u2 = (UVs.GetDimensions().x / 2.f) * CosDegrees((numSlices - i - 1) * 360.f / numSlices);
+		float v2 = (UVs.GetDimensions().y / 2.f) * SinDegrees((numSlices - i - 1) * 360.f / numSlices);
+		verts.push_back(Vertex_PCU(localStart, color, uvCenter));
+		verts.push_back(Vertex_PCU(bottomCircle[nextI], color, uvCenter + Vec2(u2, v2)));
+		verts.push_back(Vertex_PCU(bottomCircle[i], color, uvCenter + Vec2(u1, v1)));
+	}
+
+	Mat44 rotateMat = Mat44::MakeYRotationDegrees(90.f);
+	TransformVertexArray3D(verts, rotateMat);
+	Mat44 lookAtMatrix = GetLookAtMatrix(start, end);
+	TransformVertexArray3D(verts, lookAtMatrix);
+}
+
+AABB2 GetVertexBounds2D(const std::vector<Vertex_PCU>& verts)
+{
+	if (verts.empty()) 
+	{
+		return AABB2(); 
+	}
+
+	float minX = verts[0].m_position.x;
+	float minY = verts[0].m_position.y;
+	float maxX = verts[0].m_position.x;
+	float maxY = verts[0].m_position.y;
+
+	for (int i = 1; i < (int)verts.size(); i++)
+	{
+		const Vec2& pos = Vec2(verts[i].m_position.x, verts[i].m_position.y);
+
+		if (pos.x < minX) minX = pos.x;
+		if (pos.y < minY) minY = pos.y;
+
+		if (pos.x > maxX) maxX = pos.x;
+		if (pos.y > maxY) maxY = pos.y;
+	}
+	return AABB2(Vec2(minX, minY), Vec2(maxX, maxY));
+}

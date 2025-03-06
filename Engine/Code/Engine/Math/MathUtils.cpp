@@ -9,6 +9,8 @@
 #include "Engine/Math/Capsule2.hpp"
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Math/FloatRange.hpp"
+#include <Engine/Core/EngineCommon.hpp>
+
 #define PI 3.1415926535897f
 
 //Angle
@@ -187,6 +189,16 @@ bool DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, f
 	}
 	else
 		return false;
+}
+
+bool DoAABB2Overlap(AABB2 const& box1, AABB2 const& box2)
+{
+	if (box1.m_maxs.x <= box2.m_mins.x || box1.m_mins.x >= box2.m_maxs.x) 
+		return false;
+	if (box1.m_maxs.y <= box2.m_mins.y || box1.m_mins.y >= box2.m_maxs.y) 
+		return false;
+
+	return true;
 }
 
 bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRadius)
@@ -705,4 +717,65 @@ float DenormalizeByte(float f)
 		return 255.f;
 	else
 		return (float)RoundDownToInt(f * 256.f);
+}
+
+Mat44 GetLookAtMatrix(const Vec3& pos,const Vec3& target)
+{
+	Vec3 I = (target - pos).GetNormalized();
+	Vec3 J;
+	Vec3 K;
+	Vec3 z = Vec3(0.f, 0.f, 1.f);
+	Vec3 x = Vec3(1.f, 0.f, 0.f);
+	if (abs(DotProduct3D(z, I)) < 1.f)
+	{
+		J = CrossProduct3D(z, I);
+		K = CrossProduct3D(I, J);
+	}
+	else
+	{
+		K = CrossProduct3D(I, x);
+		J = CrossProduct3D(K, I);
+	}
+
+	Mat44 rotationMatrix;
+	rotationMatrix.SetIJK3D(I, J, K);
+	Mat44 translationMatrix;
+	translationMatrix.SetTranslation3D(pos);
+	translationMatrix.Append(rotationMatrix);
+	return translationMatrix;
+}
+
+Mat44 GetBillboardMatrix(BillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& targetPos, const Vec3& billboardPosition, const Vec2& billboardScale)
+{
+	UNUSED(billboardScale);
+	if (billboardType == BillboardType::WORLD_UP_FACING)
+	{
+		return GetLookAtMatrix(billboardPosition,targetPos);
+	}
+	else if (billboardType == BillboardType::WORLD_UP_OPPOSING)
+	{
+		Mat44 translation = Mat44::MakeTranslation3D(billboardPosition);
+
+		Mat44 reflectedMatrix = targetMatrix;
+		reflectedMatrix.SetIJK3D(CrossProduct3D(targetMatrix.GetJBasis3D() * -1.f, Vec3(0.f, 0.f, 1.f)), targetMatrix.GetJBasis3D() * -1.f, Vec3(0.f,0.f,1.f));
+
+		translation.Append(reflectedMatrix);
+		return translation;
+	}
+	else if (billboardType == BillboardType::FULL_FACING)
+	{
+		Vec3 curTarget = Vec3(targetPos.x, targetPos.y, billboardPosition.z);
+		return GetLookAtMatrix(billboardPosition, curTarget);
+	}
+	else if (billboardType == BillboardType::FULL_OPPOSING)
+	{
+		Mat44 translation = Mat44::MakeTranslation3D(billboardPosition);
+
+		Mat44 reflectedMatrix = targetMatrix;
+		reflectedMatrix.SetIJK3D(targetMatrix.GetIBasis3D() * -1.f, targetMatrix.GetJBasis3D() * -1.f, targetMatrix.GetKBasis3D());
+
+		translation.Append(reflectedMatrix);
+		return translation;
+	}
+	return Mat44();
 }

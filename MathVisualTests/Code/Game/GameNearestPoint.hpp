@@ -3,15 +3,18 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/Triangle2.hpp"
 
+class Clock;
+
 class GameNearestPoint :public Game
 {
 public:
 	GameNearestPoint();
 	~GameNearestPoint();
-	void Update(float deltaTime) override;
+	void Update() override;
 	void Renderer() const override;
 	void UpdateCamera(float deltaTime) override;
 
+	Clock* m_gameClock = nullptr;
 private:
 	void UpdateInput(float deltaTime);
 	void RenderBasicShape() const;

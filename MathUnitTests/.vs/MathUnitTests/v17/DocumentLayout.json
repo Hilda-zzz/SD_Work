@@ -185,8 +185,7 @@
               "ViewState": "AQIAAG8AAAAAAAAAAAAawIMAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-10-17T22:13:28.385Z",
-              "IsPinned": true,
-              "EditorCaption": " [Read Only]"
+              "IsPinned": true
             },
             {
               "$type": "Bookmark",
@@ -202,8 +201,7 @@
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Math\\Mat44.hpp",
               "ViewState": "AQIAADYAAAAAAAAAAAAAAEAAAAAjAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-11-13T23:25:49.045Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-11-13T23:25:49.045Z"
             },
             {
               "$type": "Document",
@@ -215,8 +213,7 @@
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Math\\Vec2.cpp [Read Only]",
               "ViewState": "AQIAABEBAAAAAAAAAAAvwCABAAABAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-09-08T19:47:52.035Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2024-09-08T19:47:52.035Z"
             },
             {
               "$type": "Document",
@@ -228,8 +225,7 @@
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Math\\Vec3.cpp",
               "ViewState": "AQIAALwAAAAAAAAAAAAvwMwAAAAVAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-09-08T20:01:24.664Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-09-08T20:01:24.664Z"
             },
             {
               "$type": "Document",
@@ -241,8 +237,7 @@
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Math\\Vec3.hpp",
               "ViewState": "AQIAAA0AAAAAAAAAAAAvwBoAAAAQAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-09-08T20:00:55.126Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-09-08T20:00:55.126Z"
             },
             {
               "$type": "Document",
@@ -254,8 +249,7 @@
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Math\\Vec2.hpp [Read Only]",
               "ViewState": "AQIAACcAAAAAAAAAAAAAADgAAAAPAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-11-13T23:26:45.41Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2024-11-13T23:26:45.41Z"
             },
             {
               "$type": "Document",
@@ -265,7 +259,7 @@
               "RelativeDocumentMoniker": "Code\\Game\\UnitTests_MP2A2.cpp",
               "ToolTip": "C:\\p4\\Personal\\SD\\MathUnitTests\\Code\\Game\\UnitTests_MP2A2.cpp [Read Only]",
               "RelativeToolTip": "Code\\Game\\UnitTests_MP2A2.cpp [Read Only]",
-              "ViewState": "AQIAALgAAAAAAAAAAAAawEsBAAAAAAAA",
+              "ViewState": "AQIAAMwAAAAAAAAAAAAwwEsBAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-02-10T04:36:33.204Z",
               "EditorCaption": " [Read Only]"
@@ -280,8 +274,7 @@
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Math\\Mat44.cpp",
               "ViewState": "AQIAANoBAAAAAAAAAAAvwOQBAAANAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-11-13T23:25:19.652Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-11-13T23:25:19.652Z"
             },
             {
               "$type": "Document",
@@ -293,8 +286,7 @@
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Math\\Vec4.cpp [Read Only]",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAAYAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-11-13T23:26:35.894Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2024-11-13T23:26:35.894Z"
             },
             {
               "$type": "Document",
@@ -306,8 +298,7 @@
               "RelativeToolTip": "Code\\Game\\UnitTests_MP2A2.hpp",
               "ViewState": "AQIAAB8AAAAAAAAAAAAvwCwAAABLAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-10T04:36:42.804Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-02-10T04:36:42.804Z"
             },
             {
               "$type": "Document",
@@ -319,8 +310,7 @@
               "RelativeToolTip": "..\\Engine\\Code\\Engine\\Math\\Vec4.hpp [Read Only]",
               "ViewState": "AQIAAAYAAAAAAAAAAAAAAB8AAAANAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-11-13T23:26:14.887Z",
-              "EditorCaption": " [Read Only]"
+              "WhenOpened": "2024-11-13T23:26:14.887Z"
             },
             {
               "$type": "Document",

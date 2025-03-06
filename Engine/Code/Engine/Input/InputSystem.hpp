@@ -2,6 +2,7 @@
 
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Input/KeyButtonState.hpp"
+#include "Engine/Math/IntVec2.hpp"
 class NamedStrings;
 typedef NamedStrings EventArgs;
 
@@ -35,11 +36,22 @@ extern unsigned char const KEYCODE_INSERT;
 extern unsigned char const KEYCODE_DELETE;
 extern unsigned char const KEYCODE_HOME;
 extern unsigned char const KEYCODE_END;
+extern unsigned char const KEYCODE_LEFT_SHIFT;
 
 constexpr int NUM_KEYCODES = 256;
 constexpr int NUM_XBOX_CONTROLLERS = 4;
 
+enum class CursorMode
+{
+	POINTER,
+	FPS
+};
 
+struct CursorState
+{
+	IntVec2 m_cursorClientDelta;
+	IntVec2 m_cursorClientPosition;
+};
 
 struct InputSystemConfig
 {
@@ -66,6 +78,14 @@ public:
 	XboxController const& GetController(int controllerID);
 	XboxController& GetControllerAndSet(int controllerID);
 
+	void SetCursorMode(CursorMode cursorMode);
+
+	//only for fps mode
+	Vec2 GetCursorClientDelta() const;
+
+	Vec2 GetCursorClientPosition() const;
+
+	//Vec2 GetCursorNormalizedPosition() const;
 
 public:
 	static bool Event_KeyPressed(EventArgs& args);
@@ -74,4 +94,9 @@ public:
 protected:
 	KeyButtonState m_keyStates[NUM_KEYCODES];
 	XboxController m_controllers[NUM_XBOX_CONTROLLERS];
+	CursorMode m_cursorMode = CursorMode::POINTER;
+	//CursorState m_cursorState;
+	Vec2 m_lastCursorPos = Vec2::ZERO;
+	Vec2 m_curCursorPos = Vec2::ZERO;
+	Vec2 m_cursorClientDelta = Vec2::ZERO;
 };

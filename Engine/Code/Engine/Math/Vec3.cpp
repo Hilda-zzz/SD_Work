@@ -2,6 +2,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
+#include <cmath>
 extern Vec2 ori;
 Vec3::Vec3(float x, float y, float z):x(x),y(y),z(z)
 {
@@ -108,6 +109,32 @@ void Vec3::operator=(Vec3 const& copyFrom)
 	x = copyFrom.x;
 	y = copyFrom.y;
 	z = copyFrom.z;
+}
+
+const Vec3 Vec3::MakeFromPolarRadians(float latitudeRadians, float longitudeRadians, float length)
+{
+	return Vec3(length * std::cos(latitudeRadians) * std::cos(longitudeRadians),
+		length * std::cos(latitudeRadians) * std::sin(longitudeRadians),
+		-length* std::sin(longitudeRadians));
+}
+
+const Vec3 Vec3::MakeFromPolarDegrees(float latitudeDegrees, float longitudeDegrees, float length)
+{
+	return Vec3(length * CosDegrees(latitudeDegrees) * CosDegrees(longitudeDegrees),
+		length * CosDegrees(latitudeDegrees) * SinDegrees(longitudeDegrees),
+		length * SinDegrees(latitudeDegrees));
+}
+
+void Vec3::SetLength(float newLength)
+{
+	float length = GetLength();
+	if (length > 0.f)
+	{
+		float scale = newLength / length;
+		x *= scale;
+		y *= scale;
+		z *= scale;
+	}
 }
 
 //-----------------------------------------------------------------------------------------------

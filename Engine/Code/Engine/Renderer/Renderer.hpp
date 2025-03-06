@@ -22,6 +22,8 @@ struct ID3D11RenderTargetView;
 struct ID3D11RasterizerState;
 struct ID3D11BlendState;
 struct ID3D11SamplerState;
+struct ID3D11DepthStencilView;
+struct ID3D11DepthStencilState;
 
 #if defined(OPAQUE)
 #undef OPAQUE
@@ -39,6 +41,24 @@ enum class SamplerMode
 {
 	POINT_CLAMP,
 	BILINEAR_WRAP,
+	COUNT
+};
+
+enum class RasterizerMode
+{
+	SOLID_CULL_NONE,
+	SOLID_CULL_BACK,
+	WIREFRAME_CULL_NONE,
+	WIREFRAME_CULL_BACK,
+	COUNT
+};
+
+enum class DepthMode
+{
+	DISABLED,
+	READ_ONLY_ALWYAS,
+	READ_ONLY_LESS_EQUAL,
+	READ_WRITE_LESS_EQUAL,
 	COUNT
 };
 
@@ -62,6 +82,7 @@ public:
 	void		EndCamera(const Camera& camera);
 	void		DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs);
 	void		DrawVertexArray(const std::vector<Vertex_PCU>& vertexs);
+	//void		DrawVertexArrayTest(const std::vector<Vertex_PCU>& vertexs,Mat44 const& localToWorld);
 
 	Image*		CreateImageFromFile(char const* imagePath);
 	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath);
@@ -75,11 +96,14 @@ public:
 	
 	void		SetBlendMode(BlendMode blendMode);
 	void		SetSamplerMode(SamplerMode samplerMode);
+	void        SetDepthMode(DepthMode depthMode);
+	void        SetRasterizerMode(RasterizerMode rasterizerMode);
 	
 public:
 	std::vector<Texture*>		m_loadedTextures;
 	std::vector<BitmapFont*>	m_loadedFonts;
 
+	void SetModelConstants(const Mat44& modelToWorldTransform = Mat44(), const Rgba8& modelColor = Rgba8::WHITE);
 private:
 	RendererConfig			m_config;
 
@@ -98,6 +122,7 @@ protected:
 	Shader*					m_defaultShader = nullptr;
 	VertexBuffer*			m_immediateVBO = nullptr;
 	ConstantBuffer*			m_cameraCBO = nullptr;
+	ConstantBuffer*         m_modelCBO = nullptr;
 	const Texture*			m_defaultTexture = nullptr;
 protected:
 	Shader*			CreateShaderFromSource(char const* shaderName, char const* shaderSource);
@@ -123,4 +148,13 @@ protected:
 	ID3D11SamplerState* m_samplerState = nullptr;
 	SamplerMode			m_desiredSamplerMode = SamplerMode::POINT_CLAMP;
 	ID3D11SamplerState* m_samplerStates[(int)(SamplerMode::COUNT)] = {};
+	//----------------------------------------------------------------
+	RasterizerMode  m_desiredRasterizerMode = RasterizerMode::SOLID_CULL_BACK;
+	ID3D11RasterizerState* m_rasterizerStates[(int)(RasterizerMode::COUNT)] = {};
+	//----------------------------------------------------------------
+	ID3D11Texture2D* m_depthStencilTexture = nullptr;
+	ID3D11DepthStencilView* m_depthStencilDSV = nullptr;
+	ID3D11DepthStencilState* m_depthStencilStates[(int)(DepthMode::COUNT)] = {};
+	ID3D11DepthStencilState* m_depthStencilState = nullptr;
+	DepthMode m_desiredDepthMode = DepthMode::DISABLED;
 };

@@ -1,6 +1,7 @@
 C:\p4\Personal\SD\Engine\Code\ThirdParty\TinyXML2\tinyxml2.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\tinyxml2.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Audio\AudioSystem.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\AudioSystem.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\Clock.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\Clock.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DebugRenderSystem.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\DebugRenderSystem.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\DevConsole.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\EngineCommon.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\EngineCommon.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\ErrorWarningAssert.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\ErrorWarningAssert.obj

@@ -61,9 +61,6 @@ void App::Startup()
 	AudioSystemConfig audioConfig;
 	g_theAudio = new AudioSystem(audioConfig);
 	
-
-	g_theGame = new Game();
-
 	g_theEventSystem->Startup();
 	g_theWindow->Startup();
 	g_theRenderer->Startup();
@@ -72,6 +69,8 @@ void App::Startup()
 	g_theAudio->Startup();
 
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
+
+	g_theGame = new Game();
 }
 
 void App::Shutdown()

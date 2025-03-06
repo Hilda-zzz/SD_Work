@@ -52,16 +52,18 @@ void* m_dxgiDebugModule = nullptr;
 //-------------------------------------------------------------
 struct CameraConstants
 {
-	float OrthoMinX;
-	float OrthoMinY;
-	float OrthoMinZ;
-	float OrthoMaxX;
-	float OrthoMaxY;
-	float OrthoMaxZ;
-	float pad0;
-	float pad1;
+	Mat44 WorldToCameraTransform;
+	Mat44 CameraToRenderTransform;
+	Mat44 RenderToClipTransform;
 };
 static const int k_cameraConstantsSlot = 2;
+
+struct ModelConstants
+{
+	Mat44 ModelToWorldTransform;
+	float ModelColor[4];
+};
+static const int k_modelConstantsSlot = 3;
 //-------------------------------------------------------------
 BitmapFont* g_testFont = nullptr;
 
@@ -102,6 +104,8 @@ void Renderer::Startup()
 
 	m_desiredBlendMode = BlendMode::ALPHA;
 	m_desiredSamplerMode = SamplerMode::POINT_CLAMP;
+	m_desiredRasterizerMode = RasterizerMode::SOLID_CULL_BACK;
+	m_desiredDepthMode = DepthMode::READ_WRITE_LESS_EQUAL;
 
 	//create device and swap chain
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
@@ -151,6 +155,8 @@ void Renderer::Startup()
 
 	//---------------------------------------------------------
 	//Set rasterizer state
+
+	//SOLID_CULL_NONE
 	D3D11_RASTERIZER_DESC rasterizerDesc = {};
 	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
 	rasterizerDesc.CullMode = D3D11_CULL_NONE;
@@ -162,17 +168,57 @@ void Renderer::Startup()
 	rasterizerDesc.ScissorEnable = false;
 	rasterizerDesc.MultisampleEnable = false;
 	rasterizerDesc.AntialiasedLineEnable = true;
-
-	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerState);
+	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)RasterizerMode::SOLID_CULL_NONE]);
 	if (!SUCCEEDED(hr))
 	{
-		ERROR_AND_DIE("Could not create rasterizer state.");
+		ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed");
 	}
 
-	m_deviceContext->RSSetState(m_rasterizerState);
+	//SOLID_CULL_BACK
+	rasterizerDesc = {};
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_BACK;
+	rasterizerDesc.FrontCounterClockwise = true;
+	rasterizerDesc.DepthClipEnable = true;
+	rasterizerDesc.AntialiasedLineEnable = true;
+	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)RasterizerMode::SOLID_CULL_BACK]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_BACK failed");
+	}
+
+	//WIREFRAME_CULL_NONE
+	rasterizerDesc = {};
+	rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+	rasterizerDesc.CullMode = D3D11_CULL_NONE;
+	rasterizerDesc.FrontCounterClockwise = true;
+	rasterizerDesc.DepthClipEnable = true;
+	rasterizerDesc.AntialiasedLineEnable = true;
+	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)RasterizerMode::WIREFRAME_CULL_NONE]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_NONE failed");
+	}
+
+	//WIREFRAME_CULL_BACK
+	rasterizerDesc = {};
+	rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+	rasterizerDesc.CullMode = D3D11_CULL_BACK;
+	rasterizerDesc.FrontCounterClockwise = true;
+	rasterizerDesc.DepthClipEnable = true;
+	rasterizerDesc.AntialiasedLineEnable = true;
+	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)RasterizerMode::WIREFRAME_CULL_BACK]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed");
+	}
+
+	//m_deviceContext->RSSetState(m_rasterizerState);
+
 	//---------------------------------------------------------
 
 	m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
+	m_modelCBO = CreateConstantBuffer(sizeof(ModelConstants));
 
 	//---------------------------------------------------------
 	// OPAQUE
@@ -216,11 +262,9 @@ void Renderer::Startup()
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[(int)BlendMode::ADDITIVE]);
 	if (FAILED(hr)) { ERROR_AND_DIE("ADDITIVE blend state creation failed"); }
+
 	//---------------------------------------------------------
-	Image defaultImage = Image(IntVec2(2, 2), Rgba8::WHITE);
-	m_defaultTexture = CreateTextureFromImage(defaultImage);
-	BindTexture(nullptr);
-	//---------------------------------------------------------
+	//Sample
 	D3D11_SAMPLER_DESC samplerDesc = {};
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -246,14 +290,83 @@ void Renderer::Startup()
 
 	m_samplerState = m_samplerStates[(int)m_desiredSamplerMode];
 	m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+	//---------------------------------------------------------
+	//Create depth stencil texture and view
+	D3D11_TEXTURE2D_DESC depthTextureDesc = {};
+	depthTextureDesc.Width = m_config.m_window->GetClientDimensions().x;
+	depthTextureDesc.Height = m_config.m_window->GetClientDimensions().y;
+	depthTextureDesc.MipLevels = 1;
+	depthTextureDesc.ArraySize = 1;
+	depthTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthTextureDesc.SampleDesc.Count = 1;
 
+	hr = m_device->CreateTexture2D(&depthTextureDesc, nullptr, &m_depthStencilTexture);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could not create texture for depth stencil.");
+	}
+
+	hr = m_device->CreateDepthStencilView(m_depthStencilTexture, nullptr, &m_depthStencilDSV);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could not create depth stencil view.");
+	}
+
+	//---------------------------------------------------------
+	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
+
+	hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)DepthMode::DISABLED]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateDepthStencilState for DepthMode::DISABLE failed.");
+	}
+
+	depthStencilDesc = {};
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+	hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)DepthMode::READ_ONLY_ALWYAS]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_ONLY_ALWYAS failed.");
+	}
+
+	depthStencilDesc = {};
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)DepthMode::READ_ONLY_LESS_EQUAL]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_ONLY_LESS_EQUAL failed.");
+	}
+
+	depthStencilDesc = {};
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)DepthMode::READ_WRITE_LESS_EQUAL]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_WRITE_LESS_EQUAL failed.");
+	}
+
+	m_depthStencilState = m_depthStencilStates[(int)m_desiredDepthMode];
+	m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
+	//---------------------------------------------------------
+	Image defaultImage = Image(IntVec2(2, 2), Rgba8::WHITE);
+	m_defaultTexture = CreateTextureFromImage(defaultImage);
+	BindTexture(nullptr);
 	g_testFont =CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 }
 
 void Renderer::BeginFrame()
 {
 	//Set render target
-	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
+	//m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
+	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
 }
 
 void Renderer::EndFrame()
@@ -272,7 +385,7 @@ void Renderer::EndFrame()
 
 void Renderer::Shutdown()
 {
-	DX_SAFE_RELEASE(m_rasterizerState);
+	//DX_SAFE_RELEASE(m_rasterizerState);
 	DX_SAFE_RELEASE(m_renderTargetView);
 	DX_SAFE_RELEASE(m_swapChain);
 	DX_SAFE_RELEASE(m_deviceContext);
@@ -290,6 +403,9 @@ void Renderer::Shutdown()
 	delete m_cameraCBO;
 	m_cameraCBO = nullptr;
 
+	delete m_modelCBO;
+	m_modelCBO = nullptr;
+
 	for (int i = 0; i < (int)BlendMode::COUNT; i++)
 	{
 		DX_SAFE_RELEASE(m_blendStates[i]);
@@ -300,6 +416,18 @@ void Renderer::Shutdown()
 	{
 		DX_SAFE_RELEASE(m_samplerStates[i]);
 	}
+
+	for (int i = 0; i < (int)RasterizerMode::COUNT; i++)
+	{
+		DX_SAFE_RELEASE(m_rasterizerStates[i]);
+	}
+
+	for (int i = 0; i < (int)DepthMode::COUNT; i++)
+	{
+		DX_SAFE_RELEASE(m_depthStencilStates[i]);
+	}
+	DX_SAFE_RELEASE(m_depthStencilTexture);
+	DX_SAFE_RELEASE(m_depthStencilDSV);
 
 	for (BitmapFont* bitFont : m_loadedFonts)
 	{
@@ -332,6 +460,7 @@ void Renderer::ClearScreen(const Rgba8& clearColor)
 	float colorAsFloats[4];
 	clearColor.GetAsFloats(colorAsFloats);
 	m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
+	m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 }
 
 void Renderer::BeginCamera(const Camera& camera)
@@ -348,14 +477,20 @@ void Renderer::BeginCamera(const Camera& camera)
 	m_deviceContext->RSSetViewports(1, &viewport);
 
 	CameraConstants camConstants;
-	camConstants.OrthoMinX = camera.GetOrthoBottomLeft().x;
-	camConstants.OrthoMinY = camera.GetOrthoBottomLeft().y;
-	camConstants.OrthoMinZ = 0.f;
-	camConstants.OrthoMaxX = camera.GetOrthoTopRight().x;
-	camConstants.OrthoMaxY = camera.GetOrthoTopRight().y;
-	camConstants.OrthoMaxZ = 1.f;
+	camConstants.WorldToCameraTransform = camera.GetWorldToCameraTransform();
+	camConstants.CameraToRenderTransform = camera.GetCameraToRenderTransorm();
+	camConstants.RenderToClipTransform = camera.GetRenderToClipTransform();
 	CopyCPUToGPU(&camConstants, sizeof(CameraConstants), m_cameraCBO);
 	BindConstantBuffer(k_cameraConstantsSlot, m_cameraCBO);
+
+	ModelConstants modelConstants;
+	modelConstants.ModelColor[0]=255.f;
+	modelConstants.ModelColor[1] = 255.f;
+	modelConstants.ModelColor[2] = 255.f;
+	modelConstants.ModelColor[3] = 255.f;
+	modelConstants.ModelToWorldTransform = Mat44();
+	CopyCPUToGPU(&modelConstants, sizeof(modelConstants), m_modelCBO);
+	BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
 }
 
 void Renderer::EndCamera(const Camera& camera)
@@ -374,6 +509,13 @@ void Renderer::DrawVertexArray(const std::vector<Vertex_PCU>& vertexs)
 	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), m_immediateVBO);
 	DrawVertexBuffer(m_immediateVBO, (int)vertexs.size());
 }
+//void Renderer::DrawVertexArrayTest(const std::vector<Vertex_PCU>& vertexs, Mat44 const& localToWorld)
+//{
+////	ModelConstants modelConstants;
+////	modelConstants.ModelToWorldTransform = localToWorld;
+////	CopyCPUToGPU(&modelConstants, sizeof(modelConstants), m_modelCBO);
+////	BindConstantBuffer(k_modeConstantsSlot, m_modelCBO);
+//}
 //-------------------------------------------------------------
 
 Image* Renderer::CreateImageFromFile(char const* imagePath)
@@ -512,6 +654,14 @@ void Renderer::SetBlendMode(BlendMode blendMode)
 void Renderer::SetSamplerMode(SamplerMode samplerMode)
 {
 	m_desiredSamplerMode = samplerMode;
+}
+void Renderer::SetDepthMode(DepthMode depthMode)
+{
+	m_desiredDepthMode = depthMode;
+}
+void Renderer::SetRasterizerMode(RasterizerMode rasterizerMode)
+{
+	m_desiredRasterizerMode = rasterizerMode;
 }
 //-------------------------------------------------------------
 
@@ -724,6 +874,27 @@ void Renderer::SetStateIfChanged()
 		m_samplerState = m_samplerStates[(int)m_desiredSamplerMode];
 		m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 	}
+
+	if (m_rasterizerStates[(int)m_desiredRasterizerMode] != m_rasterizerState)
+	{
+		m_rasterizerState = m_rasterizerStates[(int)m_desiredRasterizerMode];
+		m_deviceContext->RSSetState(m_rasterizerState);
+	}
+
+	if (m_depthStencilStates[(int)m_desiredDepthMode] != m_depthStencilState)
+	{
+		m_depthStencilState=m_depthStencilStates[(int)m_desiredDepthMode];
+		m_deviceContext->OMSetDepthStencilState(m_depthStencilState,0);
+	}
+}
+
+void Renderer::SetModelConstants(const Mat44& modelToWorldTransform, const Rgba8& modelColor)
+{
+	ModelConstants modelConstants;
+	modelColor.GetAsFloats(&modelConstants.ModelColor[0]);
+	modelConstants.ModelToWorldTransform = modelToWorldTransform;
+	CopyCPUToGPU(&modelConstants, sizeof(modelConstants), m_modelCBO);
+	BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
 }
 
 

@@ -42,6 +42,12 @@ public:
 
 	// Standalone "friend" functions that are conceptually, but not actually, part of Vec2::
 	friend Vec3 const operator*(float uniformScale, Vec3 const& vecToScale);	// float * vec2
+
+	const static Vec3 MakeFromPolarRadians(float latitudeRadians, float longitudeRadians, float length = 1.f);
+
+	const static Vec3 MakeFromPolarDegrees(float latitudeDegrees, float longitudeDegrees, float length = 1.f);
+
+	void SetLength(float newLength);
 };
 
 

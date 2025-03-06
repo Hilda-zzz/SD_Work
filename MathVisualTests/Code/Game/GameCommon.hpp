@@ -1,6 +1,6 @@
 #pragma once
 #include "Engine/Core/EngineCommon.hpp"
-
+#include "Engine/Renderer/Renderer.hpp"
 class App;
 class InputSystem;
 class AudioSystem;
@@ -8,12 +8,13 @@ class Renderer;
 class Window;
 struct Vec2;
 struct Rgba8;
+class Clock;
 
 extern App* g_theApp;
 extern InputSystem* g_theInput;
 extern Window* g_theWindow;
 extern Renderer* g_theRenderer;
-extern AudioSystem* g_theAudio;
+extern Clock* g_systemClock;
 
 constexpr float		SCREEN_SIZE_X=1600.f;
 constexpr float		SCREEN_SIZE_Y=800.f;

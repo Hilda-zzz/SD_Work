@@ -27,6 +27,7 @@ void DiscObstacle::Render()
 	}
 	std::vector<Vertex_PCU> disc_verts;
 	AddVertsForDisc2D(disc_verts, m_center, m_radius, curColor);
+	g_theRenderer->SetModelConstants();
 	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(disc_verts);
 }

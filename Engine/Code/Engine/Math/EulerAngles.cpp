@@ -14,18 +14,29 @@ void EulerAngles::GetAsVectors_IFwd_JLeft_KUp(Vec3& out_forwardIBasis, Vec3& out
 	out_upKBasis = matResult.GetKBasis3D();
 }
 
+Vec3 const EulerAngles::GetForward_IFwd() const
+{
+	Mat44 matResult = this->GetAsMatrix_IFwd_JLeft_KUp();
+	Vec3 out_forwardIBasis = matResult.GetIBasis3D();
+	return out_forwardIBasis;
+}
+
 Mat44 EulerAngles::GetAsMatrix_IFwd_JLeft_KUp() const
 {
 	Mat44 matResult = Mat44();
-	//float rollDegrees = m_rollDegrees;
-	//float pitchDegrees = m_pitchDegrees;
-	//float yawDegrees = m_yawDegrees;
-	//if (m_rollDegrees < 0.f) rollDegrees = 360.f + m_rollDegrees;
-	//if (m_pitchDegrees < 0.f) pitchDegrees = 360.f + m_pitchDegrees;
-	//if (m_yawDegrees < 0.f) yawDegrees = 360.f + m_yawDegrees;
 	matResult.AppendZRotation(m_yawDegrees);
 	matResult.AppendYRotation(m_pitchDegrees);
 	matResult.AppendXRotation(m_rollDegrees);
 	
 	return matResult;
+}
+
+EulerAngles EulerAngles::operator*(float scale) const
+{
+	return EulerAngles(m_yawDegrees * scale, m_pitchDegrees * scale,m_rollDegrees*scale);
+}
+
+EulerAngles EulerAngles::operator+(EulerAngles const& eulerAnglesToAdd) const
+{
+	return EulerAngles(m_yawDegrees + eulerAnglesToAdd.m_yawDegrees, m_pitchDegrees+ eulerAnglesToAdd.m_pitchDegrees, m_rollDegrees + eulerAnglesToAdd.m_rollDegrees);
 }
