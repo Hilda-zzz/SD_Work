@@ -197,6 +197,47 @@ void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, const Vec3& bottomLeft, c
 	verts.push_back(Vertex_PCU(Vec3(topLeft.x, topLeft.y, topLeft.z), color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));						  
 }
 
+void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indexes, const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft, const Rgba8& color, const AABB2& UVs)
+{
+	unsigned int startIndex = (unsigned int)verts.size();
+
+	verts.push_back(Vertex_PCU(Vec3(bottomLeft.x, bottomLeft.y, bottomLeft.z), color, UVs.m_mins));                    
+	verts.push_back(Vertex_PCU(Vec3(bottomRight.x, bottomRight.y, bottomRight.z), color, Vec2(UVs.m_maxs.x, UVs.m_mins.y))); 
+	verts.push_back(Vertex_PCU(Vec3(topRight.x, topRight.y, topRight.z), color, UVs.m_maxs));                        
+	verts.push_back(Vertex_PCU(Vec3(topLeft.x, topLeft.y, topLeft.z), color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));    
+
+	indexes.push_back(startIndex + 0);
+	indexes.push_back(startIndex + 1);
+	indexes.push_back(startIndex + 2);
+
+	indexes.push_back(startIndex + 0);
+	indexes.push_back(startIndex + 2);
+	indexes.push_back(startIndex + 3);
+}
+
+void AddVertsForQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft, const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 edge1 = bottomRight - bottomLeft;
+	Vec3 edge2 = topLeft - bottomLeft;
+	Vec3 normal = CrossProduct3D(edge1, edge2).GetNormalized();
+	Vec3 tangent = edge1.GetNormalized();
+	Vec3 bitangent = CrossProduct3D(normal, tangent);
+
+	unsigned int startIndex = (unsigned int)verts.size();
+	verts.push_back(Vertex_PCUTBN(bottomLeft, color, UVs.m_mins, tangent, bitangent, normal));
+	verts.push_back(Vertex_PCUTBN(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, normal));
+	verts.push_back(Vertex_PCUTBN(topRight, color, UVs.m_maxs, tangent, bitangent, normal));
+	verts.push_back(Vertex_PCUTBN(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, normal));
+
+	indexes.push_back(startIndex + 0);
+	indexes.push_back(startIndex + 1);
+	indexes.push_back(startIndex + 2);
+
+	indexes.push_back(startIndex + 0);
+	indexes.push_back(startIndex + 2);
+	indexes.push_back(startIndex + 3);
+}
+
 void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, const AABB3& bounds, const Rgba8& color, const AABB2& UVs)
 {
 	Vec3 mins = bounds.m_mins;
@@ -320,6 +361,8 @@ void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, flo
 
 void AddVertsForCylinder3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius, const Rgba8 color, const AABB2& UVs, int numSlices)
 {
+	size_t originalSize = verts.size();
+
 	float height = (end - start).GetLength();
 
 	Vec3 localStart(0.0f, 0.0f, 0.f);
@@ -373,10 +416,16 @@ void AddVertsForCylinder3D(std::vector<Vertex_PCU>& verts, const Vec3& start, co
 		verts.push_back(Vertex_PCU(topCircle[nextI], color, uvCenter + Vec2(u2, v2)));
 	}
 
+
 	Mat44 rotateMat = Mat44::MakeYRotationDegrees(90.f);
-	TransformVertexArray3D(verts, rotateMat);
 	Mat44 lookAtMatrix = GetLookAtMatrix(start, end);
-	TransformVertexArray3D(verts, lookAtMatrix);
+	lookAtMatrix.Append(rotateMat);
+
+
+	for (size_t i = originalSize; i < verts.size(); i++)
+	{
+		verts[i].m_position = lookAtMatrix.TransformPosition3D(verts[i].m_position);
+	}
 }
 
 
@@ -428,6 +477,135 @@ void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const 
 	TransformVertexArray3D(verts, rotateMat);
 	Mat44 lookAtMatrix = GetLookAtMatrix(start, end);
 	TransformVertexArray3D(verts, lookAtMatrix);
+}
+
+void AddVertsForAABB3DWireFrame(std::vector<Vertex_PCU>& verts, const AABB3& bounds, const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 mins = bounds.m_mins;
+	Vec3 maxs = bounds.m_maxs;
+	float radius = 0.03f; 
+
+	AddVertsForCylinder3D(verts, Vec3(mins.x, mins.y, mins.z), Vec3(maxs.x, mins.y, mins.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(maxs.x, mins.y, mins.z), Vec3(maxs.x, maxs.y, mins.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(maxs.x, maxs.y, mins.z), Vec3(mins.x, maxs.y, mins.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(mins.x, maxs.y, mins.z), Vec3(mins.x, mins.y, mins.z), radius, color, UVs);
+
+	AddVertsForCylinder3D(verts, Vec3(mins.x, mins.y, maxs.z), Vec3(maxs.x, mins.y, maxs.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(maxs.x, mins.y, maxs.z), Vec3(maxs.x, maxs.y, maxs.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(maxs.x, maxs.y, maxs.z), Vec3(mins.x, maxs.y, maxs.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(mins.x, maxs.y, maxs.z), Vec3(mins.x, mins.y, maxs.z), radius, color, UVs);
+
+	AddVertsForCylinder3D(verts, Vec3(mins.x, mins.y, mins.z), Vec3(mins.x, mins.y, maxs.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(maxs.x, mins.y, mins.z), Vec3(maxs.x, mins.y, maxs.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(maxs.x, maxs.y, mins.z), Vec3(maxs.x, maxs.y, maxs.z), radius, color, UVs);
+	AddVertsForCylinder3D(verts, Vec3(mins.x, maxs.y, mins.z), Vec3(mins.x, maxs.y, maxs.z), radius, color, UVs);
+}
+
+void AddVertsForSphere3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius, const Rgba8& color, const AABB2& UVs, int numSlices, int numStacks)
+{
+	size_t originalSize = verts.size();
+
+	float lineRadius = radius * 0.01f; 
+
+	std::vector<Vec3> sphereVerts;
+	sphereVerts.reserve(numSlices * (numStacks - 1) + 2);
+
+	sphereVerts.push_back(Vec3(0.f, 0.f, -radius));
+
+	float eachLongitude = 360.f / numSlices;
+	float eachLatitude = 180.f / numStacks;
+	for (int curStack = 0; curStack < numStacks - 1; curStack++)
+	{
+		float curLatitude = -90.f + (curStack + 1) * eachLatitude;
+		for (int curSlice = 0; curSlice < numSlices; curSlice++)
+		{
+			float curLongitude = curSlice * eachLongitude;
+			sphereVerts.push_back(Vec3::MakeFromPolarDegrees(curLatitude, curLongitude, radius));
+		}
+	}
+
+	sphereVerts.push_back(Vec3(0.f, 0.f, radius));
+
+	for (int curSlice = 0; curSlice < numSlices; curSlice++)
+	{
+		AddVertsForCylinder3D(verts, sphereVerts[0], sphereVerts[1 + curSlice], lineRadius, color, UVs, 8);
+		for (int curStack = 0; curStack < numStacks - 2; curStack++)
+		{
+			int baseIndex = 1 + curStack * numSlices;
+			int currentIndex = baseIndex + curSlice;
+			int nextIndex = baseIndex + numSlices + curSlice;
+
+			AddVertsForCylinder3D(verts, sphereVerts[currentIndex], sphereVerts[nextIndex], lineRadius, color, UVs, 8);
+		}
+		int lastRingStart = (int)sphereVerts.size() - 1 - numSlices;
+		AddVertsForCylinder3D(verts, sphereVerts[lastRingStart + curSlice], sphereVerts[sphereVerts.size() - 1], lineRadius, color, UVs, 8);
+	}
+
+	for (int curStack = 0; curStack < numStacks - 1; curStack++)
+	{
+		int baseIndex = 1 + curStack * numSlices;
+
+		for (int curSlice = 0; curSlice < numSlices; curSlice++)
+		{
+			int currentIndex = baseIndex + curSlice;
+			int nextIndex = baseIndex + ((curSlice + 1) % numSlices);
+
+			AddVertsForCylinder3D(verts, sphereVerts[currentIndex], sphereVerts[nextIndex], lineRadius, color, UVs, 8);
+		}
+	}
+
+	for (size_t i = originalSize; i < verts.size(); i++)
+	{
+		verts[i].m_position += center;
+	}
+}
+
+void AddVertsForCylinder3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius, const Rgba8 color, const AABB2& UVs, int numSlices)
+{
+	size_t originalSize = verts.size();
+	float height = (end - start).GetLength();
+	float lineRadius = radius * 0.02f; 
+
+	Vec3 localStart(0.0f, 0.0f, 0.f);
+	Vec3 localEnd(0.f, 0.f, height);
+
+	std::vector<Vec3> bottomCircle;
+	std::vector<Vec3> topCircle;
+
+	for (int i = 0; i < numSlices; i++)
+	{
+		float angle = i * 360.f / numSlices;
+		float x = radius * CosDegrees(angle);
+		float y = radius * SinDegrees(angle);
+
+		bottomCircle.push_back(Vec3(x, y, 0.f));
+		topCircle.push_back(Vec3(x, y, height));
+	}
+
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+		AddVertsForCylinder3D(verts, bottomCircle[i], bottomCircle[nextI], lineRadius, color, UVs, 4);
+	}
+
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+		AddVertsForCylinder3D(verts, topCircle[i], topCircle[nextI], lineRadius, color, UVs, 4);
+	}
+
+	for (int i = 0; i < numSlices; i++)
+	{
+		AddVertsForCylinder3D(verts, bottomCircle[i], topCircle[i], lineRadius, color, UVs, 4);
+	}
+
+	Mat44 rotateMat = Mat44::MakeYRotationDegrees(90.f);
+	Mat44 lookAtMatrix = GetLookAtMatrix(start, end);
+	lookAtMatrix.Append(rotateMat);
+	for (size_t i = originalSize; i < verts.size(); i++)
+	{
+		verts[i].m_position = lookAtMatrix.TransformPosition3D(verts[i].m_position);
+	}
 }
 
 AABB2 GetVertexBounds2D(const std::vector<Vertex_PCU>& verts)

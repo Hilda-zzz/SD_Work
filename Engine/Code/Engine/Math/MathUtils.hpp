@@ -1,6 +1,7 @@
 # pragma once
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Math/AABB3.hpp"
 struct Vec2;
 struct Vec3;
 struct Vec4;
@@ -63,7 +64,10 @@ bool IsPointInsideAABB2D(Vec2 const& point, AABB2 const& box);
 bool IsPointInsideCapsule2D(Vec2 const& point, Vec2 const& boneStart, Vec2 const& boneEnd, float radius);
 bool IsPointInsideOBB2D(Vec2 const& point, OBB2 const& orientbox);
 bool IsPointInsideTriangle2D(Vec2 const& point, Triangle2 const& triangle);
-
+//---------------------------------------------------------
+bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
+bool IsPointInsideCylinder3D(Vec3 const& point, Vec3 const& center, float radius, float halfHeight);
+bool IsPointInsideAABB3D(Vec3 const& point, AABB3 const& box);
 //GetNearest
 Vec2 const GetNearestPointOnDisc2D(Vec2 const& referencePosition, Vec2 const& discCenter, float discRadius);
 Vec2 const GetNearestPointOnAABB2D(Vec2 const& referencePosition, AABB2 const& box);
@@ -75,8 +79,12 @@ Vec2 const GetNearestPointOnCapsule2D(Vec2 const& referencePosition, Capsule2 co
 Vec2 const GetNearestPointOnCapsule2D(Vec2 const& referencePosition, Vec2 const& boneStart, Vec2 const& boneEnd, float radius);
 Vec2 const  GetNearestPointOnOBB2D(Vec2 const& referencePosition, OBB2 const& orientedBox);
 Vec2 const GetNearestPointOnTriangle2D(Vec2 const& referencePosition, Triangle2 const& triangle);
+//--------------------------------------------------------------------------------------------------
+Vec3 const GetNearestPointOnSphere3D(Vec3 const& referencePosition, Vec3 const& sphereCenter, float sphereRadius);
+Vec3 const GetNearestPointOnZCylinder3D(Vec3 const& referencePosition, Vec3 const& cylinderCenter, float cylinderRadius,float halfHeight);
+Vec3 const GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& box);
 
-//Geomertric query utilities
+//Geometric query utilities
 bool DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB);
 bool DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB);
 bool DoAABB2Overlap(AABB2 const& box1, AABB2 const& box2);
@@ -84,6 +92,19 @@ bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& 
 bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius);
 bool PushDiscOutOfAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& fixedBox);
+//------------------------------------------------------
+bool DoAABBsOverlap3D(AABB3 const& boxA, AABB3 const& boxB);
+bool DoSpheresOverlap3D(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB);
+bool DoZCylindersOverlap3D(Vec3 const& centerA, float radiusA, float halfHeightA,
+	Vec3 const& centerB, float radiusB, float halfHeightB);
+bool DoSphereAndAABBOverlap3D(Vec3 const& sphereCenter, float sphereRadius, AABB3 const& box);
+bool DoZCylinderAndAABBOverlap3D(Vec3 cylinderCenter, float cylinderRadius, float halfHeight, AABB3 const& box);
+bool DoZCylinderAndShpereOVerlap3D(Vec3 cylinderCenter, float cylinderRadius, float halfHeight,
+	Vec3 const& sphereCenter, float sphereRadius);
+bool PushZCylinderOutOfZCylinderFromZ3D(Vec3& mobileCylinderCenter, float mobileCylinderRadius, 
+	Vec3 const& fixedCylinderCenter, float fixedCylinderRadius);
+bool PushZCylinderOutOfEachOtherFromZ3D(Vec3& aCenter, float aRadius, Vec3& bCenter, float bRadius);
+
 
 //transform
 void TransformPosition2D(Vec2& posToTransform, float uniformScale, 
@@ -106,7 +127,6 @@ float NormalizeByte(unsigned char uc);
 float DenormalizeByte(float f);
 
 Mat44 GetLookAtMatrix(const Vec3& pos, const Vec3& target);
-
 Mat44 GetBillboardMatrix(BillboardType billboardType,
 	Mat44 const& targetMatrix,Vec3 const& targetPos,
 	const Vec3& billboardPosition,

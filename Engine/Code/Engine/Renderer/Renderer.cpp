@@ -11,6 +11,7 @@
 #include "Engine/Renderer/DefaultShader.hpp"
 #include "Engine/Renderer/ConstantBuffer.hpp"
 #include "Engine/Core/Image.hpp"
+#include "Engine/Renderer/IndexBuffer.hpp"
 //-------------------------------------------------------------
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -64,6 +65,14 @@ struct ModelConstants
 	float ModelColor[4];
 };
 static const int k_modelConstantsSlot = 3;
+
+struct LightConstants
+{
+	Vec3 SunDirection;
+	float SunIntensity;
+	float AmbientIntensity;
+};
+static const int k_lightConstantsSlot = 1;
 //-------------------------------------------------------------
 BitmapFont* g_testFont = nullptr;
 
@@ -151,8 +160,9 @@ void Renderer::Startup()
 	m_defaultShader = CreateShaderFromSource("Default", g_shaderSource);
 	BindShader(m_defaultShader);
 	//--------------------------------------------------------------------------------
-	m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-
+	m_immediateVBO = CreateVertexBuffer(24, sizeof(Vertex_PCU));
+	m_immediateIBO = CreateIndexBuffer(24);
+	m_immediateVBO_WithTBN=CreateVertexBuffer(24, sizeof(Vertex_PCUTBN));
 	//---------------------------------------------------------
 	//Set rasterizer state
 
@@ -219,7 +229,7 @@ void Renderer::Startup()
 
 	m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
 	m_modelCBO = CreateConstantBuffer(sizeof(ModelConstants));
-
+	m_lightCBO = CreateConstantBuffer(32);
 	//---------------------------------------------------------
 	// OPAQUE
 	D3D11_BLEND_DESC blendDesc = {};
@@ -359,7 +369,7 @@ void Renderer::Startup()
 	Image defaultImage = Image(IntVec2(2, 2), Rgba8::WHITE);
 	m_defaultTexture = CreateTextureFromImage(defaultImage);
 	BindTexture(nullptr);
-	g_testFont =CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+	//g_testFont =CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 }
 
 void Renderer::BeginFrame()
@@ -400,11 +410,20 @@ void Renderer::Shutdown()
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
 
+	delete m_immediateVBO_WithTBN;
+	m_immediateVBO_WithTBN = nullptr;
+
+	delete m_immediateIBO;
+	m_immediateIBO = nullptr;
+
 	delete m_cameraCBO;
 	m_cameraCBO = nullptr;
 
 	delete m_modelCBO;
 	m_modelCBO = nullptr;
+
+	delete m_lightCBO;
+	m_lightCBO = nullptr;
 
 	for (int i = 0; i < (int)BlendMode::COUNT; i++)
 	{
@@ -508,6 +527,28 @@ void Renderer::DrawVertexArray(const std::vector<Vertex_PCU>& vertexs)
 {
 	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), m_immediateVBO);
 	DrawVertexBuffer(m_immediateVBO, (int)vertexs.size());
+}
+void Renderer::DrawVertexArray(const std::vector<Vertex_PCU>& vertexs, std::vector<unsigned int> const& indexes)
+{
+	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), m_immediateVBO);
+	CopyCPUToGPU(indexes.data(), (int)indexes.size(), m_immediateIBO);
+	DrawIndexedVertexBuffer(m_immediateVBO, m_immediateIBO,(int)indexes.size());
+}
+void Renderer::DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs, std::vector<unsigned int> const& indexes)
+{
+	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), m_immediateVBO_WithTBN);
+	CopyCPUToGPU(indexes.data(), (int)indexes.size(), m_immediateIBO);
+	DrawIndexedVertexBuffer(m_immediateVBO_WithTBN, m_immediateIBO, (int)indexes.size());
+}
+void Renderer::DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs, std::vector<unsigned int> const& indexes, VertexBuffer* vertexBuffer, IndexBuffer* indexBuffer)
+{
+// 	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), m_immediateVBO_WithTBN);
+// 	CopyCPUToGPU(indexes.data(), (int)indexes.size(), m_immediateIBO);
+// 	DrawIndexedVertexBuffer(m_immediateVBO_WithTBN, m_immediateIBO, (int)indexes.size());
+
+ 	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), vertexBuffer);
+ 	CopyCPUToGPU(indexes.data(), (int)indexes.size(), indexBuffer);
+ 	DrawIndexedVertexBuffer(vertexBuffer, indexBuffer, (int)indexes.size());
 }
 //void Renderer::DrawVertexArrayTest(const std::vector<Vertex_PCU>& vertexs, Mat44 const& localToWorld)
 //{
@@ -637,7 +678,7 @@ BitmapFont* Renderer::GetBitmapFontFromFileName(char const* imageFilePath)
 {
 	for (int i = 0; i < static_cast<int>(m_loadedFonts.size()); i++)
 	{
-		if (m_loadedFonts[i]->GetTexture().m_name == imageFilePath)
+		if (m_loadedFonts[i]->m_fontFilePathNameWithNoExtension == imageFilePath)
 		{
 			return m_loadedFonts[i];
 		}
@@ -665,15 +706,15 @@ void Renderer::SetRasterizerMode(RasterizerMode rasterizerMode)
 }
 //-------------------------------------------------------------
 
-Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* shaderSource)
+Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* shaderSource,VertexType vertexType)
 {
 	ShaderConfig config =ShaderConfig("defaultConfig");
 	m_currentShader = new Shader(config);
-	CompileShaderToByteCode(m_vertexShaderByteCode,shaderName,shaderSource, "VertexMain", "vs_5_0");
+	CompileShaderToByteCode(m_currentShader->m_vertexShaderByteCode,shaderName,shaderSource, "VertexMain", "vs_5_0");
 	HRESULT hr;
 	hr = m_device->CreateVertexShader(
-		m_vertexShaderByteCode.data(),
-		m_vertexShaderByteCode.size(),
+		m_currentShader->m_vertexShaderByteCode.data(),
+		m_currentShader->m_vertexShaderByteCode.size(),
 		NULL, &m_currentShader->m_vertexShader
 	);
 
@@ -682,11 +723,11 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 		ERROR_AND_DIE(Stringf("Could not create vertex shader."));
 	}
 
-	CompileShaderToByteCode(m_pixelShaderByteCode, shaderName, shaderSource, "PixelMain", "ps_5_0");
+	CompileShaderToByteCode(m_currentShader->m_pixelShaderByteCode, shaderName, shaderSource, "PixelMain", "ps_5_0");
 
 	hr = m_device->CreatePixelShader(
-		m_pixelShaderByteCode.data(),
-		m_pixelShaderByteCode.size(),
+		m_currentShader->m_pixelShaderByteCode.data(),
+		m_currentShader->m_pixelShaderByteCode.size(),
 		NULL, &m_currentShader->m_pixelShader
 	);
 	if (!SUCCEEDED(hr))
@@ -694,36 +735,64 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 		ERROR_AND_DIE(Stringf("Could not create pixel shader."));
 	}
 
-	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+	if (vertexType == VertexType::VERTEX_PCU)
+	{
+		D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
 		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,
 			0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
 		{"COLOR",0,DXGI_FORMAT_R8G8B8A8_UNORM,
 			0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
 		{"TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,
 			0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
-	};
-	UINT numElements = ARRAYSIZE(inputElementDesc);
-	hr = m_device->CreateInputLayout(
-		inputElementDesc, numElements,
-		m_vertexShaderByteCode.data(),
-		m_vertexShaderByteCode.size(),
-		&m_currentShader->m_inputLayout
-	);
+		};
+		UINT numElements = ARRAYSIZE(inputElementDesc);
+		hr = m_device->CreateInputLayout(
+			inputElementDesc, numElements,
+			m_currentShader->m_vertexShaderByteCode.data(),
+			m_currentShader->m_vertexShaderByteCode.size(),
+			&m_currentShader->m_inputLayout
+		);
+	}
+	else
+	{
+		D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+ 			{"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+ 				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+ 			{"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+ 				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+ 			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+ 				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		};
+		UINT numElements = ARRAYSIZE(inputElementDesc);
+		hr = m_device->CreateInputLayout(
+			inputElementDesc, numElements,
+			m_currentShader->m_vertexShaderByteCode.data(),
+			m_currentShader->m_vertexShaderByteCode.size(),
+			&m_currentShader->m_inputLayout
+		);
+	}
+	
 	if (!SUCCEEDED(hr))
 	{
-		ERROR_AND_DIE("Could not reate vertex layout");
+		ERROR_AND_DIE(Stringf("Could not create vertex layout"));
 	}
 
 	m_loadedShaders.push_back(m_currentShader);
 	return m_currentShader;
 }
 
-Shader* Renderer::CreateShaderFromFile(char const* shaderName)
+Shader* Renderer::CreateShaderFromFile(char const* shaderName,VertexType vertexType)
 {
-	std::string shaderPath = "Data/Shaders/"+std::string(shaderName)+".hlsl";
+	std::string shaderPath = std::string(shaderName)+".hlsl";
 	std::string outShaderString;
 	FileReadToString(outShaderString,shaderPath);
-	return CreateShaderFromSource(shaderName, outShaderString.c_str());
+	return CreateShaderFromSource(shaderName, outShaderString.c_str(),vertexType);
 }
 
 bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name, char const* source, char const* enetryPoint, char const* target)
@@ -815,6 +884,15 @@ void Renderer::BindVertextBuffer(VertexBuffer* vbo)
 	m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
+void Renderer::BindVertexAndIndexBuffer(VertexBuffer* vbo, IndexBuffer* ibo)
+{
+	UINT stride = vbo->GetStride();
+	UINT startOffset = 0;
+	m_deviceContext->IASetVertexBuffers(0, 1, &vbo->m_buffer, &stride, &startOffset);
+	m_deviceContext->IASetIndexBuffer(ibo->m_buffer,DXGI_FORMAT_R32_UINT,0);
+	m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
 void Renderer::DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount)
 {
 	SetStateIfChanged();
@@ -822,6 +900,36 @@ void Renderer::DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount)
 	BindVertextBuffer(vbo);
 	//Draw
 	m_deviceContext->Draw(vertexCount, 0);
+}
+
+IndexBuffer* Renderer::CreateIndexBuffer(unsigned int size)
+{
+	//size=count*stride
+	IndexBuffer* curIndexBuffer = new IndexBuffer(m_device, size);
+	return curIndexBuffer;
+}
+
+void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)
+{
+	SetStateIfChanged();
+	BindVertexAndIndexBuffer(vbo, ibo);
+	m_deviceContext->DrawIndexed(indexCount, 0, 0);
+}
+
+void Renderer::CopyCPUToGPU(const void* data, unsigned int count, IndexBuffer* ibo)
+{
+	if (count == 0) {
+		return;
+	}
+
+	ibo->Resize(count);
+
+	D3D11_MAPPED_SUBRESOURCE resource;
+	m_deviceContext->Map(ibo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+
+	memcpy(resource.pData, data, count * ibo->GetStride());
+
+	m_deviceContext->Unmap(ibo->m_buffer, 0);
 }
 
 ConstantBuffer* Renderer::CreateConstantBuffer(const unsigned int size)
@@ -896,6 +1004,17 @@ void Renderer::SetModelConstants(const Mat44& modelToWorldTransform, const Rgba8
 	CopyCPUToGPU(&modelConstants, sizeof(modelConstants), m_modelCBO);
 	BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
 }
+
+void Renderer::SetLightConstants(Vec3 const& sunDirection, float sunIntensity, float ambientIntensity)
+{
+	LightConstants lightConstants;
+	lightConstants.SunDirection = sunDirection;
+	lightConstants.SunIntensity = sunIntensity;
+	lightConstants.AmbientIntensity = ambientIntensity;
+	CopyCPUToGPU(&lightConstants, sizeof(lightConstants), m_lightCBO);
+	BindConstantBuffer(k_lightConstantsSlot, m_lightCBO);
+}
+
 
 
 

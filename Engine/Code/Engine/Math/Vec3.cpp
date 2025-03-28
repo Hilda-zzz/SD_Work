@@ -71,6 +71,11 @@ Vec3 const Vec3::operator/(float inverseScale) const
 	return Vec3(x / inverseScale, y / inverseScale,z/inverseScale);
 }
 
+Vec3 const Vec3::operator-() const
+{
+	return Vec3(-x, -y,-z);
+}
+
 //-----------------------------------------------------------------------------------------------
 void Vec3::operator+=(Vec3 const& vecToAdd)
 {

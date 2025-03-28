@@ -1,0 +1,10 @@
+<MapDefinitions>
+	<MapDefinition
+		name="Approach"
+		mapFloorImageName="Data/Maps/MiamiMap01.png"
+		mapWallImageName="Data/Maps/Wall01.png"
+		dimensions="50,25"
+		startCoords="1,1"
+		exitCoords="48,23"
+	/>  
+</MapDefinitions>

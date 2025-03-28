@@ -10,6 +10,9 @@
 constexpr float SPEED = 180.f;
 GameRaycastVsAABB2D::GameRaycastVsAABB2D()
 {
+	g_theInput->SetCursorMode(CursorMode::POINTER);
+	g_theWindow->SetCursorVisible(true);
+
 	m_gameClock = new Clock();
 	m_arrow = RaycastArrow(Vec2(100.f, 50.f), Vec2(2.f, 1.f), 1400.f);
 	//m_final_result = RaycastResult2D(Vec2(100.f, 50.f), Vec2(2.f, 1.f), 1400.f);

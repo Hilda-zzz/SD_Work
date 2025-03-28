@@ -8,6 +8,30 @@
     <Filter Include="HumanActors">
       <UniqueIdentifier>{384dbca6-085f-4c36-a9d4-ab15ca684ef1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="AnimStateMachine">
+      <UniqueIdentifier>{1de5191e-3075-4b13-8397-8f882356c75e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WeaponSystem">
+      <UniqueIdentifier>{c3f3c5ea-d40e-4ff2-88ef-0935d4ddc1d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PlayerStates">
+      <UniqueIdentifier>{d8a6e4eb-d0e3-4e19-9947-850e0f2eb160}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PlayerStates\WeaponStates">
+      <UniqueIdentifier>{08a7571b-72c5-477a-bc35-29c1f07df118}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PlayerStates\LegStates">
+      <UniqueIdentifier>{f3c5eb38-b231-4555-a7c8-4c9336b4260f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PlayerStates\UpperStates">
+      <UniqueIdentifier>{97b9c168-2e8d-48f6-8565-25859369cb71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MapAndTile">
+      <UniqueIdentifier>{783594d1-aed2-42b5-855c-ef8dbd5fbe70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigFiles">
+      <UniqueIdentifier>{e8c9a8cb-67bd-46cf-9913-c000a36fb4d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -24,6 +48,42 @@
     </ClCompile>
     <ClCompile Include="Player.cpp">
       <Filter>HumanActors</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimState.cpp">
+      <Filter>AnimStateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="WeaponFireState.cpp">
+      <Filter>PlayerStates\WeaponStates</Filter>
+    </ClCompile>
+    <ClCompile Include="WeaponIdleState.cpp">
+      <Filter>PlayerStates\WeaponStates</Filter>
+    </ClCompile>
+    <ClCompile Include="LegIdleState.cpp">
+      <Filter>PlayerStates\LegStates</Filter>
+    </ClCompile>
+    <ClCompile Include="LegWalkState.cpp">
+      <Filter>PlayerStates\LegStates</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerUpperIdleState.cpp">
+      <Filter>PlayerStates\UpperStates</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerUpperWalkState.cpp">
+      <Filter>PlayerStates\UpperStates</Filter>
+    </ClCompile>
+    <ClCompile Include="PistolStrategy.cpp">
+      <Filter>WeaponSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Map.cpp">
+      <Filter>MapAndTile</Filter>
+    </ClCompile>
+    <ClCompile Include="MapDefinition.cpp">
+      <Filter>MapAndTile</Filter>
+    </ClCompile>
+    <ClCompile Include="Tile.cpp">
+      <Filter>MapAndTile</Filter>
+    </ClCompile>
+    <ClCompile Include="TileDefinition.cpp">
+      <Filter>MapAndTile</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -42,5 +102,70 @@
     <ClInclude Include="Player.hpp">
       <Filter>HumanActors</Filter>
     </ClInclude>
+    <ClInclude Include="AnimState.hpp">
+      <Filter>AnimStateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="StateMachine.hpp">
+      <Filter>AnimStateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="WeaponStrategy.hpp">
+      <Filter>WeaponSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerWeaponEnum.hpp">
+      <Filter>WeaponSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="WeaponFireState.hpp">
+      <Filter>PlayerStates\WeaponStates</Filter>
+    </ClInclude>
+    <ClInclude Include="WeaponIdleState.hpp">
+      <Filter>PlayerStates\WeaponStates</Filter>
+    </ClInclude>
+    <ClInclude Include="WeaponState.hpp">
+      <Filter>PlayerStates\WeaponStates</Filter>
+    </ClInclude>
+    <ClInclude Include="LegIdleState.hpp">
+      <Filter>PlayerStates\LegStates</Filter>
+    </ClInclude>
+    <ClInclude Include="LegWalkState.hpp">
+      <Filter>PlayerStates\LegStates</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerUpperIdleState.hpp">
+      <Filter>PlayerStates\UpperStates</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerUpperWalkState.hpp">
+      <Filter>PlayerStates\UpperStates</Filter>
+    </ClInclude>
+    <ClInclude Include="PistolStrategy.hpp">
+      <Filter>WeaponSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerAnimStateEnum.hpp">
+      <Filter>PlayerStates</Filter>
+    </ClInclude>
+    <ClInclude Include="Map.hpp">
+      <Filter>MapAndTile</Filter>
+    </ClInclude>
+    <ClInclude Include="MapDefinition.hpp">
+      <Filter>MapAndTile</Filter>
+    </ClInclude>
+    <ClInclude Include="Tile.hpp">
+      <Filter>MapAndTile</Filter>
+    </ClInclude>
+    <ClInclude Include="TileDefinition.hpp">
+      <Filter>MapAndTile</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\..\Run\Data\Definitions\GameConfig.xml">
+      <Filter>ConfigFiles</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Definitions\MapDefinitions.xml">
+      <Filter>ConfigFiles</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Definitions\TileDefinitions.xml">
+      <Filter>ConfigFiles</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Definitions\WallTileDefinitions.xml">
+      <Filter>ConfigFiles</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

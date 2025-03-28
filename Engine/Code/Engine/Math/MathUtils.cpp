@@ -203,7 +203,7 @@ bool DoAABB2Overlap(AABB2 const& box1, AABB2 const& box2)
 
 bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRadius)
 {
-	if (GetDistance2D(point, discCenter) < discRadius)
+	if (GetDistanceSquared2D(point, discCenter) < discRadius*discRadius)
 	{
 		return true;
 	}
@@ -212,7 +212,7 @@ bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRa
 
 bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorForwardDegrees, float sectorApertureDegrees, float sectorRadius)
 {
-	if (GetDistance2D(point, sectorTip) < sectorRadius)
+	if (GetDistanceSquared2D(point, sectorTip) < sectorRadius* sectorRadius)
 	{
 	/*	if (GetAngleDegreesBetweenVectors2D(point - sectorTip, Vec2::MakeFromPolarDegrees(sectorApertureDegrees, sectorRadius).GetNormalized())
 			< 0.5f * sectorApertureDegrees)*/
@@ -303,6 +303,38 @@ bool IsPointInsideTriangle2D(Vec2 const& point, Triangle2 const& triangle)
 		return false;
 	}
 	return true;
+}
+
+bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius)
+{
+	if (GetDistanceSquared3D(point, sphereCenter) < sphereRadius*sphereRadius)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool IsPointInsideCylinder3D(Vec3 const& point, Vec3 const& center, float radius, float halfHeight)
+{
+	if (IsPointInsideDisc2D(Vec2(point.x, point.y), Vec2(center.x, center.y), radius))
+	{
+		if (point.z<center.z + halfHeight && point.z>center.z - halfHeight)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool IsPointInsideAABB3D(Vec3 const& point, AABB3 const& box)
+{
+	if (point.x > box.m_mins.x && point.x<box.m_maxs.x
+		&&point.y>box.m_mins.y && point.y < box.m_maxs.y
+		&& point.z>box.m_mins.z && point.z < box.m_maxs.z)
+	{
+		return true;
+	}
+	return false;
 }
 
 Vec2 const GetNearestPointOnDisc2D(Vec2 const& referencePosition, Vec2 const& discCenter, float discRadius)
@@ -506,6 +538,35 @@ Vec2 const GetNearestPointOnTriangle2D(Vec2 const& referencePosition, Triangle2 
 	}
 }
 
+Vec3 const GetNearestPointOnSphere3D(Vec3 const& referencePosition, Vec3 const& sphereCenter, float sphereRadius)
+{
+	if (GetDistance3D(referencePosition, sphereCenter) <= sphereRadius)
+	{
+		return referencePosition;
+	}
+	else
+	{
+		Vec3 refer_center = referencePosition - sphereCenter;
+		refer_center.SetLength(sphereRadius);
+		return refer_center + sphereCenter;
+	}
+}
+
+Vec3 const GetNearestPointOnZCylinder3D(Vec3 const& referencePosition, Vec3 const& cylinderCenter, float cylinderRadius, float halfHeight)
+{
+	Vec2 nearPointOnDisc=GetNearestPointOnDisc2D(Vec2(referencePosition.x,referencePosition.y), Vec2(cylinderCenter.x, cylinderCenter.y), cylinderRadius);
+	float nearZ=GetClamped(referencePosition.z, cylinderCenter.z - halfHeight, cylinderCenter.z + halfHeight);
+	return Vec3(nearPointOnDisc.x, nearPointOnDisc.y, nearZ);
+}
+
+Vec3 const GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& box)
+{
+	float x = GetClamped(referencePosition.x, box.m_mins.x, box.m_maxs.x);
+	float y = GetClamped(referencePosition.y, box.m_mins.y, box.m_maxs.y);
+	float z = GetClamped(referencePosition.z, box.m_mins.z, box.m_maxs.z);
+	return Vec3(x, y, z);
+}
+
 bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint)
 {
 	Vec2 cp = fixedPoint - mobileDiscCenter;
@@ -559,6 +620,93 @@ bool PushDiscOutOfAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& 
 	Vec2 p=fixedBox.GetNearestPoint(mobileDiscCenter);
 	return PushDiscOutOfPoint2D(mobileDiscCenter, discRadius, p);
 }
+
+bool DoAABBsOverlap3D(AABB3 const& boxA, AABB3 const& boxB)
+{
+	if (boxA.m_maxs.x <= boxB.m_mins.x || boxA.m_mins.x >= boxB.m_maxs.x)
+		return false;
+	if (boxA.m_maxs.y <= boxB.m_mins.y || boxA.m_mins.y >= boxB.m_maxs.y)
+		return false;
+	if (boxA.m_maxs.z <= boxB.m_mins.z || boxA.m_mins.z >= boxB.m_maxs.z)
+		return false;
+	return true;
+}
+
+bool DoSpheresOverlap3D(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB)
+{
+	float cur_dis_square = GetDistanceSquared3D(centerA, centerB);
+	if (cur_dis_square < (radiusA + radiusB)*(radiusA + radiusB))
+	{
+		return true;
+	}
+	else
+		return false;
+}
+
+bool DoZCylindersOverlap3D(Vec3 const& centerA, float radiusA, float halfHeightA, Vec3 const& centerB, float radiusB, float halfHeightB)
+{
+	if (DoDiscsOverlap(Vec2(centerA.x, centerA.y), radiusA, Vec2(centerB.x, centerB.y), radiusB))
+	{
+		if (centerA.z + halfHeightA <= centerB.z - halfHeightA || centerB.z + halfHeightB <= centerA.z - halfHeightA)
+			return false;
+		else
+			return true;
+	}
+	return false;
+}
+
+bool DoSphereAndAABBOverlap3D(Vec3 const& sphereCenter, float sphereRadius, AABB3 const& box)
+{
+	Vec3 nearPoint=GetNearestPointOnAABB3D(sphereCenter, box);
+	if (GetDistanceSquared3D(sphereCenter, nearPoint) < sphereRadius*sphereRadius)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool DoZCylinderAndAABBOverlap3D(Vec3 cylinderCenter, float cylinderRadius, float halfHeight, AABB3 const& box)
+{
+	if (box.m_maxs.x <= cylinderCenter.x-cylinderRadius || box.m_mins.x >= cylinderCenter.x + cylinderRadius)
+		return false;
+	if (box.m_maxs.y <= cylinderCenter.y - cylinderRadius || box.m_mins.y >= cylinderCenter.y + cylinderRadius)
+		return false;
+	if (box.m_maxs.z <= cylinderCenter.z - halfHeight || box.m_mins.z >= cylinderCenter.z + halfHeight)
+		return false;
+	return true;
+}
+
+bool DoZCylinderAndShpereOVerlap3D(Vec3 cylinderCenter, float cylinderRadius, float halfHeight, Vec3 const& sphereCenter, float sphereRadius)
+{
+	Vec3 nearPoint = GetNearestPointOnZCylinder3D(sphereCenter,cylinderCenter,cylinderRadius,halfHeight);
+	if (GetDistanceSquared3D(sphereCenter, nearPoint) < sphereRadius * sphereRadius)
+	{
+		return true;
+	}
+	return false;
+}
+
+//bool PushZCylinderOutOfZCylinderFromZ3D(Vec3& mobileCylinderCenter, float mobileCylinderRadius, Vec3 const& fixedCylinderCenter, float fixedCylinderRadius)
+//{
+//	return false;
+//}
+//
+//bool PushZCylinderOutOfEachOtherFromZ3D(Vec3& aCenter, float aRadius, Vec3& bCenter, float bRadius)
+//{
+//	Vec2 ab = bCenter - aCenter;
+//	if (ab.GetLengthSquared() >= (aRadius + bRadius) * (aRadius + bRadius))
+//	{
+//		return false;
+//	}
+//	else
+//	{
+//		float overlap = aRadius + bRadius - ab.GetLength();
+//		ab.SetLength(overlap * 0.5f);
+//		aCenter += -ab;
+//		bCenter += ab;
+//		return true;
+//	}
+//}
 
 //transform
 void TransformPosition2D(Vec2& posToTransform, float uniformScale,
@@ -726,15 +874,16 @@ Mat44 GetLookAtMatrix(const Vec3& pos,const Vec3& target)
 	Vec3 K;
 	Vec3 z = Vec3(0.f, 0.f, 1.f);
 	Vec3 x = Vec3(1.f, 0.f, 0.f);
-	if (abs(DotProduct3D(z, I)) < 1.f)
+	Vec3 y = Vec3(0.f, 1.f, 0.f);
+	if (abs(DotProduct3D(z, I)) < 0.99f)
 	{
-		J = CrossProduct3D(z, I);
-		K = CrossProduct3D(I, J);
+		J = CrossProduct3D(z, I).GetNormalized();
+		K = CrossProduct3D(I, J).GetNormalized();
 	}
 	else
 	{
-		K = CrossProduct3D(I, x);
-		J = CrossProduct3D(K, I);
+		K = CrossProduct3D(I, y).GetNormalized();
+		J = CrossProduct3D(K, I).GetNormalized();
 	}
 
 	Mat44 rotationMatrix;

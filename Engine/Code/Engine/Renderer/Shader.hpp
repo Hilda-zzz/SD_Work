@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 struct ID3D11VertexShader;
 struct ID3D11PixelShader;
@@ -23,6 +24,8 @@ public:
 
 	const std::string& GetName() const;
 
+	std::vector<uint8_t>	m_vertexShaderByteCode;
+	std::vector<uint8_t>	m_pixelShaderByteCode;
 private:
 	ShaderConfig m_config;
 	ID3D11VertexShader* m_vertexShader = nullptr;

@@ -169,6 +169,7 @@ Vec2 Window::GetNormalizedMouseUV() const
 	float cursorX = static_cast<float>(cursorCoords.x) / static_cast<float>(clientRect.right);
 	float cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
 	return Vec2(cursorX, 1.f - cursorY);
+	//then 0,0 at bl, 1,1 at tr
 }
 
 Vec2 Window::GetMousePixelPos() const

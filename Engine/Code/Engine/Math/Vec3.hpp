@@ -32,6 +32,7 @@ public:
 	Vec3 const	operator-(Vec3 const& vecToSubtract) const;	// vec2 - vec2
 	Vec3 const	operator*(float uniformScale) const;			// vec2 * float
 	Vec3 const	operator/(float inverseScale) const;			// vec2 / float
+	Vec3 const	operator-() const;
 
 	// Operators (self-mutating / non-const)
 	void		operator+=(Vec3 const& vecToAdd);				// vec2 += vec2

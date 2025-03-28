@@ -11,6 +11,8 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Game/GameRaycastVsAABB2D.hpp"
+#include "Game3DTestShapes.hpp"
+#include <Engine/Core/DebugRenderSystem.hpp>
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
 Camera*			g_theCamera = nullptr;
@@ -60,11 +62,17 @@ void App::Startup()
 
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
 
-	m_theGame = new GameNearestPoint();
+	DebugRenderConfig debugRenderConfig;
+	debugRenderConfig.m_fontName = "Data/Fonts/SquirrelFixedFont";
+	debugRenderConfig.m_renderer = g_theRenderer;
+	DebugRenderSystemStartup(debugRenderConfig);
+
+	m_theGame = new Game3DTestShapes();
 }
 
 void App::Shutdown()
 {
+	DebugRenderSystemShutdown();
 	g_theDevConsole->Shutdown();
 	g_theRenderer->Shutdown();
 	g_theWindow->Shutdown();
@@ -126,6 +134,9 @@ void App::ChangeGameMode(unsigned char modeType)
 	case GAME_MODEE_RAYCAST_VS_AABB2D:
 		m_theGame = new GameRaycastVsAABB2D();
 		return;
+	case GAME_MODE_3DSHAPES:
+		m_theGame = new Game3DTestShapes();
+		return;
 	}
 }
 
@@ -135,6 +146,7 @@ void App::BeginFrame()
 	g_theInput->BeginFrame();
 	g_theWindow->BeginFrame();
 	g_theRenderer->BeginFrame();
+	DebugRenderBeginFrame();
 	Clock::TickSystemClock();
 }
 
@@ -177,6 +189,7 @@ void App::Render()  const
 
 void App::EndFrame()
 {
+	DebugRenderEndFrame();
 	g_theRenderer->EndFrame();
 	g_theWindow->EndFrame();
 	g_theInput->EndFrame();

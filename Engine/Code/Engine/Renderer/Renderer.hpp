@@ -7,11 +7,13 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 #include <vector>
+#include <Engine/Core/Vertex_PCUTBN.hpp>
 
 class Shader;
 class Window;
 class Texture;
 class VertexBuffer;
+class IndexBuffer;
 class ConstantBuffer;
 class Image;
 
@@ -62,6 +64,12 @@ enum class DepthMode
 	COUNT
 };
 
+enum class VertexType
+{
+	VERTEX_PCU,
+	VERTEX_PCUTBN
+};
+
 struct RendererConfig
 {
 	Window* m_window = nullptr;
@@ -82,6 +90,10 @@ public:
 	void		EndCamera(const Camera& camera);
 	void		DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs);
 	void		DrawVertexArray(const std::vector<Vertex_PCU>& vertexs);
+	void		DrawVertexArray(std::vector<Vertex_PCU> const& vertexs, std::vector<unsigned int> const& indexes);
+	void		DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs, std::vector<unsigned int> const& indexes);
+	void		DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs, std::vector<unsigned int> const& indexes,
+					VertexBuffer* vertexBuffer, IndexBuffer* indexBuffer);
 	//void		DrawVertexArrayTest(const std::vector<Vertex_PCU>& vertexs,Mat44 const& localToWorld);
 
 	Image*		CreateImageFromFile(char const* imagePath);
@@ -98,12 +110,21 @@ public:
 	void		SetSamplerMode(SamplerMode samplerMode);
 	void        SetDepthMode(DepthMode depthMode);
 	void        SetRasterizerMode(RasterizerMode rasterizerMode);
+
+
+	void SetModelConstants(const Mat44& modelToWorldTransform = Mat44(), const Rgba8& modelColor = Rgba8::WHITE);
+	void SetLightConstants(Vec3 const& sunDirection= Vec3(2.f, 1.f, -1.f), float sunIntensity=0.85f, float ambientIntensity=0.35f);
+
+	Shader* CreateShaderFromFile(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
+	void			BindShader(Shader* shader);
+
+	VertexBuffer* CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride);
+	IndexBuffer* CreateIndexBuffer(unsigned int size);
 	
 public:
 	std::vector<Texture*>		m_loadedTextures;
 	std::vector<BitmapFont*>	m_loadedFonts;
 
-	void SetModelConstants(const Mat44& modelToWorldTransform = Mat44(), const Rgba8& modelColor = Rgba8::WHITE);
 private:
 	RendererConfig			m_config;
 
@@ -114,31 +135,40 @@ protected:
 	ID3D11RenderTargetView* m_renderTargetView = nullptr;
 	ID3D11RasterizerState*	m_rasterizerState = nullptr;
 
-	std::vector<uint8_t>	m_vertexShaderByteCode;
-	std::vector<uint8_t>	m_pixelShaderByteCode;
+// 	std::vector<uint8_t>	m_vertexShaderByteCode;
+// 	std::vector<uint8_t>	m_pixelShaderByteCode;
 
 	std::vector<Shader*>	m_loadedShaders;
 	Shader*					m_currentShader = nullptr;
 	Shader*					m_defaultShader = nullptr;
 	VertexBuffer*			m_immediateVBO = nullptr;
+	VertexBuffer*			m_immediateVBO_WithTBN = nullptr;
+	IndexBuffer*			m_immediateIBO = nullptr;
 	ConstantBuffer*			m_cameraCBO = nullptr;
 	ConstantBuffer*         m_modelCBO = nullptr;
+	ConstantBuffer*			m_lightCBO = nullptr;
 	const Texture*			m_defaultTexture = nullptr;
 protected:
-	Shader*			CreateShaderFromSource(char const* shaderName, char const* shaderSource);
-	Shader*			CreateShaderFromFile(char const* shaderName);
+	Shader*			CreateShaderFromSource(char const* shaderName, char const* shaderSource, VertexType vertexType = VertexType::VERTEX_PCU);
+	
 	bool			CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name,
 					char const* source, char const* enetryPoint, char const* target);
-	void			BindShader(Shader* shader);
+	
 	//----------------------------------------------------------------
-	VertexBuffer*	CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride);
+
 	void			CopyCPUToGPU(const void* data, unsigned int verticeCount, VertexBuffer* vbo);
 	void			BindVertextBuffer(VertexBuffer* vbo);
+	void			BindVertexAndIndexBuffer(VertexBuffer* vbo, IndexBuffer* ibo);
 	void			DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount);
+
+	void			DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount);
+	void			CopyCPUToGPU(const void* data, unsigned int count, IndexBuffer* ibo);
 	//----------------------------------------------------------------
 	ConstantBuffer* CreateConstantBuffer(const unsigned int size);
 	void			CopyCPUToGPU(const void* data, unsigned int size, ConstantBuffer* cbo);
 	void			BindConstantBuffer(int slot, ConstantBuffer* cbo);
+	//----------------------------------------------------------------
+	
 	//----------------------------------------------------------------
 	void				SetStateIfChanged();
 	ID3D11BlendState*	m_blendState = nullptr;

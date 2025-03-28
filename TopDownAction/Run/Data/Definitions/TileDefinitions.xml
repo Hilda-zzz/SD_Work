@@ -1,0 +1,8 @@
+<TileDefinitions>
+	<TileDefinition name="101" mapImagePixelColor="255,255,255,255"	     spriteCoords="4,1"	tint="255,255,255,255"/>
+	<TileDefinition name="102" mapImagePixelColor="0,0,0,255"			 spriteCoords="3,0"	tint="255,255,255,255"/>
+	<TileDefinition name="103" mapImagePixelColor="255,0,0,255"			 spriteCoords="0,0"	tint="255,255,255,255"/>
+	<TileDefinition name="104" mapImagePixelColor="0,255,0,255"			 spriteCoords="0,3"	tint="255,255,255,255"/>
+	<TileDefinition name="105" mapImagePixelColor="0,0,255,255"			 spriteCoords="1,3"	tint="255,255,255,255"/>
+	<TileDefinition name="106" mapImagePixelColor="255,255,0,255"		 spriteCoords="7,1"	tint="255,255,255,255"/>
+</TileDefinitions>

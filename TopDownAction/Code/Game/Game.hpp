@@ -4,6 +4,7 @@
 #include "Engine/Renderer/Camera.hpp"
 class Clock;
 class Player;
+class Map;
 class Game
 {
 public:
@@ -38,4 +39,7 @@ private:
 	bool m_pauseAfterUpdate = false;
 
 	Player* m_player = nullptr;
+
+	std::vector<Map*> m_maps;
+	Map* m_curMap = nullptr;
 };

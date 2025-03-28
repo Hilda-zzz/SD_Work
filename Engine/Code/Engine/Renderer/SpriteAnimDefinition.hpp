@@ -15,7 +15,7 @@ public:
 	SpriteAnimDefinition(SpriteSheet const& sheet, int startSpriteIndex, int endSpriteIndex,
 		float framesPerSecond, SpriteAnimPlaybackType playbackType = SpriteAnimPlaybackType::LOOP);
 
-	SpriteDefinition const& GetSpriteDefAtTime(float seconds) const; // Most of the logic for this class is done here!
+	SpriteDefinition const& GetSpriteDefAtTime(float seconds) const; 
 	bool IsPlayOnceFinished(float seconds);
 private:
 	SpriteSheet const&	m_spriteSheet;

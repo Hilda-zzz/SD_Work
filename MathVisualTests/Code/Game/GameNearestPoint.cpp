@@ -16,6 +16,9 @@ Rgba8 BRIGHT_COLOR = Rgba8(150, 100, 225, 255);
 
 GameNearestPoint::GameNearestPoint()
 {
+	g_theInput->SetCursorMode(CursorMode::POINTER);
+	g_theWindow->SetCursorVisible(true);
+
 	m_gameClock = new Clock();
 	ReRandomObject();
 	//aim point position

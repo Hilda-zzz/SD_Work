@@ -1,18 +1,48 @@
 #include "Game/Game.hpp"
 #include "App.hpp"
-#include "Engine/Input/InputSystem.hpp"
-#include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Game/Player.hpp"
+#include "MapDefinition.hpp"
+#include "TileDefinition.hpp"
+#include "Game/Map.hpp"
 extern bool g_isDebugDraw;
+
+SpriteSheet* g_terrianSpriteSheet = nullptr;
+SpriteSheet* g_wallSpriteSheet = nullptr;
 
 Game::Game()
 {
+	Texture* tileMapTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/bacground0.png");
+	Texture* wallMapTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/WallSet01.png");
+	g_terrianSpriteSheet = new SpriteSheet(*tileMapTexture, IntVec2(56, 24));
+	g_wallSpriteSheet = new SpriteSheet(*wallMapTexture, IntVec2(4, 2));
+
 	m_gameClock = new Clock();
-	m_player = new Player(Vec2(100.f,50.f));
+	m_player = new Player(Vec2(10.f,10.f));
+
+	MapDefinition::InitializeMapDefinitionFromFile();
+	TileDefinition::InitializeTileDefinitionFromFile();
+	TileDefinition::InitializeWallDefinitionFromFile();
+
+	m_maps.reserve(10);
+	Map* map1 = new Map(this, MapDefinition::s_mapDefinitions[0]);
+	// 	Map* map2 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
+	// 	Map* map3 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
+	// 	Map* map4 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
+	// 	Map* map5 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
+	// 	Map* map6 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
+	m_maps.push_back(map1);
+	// 	m_maps.push_back(map2);
+	// 	m_maps.push_back(map3);
+	// 	m_maps.push_back(map4);
+	// 	m_maps.push_back(map5);
+	// 	m_maps.push_back(map6);
+	m_curMap = m_maps[0];
+	m_curMap->InitializeTileMapFromImage(m_curMap->m_mapDef.m_mapImageName,&m_curMap->m_tiles);
+	m_curMap->InitializeTileMapFromImage(m_curMap->m_mapDef.m_mapWallImageName, &m_curMap->m_walls);
 }
 
 Game::~Game()
@@ -21,6 +51,13 @@ Game::~Game()
 	m_player = nullptr;
 	delete m_gameClock;
 	m_gameClock = nullptr;
+
+	for (Map* map : m_maps)
+	{
+		delete map;
+		map = nullptr;
+	}
+	m_maps.clear();
 }
 
 void Game::Update()
@@ -98,7 +135,8 @@ void Game::UpdateCamera(float deltaTime)
 {
 	UNUSED(deltaTime);
 	m_screenCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
-	m_gameCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(200.f, 100.f));
+	m_gameCamera.SetOrthographicView(m_player->m_position-Vec2(GAME_SIZE_X/2.f, GAME_SIZE_Y/2.f), 
+		m_player->m_position + Vec2(GAME_SIZE_X / 2.f, GAME_SIZE_Y / 2.f));
 }
 
 void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
@@ -143,6 +181,7 @@ void Game::RenderAttractMode() const
 void Game::RenderGameMode() const
 {
 	g_theRenderer->BeginCamera(m_gameCamera);
+	m_curMap->Render();
 	m_player->Render();
 	g_theRenderer->EndCamera(m_gameCamera);
 

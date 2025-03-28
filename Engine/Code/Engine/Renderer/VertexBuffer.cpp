@@ -11,8 +11,11 @@ VertexBuffer::VertexBuffer(ID3D11Device* device, unsigned int verticeCount, unsi
 
 VertexBuffer::~VertexBuffer()
 {
-	m_buffer->Release();
-	m_buffer = nullptr;
+	if (m_buffer)
+	{
+		m_buffer->Release();
+		m_buffer = nullptr;
+	}
 }
 
 void VertexBuffer::Create()

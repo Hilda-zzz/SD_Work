@@ -78,8 +78,9 @@ void DebugAddWorldBillboardText(const std::string& text,
 	const Rgba8& startColor = Rgba8::WHITE,
 	const Rgba8& endColor = Rgba8::WHITE,
 	DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
-void DebugAddWorldBasis(const Mat44& transform, float duration, 
-	DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
+//void DebugAddWorldBasis(const Mat44& transform, float duration, 
+//	DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
+void DebugAddWorldBasis(const Mat44& transform, float duration, DebugRenderMode mode=DebugRenderMode::USE_DEPTH, float scale = 1.0f);
 void DebugAddScreenText(const std::string& text, const AABB2& textBox, 
 	float textHeight, const Vec2& alignment, 
 	float duration, const Rgba8& startColor, 

@@ -3,6 +3,7 @@
 #include <vector>
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Vertex_PCUTBN.hpp"
 struct Vec2;
 struct Rgba8;
 class OBB2;
@@ -32,6 +33,12 @@ void AddVertsForArrow2D(std::vector<Vertex_PCU>& verts, Vec2 tailPos, Vec2 tipPo
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indexes,
+	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
+	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
+	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
+	const Rgba8& color, const AABB2& UVs);
 void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, const AABB3& bounds, 
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius,
@@ -39,6 +46,13 @@ void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, flo
 void AddVertsForCylinder3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius,
 	const Rgba8 color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
 void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius,
+	const Rgba8 color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
+
+void AddVertsForAABB3DWireFrame(std::vector<Vertex_PCU>& verts, const AABB3& bounds,
+	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForSphere3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius,
+	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);
+void AddVertsForCylinder3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius,
 	const Rgba8 color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
 
 AABB2 GetVertexBounds2D(const std::vector<Vertex_PCU>& verts);

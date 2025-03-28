@@ -153,7 +153,7 @@ void DebugRenderSystemStartup(const DebugRenderConfig& config)
 	s_debugRenderListScreen.reserve(50);
 	s_isDebugRenderMode = true;
 
-	DebugAddWorldBasis(Mat44(),-1.f,DebugRenderMode::USE_DEPTH);
+	//DebugAddWorldBasis(Mat44(),-1.f,DebugRenderMode::USE_DEPTH);
 
 	Mat44 xTextMat = Mat44::MakeTranslation3D(Vec3(1.3f, 0.f, 0.25f));
 	xTextMat.Append(Mat44::MakeZRotationDegrees(-90.f));
@@ -246,7 +246,12 @@ void DebugRenderWorld(const Camera& camera)
 		s_curRenderer->BeginCamera(camera);
 		for (DebugRenderGeometry* geometry : s_debugRenderListWorld)
 		{
-			geometry->Render(camera);
+			if (!geometry->m_isDestroyed) {
+				geometry->Render(camera);
+			}
+			//if (geometry->m_duration == 0.f) {
+			//	int x = 0;
+			//}
 		}
 		s_curRenderer->EndCamera(camera);
 	}
@@ -285,37 +290,35 @@ void DebugRenderScreen(const Camera& camera)
 
 void DebugRenderEndFrame()
 {
-	for (DebugRenderGeometry* geometry : s_debugRenderListWorld)
-	{
-		if (geometry->m_isDestroyed)
-		{
-			s_debugRenderListWorld.erase(
-				std::remove(s_debugRenderListWorld.begin(), s_debugRenderListWorld.end(), geometry),
-				s_debugRenderListWorld.end()
-			);
+	auto iter_removeFrom = std::remove_if(s_debugRenderListWorld.begin(), s_debugRenderListWorld.end(), [](DebugRenderGeometry* geo) {
+		if (geo->m_isDestroyed) {
+			delete geo;
+			return true;
 		}
-	}
-	for (DebugRenderGeometry* geometry : s_debugRenderListScreen)
-	{
-		if (geometry->m_isDestroyed)
-		{
-			s_debugRenderListScreen.erase(
-				std::remove(s_debugRenderListScreen.begin(), s_debugRenderListScreen.end(), geometry),
-				s_debugRenderListScreen.end()
-			);
+		return false;
 		}
-	}
+	);
+	s_debugRenderListWorld.erase(iter_removeFrom, s_debugRenderListWorld.end());
 
-	for (DebugRenderGeometry* geometry : s_debugRenderListMsg)
-	{
-		if (geometry->m_isDestroyed)
-		{
-			s_debugRenderListMsg.erase(
-				std::remove(s_debugRenderListMsg.begin(), s_debugRenderListMsg.end(), geometry),
-				s_debugRenderListMsg.end()
-			);
+	auto iter_removeFrom2 = std::remove_if(s_debugRenderListScreen.begin(), s_debugRenderListScreen.end(), [](DebugRenderGeometry* geo) {
+		if (geo->m_isDestroyed) {
+			delete geo;
+			return true;
 		}
-	}
+		return false;
+		}
+	);
+	s_debugRenderListScreen.erase(iter_removeFrom2, s_debugRenderListScreen.end());
+
+	auto iter_removeFrom3 = std::remove_if(s_debugRenderListMsg.begin(), s_debugRenderListMsg.end(), [](DebugRenderGeometry* geo) {
+		if (geo->m_isDestroyed) {
+			delete geo;
+			return true;
+		}
+		return false;
+		}
+	);
+	s_debugRenderListMsg.erase(iter_removeFrom3, s_debugRenderListMsg.end());
 }
 
 void DebugAddWorldPoint(const Vec3& pos, float radius, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
@@ -350,14 +353,26 @@ void DebugAddWorldWireSphere(const Vec3& center, float radius, float duration, c
 
 void DebugAddWorldArrow(const Vec3& start, const Vec3& end, float radius, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
-	float len = (end - start).GetLength();
-	Vec3 dir =(end - start).GetNormalized();
+	const float CONE_HEIGHT = 0.15f; 
+
+	Vec3 dir = (end - start).GetNormalized();
+	float totalLength = (end - start).GetLength();
+
+	if (totalLength <= CONE_HEIGHT) {
+
+		DebugRenderGeometry* newCone = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, mode);
+		AddVertsForCone3D(newCone->m_verts, start, end, radius * 1.5f, endColor);
+		s_debugRenderListWorld.push_back(newCone);
+		return;
+	}
+	Vec3 cylinderEnd = end - dir * CONE_HEIGHT;
+
 	DebugRenderGeometry* newLine = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, mode);
-	AddVertsForCylinder3D(newLine->m_verts, start, end-dir*0.6f, radius, startColor);
+	AddVertsForCylinder3D(newLine->m_verts, start, cylinderEnd, radius, startColor);
 	s_debugRenderListWorld.push_back(newLine);
 
 	DebugRenderGeometry* newCone = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, mode);
-	AddVertsForCone3D(newCone->m_verts, start + dir * (len - 0.6f), start + dir * len, radius+0.1f, startColor);
+	AddVertsForCone3D(newCone->m_verts, cylinderEnd, end, radius * 1.5f, endColor);
 	s_debugRenderListWorld.push_back(newCone);
 }
 
@@ -380,29 +395,36 @@ void DebugAddWorldBillboardText(const std::string& text, const Vec3& origin, flo
 	s_debugRenderListWorld.push_back(newWorldText);
 }
 
-void DebugAddWorldBasis(const Mat44& transform, float duration, DebugRenderMode mode)
+void DebugAddWorldBasis(const Mat44& transform, float duration, DebugRenderMode mode, float scale)
 {
-	DebugRenderGeometry* xLine = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration,Rgba8::RED, Rgba8::RED, mode);
-	AddVertsForCylinder3D(xLine->m_verts,Vec3(0.f,0.f,0.f), Vec3(0.6f, 0.f, 0.f), 0.08f, Rgba8::RED);
+	// X-axis (Red)
+	DebugRenderGeometry* xLine = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, Rgba8::RED, Rgba8::RED, mode);
+	AddVertsForCylinder3D(xLine->m_verts, Vec3(0.f, 0.f, 0.f), Vec3(0.6f * scale, 0.f, 0.f), 0.08f * scale, Rgba8::RED);
 	s_debugRenderListWorld.push_back(xLine);
+
 	DebugRenderGeometry* xCone = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, Rgba8::RED, Rgba8::RED, mode);
-	AddVertsForCone3D(xCone->m_verts, Vec3(0.6f, 0.f, 0.f), Vec3(1.f, 0.f, 0.f), 0.15f, Rgba8::RED,AABB2::ZERO_TO_ONE, 16);
+	AddVertsForCone3D(xCone->m_verts, Vec3(0.6f * scale, 0.f, 0.f), Vec3(1.f * scale, 0.f, 0.f), 0.15f * scale, Rgba8::RED, AABB2::ZERO_TO_ONE, 16);
 	s_debugRenderListWorld.push_back(xCone);
 
+	// Y-axis (Green)
 	DebugRenderGeometry* yLine = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, Rgba8::GREEN, Rgba8::GREEN, mode);
-	AddVertsForCylinder3D(yLine->m_verts, Vec3(0.f, 0.f, 0.f), Vec3(0.0f, 0.6f, 0.f), 0.08f, Rgba8::GREEN);
+	AddVertsForCylinder3D(yLine->m_verts, Vec3(0.f, 0.f, 0.f), Vec3(0.0f, 0.6f * scale, 0.f), 0.08f * scale, Rgba8::GREEN);
 	s_debugRenderListWorld.push_back(yLine);
+
 	DebugRenderGeometry* yCone = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, Rgba8::GREEN, Rgba8::GREEN, mode);
-	AddVertsForCone3D(yCone->m_verts, Vec3(0.f, 0.6f, 0.f), Vec3(0.f, 1.f, 0.f), 0.15f, Rgba8::GREEN,AABB2::ZERO_TO_ONE,16);
+	AddVertsForCone3D(yCone->m_verts, Vec3(0.f, 0.6f * scale, 0.f), Vec3(0.f, 1.f * scale, 0.f), 0.15f * scale, Rgba8::GREEN, AABB2::ZERO_TO_ONE, 16);
 	s_debugRenderListWorld.push_back(yCone);
 
+	// Z-axis (Blue)
 	DebugRenderGeometry* zLine = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, Rgba8::BLUE, Rgba8::BLUE, mode);
-	AddVertsForCylinder3D(zLine->m_verts, Vec3(0.f, 0.f, 0.f), Vec3(0.f, 0.f, 0.6f), 0.08f, Rgba8::BLUE);
+	AddVertsForCylinder3D(zLine->m_verts, Vec3(0.f, 0.f, 0.f), Vec3(0.f, 0.f, 0.6f * scale), 0.08f * scale, Rgba8::BLUE);
 	s_debugRenderListWorld.push_back(zLine);
+
 	DebugRenderGeometry* zCone = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, Rgba8::BLUE, Rgba8::BLUE, mode);
-	AddVertsForCone3D(zCone->m_verts, Vec3(0.f, 0.f, 0.6f), Vec3(0.f, 0.f, 1.f), 0.15f, Rgba8::BLUE, AABB2::ZERO_TO_ONE, 16);
+	AddVertsForCone3D(zCone->m_verts, Vec3(0.f, 0.f, 0.6f * scale), Vec3(0.f, 0.f, 1.f * scale), 0.15f * scale, Rgba8::BLUE, AABB2::ZERO_TO_ONE, 16);
 	s_debugRenderListWorld.push_back(zCone);
 
+	// Apply transforms
 	TransformVertexArray3D(xLine->m_verts, transform);
 	TransformVertexArray3D(yLine->m_verts, transform);
 	TransformVertexArray3D(zLine->m_verts, transform);
@@ -419,7 +441,6 @@ void DebugAddScreenText(const std::string& text, const AABB2& textBox,
 	DebugRenderGeometry* newScreenText = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, DebugRenderMode::USE_DEPTH);
 	s_curFont->AddVertsForTextInBox2D(newScreenText->m_verts, text, textBox, textHeight,Rgba8::WHITE,1.f,alignment);
 	newScreenText->m_isText = true;
-	//newScreenText->m_position = Vec3(position.x,position.y,0.f);
 	s_debugRenderListScreen.push_back(newScreenText);
 }
 

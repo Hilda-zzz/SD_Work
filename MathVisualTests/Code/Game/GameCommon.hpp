@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Input/InputSystem.hpp"
 class App;
 class InputSystem;
 class AudioSystem;
