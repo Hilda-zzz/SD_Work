@@ -225,4 +225,6 @@ private:
 	float m_shipRevolutionDeg = 0;
 	float m_shipScale = 10.f;
 	Rgba8 m_at_shipColor;
+
+	BitmapFont* m_font=nullptr;
 };

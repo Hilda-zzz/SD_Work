@@ -1,4 +1,4 @@
-#include "Map.hpp"
+﻿#include "Map.hpp"
 #include "Engine/Core/Image.hpp"
 #include "Game/TileDefinition.hpp"
 #include <Engine/Core/ErrorWarningAssert.hpp>
@@ -9,27 +9,52 @@
 #include "Engine/Input/InputSystem.cpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
-#include "Game/Player.hpp"
-#include "Enemy.hpp"
-#include "Projectile.hpp"
 #include <Engine/Core/DebugRenderSystem.hpp>
+#include "Game/PlayerController.hpp"
+#include "Game/Actor.hpp"
+#include "Engine/Core/Clock.hpp"
 extern SpriteSheet* g_terrianSpriteSheet;
 
-Map::Map(Game* game, const MapDefinition* definition) :m_game(game), m_definition(definition)
+Map::Map(Game* game, const MapDefinition* definition) 
+	:m_game(game), m_definition(definition),m_physicsTimer(Timer(1.f/60.f,game->m_gameClock))
 {
 	m_texture = m_definition->m_spriteSheetTexture;
 	m_shader = m_definition->m_shader;
+
+	m_pointLights.reserve(10);
+	PointLight pointLight = PointLight(
+		Vec3(3.f, 3.f, 0.5f),  
+		20.f,                  
+		Rgba8::CYAN,           
+		2.0f,                  
+		Vec3(1.0f, 0.09f, 0.032f) 
+	);
+	m_pointLights.push_back(pointLight);
+
+
+	m_spotLights.reserve(10);
+	SpotLight spotLight = SpotLight(
+		Vec3(10.f, 1.f, 1.5f),
+		20.f,
+		Rgba8::RED,
+		2.0f,
+		Vec3(1.0f, 0.09f, 0.032f),
+		20.f,Vec3(0.f,0.f,-1.f),20.f
+	);
+	m_spotLights.push_back(spotLight);
+	//m_mapClock = new Clock(*m_game->m_gameClock);
 }
 
 Map::~Map()
 {
+// 	delete m_mapClock;
+// 	m_mapClock = nullptr;
+
 	delete m_vertexBuffer;
 	m_vertexBuffer = nullptr;
 
 	delete m_indexBuffer;
 	m_indexBuffer = nullptr;
-
-	m_player = nullptr;
 
 	for (Actor* actor : m_actors)
 	{
@@ -37,13 +62,22 @@ Map::~Map()
 		actor = nullptr;
 	}
 	m_actors.clear();
+
+	for (Actor* spawnPoint : m_spawnPoint)
+	{
+		spawnPoint = nullptr;
+	}
 }
 
 void Map::InitializeMap()
 {
 	CreateBuffers();
 	InitializeTileMapFromImage(m_definition->m_mapImageName);
-	InitializeEnemies();
+	//InitializeEnemies();
+	InitializeActors();
+// 	m_player = new Player(1,this);
+// 	m_player->m_curMap = this;
+//  m_game->m_playerController0->m_playerCam.SetPerspectiveView(2.f, 60.f, 0.1f, 100.f);
 }
 
 void Map::InitializeTileMapFromImage(std::string const& imagePath)
@@ -71,6 +105,36 @@ void Map::InitializeTileMapFromImage(std::string const& imagePath)
 	// 	m_heatMapDistance->AddVertsForDebugDraw(m_heatmapVerts,
 	// 		AABB2(0.f, 0.f, m_dimensions.x * m_tileSizeX, m_dimensions.y * m_tileSizeY),
 	// 		FloatRange(0.f, (float)maxSteps));
+}
+
+void Map::InitializeActors()
+{
+	for (int i = 0; i < (int)m_definition->m_spawnInfos.size(); i++)
+	{
+		SpawnActor(m_definition->m_spawnInfos[i]);
+	}
+	if (m_game->m_playerController0)
+	{
+		if (m_game->m_playerController1)
+		{
+			SpawnPlayer(m_game->m_playerController0,0);
+		}
+		else
+		{
+			SpawnPlayer(m_game->m_playerController0, -1);
+		}
+	}
+	if (m_game->m_playerController1)
+	{
+		if (m_game->m_playerController0)
+		{
+			SpawnPlayer(m_game->m_playerController1, 1);
+		}
+		else
+		{
+			SpawnPlayer(m_game->m_playerController1, -1);
+		}
+	}
 }
 
 void Map::CreateEachTile(int columnIndex, int rowIndex, std::string& tileTypeName)
@@ -177,25 +241,25 @@ void Map::CreateBuffers()
 	m_indexBuffer = g_theRenderer->CreateIndexBuffer(24);
 }
 
-void Map::InitializeEnemies()
-{
-	m_actors.reserve(10);
-	Enemy* enemy1 = new Enemy(Vec3(7.5f, 8.5f, 0.25f), EulerAngles(0.f, 0.f, 0.f), Rgba8(168, 0, 104));
-	Enemy* enemy2 = new Enemy(Vec3(8.5f, 8.5f, 0.125f), EulerAngles(0.f, 0.f, 0.f), Rgba8(168, 0, 104));
-	Enemy* enemy3 = new Enemy(Vec3(9.5f, 8.5f, 0.0f), EulerAngles(0.f, 0.f, 0.f), Rgba8(168, 0, 104));
-	Projectile* projectile1 = new Projectile(Vec3(5.5f, 8.5f, 0.0f), EulerAngles(0.f, 0.f, 0.f), Rgba8::BLUE);
-	m_actors.push_back(enemy1);
-	m_actors.push_back(enemy2);
-	m_actors.push_back(enemy3);
-	m_actors.push_back(projectile1);
-	m_projectile = projectile1;
-}
-
-void Map::SetPlayer(Player* player)
-{
-	m_player = player;
-	m_player->m_position = Vec3(2.5f, 8.5f, 0.5f);
-}
+//void Map::InitializeEnemies()
+//{
+//	m_actors.reserve(10);
+//	Enemy* enemy1 = new Enemy(Vec3(7.5f, 8.5f, 0.25f), EulerAngles(0.f, 0.f, 0.f), Rgba8(255, 0, 0));
+//	Enemy* enemy2 = new Enemy(Vec3(8.5f, 8.5f, 0.125f), EulerAngles(0.f, 0.f, 0.f), Rgba8(255, 0, 0));
+//	Enemy* enemy3 = new Enemy(Vec3(9.5f, 8.5f, 0.0f), EulerAngles(0.f, 0.f, 0.f), Rgba8(255, 0, 0));
+//	Projectile* projectile1 = new Projectile(Vec3(5.5f, 8.5f, 0.0f), EulerAngles(0.f, 0.f, 0.f), Rgba8::BLUE);
+//	m_actors.push_back(enemy1);
+//	m_actors.push_back(enemy2);
+//	m_actors.push_back(enemy3);
+//	m_actors.push_back(projectile1);
+//	m_projectile = projectile1;
+//}
+//
+//void Map::SetPlayer(Player* player)
+//{
+//	m_player = player;
+//	m_player->m_position = Vec3(2.5f, 8.5f, 0.5f);
+//}
 
 const Tile* Map::GetTile(int x, int y) const
 {
@@ -277,33 +341,280 @@ bool Map::AreCoordsInBounds(int x, int y) const
 	return true;
 }
 
+ActorHandle* Map::SpawnActor(const SpawnInfo& spawnInfo)
+{
+	int defIndex = -1;
+	for (int i = 0; i < (int)ActorDefinition::s_actorDefinitions.size(); i++)
+	{
+		if (ActorDefinition::s_actorDefinitions[i]->m_name == spawnInfo.m_typeName)
+		{
+			defIndex = i;
+			break; 
+		}
+	}
+	if (defIndex == -1)
+	{
+		return nullptr;
+	}
+
+	Actor* newActor = new Actor(defIndex, this, spawnInfo.m_position, spawnInfo.m_orientation);
+
+	bool isSpawnPoint = (ActorDefinition::s_actorDefinitions[defIndex]->m_name == "SpawnPoint");
+
+	for (int i = 0; i < (int)m_actors.size(); i++)
+	{
+		if (m_actors[i] == nullptr)
+		{
+			m_actors[i] = newActor;
+			m_actors[i]->m_actorHandle = new ActorHandle(m_nextActorUID, i);
+			if (m_actors[i]->m_controller)
+			{
+				m_actors[i]->m_controller->Possess(*m_actors[i]->m_actorHandle);
+			}
+
+			m_nextActorUID = (m_nextActorUID >= ActorHandle::MAX_ACTOR_UID) ? 1 : m_nextActorUID + 1;
+
+			return m_actors[i]->m_actorHandle;
+		}
+	}
+
+	int newIndex = static_cast<int>(m_actors.size());
+	newActor->m_actorHandle = new ActorHandle(m_nextActorUID, newIndex);
+	m_actors.push_back(newActor);
+	if (newActor->m_controller)
+	{
+		newActor->m_controller->Possess(*newActor->m_actorHandle);
+	}
+	
+	if (isSpawnPoint)
+	{
+		m_spawnPoint.push_back(newActor);
+	}
+
+	m_nextActorUID = (m_nextActorUID >= ActorHandle::MAX_ACTOR_UID) ? 1 : m_nextActorUID + 1;
+
+	return newActor->m_actorHandle;
+}
+
+ActorHandle* Map::SpawnProjectile(const SpawnInfo& spawnInfo, ActorHandle* ownerHandle)
+{
+	int defIndex = -1;
+	for (int i = 0; i < (int)ActorDefinition::s_projectileActorDefinitions.size(); i++)
+	{
+		if (ActorDefinition::s_projectileActorDefinitions[i]->m_name == spawnInfo.m_typeName)
+		{
+			defIndex = i;
+			break;
+		}
+	}
+	if (defIndex == -1)
+	{
+		return nullptr;
+	}
+
+	Actor* newActor = new Actor(defIndex, this, spawnInfo.m_position, spawnInfo.m_orientation,true);
+
+	//bool isSpawnPoint = (ActorDefinition::s_actorDefinitions[defIndex].m_name == "SpawnPoint");
+
+	for (int i = 0; i < (int)m_actors.size(); i++)
+	{
+		if (m_actors[i] == nullptr)
+		{
+			m_actors[i] = newActor;
+			newActor->m_actorHandle = new ActorHandle(m_nextActorUID, i);
+			m_nextActorUID = (m_nextActorUID >= ActorHandle::MAX_ACTOR_UID) ? 1 : m_nextActorUID + 1;
+			newActor->m_isProjectile = true;
+			newActor->m_owner = ownerHandle;
+			return newActor->m_actorHandle;
+		}
+	}
+
+	int newIndex = static_cast<int>(m_actors.size());
+	newActor->m_actorHandle = new ActorHandle(m_nextActorUID, newIndex);
+	newActor->m_isProjectile = true;
+	newActor->m_owner = ownerHandle;
+	m_actors.push_back(newActor);
+	m_nextActorUID = (m_nextActorUID >= ActorHandle::MAX_ACTOR_UID) ? 1 : m_nextActorUID + 1;
+
+	return newActor->m_actorHandle;
+}
+
+ActorHandle* Map::SpawnPlayer(PlayerController* curPlayerController,int viewPortType)
+{
+	int spawnPointIndex = m_game->m_rng.RollRandomIntInRange(0, (int)m_spawnPoint.size() - 1);
+	SpawnInfo playerSpawnInfo = SpawnInfo("Marine", Faction::GOOD,
+		m_spawnPoint[spawnPointIndex]->m_position, m_spawnPoint[spawnPointIndex]->m_orientation);
+	ActorHandle* newPlayerHandle=SpawnActor(playerSpawnInfo);
+	curPlayerController->Possess(*newPlayerHandle,viewPortType);
+
+	return newPlayerHandle;
+}
+
+Actor* Map::GetActorByHandle(const ActorHandle handle) const
+{
+	if (!handle.IsValid())
+	{
+		return nullptr;
+	}
+	unsigned int index = handle.GetIndex();
+	if (index >= m_actors.size())
+	{
+		return nullptr;
+	}
+
+	Actor* actor = m_actors[index];
+
+	if (actor == nullptr)
+	{
+		return nullptr;
+	}
+
+	if (handle != *m_actors[index]->m_actorHandle)
+	{
+		return nullptr;
+	}
+	return m_actors[index];
+}
+
+void Map::DeleteDestroyedActors()
+{
+	for (size_t i = 0; i < m_actors.size(); i++)
+	{
+		if (m_actors[i] && m_actors[i]->m_isDestroy)
+		{
+			delete m_actors[i];
+			m_actors[i] = nullptr; 
+		}
+	}
+}
+
 
 
 void Map::Update(float deltaTime)
 {
+	DeleteDestroyedActors();
+
 	UpdateLight();
+
+	if (!(m_game->m_playerController0 && m_game->m_playerController1))
+	{
+		if (g_theInput->WasKeyJustPressed('N'))
+		{
+			DebugPossessNext();
+		}
+	}
+
+
+	if (m_game->m_playerController0)
+	{
+		if (m_game->m_playerController0->GetActor())
+		{
+			m_game->m_playerController0->Update(deltaTime);
+		}
+		else
+		{
+			if (m_game->m_playerController1)
+			{
+				SpawnPlayer(m_game->m_playerController0, 0);
+			}
+			else
+			{
+				SpawnPlayer(m_game->m_playerController0, -1);
+			}
+			
+		}
+	}
+
+	if (m_game->m_playerController1)
+	{
+		if (m_game->m_playerController1->GetActor())
+		{
+			m_game->m_playerController1->Update(deltaTime);
+		}
+		else
+		{
+			if (m_game->m_playerController0)
+			{
+				SpawnPlayer(m_game->m_playerController1, 1);
+			}
+			else
+			{
+				SpawnPlayer(m_game->m_playerController1, -1);
+			}
+		}
+	}
+
+
+	for (Actor* actor : m_actors)
+	{
+		if (actor)
+		{
+			actor->Update(deltaTime);
+		}
+	}
 
 	CollideActors();
 	CollideActorsWithMap();
 
-	UpdatePlayerMode(deltaTime);
-	UpdateRaycastTest();
+
+	//FixedUpdate(deltaTime);
+
+	for (Actor* actor : m_actors)
+	{
+		if (actor)
+		{
+			if (actor->m_actorDef->m_simulated && !actor->m_isDead)
+			{
+				actor->UpdatePhysics(deltaTime);
+			}
+		}
+	}
+
+	//UpdatePlayerMode(deltaTime);
+	//UpdateRaycastTest();
 }
+
+void Map::FixedUpdate(float deltaTime)
+{
+	m_physicsUpdateAccumulator += deltaTime;
+	while (m_physicsUpdateAccumulator >= m_fixedTimeStep)
+	{
+		for (Actor* actor : m_actors)
+		{
+			if (actor)
+			{
+				if (actor->m_actorDef->m_simulated && !actor->m_isDead)
+				{
+					actor->UpdatePhysics(m_fixedTimeStep);
+				}
+			}
+		}
+		m_physicsUpdateAccumulator -= m_fixedTimeStep;
+	}
+}
+
 
 void Map::CollideActors()
 {
 	for (Actor* actorA : m_actors)
 	{
 		if (actorA == nullptr) continue;
+		if (actorA->m_isDead) continue;
+		if (!actorA->m_actorDef->m_collideWithActors) continue;
 		for (Actor* actorB : m_actors)
 		{
 			if (actorB == nullptr) continue;
+			if (actorB->m_isDead) continue;
+			if (!actorB->m_actorDef->m_collideWithActors) continue;
 			if (actorA == actorB)
 			{
 				continue;
 			}
- 			bool canAPushB = actorA->m_isStatic && !actorB->m_isStatic;
- 			bool canBPushA = actorB->m_isStatic && !actorA->m_isStatic;
+			if (actorA->m_actorHandle == actorB->m_owner || actorA->m_owner == actorB->m_actorHandle)
+			{
+				continue;
+			}
+			bool canPushEachOther = actorA->m_actorDef->m_collideWithActors && actorB->m_actorDef->m_collideWithActors;
 			Vec3 aColliderCenter = actorA->m_position + actorA->m_physicCollider.m_center;
 			Vec3 bColliderCenter = actorB->m_position + actorB->m_physicCollider.m_center;
  			if (abs(aColliderCenter.z - bColliderCenter.z) >= actorA->m_physicCollider.m_halfHeight + actorB->m_physicCollider.m_halfHeight)
@@ -312,34 +623,42 @@ void Map::CollideActors()
  			}
 			Vec2 aCCenterXY = Vec2(aColliderCenter.x, aColliderCenter.y);
 			Vec2 bCCenterXY = Vec2(bColliderCenter.x, bColliderCenter.y);
- 			if (!canAPushB && !canBPushA)
- 			{
- 				continue;
- 			}
-			else if (canAPushB && canBPushA)
+//  			if (!canAPushB && !canBPushA)
+//  			{
+//  				continue;
+//  			}
+			if (canPushEachOther)
 			{
 				PushDiscsOutOfEachOther2D(aCCenterXY, actorA->m_physicCollider.m_radius, bCCenterXY, actorB->m_physicCollider.m_radius);
+				if (actorA->m_position.x != aCCenterXY.x ||
+					actorA->m_position.y != aCCenterXY.y ||
+					actorB->m_position.x != bCCenterXY.x ||
+					actorB->m_position.y != bCCenterXY.y)
+				{
+					actorA->OnCollideOtherActor(actorB->m_actorHandle);
+					actorB->OnCollideOtherActor(actorA->m_actorHandle);
+				}
 				actorA->m_position.x = aCCenterXY.x;
 				actorA->m_position.y = aCCenterXY.y;
 				actorB->m_position.x = bCCenterXY.x;
 				actorB->m_position.y = bCCenterXY.y;
 			}
-			else if (!canAPushB && canBPushA)
-			{
-				PushDiscOutOfDisc2D(aCCenterXY, actorA->m_physicCollider.m_radius, bCCenterXY, actorB->m_physicCollider.m_radius);
-				actorA->m_position.x = aCCenterXY.x;
-				actorA->m_position.y = aCCenterXY.y;
-				actorB->m_position.x = bCCenterXY.x;
-				actorB->m_position.y = bCCenterXY.y;
-			}
-			else if (canAPushB && !canBPushA)
-			{
-				PushDiscOutOfDisc2D(bCCenterXY, actorB->m_physicCollider.m_radius, aCCenterXY, actorA->m_physicCollider.m_radius);
-				actorA->m_position.x = aCCenterXY.x;
-				actorA->m_position.y = aCCenterXY.y;
-				actorB->m_position.x = bCCenterXY.x;
-				actorB->m_position.y = bCCenterXY.y;
-			}
+// 			else if (!canAPushB && canBPushA)
+// 			{
+// 				PushDiscOutOfDisc2D(aCCenterXY, actorA->m_physicCollider.m_radius, bCCenterXY, actorB->m_physicCollider.m_radius);
+// 				actorA->m_position.x = aCCenterXY.x;
+// 				actorA->m_position.y = aCCenterXY.y;
+// 				actorB->m_position.x = bCCenterXY.x;
+// 				actorB->m_position.y = bCCenterXY.y;
+// 			}
+// 			else if (canAPushB && !canBPushA)
+// 			{
+// 				PushDiscOutOfDisc2D(bCCenterXY, actorB->m_physicCollider.m_radius, aCCenterXY, actorA->m_physicCollider.m_radius);
+// 				actorA->m_position.x = aCCenterXY.x;
+// 				actorA->m_position.y = aCCenterXY.y;
+// 				actorB->m_position.x = bCCenterXY.x;
+// 				actorB->m_position.y = bCCenterXY.y;
+// 			}
 		}
 	}
 }
@@ -353,11 +672,8 @@ void Map::CollideActorsWithMap()
 	for (Actor* actor : m_actors)
 	{
 		if (actor == nullptr) continue;
-// 		if (actor == m_player && g_theGame->IsNoClip())
-// 		{
-// 			continue;
-// 		}
-		if (!actor->m_isStatic)
+
+		if (!actor->m_isDead&&actor->m_actorDef->m_collideWithWorld)
 		{
 			IntVec2 entityTileCoordsPos = GetTileCoordsFromPoint(Vec2(actor->m_position.x,actor->m_position.y));
 			Vec2 actorPosFromZ = Vec2(actor->m_position.x,actor->m_position.y);
@@ -378,8 +694,26 @@ void Map::CollideActorsWithMap()
 			//SW																							
 			PushOutOfEachTile(IntVec2(entityTileCoordsPos.x - 1, entityTileCoordsPos.y - 1), actorPosFromZ, actor->m_physicCollider.m_radius);
 
+			float newZ = actor->m_position.z;
+			if (actor->m_position.z < 0.f)
+			{
+				newZ = 0.f;
+			}
+
+			if (actor->m_position.z > 1.f - actor->m_actorDef->m_physicsHeight)
+			{
+				newZ = 1.f - actor->m_actorDef->m_physicsHeight;
+			}
+
+			if (actor->m_position.x != actorPosFromZ.x ||
+				actor->m_position.y != actorPosFromZ.y||
+				actor->m_position.z!=newZ)
+			{
+				actor->OnCollideWorld();
+			}
 			actor->m_position.x = actorPosFromZ.x;
 			actor->m_position.y = actorPosFromZ.y;
+			actor->m_position.z = newZ;
 		}
 	}
 }
@@ -398,7 +732,7 @@ void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhy
 	}
 }
 
-RaycastResult3D Map::RaycastAll(const Vec3& start, const Vec3& direction, float distance) const
+RaycastResult3D Map::RaycastAll(const Vec3& start, const Vec3& direction, float distance, ActorHandle* sourceActorHandle) 
 {
 	RaycastResult3D finalResult;
 
@@ -407,7 +741,8 @@ RaycastResult3D Map::RaycastAll(const Vec3& start, const Vec3& direction, float 
 		return finalResult;
 	}
 
-	RaycastResult3D resultActors=RaycastWorldActors(start, direction, distance);
+	ActorHandle resulatActorHandle;
+	RaycastResult3D resultActors=RaycastWorldActors(start, direction, distance,sourceActorHandle, resulatActorHandle);
 	RaycastResult3D resultXY = RaycastWorldXY(start, direction, distance);
 	RaycastResult3D resultZ = RaycastWorldZ(start, direction, distance);
 	
@@ -428,15 +763,45 @@ RaycastResult3D Map::RaycastAll(const Vec3& start, const Vec3& direction, float 
 		finalResult = resultZ;
 	}
 
+	PlayerController* listener = nullptr;
+	if (m_game->m_playerController0)
+	{
+		listener = m_game->m_playerController0;
+	}
+	else
+	{
+		listener = m_game->m_playerController1;
+	}
+
+	if (finalResult.m_impactPos== resultActors.m_impactPos)
+	{
+		GetActorByHandle(resulatActorHandle)->OnCollideRay(sourceActorHandle,finalResult.m_rayFwdNormal);
+		SpawnInfo bloodSpawnInfo = SpawnInfo("BloodSplatter", Faction::NEUTRAL,
+			finalResult.m_impactPos, EulerAngles(0.f,0.f,0.f));
+		ActorHandle* blood=SpawnActor(bloodSpawnInfo);
+		GetActorByHandle(*blood)->Die(listener);
+	}
+	else
+	{
+		SpawnInfo hitSpawnInfo = SpawnInfo("BulletHit", Faction::NEUTRAL,
+			finalResult.m_impactPos, EulerAngles(0.f, 0.f, 0.f));
+		ActorHandle* hit = SpawnActor(hitSpawnInfo);
+		
+		GetActorByHandle(*hit)->Die(listener);
+	}
+
 	return finalResult;
 }
 
-RaycastResult3D Map::RaycastWorldActors(const Vec3& start, const Vec3& direction, float distance) const
+RaycastResult3D Map::RaycastWorldActors(const Vec3& start, const Vec3& direction, float distance, ActorHandle* sourceActorHandle,ActorHandle& resultActor) const
 {
 	RaycastResult3D result = RaycastResult3D(direction, start, distance);
 	float impactDist = FLT_MAX;
 	for (Actor* actor : m_actors)
 	{
+		if (!actor) continue;
+		if (sourceActorHandle == actor->m_actorHandle) continue;
+		//if (actor->m_actorDef->m_flying) continue;
 		Vec3 colliderCenter = actor->m_position+ Vec3(0.f, 0.f, actor->m_physicCollider.m_halfHeight);
 		RaycastResult3D curResult=RaycastVsZCylinder3D(start, direction, distance,
 			colliderCenter, actor->m_physicCollider.m_radius, actor->m_physicCollider.m_halfHeight);
@@ -444,6 +809,7 @@ RaycastResult3D Map::RaycastWorldActors(const Vec3& start, const Vec3& direction
 		{
 			result = curResult;
 			impactDist = curResult.m_impactDist;
+			resultActor = *actor->m_actorHandle;
 		}
 	}
 	return result;
@@ -579,171 +945,420 @@ RaycastResult3D Map::RaycastWorldZ(const Vec3& start, const Vec3& direction, flo
 	}
 }
 
+bool Map::IsEyeSightBlock(const Vec3& start, const Vec3& direction, float distance, ActorHandle* sourceActorHandle,float aimDistSq)
+{
+	RaycastResult3D finalResult;
+
+	if (!IsPositionInBounds(start))
+	{
+		return true;
+	}
+
+	ActorHandle resulatActorHandle;
+	RaycastResult3D resultActors = RaycastWorldActors(start, direction, distance, sourceActorHandle, resulatActorHandle);
+	RaycastResult3D resultXY = RaycastWorldXY(start, direction, distance);
+	RaycastResult3D resultZ = RaycastWorldZ(start, direction, distance);
+
+	float minDistance = FLT_MAX;
+
+	if (resultActors.m_didImpact && resultActors.m_impactDist < minDistance) {
+		minDistance = resultActors.m_impactDist;
+		finalResult = resultActors;
+	}
+
+	if (resultXY.m_didImpact && resultXY.m_impactDist < minDistance) {
+		minDistance = resultXY.m_impactDist;
+		finalResult = resultXY;
+	}
+
+	if (resultZ.m_didImpact && resultZ.m_impactDist < minDistance) {
+		minDistance = resultZ.m_impactDist;
+		finalResult = resultZ;
+	}
+
+	if (finalResult.m_impactPos == resultXY.m_impactPos|| finalResult.m_impactPos == resultZ.m_impactPos)
+	{
+		if(aimDistSq>finalResult.m_impactDist* finalResult.m_impactDist)
+			return true;
+	}
+	return false;
+}
+
 void Map::UpdateLight()
 {
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
 	{
 		m_sunDirection.x -= 1.f;
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer),
+			"LightDirection x: %.2f",
+			m_sunDirection.x);
+		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
 	}
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
 	{
 		m_sunDirection.x += 1.f;
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer),
+			"LightDirection x: %.2f",
+			m_sunDirection.x);
+		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
 	}
 
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
 	{
 		m_sunDirection.y -= 1.f;
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer),
+			"LightDirection y: %.2f",
+			m_sunDirection.y);
+		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
 	}
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F5))
 	{
 		m_sunDirection.y += 1.f;
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer),
+			"LightDirection y: %.2f",
+			m_sunDirection.y);
+		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
 	}
 
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
 	{
 		m_sunIntensity -= 0.05f;
 		m_sunIntensity = GetClamped(m_sunIntensity, 0.f, 1.f);
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer),
+			"LightIntensity: %.2f",
+			m_sunIntensity);
+		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
 	}
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
 	{
 		m_sunIntensity += 0.05f;
 		m_sunIntensity = GetClamped(m_sunIntensity, 0.f, 1.f);
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer),
+			"LightIntensity: %.2f",
+			m_sunIntensity);
+		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
 	}
 
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F8))
 	{
 		m_ambientIntensity -= 0.05f;
 		m_ambientIntensity = GetClamped(m_ambientIntensity, 0.f, 1.f);
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer),
+			"AmbientIntensity: %.2f",
+			m_ambientIntensity);
+		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
 	}
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F9))
 	{
 		m_ambientIntensity += 0.05f;
 		m_ambientIntensity = GetClamped(m_ambientIntensity, 0.f, 1.f);
-	}
-
-}
-
-void Map::UpdatePlayerMode(float deltaSeconds)
-{
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F1))
-	{
-		m_isPlayerMode = !m_isPlayerMode;
-	}
-	if (m_isPlayerMode)
-	{
-		Vec3 fwdDirection;
-		Vec3 leftDirection;
-		Vec3 upDirection;
-		m_player->m_orientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
-		fwdDirection.z = 0.f;
-		leftDirection.z = 0.f;
-		upDirection.z = 0.f;
-		float curMoveSpeed;
-		if (g_theInput->IsKeyDown(KEYCODE_LEFT_SHIFT))
-		{
-			curMoveSpeed = m_player->m_moveSpeed * 10.f;
-		}
-		else
-		{
-			curMoveSpeed = m_player->m_moveSpeed;
-		}
-
-		m_projectile->m_velocity = Vec3(0.f, 0.f, 0.f);
-		Vec3 aimDirection = Vec3(0.f, 0.f, 0.f);
-		if (g_theInput->IsKeyDown('W'))
-		{
-			aimDirection += fwdDirection;
-		}
-		if (g_theInput->IsKeyDown('S'))
-		{
-			aimDirection -= fwdDirection;
-		}
-		if (g_theInput->IsKeyDown('A'))
-		{
-			aimDirection += leftDirection;
-		}
-		if (g_theInput->IsKeyDown('D'))
-		{
-			aimDirection -= leftDirection;
-		}
-
-		aimDirection.Normalized();
-		aimDirection.SetLength(curMoveSpeed);
-		m_projectile->m_velocity = aimDirection;
-		m_projectile->m_position += m_projectile->m_velocity * deltaSeconds;
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer),
+			"AmbientIntensity: %.2f",
+			m_ambientIntensity);
+		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
 	}
 }
 
-void Map::UpdateRaycastTest()
-{
-	if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
-	{
-		Vec3 dir = m_player->m_playerCam.GetOrientation().GetForward_IFwd().GetNormalized();
-		Vec3 endPoint = m_player->m_position + dir * 10.f;
-		DebugAddWorldLine(m_player->m_position, endPoint, 0.02f, 10.f, Rgba8::WHITE, Rgba8::WHITE, DebugRenderMode::X_RAY);
-		//calculate and debug draw
-		CalculateAndDrawRaycastResult(m_player->m_position, dir, 10.f);
-	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
-	{
-		Vec3 dir = m_player->m_playerCam.GetOrientation().GetForward_IFwd().GetNormalized();
-		Vec3 endPoint = m_player->m_position + dir * 0.25f;
-		DebugAddWorldLine(m_player->m_position, endPoint, 0.02f, 10.f, Rgba8::WHITE, Rgba8::WHITE, DebugRenderMode::X_RAY);
-		//calculate and debug draw
-		CalculateAndDrawRaycastResult(m_player->m_position, dir, 0.25f);
-	}
-}
+//void Map::UpdateSprint()
+//{
+//	m_isSprint = !m_isSprint;
+//}
 
-void Map::CalculateAndDrawRaycastResult(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist)
-{
-	RaycastResult3D result = RaycastAll(startPos, fwdNormal, maxDist);
-	if (result.m_didImpact)
-	{
-		DebugAddWorldPoint(result.m_impactPos, 0.06f, 10.f, Rgba8::YELLOW);
-		DebugAddWorldArrow(result.m_impactPos, result.m_impactPos + 0.3f * result.m_impactNormal, 0.03f, 10.f, Rgba8::BLUE, Rgba8::BLUE);
-	}
-	////actor
-	//RaycastResult3D resultActors=RaycastWorldActors(startPos, fwdNormal, maxDist);
-	//if (resultActors.m_didImpact)
-	//{
-	//	DebugAddWorldPoint(resultActors.m_impactPos, 0.06f, 10.f, Rgba8::YELLOW);
-	//	DebugAddWorldArrow(resultActors.m_impactPos, resultActors.m_impactPos + 0.3f * resultActors.m_impactNormal, 0.03f, 10.f, Rgba8::BLUE, Rgba8::BLUE);
-	//}
-	////world grid
-	//RaycastResult3D resultGridXY=RaycastWorldXY(startPos, fwdNormal, maxDist);
-	//if (resultGridXY.m_didImpact)
-	//{
-	//	DebugAddWorldPoint(resultGridXY.m_impactPos,0.06f,10.f,Rgba8::YELLOW);
-	//	DebugAddWorldArrow(resultGridXY.m_impactPos, resultGridXY.m_impactPos + 0.3f*resultGridXY.m_impactNormal,0.03f, 10.f, Rgba8::BLUE, Rgba8::BLUE);
-	//}
-	////ceiling and floor
-	//RaycastResult3D resultGridZ = RaycastWorldZ(startPos, fwdNormal, maxDist);
-	//if (resultGridZ.m_didImpact)
-	//{
-	//	DebugAddWorldPoint(resultGridZ.m_impactPos, 0.06f, 10.f, Rgba8::YELLOW);
-	//	DebugAddWorldArrow(resultGridZ.m_impactPos, resultGridZ.m_impactPos + 0.3f * resultGridZ.m_impactNormal, 0.03f, 10.f, Rgba8::BLUE, Rgba8::BLUE);
-	//}
-	//find shortest
+// void Map::UpdatePlayerMode(float deltaSeconds)
+// {
+// 	if (m_isSprint)
+// 	{
+// 		m_player->m_moveSpeed = 15.f;
+// 	}
+// 	else
+// 	{
+// 		m_player->m_moveSpeed = 1.f;
+// 	}
+// 	if (g_theInput->WasKeyJustPressed('F'))
+// 	{
+// 		m_player->m_playerMode=PlayerMode::FREE_CAMERA;
+// 	}
+// 	if (m_isPlayerMode)
+// 	{
+// 		DebugAddScreenText("F1: ControlMode: Actor", AABB2(Vec2(1100.f, 730.f), Vec2(1590.f, 750.f)), 20.f, Vec2(1.f, 1.f), 0.f, Rgba8::BLUE, Rgba8::BLUE);
+// 		Vec3 fwdDirection;
+// 		Vec3 leftDirection;
+// 		Vec3 upDirection;
+// 		m_player->m_orientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
+// 		fwdDirection.z = 0.f;
+// 		leftDirection.z = 0.f;
+// 		upDirection.z = 0.f;
+// 		float curMoveSpeed;
+// 		if (g_theInput->IsKeyDown(KEYCODE_LEFT_SHIFT))
+// 		{
+// 			curMoveSpeed = m_player->m_moveSpeed * 10.f;
+// 		}
+// 		else
+// 		{
+// 			curMoveSpeed = m_player->m_moveSpeed;
+// 		}
+// 
+// 		m_projectile->m_velocity = Vec3(0.f, 0.f, 0.f);
+// 		Vec3 aimDirection = Vec3(0.f, 0.f, 0.f);
+// 		if (g_theInput->IsKeyDown('W'))
+// 		{
+// 			aimDirection += fwdDirection;
+// 		}
+// 		if (g_theInput->IsKeyDown('S'))
+// 		{
+// 			aimDirection -= fwdDirection;
+// 		}
+// 		if (g_theInput->IsKeyDown('A'))
+// 		{
+// 			aimDirection += leftDirection;
+// 		}
+// 		if (g_theInput->IsKeyDown('D'))
+// 		{
+// 			aimDirection -= leftDirection;
+// 		}
+// 
+// 		aimDirection.Normalized();
+// 		aimDirection.SetLength(curMoveSpeed);
+// 		m_projectile->m_velocity = aimDirection;
+// 		m_projectile->m_position += m_projectile->m_velocity * deltaSeconds;
+// 	}
+// 	else
+// 	{
+// 		DebugAddScreenText("F1: ControlMode: Camera", AABB2(Vec2(1100.f, 730.f), Vec2(1590.f, 750.f)), 20.f, Vec2(1.f, 1.f), 0.f, Rgba8::WHITE, Rgba8::WHITE);
+// 	}
+// }
 
-	//debug draw
-}
+//void Map::UpdateRaycastTest()
+//{
+//	if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+//	{
+//		Vec3 dir = m_player->m_playerCam.GetOrientation().GetForward_IFwd().GetNormalized();
+//		Vec3 endPoint = m_player->m_position + dir * 10.f;
+//		DebugAddWorldLine(m_player->m_position, endPoint, 0.02f, 10.f, Rgba8::WHITE, Rgba8::WHITE, DebugRenderMode::X_RAY);
+//		//calculate and debug draw
+//		CalculateAndDrawRaycastResult(m_player->m_position, dir, 10.f);
+//	}
+//	if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
+//	{
+//		Vec3 dir = m_player->m_playerCam.GetOrientation().GetForward_IFwd().GetNormalized();
+//		Vec3 endPoint = m_player->m_position + dir * 0.25f;
+//		DebugAddWorldLine(m_player->m_position, endPoint, 0.02f, 10.f, Rgba8::WHITE, Rgba8::WHITE, DebugRenderMode::X_RAY);
+//		//calculate and debug draw
+//		CalculateAndDrawRaycastResult(m_player->m_position, dir, 0.25f);
+//	}
+//}
+//
+//void Map::CalculateAndDrawRaycastResult(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist)
+//{
+//	RaycastResult3D result = RaycastAll(startPos, fwdNormal, maxDist);
+//	if (result.m_didImpact)
+//	{
+//		DebugAddWorldPoint(result.m_impactPos, 0.06f, 10.f, Rgba8::YELLOW);
+//		DebugAddWorldArrow(result.m_impactPos, result.m_impactPos + 0.3f * result.m_impactNormal, 0.03f, 10.f, Rgba8::BLUE, Rgba8::BLUE);
+//	}
+//	////actor
+//	//RaycastResult3D resultActors=RaycastWorldActors(startPos, fwdNormal, maxDist);
+//	//if (resultActors.m_didImpact)
+//	//{
+//	//	DebugAddWorldPoint(resultActors.m_impactPos, 0.06f, 10.f, Rgba8::YELLOW);
+//	//	DebugAddWorldArrow(resultActors.m_impactPos, resultActors.m_impactPos + 0.3f * resultActors.m_impactNormal, 0.03f, 10.f, Rgba8::BLUE, Rgba8::BLUE);
+//	//}
+//	////world grid
+//	//RaycastResult3D resultGridXY=RaycastWorldXY(startPos, fwdNormal, maxDist);
+//	//if (resultGridXY.m_didImpact)
+//	//{
+//	//	DebugAddWorldPoint(resultGridXY.m_impactPos,0.06f,10.f,Rgba8::YELLOW);
+//	//	DebugAddWorldArrow(resultGridXY.m_impactPos, resultGridXY.m_impactPos + 0.3f*resultGridXY.m_impactNormal,0.03f, 10.f, Rgba8::BLUE, Rgba8::BLUE);
+//	//}
+//	////ceiling and floor
+//	//RaycastResult3D resultGridZ = RaycastWorldZ(startPos, fwdNormal, maxDist);
+//	//if (resultGridZ.m_didImpact)
+//	//{
+//	//	DebugAddWorldPoint(resultGridZ.m_impactPos, 0.06f, 10.f, Rgba8::YELLOW);
+//	//	DebugAddWorldArrow(resultGridZ.m_impactPos, resultGridZ.m_impactPos + 0.3f * resultGridZ.m_impactNormal, 0.03f, 10.f, Rgba8::BLUE, Rgba8::BLUE);
+//	//}
+//	//find shortest
+//
+//	//debug draw
+//}
 
 void Map::Render() const
 {
- 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
- 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
- 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
- 	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
- 	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
- 	g_theRenderer->BindTexture(m_texture);
- 	g_theRenderer->BindShader(m_shader);
- 	Vec3 normalSunDirection = m_sunDirection.GetNormalized();
- 	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
- 	g_theRenderer->DrawVertexArray_WithTBN(m_vertexs, m_indexs,m_vertexBuffer,m_indexBuffer);
-
-
-	for (Actor* actor : m_actors)
+	//-----------------------------------------------------------------------
+	if (m_game->m_playerController0)
 	{
-		actor->Render();
+		g_theRenderer->BeginCamera(m_game->m_playerController0->m_playerCam);
+
+		g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+		g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+		g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+		g_theRenderer->BindTexture(m_texture);
+		g_theRenderer->BindShader(m_shader);
+		Vec3 normalSunDirection = m_sunDirection.GetNormalized();
+		g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
+		g_theRenderer->SetPointLightsConstants(m_pointLights);
+		g_theRenderer->SetSpotLightsConstants(m_spotLights);
+		g_theRenderer->DrawVertexArray_WithTBN(m_vertexs, m_indexs, m_vertexBuffer, m_indexBuffer);
+		if (m_game->m_playerController1)
+		{
+			m_game->m_playerController1->GetActor()->UpdateAnimation(m_game->m_playerController0);
+			m_game->m_playerController1->GetActor()->Render(m_game->m_playerController0);
+		}
+		for (Actor* actor : m_actors)
+		{
+			if (actor)
+			{
+				if (actor->m_isVisible)
+				{
+					actor->UpdateAnimation(m_game->m_playerController0);
+					actor->Render(m_game->m_playerController0);
+				}
+			}
+
+		}
+
+		g_theRenderer->EndCamera(m_game->m_playerController0->m_playerCam);
+		m_game->m_playerController0->RenderPlayerHUD();
 	}
+	
+	//-----------------------------------------------------------------------
+	if (m_game->m_playerController1)
+	{
+		g_theRenderer->BeginCamera(m_game->m_playerController1->m_playerCam);
+
+		g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+		g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+		g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+		g_theRenderer->BindTexture(m_texture);
+		g_theRenderer->BindShader(m_shader);
+		Vec3 normalSunDirection = m_sunDirection.GetNormalized();
+		g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
+		g_theRenderer->DrawVertexArray_WithTBN(m_vertexs, m_indexs, m_vertexBuffer, m_indexBuffer);
+		//m_player->Render();
+		if (m_game->m_playerController0)
+		{
+			m_game->m_playerController0->GetActor()->UpdateAnimation(m_game->m_playerController1);
+			m_game->m_playerController0->GetActor()->Render(m_game->m_playerController1);
+		}
+		for (Actor* actor : m_actors)
+		{
+			if (actor)
+			{
+				if (actor->m_isVisible)
+				{
+					actor->UpdateAnimation(m_game->m_playerController1);
+					actor->Render(m_game->m_playerController1);
+				}
+			}
+		}
+		g_theRenderer->EndCamera(m_game->m_playerController1->m_playerCam);
+		m_game->m_playerController1->RenderPlayerHUD();
+	}
+}
+
+ActorHandle* Map::GetClosestVisibleEnemy(Actor* myActor, Faction const& aimFaction)
+{
+	if (!myActor) return nullptr;
+	float closestDistanceSq = myActor->m_actorDef->m_sightRadius* myActor->m_actorDef->m_sightRadius;
+	ActorHandle* nearestEnemyHandle = nullptr;
+
+	Vec3 myDirection = myActor->m_orientation.GetForward_IFwd();
+
+	for (Actor* otherActor : m_actors)
+	{
+		if (!otherActor) continue;
+		if (otherActor == myActor) continue;
+
+		if (otherActor->m_faction== aimFaction)
+		{
+			Vec3 otherPosition = otherActor->m_position;
+
+			if(!IsPointInsideDirectedSector2D(Vec2(otherPosition.x, otherPosition.y),
+					Vec2(myActor->m_position.x, myActor->m_position.y),
+					Vec2(myDirection.x, myDirection.y),
+					myActor->m_actorDef->m_cameraFOVDegrees, myActor->m_actorDef->m_sightRadius)) 
+				continue;
+
+			if (
+				IsEyeSightBlock(myActor->m_position,(otherPosition-myActor->m_position).GetNormalized(), myActor->m_actorDef->m_sightRadius, myActor->m_actorHandle,
+					GetDistanceSquared3D(myActor->m_position, otherPosition))
+				)
+				continue;
+			
+			float distSq = GetDistanceSquared2D(Vec2(myActor->m_position.x, myActor->m_position.y), 
+				Vec2(otherPosition.x, otherPosition.y));
+
+			if (distSq < closestDistanceSq)
+			{
+				closestDistanceSq = distSq;
+				nearestEnemyHandle = otherActor->m_actorHandle;
+			}
+		}		
+	}
+	return nearestEnemyHandle;
+}
+
+ActorHandle* Map::GetMeleeTarget(Actor* myActor, Faction const& aimFaction, float meleeRadius, float meleeDegrees)
+{
+	if (!myActor) return nullptr;
+
+	float meleeRangeSq = meleeRadius * meleeRadius;
+	ActorHandle* nearestMeleeTargetHandle = nullptr;
+
+	for (Actor* otherActor : m_actors)
+	{
+		if (!otherActor) continue;
+		if (otherActor == myActor) continue;
+		if (otherActor->m_faction == aimFaction)
+		{
+			Vec3 otherPosition = otherActor->m_position;
+
+			if (!IsPointInsideDirectedSector2D(Vec2(otherPosition.x, otherPosition.y),
+				Vec2(myActor->m_position.x, myActor->m_position.y),
+				Vec2(myActor->m_orientation.GetForward_IFwd().x, myActor->m_orientation.GetForward_IFwd().y),
+				meleeDegrees, meleeRadius)) continue;
+
+			float distSq = GetDistanceSquared2D(Vec2(myActor->m_position.x, myActor->m_position.y),
+				Vec2(otherPosition.x, otherPosition.y));
+
+			if (distSq < meleeRangeSq)
+			{
+				meleeRangeSq = distSq;
+				nearestMeleeTargetHandle = otherActor->m_actorHandle;
+			}
+		}
+	}
+
+	return nearestMeleeTargetHandle;
+}
+
+void Map::DebugPossessNext()
+{
+	m_curPlayerActorIndex++;
+	m_curPlayerActorIndex %= m_actors.size();
+
+	while (m_actors[m_curPlayerActorIndex] == nullptr || !m_actors[m_curPlayerActorIndex]->m_actorDef->m_canBePossessed)
+	{
+		m_curPlayerActorIndex++;
+		m_curPlayerActorIndex %= m_actors.size();
+	}
+
+	if (m_actors[m_curPlayerActorIndex]->m_actorDef->m_canBePossessed)
+	{
+		m_game->m_playerController0->GetActor()->m_isVisible = true;
+		m_game->m_playerController0->Possess(*m_actors[m_curPlayerActorIndex]->m_actorHandle,-1);
+	}
+
 }

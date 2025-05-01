@@ -33,6 +33,7 @@
     <ClCompile Include="Main_Windows.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MapDefinition.cpp" />
+    <ClCompile Include="MapLayer.cpp" />
     <ClCompile Include="PistolStrategy.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerUpperIdleState.cpp" />
@@ -46,6 +47,7 @@
     <ClInclude Include="AnimState.hpp" />
     <ClInclude Include="Map.hpp" />
     <ClInclude Include="MapDefinition.hpp" />
+    <ClInclude Include="MapLayer.hpp" />
     <ClInclude Include="PistolStrategy.hpp" />
     <ClInclude Include="PlayerAnimStateEnum.hpp" />
     <ClInclude Include="PlayerUpperIdleState.hpp" />

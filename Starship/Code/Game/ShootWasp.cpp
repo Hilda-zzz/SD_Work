@@ -62,7 +62,8 @@ void ShootWasp::Render() const
 	}
 
 	TransformVertexArrayXY3D(NUM_SHOOTWASP_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
-
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(NUM_SHOOTWASP_VERTS, temp_vertices);
 }
 
@@ -85,28 +86,28 @@ void ShootWasp::GetHurt(float hurtPoint)
 void ShootWasp::InitializedVerts(Vertex_PCU* vertsToFillIn, Rgba8 const& color)
 {
 	vertsToFillIn[0] = Vertex_PCU(Vec3(-3.f, 0.f, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[1] = Vertex_PCU(Vec3(-2.f, 2.f, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[2] = Vertex_PCU(Vec3(-2.f, -2.f, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[1] = Vertex_PCU(Vec3(-2.f, -2.f, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[2] =  Vertex_PCU(Vec3(-2.f, 2.f, 0.f), color, Vec2(0.f, 0.f));
 
 	vertsToFillIn[3] = Vertex_PCU(Vec3(-2.f, 2.f, 0.f), color, Vec2(0.f, 0.f));
 	vertsToFillIn[4] = Vertex_PCU(Vec3(-2.f, 0.f, 0.f), color, Vec2(0.f, 0.f));
 	vertsToFillIn[5] = Vertex_PCU(Vec3(-1.f, 2.f, 0.f), color, Vec2(0.f, 0.f));
 
 	vertsToFillIn[6] = Vertex_PCU(Vec3(-2.f, -2.f, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[7] = Vertex_PCU(Vec3(-2.f, 0.f, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[8] = Vertex_PCU(Vec3(-1.f, -2.f, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[7] = Vertex_PCU(Vec3(-1.f, -2.f, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[8] = Vertex_PCU(Vec3(-2.f, 0.f, 0.f), color, Vec2(0.f, 0.f)); 
 
 	vertsToFillIn[9] = Vertex_PCU(Vec3(-2.f, 2.f, 0.f), color, Vec2(0.f, 0.f));
 	vertsToFillIn[10] = Vertex_PCU(Vec3(2.f, 2.f, 0.f), color, Vec2(0.f, 0.f));
 	vertsToFillIn[11] = Vertex_PCU(Vec3(0.f,3.f, 0.f), color, Vec2(0.f, 0.f));
 
 	vertsToFillIn[12] = Vertex_PCU(Vec3(-2.f, -2.f, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[13] = Vertex_PCU(Vec3(2.f, -2.f, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[14] = Vertex_PCU(Vec3(0, -3.f, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[13] = Vertex_PCU(Vec3(0, -3.f, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[14] = Vertex_PCU(Vec3(2.f, -2.f, 0.f), color, Vec2(0.f, 0.f)); 
 
 	vertsToFillIn[15] = Vertex_PCU(Vec3(-1.f, 0.f, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[16] = Vertex_PCU(Vec3(0.f, 1.f, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[17] = Vertex_PCU(Vec3(0.f, -1.f, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[16] = Vertex_PCU(Vec3(0.f, -1.f, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[17] = Vertex_PCU(Vec3(0.f, 1.f, 0.f), color, Vec2(0.f, 0.f)); 
 
 	vertsToFillIn[18] = Vertex_PCU(Vec3(2.f, 0.f, 0.f), color, Vec2(0.f, 0.f));
 	vertsToFillIn[19] = Vertex_PCU(Vec3(0.f, 1.f, 0.f), color, Vec2(0.f, 0.f));

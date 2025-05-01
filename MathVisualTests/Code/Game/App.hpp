@@ -27,6 +27,6 @@ private:
 private:
 	Game* m_theGame;
 	float m_timeLastFrameStart=0;
-	GameMode m_curGameMode = GAME_MODE_NEAREST_POINT;
+	GameMode m_curGameMode = GAME_MODE_PACHINKO2D;
 };
 bool OnQuitEvent(EventArgs& args);

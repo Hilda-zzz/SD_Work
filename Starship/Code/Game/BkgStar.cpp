@@ -4,29 +4,35 @@
 
 
 Vertex_PCU crossStarVerts[18] = {
-	Vertex_PCU(Vec3(0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
-	Vertex_PCU(Vec3(-0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
-	Vertex_PCU(Vec3(0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
-
+	Vertex_PCU(Vec3(0.1f, 0.1f, 0.f), Rgba8::MAGNETA, Vec2(0.f, 0.f)),
+	Vertex_PCU(Vec3(-0.1f, 0.1f, 0.f), Rgba8::MAGNETA, Vec2(0.f, 0.f)),
+	Vertex_PCU(Vec3(0.1f, -0.1f, 0.f), Rgba8::MAGNETA, Vec2(0.f, 0.f)),
+	
 	Vertex_PCU(Vec3(-0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
 	Vertex_PCU(Vec3(-0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
 	Vertex_PCU(Vec3(0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
+	
 	//t
-	Vertex_PCU(Vec3(0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
-	Vertex_PCU(Vec3(-0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
-	Vertex_PCU(Vec3(0.f, 0.6f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
+	Vertex_PCU(Vec3(0.1f, 0.1f, 0.f), Rgba8::MAGNETA, Vec2(0.f, 0.f)),
+	Vertex_PCU(Vec3(0.f, 0.7f, 0.f), Rgba8::MAGNETA, Vec2(0.f, 0.f)),
+	Vertex_PCU(Vec3(-0.1f, 0.1f, 0.f), Rgba8::MAGNETA, Vec2(0.f, 0.f)),
+	
+	
+	
 	//r
 	Vertex_PCU(Vec3(0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
 	Vertex_PCU(Vec3(0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
 	Vertex_PCU(Vec3(0.6f, 0.f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
 	//l
 	Vertex_PCU(Vec3(-0.1f, 0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
-	Vertex_PCU(Vec3(-0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
 	Vertex_PCU(Vec3(-0.6f, 0.f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
+	Vertex_PCU(Vec3(-0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
+	
 	//b
 	Vertex_PCU(Vec3(-0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
-	Vertex_PCU(Vec3(0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f)),
-	Vertex_PCU(Vec3(0.f, -1.2f, 0.f), Rgba8{ 255,255,255,100 }, Vec2(0.f, 0.f))
+	Vertex_PCU(Vec3(0.f, -1.2f, 0.f), Rgba8{ 255,255,255,100 }, Vec2(0.f, 0.f)),
+	Vertex_PCU(Vec3(0.1f, -0.1f, 0.f), Rgba8{ 255,255,255,200 }, Vec2(0.f, 0.f))
+	
 };
 
 BkgStar::BkgStar(Game* game, Vec2 pos,int layer):m_game(game),m_position(pos),m_layer(layer),m_movingRatio(0.f)
@@ -84,6 +90,8 @@ void BkgStar::Render() const
 			temp_vertices[i] = m_vertices[i];
 		}
 		TransformVertexArrayXY3D(48, temp_vertices, 1.f, 0.f, m_position);
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 		g_theRenderer->DrawVertexArray(48, temp_vertices);
 	}
 	else
@@ -94,6 +102,8 @@ void BkgStar::Render() const
 			temp_vertices[i] = crossStarVerts[i];
 		}
 		TransformVertexArrayXY3D(18, temp_vertices, 1.f, 0.f, m_position);
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 		g_theRenderer->DrawVertexArray(18, temp_vertices);
 	}
 }

@@ -13,6 +13,8 @@
 #include "Game/GameRaycastVsAABB2D.hpp"
 #include "Game3DTestShapes.hpp"
 #include <Engine/Core/DebugRenderSystem.hpp>
+#include "Game/GameCurve.hpp"
+#include "GamePachinko2D.hpp"
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
 Camera*			g_theCamera = nullptr;
@@ -67,7 +69,7 @@ void App::Startup()
 	debugRenderConfig.m_renderer = g_theRenderer;
 	DebugRenderSystemStartup(debugRenderConfig);
 
-	m_theGame = new Game3DTestShapes();
+	m_theGame = new GamePachinko2D();
 }
 
 void App::Shutdown()
@@ -136,6 +138,12 @@ void App::ChangeGameMode(unsigned char modeType)
 		return;
 	case GAME_MODE_3DSHAPES:
 		m_theGame = new Game3DTestShapes();
+		return;
+	case GAME_MODE_CURVES:
+		m_theGame = new GameCurve();
+		return;
+	case GAME_MODE_PACHINKO2D:
+		m_theGame = new GamePachinko2D();
 		return;
 	}
 }

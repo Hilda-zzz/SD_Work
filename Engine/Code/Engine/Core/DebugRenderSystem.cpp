@@ -57,6 +57,7 @@ public:
 
 	void Render(const Camera& camera) const
 	{
+		s_curRenderer->BindShader(nullptr);
 		//?
 		if (m_isBillboard)
 		{
@@ -168,8 +169,8 @@ void DebugRenderSystemStartup(const DebugRenderConfig& config)
 	zTextMat.Append(Mat44::MakeXRotationDegrees(90.f));
 	DebugAddWorldText("z - up", zTextMat, 0.2f, Vec2(0.5f, 0.5f), -1.f, Rgba8::BLUE, Rgba8::BLUE, DebugRenderMode::USE_DEPTH);
 
-	char buffer[256]="1";
-	DebugAddMessage(std::string(buffer), -1.f, Rgba8::WHITE, Rgba8::RED);
+// 	char buffer[256]="1";
+// 	DebugAddMessage(std::string(buffer), -1.f, Rgba8::WHITE, Rgba8::RED);
 }
 
 void DebugRenderSystemShutdown()
@@ -237,11 +238,11 @@ void DebugRenderWorld(const Camera& camera)
 {
 	if (s_isDebugRenderMode)
 	{
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"player position: %.2f, %.2f, %.2f",
-			camera.GetPosition().x, camera.GetPosition().y, camera.GetPosition().z);
-		s_debugRenderListMsg[0]->m_text = std::string(buffer);
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"player position: %.2f, %.2f, %.2f",
+// 			camera.GetPosition().x, camera.GetPosition().y, camera.GetPosition().z);
+// 		s_debugRenderListMsg[0]->m_text = std::string(buffer);
 
 		s_curRenderer->BeginCamera(camera);
 		for (DebugRenderGeometry* geometry : s_debugRenderListWorld)
@@ -282,8 +283,9 @@ void DebugRenderScreen(const Camera& camera)
 		s_curRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
 		s_curRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
 		s_curRenderer->BindTexture(&s_curFont->GetTexture());
+		s_curRenderer->BindShader(nullptr);
+		s_curRenderer->SetModelConstants();
 		s_curRenderer->DrawVertexArray(msgVerts);
-
 		s_curRenderer->EndCamera(camera);
 	}
 }
@@ -439,7 +441,7 @@ void DebugAddScreenText(const std::string& text, const AABB2& textBox,
 	const Rgba8& endColor)
 {
 	DebugRenderGeometry* newScreenText = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, DebugRenderMode::USE_DEPTH);
-	s_curFont->AddVertsForTextInBox2D(newScreenText->m_verts, text, textBox, textHeight,Rgba8::WHITE,1.f,alignment);
+	s_curFont->AddVertsForTextInBox2D(newScreenText->m_verts, text, textBox, textHeight,startColor,1.f,alignment);
 	newScreenText->m_isText = true;
 	s_debugRenderListScreen.push_back(newScreenText);
 }

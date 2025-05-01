@@ -2,7 +2,7 @@
   <!-- SpawnPoint -->
   <ActorDefinition name="SpawnPoint" />
   <!-- Marine -->
-  <ActorDefinition name="Marine" faction="Marine" health="100" canBePossessed="true" corpseLifetime="2.0" visible="true">
+  <ActorDefinition name="Marine" faction="GOOD" health="100" canBePossessed="true" corpseLifetime="2.0" visible="true">
     <Collision radius="0.25" height="0.6" collidesWithWorld="true" collidesWithActors="true"/>
     <Physics simulated="true" walkSpeed="1.5f" runSpeed="6.0f" turnSpeed="180.0f" drag="9.0f"/>
     <Camera eyeHeight="0.5" cameraFOV="60.0f"/>
@@ -51,7 +51,7 @@
     </Inventory>
   </ActorDefinition>
   <!-- Demon -->
-  <ActorDefinition name="Demon" faction="Demon" health="160" canBePossessed="true" corpseLifetime="1.0" visible="true">
+  <ActorDefinition name="Demon" faction="EVIL" health="160" canBePossessed="true" corpseLifetime="1.0" visible="true">
     <Collision radius="0.35" height="0.85" collidesWithWorld="true" collidesWithActors="true"/>
     <Physics simulated="true" walkSpeed="2.0f" runSpeed="5.0f" turnSpeed="180.0f" drag="9.0f"/>
     <Camera eyeHeight="0.75f" cameraFOV="120.0f"/>
@@ -98,7 +98,6 @@
     <Inventory>
       <Weapon name="DemonMelee" />
     </Inventory>
-
     </ActorDefinition>
   <!-- BulletHit -->
   <ActorDefinition name="BulletHit" canBePossessed="false" corpseLifetime="0.4" visible="true" dieOnSpawn="true" >

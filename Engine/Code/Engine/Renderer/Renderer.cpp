@@ -1,4 +1,4 @@
-#include "Engine/Renderer/Renderer.hpp"
+﻿#include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
 #include "ThirdParty/stb/stb_image.h"
@@ -12,6 +12,7 @@
 #include "Engine/Renderer/ConstantBuffer.hpp"
 #include "Engine/Core/Image.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
+#include "Engine/Renderer/Camera.hpp"
 //-------------------------------------------------------------
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -37,6 +38,11 @@ void* m_dxgiDebugModule = nullptr;
 #pragma  comment(lib,"dxguid.lib")
 #pragma comment(lib,"dxguid.lib")
 #endif
+#include "TextureCube.hpp"
+#include "PointLight.hpp"
+//-------------------------------------------------------------
+constexpr int MAX_POINT_LIGHTS= 10;
+constexpr int MAX_SPOT_LIGHTS = 10;
 //-------------------------------------------------------------
 #define DX_SAFE_RELEASE(dxObject)			\
 {											\
@@ -71,8 +77,27 @@ struct LightConstants
 	Vec3 SunDirection;
 	float SunIntensity;
 	float AmbientIntensity;
+	float Padding[3];
 };
 static const int k_lightConstantsSlot = 1;
+
+struct PointLightConstants
+{
+	PointLight PointLights[MAX_POINT_LIGHTS];
+	uint32_t ActivePointLightCount;
+	float Padding[3];
+};
+static const int k_pointLightConstantsSlot = 4;
+
+struct SpotLightConstants
+{
+	SpotLight SpotLights[MAX_SPOT_LIGHTS];
+	uint32_t ActiveSpotLightCount;
+	float Padding[3];
+};
+static const int k_spotLightConstantsSlot = 5;
+
+
 //-------------------------------------------------------------
 BitmapFont* g_testFont = nullptr;
 
@@ -229,7 +254,9 @@ void Renderer::Startup()
 
 	m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
 	m_modelCBO = CreateConstantBuffer(sizeof(ModelConstants));
-	m_lightCBO = CreateConstantBuffer(32);
+	m_lightCBO = CreateConstantBuffer(sizeof(LightConstants));
+	m_pointLightCBO = CreateConstantBuffer(sizeof(PointLightConstants));
+	m_spotLightCBO= CreateConstantBuffer(sizeof(SpotLightConstants));
 	//---------------------------------------------------------
 	// OPAQUE
 	D3D11_BLEND_DESC blendDesc = {};
@@ -425,6 +452,12 @@ void Renderer::Shutdown()
 	delete m_lightCBO;
 	m_lightCBO = nullptr;
 
+	delete m_pointLightCBO;
+	m_pointLightCBO = nullptr;
+
+	delete m_spotLightCBO;
+	m_spotLightCBO = nullptr;
+
 	for (int i = 0; i < (int)BlendMode::COUNT; i++)
 	{
 		DX_SAFE_RELEASE(m_blendStates[i]);
@@ -457,6 +490,10 @@ void Renderer::Shutdown()
 	{
 		delete texture;
 	}
+	for (TextureCube* textureCube : m_loadedCubeTextures)
+	{
+		delete textureCube;
+	}
 
 #if defined(ENGINE_DEBUG_RENDER)
 	((IDXGIDebug*)m_dxgiDebug)->ReportLiveObjects(
@@ -486,10 +523,10 @@ void Renderer::BeginCamera(const Camera& camera)
 {
 	//Set viewport
 	D3D11_VIEWPORT viewport = {};
-	viewport.TopLeftX = 0.f;
-	viewport.TopLeftY = 0.f;
-	viewport.Width = (float)g_theWindow->GetClientDimensions().x;
-	viewport.Height = (float)g_theWindow->GetClientDimensions().y;
+	viewport.TopLeftX = camera.GetViewport().m_mins.x;
+	viewport.TopLeftY = (float)g_theWindow->GetClientDimensions().y - camera.GetViewport().m_maxs.y;
+	viewport.Width = camera.GetViewport().GetDimensions().x;
+	viewport.Height = camera.GetViewport().GetDimensions().y;
 	viewport.MinDepth = 0.f;
 	viewport.MaxDepth = 1.f;
 
@@ -527,6 +564,11 @@ void Renderer::DrawVertexArray(const std::vector<Vertex_PCU>& vertexs)
 {
 	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), m_immediateVBO);
 	DrawVertexBuffer(m_immediateVBO, (int)vertexs.size());
+}
+void Renderer::DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs)
+{
+	CopyCPUToGPU(vertexs.data(), (int)vertexs.size(), m_immediateVBO_WithTBN);
+	DrawVertexBuffer(m_immediateVBO_WithTBN, (int)vertexs.size());
 }
 void Renderer::DrawVertexArray(const std::vector<Vertex_PCU>& vertexs, std::vector<unsigned int> const& indexes)
 {
@@ -644,6 +686,194 @@ void Renderer::BindTexture(Texture* texture)
 	else
 	{
 		m_deviceContext->PSSetShaderResources(0, 1, &m_defaultTexture->m_shaderResourceView);
+	}
+}
+
+TextureCube* Renderer::CreateOrGetCubeTextureFromFiles(const std::string filePaths[6])
+{
+	// See if we already have this texture previously loaded
+	TextureCube* existingTexture = GetTextureCubeFromFileName(filePaths[0].c_str()); // You need to write this
+	if (existingTexture)
+	{
+		return existingTexture;
+	}
+
+	// Never seen this texture before!  Let's load it.
+	TextureCube* newTexture = CreateCubeTextureFromFiles(filePaths);
+	return newTexture;
+}
+
+TextureCube* Renderer::GetTextureCubeFromFileName(char const* firstFilePath)
+{
+	for (int i = 0; i < static_cast<int>(m_loadedCubeTextures.size()); i++)
+	{
+		if (m_loadedCubeTextures[i]->m_firstPath== firstFilePath)
+		{
+			return m_loadedCubeTextures[i];
+		}
+	}
+	return nullptr;
+}
+
+TextureCube* Renderer::CreateCubeTextureFromFiles(const std::string filePaths[6])
+{
+	TextureCube* newCubeTex = new TextureCube();
+	newCubeTex->m_firstPath = filePaths[0];
+// 	newCubeTex->m_filePaths.resize(6);
+// 	newCubeTex->m_filePaths[TextureCube::POSITIVE_X] = filePaths[0];
+// 	newCubeTex->m_filePaths[TextureCube::NEGATIVE_X] = filePaths[1];
+// 	newCubeTex->m_filePaths[TextureCube::POSITIVE_Y] = filePaths[2];
+// 	newCubeTex->m_filePaths[TextureCube::NEGATIVE_Y] = filePaths[3];
+// 	newCubeTex->m_filePaths[TextureCube::POSITIVE_Z] = filePaths[4];
+// 	newCubeTex->m_filePaths[TextureCube::NEGATIVE_Z] = filePaths[5];
+
+	// load 6 temp tex2D
+	ID3D11Texture2D* tempTextures[6] = {};
+	D3D11_TEXTURE2D_DESC tempDesc = {};
+
+	for (int i = 0; i < 6; i++) 
+	{
+		Image* image = CreateImageFromFile(filePaths[i].c_str());
+		if (!image) 
+		{
+			// deal with error：release temp texture2D
+			for (int j = 0; j < i; j++) 
+{
+				tempTextures[j]->Release();
+			}
+			delete newCubeTex;
+			ERROR_AND_DIE("Can not find image path when create TextureCube");
+		}
+
+		// set the first face as the cube texture's size standard
+		if (i == 0) 
+		{
+			newCubeTex->m_dimensions = IntVec2(image->GetDimensions().x, image->GetDimensions().y);
+		}
+		else if (newCubeTex->m_dimensions.x != image->GetDimensions().x ||
+			newCubeTex->m_dimensions.y != image->GetDimensions().y)
+		{
+			ERROR_AND_DIE("Cubemap faces must have the same dimensions");
+		}
+
+		// temp 2d texture
+		D3D11_TEXTURE2D_DESC desc = {};
+		desc.Width = image->GetDimensions().x;
+		desc.Height = image->GetDimensions().y;
+		desc.MipLevels = 1;
+		desc.ArraySize = 1;
+		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		desc.CPUAccessFlags = 0;
+		desc.MiscFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA initData = {};
+		initData.pSysMem = image->GetRawData();
+		initData.SysMemPitch = image->GetDimensions().x * 4; // assume that RGBA has 32 bits
+
+		HRESULT hr = m_device->CreateTexture2D(&desc, &initData, &tempTextures[i]);
+		if (FAILED(hr)) 
+		{
+			// error
+			for (int j = 0; j < i; j++) 
+			{
+				tempTextures[j]->Release();
+			}
+			delete image;
+			delete newCubeTex;
+			ERROR_AND_DIE("Failed to create texture2D for cube texture.");
+		}
+
+		// save the first texture using for create cube texture 
+		if (i == 0) 
+		{
+			tempDesc = desc;
+		}
+
+		delete image; 
+	}
+
+	D3D11_TEXTURE2D_DESC cubeDesc = {};
+	cubeDesc.Width = tempDesc.Width;
+	cubeDesc.Height = tempDesc.Height;
+	cubeDesc.MipLevels = 1;
+	cubeDesc.ArraySize = 6; // 6 faces
+	cubeDesc.Format = tempDesc.Format;
+	cubeDesc.SampleDesc.Count = 1;
+	cubeDesc.SampleDesc.Quality = 0;
+	cubeDesc.Usage = D3D11_USAGE_DEFAULT;
+	cubeDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	cubeDesc.CPUAccessFlags = 0;
+	cubeDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE; // mark as texture cube
+
+	HRESULT hr = m_device->CreateTexture2D(&cubeDesc, nullptr, &newCubeTex->m_texture);
+	if (FAILED(hr)) 
+	{
+		for (int i = 0; i < 6; i++) 
+		{
+			tempTextures[i]->Release();
+		}
+		delete newCubeTex;
+		return nullptr;
+	}
+
+	// copy all faces to cube texture
+	for (int i = 0; i < 6; i++) 
+	{
+		m_deviceContext->CopySubresourceRegion(
+			newCubeTex->m_texture,               // aim resource
+			D3D11CalcSubresource(0, i, 1),       // index
+			0, 0, 0,                             
+			tempTextures[i],                     // source
+			0,                                   
+			nullptr                              // nullptr for the all texture
+		);
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = cubeDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.TextureCube.MostDetailedMip = 0;
+	srvDesc.TextureCube.MipLevels = 1;
+
+	hr = m_device->CreateShaderResourceView(
+		newCubeTex->m_texture,
+		&srvDesc,
+		&newCubeTex->m_shaderResourceView);
+
+	if (FAILED(hr)) 
+	{
+		newCubeTex->m_texture->Release();
+		for (int i = 0; i < 6; i++) 
+		{
+			tempTextures[i]->Release();
+		}
+		delete newCubeTex;
+		return nullptr;
+	}
+
+	for (int i = 0; i < 6; i++) 
+	{
+		tempTextures[i]->Release();
+	}
+
+	m_loadedCubeTextures.push_back(newCubeTex);
+	return newCubeTex;
+}
+
+void Renderer::BindTextureCube(TextureCube* textureCube)
+{
+	if (textureCube)
+	{
+		m_deviceContext->PSSetShaderResources(0, 1, &textureCube->m_shaderResourceView);
+	}
+	else
+	{
+		ERROR_AND_DIE("cannot bind texture cube");
+		//m_deviceContext->PSSetShaderResources(0, 1, &m_defaultTexture->m_shaderResourceView);
 	}
 }
 
@@ -1013,6 +1243,30 @@ void Renderer::SetLightConstants(Vec3 const& sunDirection, float sunIntensity, f
 	lightConstants.AmbientIntensity = ambientIntensity;
 	CopyCPUToGPU(&lightConstants, sizeof(lightConstants), m_lightCBO);
 	BindConstantBuffer(k_lightConstantsSlot, m_lightCBO);
+}
+
+void Renderer::SetPointLightsConstants(const std::vector<PointLight>& lights)
+{
+	PointLightConstants pointLightConstants;
+	for (int i = 0; i < lights.size(); i++)
+	{
+		pointLightConstants.PointLights[i] = lights[i];
+	}	
+	pointLightConstants.ActivePointLightCount = lights.size();
+	CopyCPUToGPU(&pointLightConstants, sizeof(pointLightConstants), m_pointLightCBO);
+	BindConstantBuffer(k_pointLightConstantsSlot, m_pointLightCBO);
+}
+
+void Renderer::SetSpotLightsConstants(const std::vector<SpotLight>& lights)
+{
+	SpotLightConstants spotLightConstants;
+	for (int i = 0; i < lights.size(); i++)
+	{
+		spotLightConstants.SpotLights[i] = lights[i];
+	}
+	spotLightConstants.ActiveSpotLightCount = lights.size();
+	CopyCPUToGPU(&spotLightConstants, sizeof(spotLightConstants), m_spotLightCBO);
+	BindConstantBuffer(k_spotLightConstantsSlot, m_spotLightCBO);
 }
 
 

@@ -4,6 +4,7 @@ class Clock;
 class Timer
 {
 public:
+	Timer(){}
 	explicit Timer(float period, const Clock* clock = nullptr);
 
 	void	Start();
@@ -16,6 +17,6 @@ public:
 	bool	DecrementPeriodIfElapsed();
 
 	const	Clock* m_clock = nullptr;
-	double	m_startTime = 0.f;
+	double	m_startTime = -1.f;
 	double	m_period = 0.f;
 };

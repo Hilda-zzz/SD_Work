@@ -114,6 +114,44 @@ Vec2 ParseXmlAttribute(XmlElement const* element, char const* attributeName, Vec
 	return defaultValue;
 }
 
+Vec3 ParseXmlAttribute(XmlElement const* element, char const* attributeName, Vec3 const& defaultValue)
+{
+	XmlAttribute const* attribute = element->FindAttribute(attributeName);
+	if (attribute != nullptr)
+	{
+		if (attribute->Value() != nullptr)
+		{
+			Vec3 vec;
+			vec.SetFromText(attribute->Value());
+			return vec;
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+	return defaultValue;
+}
+
+EulerAngles ParseXmlAttribute(XmlElement const* element, char const* attributeName, EulerAngles const& defaultValue)
+{
+	XmlAttribute const* attribute = element->FindAttribute(attributeName);
+	if (attribute != nullptr)
+	{
+		if (attribute->Value() != nullptr)
+		{
+			EulerAngles euler;
+			euler.SetFromText(attribute->Value());
+			return euler;
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+	return defaultValue;
+}
+
 IntVec2 ParseXmlAttribute(XmlElement const* element, char const* attributeName, IntVec2 const& defaultValue)
 {
 	XmlAttribute const* attribute = element->FindAttribute(attributeName);

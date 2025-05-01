@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-
+struct Vec3;
 //-----------------------------------------------------------------------------------------------
 typedef size_t SoundID;
 typedef size_t SoundPlaybackID;
@@ -36,7 +36,7 @@ public:
 	virtual void				BeginFrame();
 	virtual void				EndFrame();
 
-	virtual SoundID				CreateOrGetSound( const std::string& soundFilePath );
+	virtual SoundID				CreateOrGetSound( const std::string& soundFilePath, bool is3D=false );
 	virtual SoundPlaybackID		StartSound( SoundID soundID, bool isLooped=false, float volume=1.f, float balance=0.0f, float speed=1.0f, bool isPaused=false );
 	virtual void				StopSound( SoundPlaybackID soundPlaybackID );
 	virtual void				SetSoundPlaybackVolume( SoundPlaybackID soundPlaybackID, float volume );	// volume is in [0,1]
@@ -44,6 +44,14 @@ public:
 	virtual void				SetSoundPlaybackSpeed( SoundPlaybackID soundPlaybackID, float speed );		// speed is frequency multiplier (1.0 == normal)
 
 	virtual void				ValidateResult( FMOD_RESULT result );
+
+	void					SetNumListeners(int numListeners);
+	void					UpdateListener(int listenerIndex, const Vec3& listenerPosition, const Vec3& listenerForward, const Vec3& listenerUp);
+	virtual SoundPlaybackID	StartSoundAt(SoundID soundID, const Vec3& soundPosition, bool isLooped = false, 
+							float volume = 1.0f, float balance = 0.0f, float speed = 1.0f, bool isPaused = false);
+	virtual void			SetSoundPosition(SoundPlaybackID soundPlaybackID, const Vec3& soundPosition);
+	bool					IsPlaying(SoundPlaybackID soundPlaybackID);
+
 
 protected:
 	std::map< std::string, SoundID >	m_registeredSoundIDs;

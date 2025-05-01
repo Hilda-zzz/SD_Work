@@ -65,6 +65,8 @@ void LightSaber::Render() const
 		TransformVertexArrayXY3D(6, temp_vertices_0deg, 1.f, m_orientationDegrees, m_position);
 		TransformVertexArrayXY3D(6, temp_vertices_120deg, 1.f, m_orientationDegrees, m_position);
 		TransformVertexArrayXY3D(6, temp_vertices_240deg, 1.f, m_orientationDegrees, m_position);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+		g_theRenderer->BindTexture(nullptr);
 		g_theRenderer->DrawVertexArray(6, temp_vertices_0deg);
 		g_theRenderer->DrawVertexArray(6, temp_vertices_120deg);
 		g_theRenderer->DrawVertexArray(6, temp_vertices_240deg);

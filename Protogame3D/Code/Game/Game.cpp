@@ -1,4 +1,4 @@
-#include "Game/Game.hpp"
+﻿#include "Game/Game.hpp"
 #include "App.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -14,6 +14,9 @@
 #include "Engine/Math/AABB3.hpp"
 #include <Engine/Core/DebugRenderSystem.hpp>
 #include "Engine/Math/AABB2.hpp"
+#include "GameCommon.hpp"
+#include "Engine/Window/Window.hpp"
+#include "Engine/Renderer/CubeSkyBox.hpp"
 
 extern bool g_isDebugDraw;
 extern Renderer* g_theRenderer;
@@ -44,9 +47,13 @@ Game::Game()
 
 	AddVertsForGroundGrid();
 	AddVertsForCubes();
+
+	IntVec2 clientDimensions = g_theWindow->GetClientDimensions();
+	AABB2 viewport = AABB2(Vec2(0.f, 0.f), Vec2((float)clientDimensions.x, (float)clientDimensions.y));
+	m_screenCamera.SetViewport(viewport);
 	m_screenCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
 	m_screenCamera.SetPositionAndOrientation(Vec3(0.f, 0.f, 0.f), EulerAngles(0.f,0.f,0.f));
-
+	m_player->m_playerCam.SetViewport(viewport);
 
 	std::string logString = "\
 	Mouse x-axis / Right stick x-axis       Yaw\n\
@@ -61,6 +68,20 @@ Game::Game()
 	O                                       Single step frame\n\
 	T                                       Slow motion mode";
 	g_theDevConsole->AddLine(DevConsole::EVENT_FEEDBACK, logString);
+
+	//----------sky box--------------------
+	std::string skyboxPaths[] = {
+ 	"Data/Images/SkyBox1/skyhsky_lf.png",
+ 	"Data/Images/SkyBox1/skyhsky_rt.png",
+ 	"Data/Images/SkyBox1/skyhsky_dn.png",
+ 	"Data/Images/SkyBox1/skyhsky_up.png",
+ 	"Data/Images/SkyBox1/skyhsky_ft.png",
+ 	"Data/Images/SkyBox1/skyhsky_bk.png",
+	};
+
+	std::string skyBoxShaderPath = "Data/Shaders/CubeSkyBox";
+
+	m_cubeSkybox = new CubeSkyBox(g_theRenderer, skyboxPaths,&skyBoxShaderPath);
 }
 
 Game::~Game()
@@ -119,6 +140,8 @@ void Game::Renderer() const
 		return;
 	}
 	g_theRenderer->BeginCamera(m_player->m_playerCam);
+
+	m_cubeSkybox->Render();
 
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 
@@ -243,7 +266,7 @@ void Game::UpdateCamera(float deltaTime)
 {
 	UNUSED(deltaTime);
 	
-	m_player->m_playerCam.SetPerspectiveView(2.f, 60.f, 0.1f, 100.f);
+	m_player->m_playerCam.SetPerspectiveView(m_player->m_playerCam.GetViewport().GetDimensions().x/ m_player->m_playerCam.GetViewport().GetDimensions().y, 60.f, 0.1f, 100.f);
 }
 
 void Game::AdjustForPauseAndTimeDitortion()

@@ -41,8 +41,6 @@ Game::Game()
 	// 	m_maps.push_back(map5);
 	// 	m_maps.push_back(map6);
 	m_curMap = m_maps[0];
-	m_curMap->InitializeTileMapFromImage(m_curMap->m_mapDef.m_mapImageName,&m_curMap->m_tiles);
-	m_curMap->InitializeTileMapFromImage(m_curMap->m_mapDef.m_mapWallImageName, &m_curMap->m_walls);
 }
 
 Game::~Game()

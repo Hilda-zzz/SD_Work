@@ -67,6 +67,11 @@ EulerAngles Camera::GetOrientation() const
 	return m_orientation;
 }
 
+void Camera::SetViewport(AABB2 const& viewPort)
+{
+	m_viewPort = viewPort;
+}
+
 Mat44 Camera::GetCameraToWorldTransform() const
 {
 	//Mat44 camToWorld = m_orientation.GetAsMatrix_IFwd_JLeft_KUp();
@@ -82,6 +87,11 @@ Mat44 Camera::GetCameraToWorldTransform() const
 Mat44 Camera::GetWorldToCameraTransform() const
 {
 	return GetCameraToWorldTransform().GetOrthonormalInverse();
+}
+
+AABB2 const& Camera::GetViewport() const
+{
+	return m_viewPort;
 }
 
 void Camera::SetCameraToRenderTransform(const Mat44& m)

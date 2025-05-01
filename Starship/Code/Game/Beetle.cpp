@@ -19,12 +19,12 @@ Beetle::Beetle(Game* game, float x, float y) : Entity(game,x,y)
 	m_health = ORI_BEETLE_HP;
 	m_oriHealth= ORI_BEETLE_HP;
 	vertices[0] = Vertex_PCU(Vec3(-1.5f, 1.7f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-	vertices[1] = Vertex_PCU(Vec3(1.5f, 1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-	vertices[2] = Vertex_PCU(Vec3(1.5f, -1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[1] = Vertex_PCU(Vec3(-1.5f, -1.7f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[2] = Vertex_PCU(Vec3(1.5f, 1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
 
-	vertices[3] = Vertex_PCU(Vec3(1.5f, -1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-	vertices[4] = Vertex_PCU(Vec3(-1.5f,1.7f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
-	vertices[5] = Vertex_PCU(Vec3(-1.5f,-1.7f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[3] = Vertex_PCU(Vec3(-1.5f, -1.7f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[4] = Vertex_PCU(Vec3(1.5f, -1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
+	vertices[5] = Vertex_PCU(Vec3(1.5f, 1.f, 0.f), Rgba8(100, 160, 60, 255), Vec2(0.f, 0.f));
 }
 
 void Beetle::Update(float deltaTime)
@@ -54,7 +54,8 @@ void Beetle::Render() const
 	}
 
 	TransformVertexArrayXY3D(NUM_BEETLE_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
-
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(NUM_BEETLE_VERTS, temp_vertices); //NUM_SHIP_VERTS
 }
 

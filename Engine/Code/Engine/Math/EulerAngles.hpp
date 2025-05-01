@@ -11,6 +11,7 @@ public:
 	Mat44 GetAsMatrix_IFwd_JLeft_KUp() const;
 	EulerAngles operator*(float scale) const;
 	EulerAngles operator+(EulerAngles const& eEulerAngleToAdd) const;
+	void SetFromText(char const* text);
 public:
 	float m_yawDegrees = 0.f;
 	float m_pitchDegrees = 0.f;

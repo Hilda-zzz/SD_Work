@@ -13,9 +13,12 @@ class Map
 public:
 	Map(Game* game, MapDefinition const& mapDef);
 	~Map();
-	void InitializeTileMapFromImage(std::string const& imagePath,std::vector<Tile>* tiles);
+
+	void InitializeFloorMapFromImage(std::string const& imagePath,std::vector<Tile>* tiles);
+	void InitializeWallMapFromImage(std::string const& imagePath, std::vector<Tile>* tiles);
 	void GenerateEachTile(int columnIndex, int rowIndex, std::string& thisTileType, std::vector<Tile>* tiles);
-	void AddVertsForAllTiles();
+	void GenerateEachWall(int columnIndex, int rowIndex, std::string& thisTileType, std::vector<Tile>* tiles);
+	void AddVertsForAllFloors();
 	void AddVertsForAllWalls();
 
 
@@ -24,7 +27,9 @@ public:
 
 	std::string const&	GetTileTypeNameByCoords(int coor_x, int coor_y);
 	std::string const&	GetTileTypeNameByColor(Rgba8 const& pixelColor);
+	std::string const&  GetWallTypeNameByColor(Rgba8 const& pixelColor);
 	int					GetTileDefIndexByName(std::string const& typeName);
+	int					GetWallDefIndexByName(std::string const& typeName);
 	int					GetTileIndexByCoords(int coor_x, int coor_y);
 	Tile*				GetTileByCoords(int coor_x, int coor_y);
 	IntVec2				GetTileCoordsFromPoint(Vec2 const& point);

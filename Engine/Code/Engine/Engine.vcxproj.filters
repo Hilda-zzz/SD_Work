@@ -32,6 +32,9 @@
     <Filter Include="ThirdParty\TingXML2">
       <UniqueIdentifier>{a0b1abec-4cd6-4a8b-88af-b2f2ec9f4cb7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Renderer\Lighting">
+      <UniqueIdentifier>{3601c871-e657-4e6f-b079-63d301206a81}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -198,6 +201,30 @@
     </ClCompile>
     <ClCompile Include="Math\ZCylinder.cpp">
       <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Easing.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\CubicBezierCurve2D.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\CubicHermiteCurve2D.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\CubicHermiteSpline2D.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\TextureCube.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\CubeSkyBox.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\PointLight.cpp">
+      <Filter>Renderer\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\SpotLight.cpp">
+      <Filter>Renderer\Lighting</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -395,6 +422,30 @@
     </ClInclude>
     <ClInclude Include="Math\ZCylinder.hpp">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Easing.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CubicBezierCurve2D.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CubicHermiteCurve2D.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CubicHermiteSpline2D.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\TextureCube.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\CubeSkyBox.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\PointLight.hpp">
+      <Filter>Renderer\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\SpotLight.hpp">
+      <Filter>Renderer\Lighting</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

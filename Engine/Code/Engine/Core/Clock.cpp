@@ -29,7 +29,13 @@ Clock::~Clock()
 	for (Clock* child : m_children)
 	{
 		child->m_parent = nullptr;
+		//RemoveChild(child);
 	}
+	if (m_parent)
+	{
+		m_parent->RemoveChild(this);
+	}
+	
 	m_parent = nullptr;
 }
 

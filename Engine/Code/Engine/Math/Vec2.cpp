@@ -1,6 +1,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "MathUtils.hpp"
 #include <Engine/Core/StringUtils.hpp>
+#include <complex>
 
 const Vec2 Vec2::ZERO = Vec2(0.f, 0.f);
 const Vec2 Vec2::ONE = Vec2(1.f, 1.f);
@@ -149,12 +150,12 @@ Vec2 const Vec2::MakeFromPolarDegrees(float orientationDegrees, float length)
 //The function will not modify the state of the object when being called
 float Vec2::GetLength() const
 {
-	return GetDistance2D(Vec2{ 0.0f, 0.0f }, *this);
+	return std::sqrt(x * x +y * y);
 }
 
 float Vec2::GetLengthSquared() const
 {
-	return GetDistanceSquared2D(Vec2{ 0.0f, 0.0f }, *this);
+	return x * x + y * y;
 }
 
 float Vec2::GetOrientationRadians() const

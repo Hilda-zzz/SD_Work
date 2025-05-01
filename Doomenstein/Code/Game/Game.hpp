@@ -3,12 +3,15 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Audio/AudioSystem.hpp"
 class Clock;
 class Player;
 class Texture;
 class Entity;
 class Map;
+class PlayerController;
 typedef std::vector<Entity*> EntityList;
+class BitmapFont;
 
 enum class GameState
 {
@@ -18,7 +21,6 @@ enum class GameState
 	PLAYING,
 	COUNT
 };
-
 
 class Game
 {
@@ -33,46 +35,59 @@ public:
 	void ExitState(GameState state);
 
 	void EnterAttractMode();
+	//void EnterLobbyMode();
 	void EnterPlayingMode();
 
+	void ExitLobbyMode();
 	void ExitPlayingMode();
 
 private:
 	void UpdateAttractMode(float deltaTime);
+	void UpdateLobbyMode(float deltaTime);
+	void AddTextForLobby();
 	void UpdateGameplayMode(float deltaTime);
-	void UpdateDeveloperCheats(float deltaTime);
+
+	void UpdateDeveloperCheats();
 	void UpdateCamera(float deltaTime);
 	void AdjustForPauseAndTimeDitortion();
+
 	void RenderAttractMode() const;
+	void RenderLobbyMode() const;
+	void RenderPlayingMode() const;
 	void RenderPlayingModeHUD() const;
 	void RenderDebugMode() const;
 
-	//void AddVertsForGroundGrid();
-	//void AddVertsForCubes();
-	//void AddEntityToList(Entity& thisEntity, EntityList& list);
+	void ParseGameConfig();
+
 public:
 	Clock* m_gameClock = nullptr;
-	bool m_isAttractMode = true;
-	bool m_isDevConsole = false;
-	bool isDebugMode = false;
+	Camera m_screenCamera;
 	RandomNumberGenerator m_rng;
 
-private:
+	bool m_isDevConsole = false;
 	GameState m_curGameState = GameState::ATTRACT;
 	GameState m_nextState = GameState::ATTRACT;
 
-	Camera m_screenCamera;
+	std::vector<Map*> m_maps;
+	Map* m_curMap = nullptr;
+	int m_curMapIndex = 0;
+	PlayerController* m_playerController0 = nullptr;
+	PlayerController* m_playerController1 = nullptr;
+private:
+	float m_previousTimeScale = 1.f;
 	bool m_isPause = false;
 	bool m_isSlow = false;
 	bool m_pauseAfterUpdate = false;
 
-	Player* m_player = nullptr;
-	Texture* m_gridTex = nullptr;
+	BitmapFont* m_font = nullptr;
+	std::vector<Vertex_PCU> m_lobbyTextVerts;
 
-	float m_previousTimeScale = 1.f;
+	float m_musicVolume = 0.1f;
 
-	//------------------------
-	std::vector<Map*> m_maps;
-	Map* m_curMap = nullptr;
-	int m_curMapIndex = 0;
+	std::string m_mainMenuMusicPath;
+	std::string	m_gameMusicPath;
+	std::string	m_buttonClickSoundPath;
+
+	SoundPlaybackID m_menuMusic;
+	SoundPlaybackID m_gameMusic;
 };

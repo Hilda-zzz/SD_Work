@@ -20,7 +20,7 @@ void Timer::Start()
 
 void Timer::Stop()
 {
-	m_startTime = 0.0;
+	m_startTime = -1.1f;
 }
 
 double Timer::GetElapsedTime() const
@@ -42,7 +42,7 @@ float Timer::GetElapsedFraction() const
 
 bool Timer::IsStopped() const
 {
-	if (m_startTime == 0.0)
+	if (m_startTime <= -1.f)
 	{
 		return true;
 	}

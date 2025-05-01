@@ -27,6 +27,8 @@ void LaserExplosionCanon::Render() const
 			temp_vertices[i] = vertices_L1[i];
 		}
 		TransformVertexArrayXY3D(NUM_LASER_CANON_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+		g_theRenderer->BindTexture(nullptr);
 		g_theRenderer->DrawVertexArray(NUM_LASER_CANON_VERTS, temp_vertices);
 	}
 }
@@ -39,8 +41,8 @@ void LaserExplosionCanon::InitializedVertsL1(Vertex_PCU* vertsToFillIn)
 {
 	//AIMMING LASER
 	vertsToFillIn[0] = Vertex_PCU(Vec3(1.f, 0.1f, 0.f), Rgba8(172, 234, 233), Vec2(0.f, 0.f));
-	vertsToFillIn[1] = Vertex_PCU(Vec3(90.f, 0.1f, 0.f), Rgba8(172, 234, 233), Vec2(0.f, 0.f));
-	vertsToFillIn[2] = Vertex_PCU(Vec3(90.f, -0.1f, 0.f), Rgba8(172, 234, 233), Vec2(0.f, 0.f));
+	vertsToFillIn[1] =  Vertex_PCU(Vec3(90.f, -0.1f, 0.f), Rgba8(172, 234, 233), Vec2(0.f, 0.f));
+	vertsToFillIn[2] = Vertex_PCU(Vec3(90.f, 0.1f, 0.f), Rgba8(172, 234, 233), Vec2(0.f, 0.f));
 
 	vertsToFillIn[3] = Vertex_PCU(Vec3(1.f, 0.1f, 0.f), Rgba8(172, 234, 233), Vec2(0.f, 0.f));
 	vertsToFillIn[4] = Vertex_PCU(Vec3(1.f, -0.1f, 0.f), Rgba8(172, 234, 233), Vec2(0.f, 0.f));

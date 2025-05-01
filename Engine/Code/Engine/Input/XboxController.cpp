@@ -69,7 +69,7 @@ KeyButtonState const& XboxController::GetButton(XboxButtonID buttonID) const
 	return m_buttons[static_cast<int>(buttonID)];
 }
 
-bool XboxController::IsButtongDown(XboxButtonID buttonID) const
+bool XboxController::IsButtonDown(XboxButtonID buttonID) const
 {
 	return m_buttons[static_cast<int>(buttonID)].m_isPressed;
 }

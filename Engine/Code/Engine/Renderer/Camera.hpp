@@ -2,6 +2,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/EulerAngles.hpp"
+#include "../Math/AABB2.hpp"
 
 
 class Camera
@@ -24,9 +25,11 @@ public:
 	Vec3 GetPosition() const;
 	void SetOrientation(const EulerAngles& orientation);
 	EulerAngles GetOrientation() const;
+	void SetViewport(AABB2 const& viewPort);
 
 	Mat44 GetCameraToWorldTransform() const;
 	Mat44 GetWorldToCameraTransform() const;
+	AABB2 const& GetViewport() const;
 
 	void SetCameraToRenderTransform(const Mat44& m);
 	Mat44 GetCameraToRenderTransorm() const;
@@ -40,6 +43,8 @@ public:
 	Mat44 GetOrthographicMatrix() const;
 	Mat44 GetPerspectiveMatrix() const;
 	Mat44 GetProjectionMatrix() const;
+
+	// set viewport
 
 protected:
 	Mode m_mode = eMode_Orthographic;
@@ -58,4 +63,7 @@ protected:
 	float m_perspectiveFar;
 
 	Mat44 m_cameraToRenderTransform;
+
+	AABB2 m_viewPort = AABB2(Vec2(0.f, 0.f), Vec2(1600.f, 800.f));
+
 };

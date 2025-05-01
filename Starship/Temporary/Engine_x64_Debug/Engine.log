@@ -1,32 +1,69 @@
-﻿  Clock.cpp
+﻿  tinyxml2.cpp
+  AudioSystem.cpp
+  Clock.cpp
   DebugRenderSystem.cpp
   DevConsole.cpp
+  EngineCommon.cpp
+  ErrorWarningAssert.cpp
   EventSystem.cpp
+  FileUtils.cpp
+  Image.cpp
   TileHeatMap.cpp
+  NamedStrings.cpp
   Rgba8.cpp
+  StringUtils.cpp
+  Time.cpp
   Timer.cpp
   VertexUtils.cpp
   Vertex_PCU.cpp
+  Vertex_PCUTBN.cpp
+  XmlUtils.cpp
+  Generating Code...
+  Compiling...
   AnalogJoystick.cpp
   InputSystem.cpp
+  KeyButtonState.cpp
   XboxController.cpp
   AABB2.cpp
   AABB3.cpp
+  Capsule2.cpp
+  CubicBezierCurve2D.cpp
+  CubicHermiteCurve2D.cpp
+  CubicHermiteSpline2D.cpp
+  Easing.cpp
   EulerAngles.cpp
+  FloatRange.cpp
+  IntRange.cpp
   IntVec2.cpp
+  LineSegment2.cpp
   Mat44.cpp
   MathUtils.cpp
   OBB2.cpp
-  RaycastUtils.cpp
+  RandomNumberGenerator.cpp
   Generating Code...
   Compiling...
+  Ray.cpp
+  RaycastUtils.cpp
+  Triangle2.cpp
+  Vec4.cpp
   Vec2.cpp
   Vec3.cpp
+  ZCylinder.cpp
   BitmapFont.cpp
   Camera.cpp
+  ConstantBuffer.cpp
+  CubeSkyBox.cpp
+  IndexBuffer.cpp
   Renderer.cpp
+  Shader.cpp
   SpriteAnimDefinition.cpp
+  SpriteDefinition.cpp
+  SpriteSheet.cpp
+  Texture.cpp
+  TextureCube.cpp
   VertexBuffer.cpp
+  Generating Code...
+  Compiling...
   Window.cpp
   Generating Code...
   Engine.vcxproj -> C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Debug\Engine.lib

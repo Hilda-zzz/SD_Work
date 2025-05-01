@@ -3,18 +3,9 @@
   Beetle.cpp
   BkgStar.cpp
   Bullet.cpp
-  Canon.cpp
-  Debris.cpp
-  EnemyBullet.cpp
-  Entity.cpp
-  ExplosionBullet.cpp
-  Game.cpp
-  GameCommon.cpp
-  LaserExplosionCanon.cpp
-  LightSaber.cpp
-  PlayerShip.cpp
-  ShootWasp.cpp
-  Turret.cpp
   Wasp.cpp
   Generating Code...
-LINK : fatal error LNK1104: cannot open file 'C:\p4\Personal\SD\Starship\Temporary\Starship_x64_Debug\Starship_Debug_x64.exe'
+  Game.vcxproj -> C:\p4\Personal\SD\Starship\Temporary\Starship_x64_Debug\Starship_Debug_x64.exe
+  Copying Starship_Debug_x64.exe to C:\p4\Personal\SD\Starship\Run...
+  C:\p4\Personal\SD\Starship\Temporary\Starship_x64_Debug\Starship_Debug_x64.exe -> C:\p4\Personal\SD\Starship\Run\Starship_Debug_x64.exe
+  1 File(s) copied

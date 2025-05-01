@@ -21,7 +21,7 @@ public:
 	float GetRightTrigger() const;
 
 	KeyButtonState const& GetButton(XboxButtonID buttonID) const;
-	bool IsButtongDown(XboxButtonID buttonID) const;
+	bool IsButtonDown(XboxButtonID buttonID) const;
 	bool WasButtonJustPressed(XboxButtonID buttonID) const;
 	bool WasButtonJustReleased(XboxButtonID buttonID) const;
 	void SetVibrates(int leftMotorSpeed, int rightMotorSpeed);

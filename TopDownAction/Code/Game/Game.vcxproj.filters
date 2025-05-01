@@ -85,6 +85,9 @@
     <ClCompile Include="TileDefinition.cpp">
       <Filter>MapAndTile</Filter>
     </ClCompile>
+    <ClCompile Include="MapLayer.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -151,6 +154,9 @@
       <Filter>MapAndTile</Filter>
     </ClInclude>
     <ClInclude Include="TileDefinition.hpp">
+      <Filter>MapAndTile</Filter>
+    </ClInclude>
+    <ClInclude Include="MapLayer.hpp">
       <Filter>MapAndTile</Filter>
     </ClInclude>
   </ItemGroup>

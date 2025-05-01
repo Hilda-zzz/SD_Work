@@ -18,8 +18,8 @@ Wasp::Wasp(Game* game, float x, float y) : Entity(game, x, y)
 	m_health = 3;
 	m_oriHealth = 3;
 	vertices[0] = Vertex_PCU(Vec3(0.f, 1.7f, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f));
-	vertices[1] = Vertex_PCU(Vec3(1.7f, 0.f, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f));
-	vertices[2] = Vertex_PCU(Vec3(0.f, -1.7f, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f));
+	vertices[1] = Vertex_PCU(Vec3(0.f, -1.7f, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f));
+	vertices[2] = Vertex_PCU(Vec3(1.7f, 0.f, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f));
 
 	vertices[3] = Vertex_PCU(Vec3(0.f, 1.1f, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f));
 	vertices[4] = Vertex_PCU(Vec3(-2.f, 0.f, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f));
@@ -63,6 +63,8 @@ void Wasp::Render() const
 	}
 
 	TransformVertexArrayXY3D(NUM_WASP_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(NUM_WASP_VERTS, temp_vertices); //NUM_SHIP_VERTS
 }
 

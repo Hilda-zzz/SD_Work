@@ -33,13 +33,13 @@ public:
 	static void TickSystemClock();
 	void AddChild(Clock* childClock);
 	void RemoveChild(Clock* childClock);
-
+	Clock* m_parent = nullptr;
 protected:
 	void Tick();
 	void Advance(double deltaTimeSeconds);
 
 protected:
-	Clock* m_parent = nullptr;
+	
 	std::vector<Clock*> m_children;
 
 	//Book keeping variables

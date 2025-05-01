@@ -19,7 +19,7 @@ Map::Map(Game* game, MapDefinition const& mapDef) :m_game(game),m_dimensions(map
 
 	if (m_mapDef.m_mapImageName != "")
 	{
-		InitializeTileMapFromImage(m_mapDef.m_mapImageName, & m_tiles);
+		InitializeFloorMapFromImage(m_mapDef.m_mapImageName, & m_tiles);
 	}
 	else
 	{
@@ -28,7 +28,7 @@ Map::Map(Game* game, MapDefinition const& mapDef) :m_game(game),m_dimensions(map
 
 	if (m_mapDef.m_mapWallImageName != "")
 	{
-		InitializeTileMapFromImage(m_mapDef.m_mapWallImageName,&m_walls);
+		InitializeWallMapFromImage(m_mapDef.m_mapWallImageName,&m_walls);
 	}
 	else
 	{
@@ -40,13 +40,10 @@ Map::~Map()
 {
 }
 
-void Map::InitializeTileMapFromImage(std::string const& imagePath, std::vector<Tile>* tiles)
+void Map::InitializeFloorMapFromImage(std::string const& imagePath, std::vector<Tile>* tiles)
 {
 	Image* mapImage = g_theRenderer->CreateImageFromFile(imagePath.c_str());
-	if (tiles == &m_tiles)
-	{
-		m_dimensions = mapImage->GetDimensions();
-	}
+	m_dimensions = mapImage->GetDimensions();
 	tiles->reserve(m_dimensions.x * m_dimensions.y);
 	for (int rowIndex = 0; rowIndex < m_dimensions.y; rowIndex++)
 	{
@@ -58,19 +55,32 @@ void Map::InitializeTileMapFromImage(std::string const& imagePath, std::vector<T
 			{
 				GenerateEachTile(columnIndex, rowIndex, thisTileType, tiles);
 			}
-			
 		}
 	}
 	delete mapImage;
 	mapImage = nullptr;
-	if (tiles == &m_tiles)
+	AddVertsForAllFloors();
+}
+
+void Map::InitializeWallMapFromImage(std::string const& imagePath, std::vector<Tile>* tiles)
+{
+	Image* mapImage = g_theRenderer->CreateImageFromFile(imagePath.c_str());
+	tiles->reserve(m_dimensions.x * m_dimensions.y);
+	for (int rowIndex = 0; rowIndex < m_dimensions.y; rowIndex++)
 	{
-		AddVertsForAllTiles();
+		for (int columnIndex = 0; columnIndex < m_dimensions.x; columnIndex++)
+		{
+			Rgba8 pixelColor = mapImage->GetTexelColor(IntVec2(columnIndex, rowIndex));
+			std::string thisTileType = GetWallTypeNameByColor(pixelColor);
+			if (thisTileType!= "NONE")
+			{
+				GenerateEachWall(columnIndex, rowIndex, thisTileType, tiles);
+			}
+		}
 	}
-	else
-	{
-		AddVertsForAllWalls();
-	}
+	delete mapImage;
+	mapImage = nullptr;
+	AddVertsForAllWalls();
 }
 
 void Map::GenerateEachTile(int columnIndex, int rowIndex, std::string& thisTileType, std::vector<Tile>* tiles)
@@ -79,19 +89,25 @@ void Map::GenerateEachTile(int columnIndex, int rowIndex, std::string& thisTileT
 	tiles->push_back(newTile);
 }
 
-void Map::AddVertsForAllTiles()
+void Map::GenerateEachWall(int columnIndex, int rowIndex, std::string& thisTileType, std::vector<Tile>* tiles)
 {
-	for (int rowIndex = 0; rowIndex < m_dimensions.y; rowIndex++)
+	Tile newTile = Tile(columnIndex, rowIndex, GetWallDefIndexByName(thisTileType));
+	tiles->push_back(newTile);
+}
+
+void Map::AddVertsForAllFloors()
+{
+	for (int i = 0; i < m_tiles.size(); i++)
 	{
-		for (int columnIndex = 0; columnIndex < m_dimensions.x; columnIndex++)
+		Vec2 worldBL_ofThisTile = Vec2(m_tiles[i].m_tileCoordinates.x * m_tileSizeX, (float)m_tiles[i].m_tileCoordinates.y * m_tileSizeY);
+		AABB2 aabb_thisTile = AABB2(worldBL_ofThisTile, worldBL_ofThisTile + Vec2(m_tileSizeX, m_tileSizeY));
+		if (m_tiles[i].m_tileDefIndex != -1)
 		{
-			Vec2 worldBL_ofThisTile = Vec2((float)columnIndex * m_tileSizeX, (float)rowIndex * m_tileSizeY);
-			AABB2 aabb_thisTile = AABB2(worldBL_ofThisTile, worldBL_ofThisTile + Vec2(m_tileSizeX, m_tileSizeY));
-			TileDefinition curDef = TileDefinition::s_tileDefinitions[m_tiles[GetTileIndexByCoords(columnIndex, rowIndex)].m_tileDefIndex];
+			TileDefinition curDef = TileDefinition::s_tileDefinitions[m_tiles[i].m_tileDefIndex];
 			int spriteIndex = curDef.m_spriteCoords.x
 				+ (curDef.m_spriteCoords.y * g_terrianSpriteSheet->m_gridLayout.x);
 			AABB2 tileUV = g_terrianSpriteSheet->GetSpriteUVs(spriteIndex);
-			AddVertsForAABB2D(m_tilemapVerts, 
+			AddVertsForAABB2D(m_tilemapVerts,
 				aabb_thisTile,
 				Rgba8::WHITE,
 				tileUV.m_mins,
@@ -163,11 +179,35 @@ std::string const& Map::GetTileTypeNameByColor(Rgba8 const& pixelColor)
 	//ERROR_AND_DIE("image's color is not appear in tile defs");
 }
 
+std::string const& Map::GetWallTypeNameByColor(Rgba8 const& pixelColor)
+{
+	for (int i = 0; i < (int)TileDefinition::s_wallDefinitions.size(); i++)
+	{
+		if (pixelColor == TileDefinition::s_wallDefinitions[i].m_mapImagePixelColor)
+		{
+			return TileDefinition::s_wallDefinitions[i].m_name;
+		}
+	}
+	return TileDefinition::s_wallDefinitions[0].m_name;
+}
+
 int Map::GetTileDefIndexByName(std::string const& typeName)
 {
 	for (int i = 0; i < (int)TileDefinition::s_tileDefinitions.size(); i++)
 	{
 		if (typeName == TileDefinition::s_tileDefinitions[i].m_name)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+int Map::GetWallDefIndexByName(std::string const& typeName)
+{
+	for (int i = 0; i < (int)TileDefinition::s_wallDefinitions.size(); i++)
+	{
+		if (typeName == TileDefinition::s_wallDefinitions[i].m_name)
 		{
 			return i;
 		}

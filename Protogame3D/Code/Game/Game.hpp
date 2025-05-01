@@ -3,11 +3,13 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
+
 class Clock;
 class Prop;
 class Player;
 class Texture;
 class Entity;
+class CubeSkyBox;
 
 typedef std::vector<Entity*> EntityList;
 
@@ -58,4 +60,6 @@ private:
 	Texture* m_gridTex = nullptr;
 
 	float m_previousTimeScale = 1.f;
+
+	CubeSkyBox* m_cubeSkybox = nullptr;
 };

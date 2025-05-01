@@ -101,9 +101,9 @@ bool DoSphereAndAABBOverlap3D(Vec3 const& sphereCenter, float sphereRadius, AABB
 bool DoZCylinderAndAABBOverlap3D(Vec3 cylinderCenter, float cylinderRadius, float halfHeight, AABB3 const& box);
 bool DoZCylinderAndShpereOVerlap3D(Vec3 cylinderCenter, float cylinderRadius, float halfHeight,
 	Vec3 const& sphereCenter, float sphereRadius);
-bool PushZCylinderOutOfZCylinderFromZ3D(Vec3& mobileCylinderCenter, float mobileCylinderRadius, 
-	Vec3 const& fixedCylinderCenter, float fixedCylinderRadius);
-bool PushZCylinderOutOfEachOtherFromZ3D(Vec3& aCenter, float aRadius, Vec3& bCenter, float bRadius);
+// bool PushZCylinderOutOfZCylinderFromZ3D(Vec3& mobileCylinderCenter, float mobileCylinderRadius, 
+// 	Vec3 const& fixedCylinderCenter, float fixedCylinderRadius);
+// bool PushZCylinderOutOfEachOtherFromZ3D(Vec3& aCenter, float aRadius, Vec3& bCenter, float bRadius);
 
 
 //transform
@@ -131,3 +131,18 @@ Mat44 GetBillboardMatrix(BillboardType billboardType,
 	Mat44 const& targetMatrix,Vec3 const& targetPos,
 	const Vec3& billboardPosition,
 	const Vec2& billboardScale = Vec2(1.f, 1.f));
+
+//curves and splines
+float ComputeCubicBezier1D(float A, float B, float C, float D, float t);
+float ComputeQuinticBezier1D(float A, float B, float C, float D, float E, float F, float t);
+
+//Bounce Math
+void BounceDiscOffPoint(Vec2 const& point, Vec2 const& discCenter, Vec2& discVelocity, float discRadius, float elasticity);
+void BounceDiscOffStaticDisc2D(Vec2 const& bumperCenter, float bumperRadius, Vec2& discCenter, Vec2& discVelocity, float discRadius, 
+	float elastcityBumper,float elastcityBall);
+void BounceDiscOffCapsule2D(Capsule2 const& bumper, Vec2& discCenter, float discRadius, Vec2& discVelocity, 
+	float elastcityBumper, float elastcityBall);
+void BounceDiscOffOBB2D(OBB2 const& bumper, Vec2& discCenter, float discRadius, Vec2& discVelocity, 
+	float elastcityBumper, float elastcityBall);
+void BounceDiscOffEachOther(Vec2& aCenter, float aRadius, Vec2& aVelocity,float aElasticity,
+	Vec2& bCenter, float bRadius, Vec2& bVelocity, float bElasticity);

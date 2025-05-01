@@ -1,7 +1,6 @@
 ﻿#include "App.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game.hpp"
-
 #include "Engine/Core/Time.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Window/Window.hpp"
@@ -11,7 +10,6 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Clock.hpp"
 #include <Engine/Core/DebugRenderSystem.hpp>
-//#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
@@ -47,7 +45,7 @@ void App::Startup()
 	WindowConfig windowConfig;
 	windowConfig.m_inputSystem = g_theInput;
 	windowConfig.m_aspectRatio = 2.f;
-	windowConfig.m_windowTitle = "Protogame3D";
+	windowConfig.m_windowTitle = "Doomenstein";
 	g_theWindow = new Window(windowConfig);
 	
 	RendererConfig rendererConfig;
@@ -166,32 +164,6 @@ void App::BeginFrame()
 
 void App::Update()
 {
-// 	if (g_theWindow->IsFocus())
-// 	{
-// 		if (!g_theGame->m_isAttractMode&&!g_theGame->m_isDevConsole)
-// 		{
-// 			g_theInput->SetCursorMode(CursorMode::FPS);
-// 			g_theWindow->SetCursorVisible(false);
-// 		}
-// 		else
-// 		{
-// 			g_theInput->SetCursorMode(CursorMode::POINTER);
-// 			g_theWindow->SetCursorVisible(true);
-// 		}
-// 	}
-// 	else
-// 	{
-// 		g_theInput->SetCursorMode(CursorMode::POINTER);
-// 		g_theWindow->SetCursorVisible(true);
-// 	}
-
-	//if (g_theInput->WasKeyJustPressed(0x77))
-	//{
-	//	delete g_theGame;
-	//	g_theGame = nullptr;
-	//	g_theGame = new Game();  
-	//}
-
 	g_theGame->Update();
 }
 

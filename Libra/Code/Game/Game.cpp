@@ -12,6 +12,8 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/Image.hpp"
+#include "../../Protogame3D/Code/Game/GameCommon.hpp"
+#include "Engine/Window/Window.hpp"
 
 SoundPlaybackID bgm;
 SpriteSheet* g_terrianSpriteSheet=nullptr;
@@ -97,7 +99,10 @@ Game::Game()
 	float screenCameraSizeY = g_gameConfigBlackboard.GetValue("screenSizeY", 800.f);
 	//float tileSizeX = g_gameConfigBlackboard.GetValue("tileSizeX", 1.f);
 	//float tileSizeY = g_gameConfigBlackboard.GetValue("tileSizeY", 1.f);
-	m_screenCamera.SetOrthoView(Vec2(0.f, 0.f), Vec2(screenCameraSizeX, screenCameraSizeY));
+	
+	IntVec2 windowDimension=g_theWindow->GetClientDimensions();
+	m_screenCamera.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
+	m_screenCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(screenCameraSizeX, screenCameraSizeY));
 	
 	SetDebugCameraOrtho(g_gameConfigBlackboard.GetValue("tileSizeX", 1.f), g_gameConfigBlackboard.GetValue("tileSizeY", 1.f));
 
@@ -259,11 +264,11 @@ void Game::UpdateInput(float& deltaTime)
 	{
 		if (g_theDevConsole->GetMode() == HIDDEN)
 		{
-			g_theDevConsole->ToggleMode(OPEN_FULL);
+			g_theDevConsole->SetMode(OPEN_FULL);
 		}
 		else
 		{
-			g_theDevConsole->ToggleMode(HIDDEN);
+			g_theDevConsole->SetMode(HIDDEN);
 		}
 	}
 }
@@ -401,12 +406,14 @@ void Game::RenderAttractMode() const
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	//g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
 	g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/AttractScreen.png"));
+	g_theRenderer->SetModelConstants();
 	AABB2 texturedAABB2_menu(0.f, 0.f, screenCameraSizeX, screenCameraSizeY);
 	std::vector<Vertex_PCU> menuVerts;
 	AddVertsForAABB2D(menuVerts, texturedAABB2_menu, Rgba8(255, 255, 255, 255), Vec2(0.f, 0.f), Vec2(1.f, 1.f));
 	g_theRenderer->DrawVertexArray(menuVerts);
 	//----------------------------------------------------------------------------------------------------------
 	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetModelConstants();
 	float delta_radius = 50*SinDegrees(50 * (float) GetCurrentTimeSeconds());
 	float delta_thickness = 8 * CosDegrees(200 *(float) GetCurrentTimeSeconds());
 	DebugDrawRing(15.f+ delta_thickness, 100.f+ delta_radius, Rgba8(0, 180, 100), Vec2(screenCameraSizeX * 0.5f, screenCameraSizeY * 0.5f));
@@ -470,6 +477,7 @@ void Game::RenderUI() const
 		g_testFont->AddVertsForText2D(textVerts, Vec2(22.f, 768.f), 15.f, debugString, Rgba8(0,0,0,200), 0.8f);
 		g_testFont->AddVertsForText2D(textVerts, Vec2(20.f, 770.f), 15.f, debugString,Rgba8::GREEN,0.8f);
 		g_theRenderer->BindTexture(&g_testFont->GetTexture());
+		g_theRenderer->SetModelConstants();
 		g_theRenderer->DrawVertexArray(textVerts);
 	}
 	if (m_isPause)
@@ -482,6 +490,7 @@ void Game::RenderUI() const
 			AABB2 texturedAABB2_sheet(0.f, 0.f, screenCameraSizeX, screenCameraSizeY);
 			std::vector<Vertex_PCU> testVerts;
 			AddVertsForAABB2D(testVerts, texturedAABB2_sheet, Rgba8(255, 255, 255, 255), Vec2(0.f,0.f), Vec2(1.f, 1.f));
+			g_theRenderer->SetModelConstants();
 			g_theRenderer->DrawVertexArray(testVerts);
 		}
 
@@ -492,6 +501,7 @@ void Game::RenderUI() const
 			AABB2 texturedAABB2_sheet(0.f, 0.f, screenCameraSizeX, screenCameraSizeY);
 			std::vector<Vertex_PCU> testVerts;
 			AddVertsForAABB2D(testVerts, texturedAABB2_sheet, Rgba8(255, 255, 255, 255), Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+			g_theRenderer->SetModelConstants();
 			g_theRenderer->DrawVertexArray(testVerts);
 		}
 	}
@@ -501,6 +511,7 @@ void Game::RenderUI() const
 		AABB2 BlackFrontAABB2(0.f, 0.f, screenCameraSizeX, screenCameraSizeY);
 		std::vector<Vertex_PCU> blackFrontVerts;
 		AddVertsForAABB2D(blackFrontVerts, BlackFrontAABB2, Rgba8(0, 0,0, (unsigned char)m_alphaBlackFront), Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+		g_theRenderer->SetModelConstants();
 		g_theRenderer->DrawVertexArray(blackFrontVerts);
 	}
 
@@ -528,14 +539,16 @@ void Game::ChangeMap(Map* nextMap,float nextPlayerOrientation)
 
 void Game::SetDebugCameraOrtho(float tileSizeX, float tileSizeY)
 {
+	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
+	m_debugCamera.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
 	float ratio = (float)m_currentMap->m_dimensions.y / (float)m_currentMap->m_dimensions.x;
 	if (ratio < 0.5)
 	{
-		m_debugCamera.SetOrthoView(Vec2(0.f, 0.f), Vec2(m_currentMap->m_dimensions.x * tileSizeX, 0.5f * m_currentMap->m_dimensions.x * tileSizeX));
+		m_debugCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(m_currentMap->m_dimensions.x * tileSizeX, 0.5f * m_currentMap->m_dimensions.x * tileSizeX));
 	}
 	else
 	{
-		m_debugCamera.SetOrthoView(Vec2(0.f, 0.f), Vec2(2.0f * m_currentMap->m_dimensions.y * tileSizeY, m_currentMap->m_dimensions.y * tileSizeY));
+		m_debugCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(2.0f * m_currentMap->m_dimensions.y * tileSizeY, m_currentMap->m_dimensions.y * tileSizeY));
 	}
 }
 

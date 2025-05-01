@@ -8,6 +8,8 @@
 #include "Game/EngineBuildPreferences.hpp"
 #include <vector>
 #include <Engine/Core/Vertex_PCUTBN.hpp>
+#include "Engine/Renderer/PointLight.hpp"
+#include "SpotLight.hpp"
 
 class Shader;
 class Window;
@@ -16,6 +18,7 @@ class VertexBuffer;
 class IndexBuffer;
 class ConstantBuffer;
 class Image;
+class TextureCube;
 
 struct ID3D11Device;
 struct ID3D11DeviceContext;
@@ -90,10 +93,12 @@ public:
 	void		EndCamera(const Camera& camera);
 	void		DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs);
 	void		DrawVertexArray(const std::vector<Vertex_PCU>& vertexs);
+	void		DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs);
 	void		DrawVertexArray(std::vector<Vertex_PCU> const& vertexs, std::vector<unsigned int> const& indexes);
 	void		DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs, std::vector<unsigned int> const& indexes);
 	void		DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs, std::vector<unsigned int> const& indexes,
 					VertexBuffer* vertexBuffer, IndexBuffer* indexBuffer);
+	
 	//void		DrawVertexArrayTest(const std::vector<Vertex_PCU>& vertexs,Mat44 const& localToWorld);
 
 	Image*		CreateImageFromFile(char const* imagePath);
@@ -101,6 +106,11 @@ public:
 	Texture*	GetTextureFromFileName(char const* imageFilePath);
 	Texture*	CreateTextureFromImage(const Image& image);
 	void		BindTexture(Texture* texture);
+
+	TextureCube* CreateOrGetCubeTextureFromFiles(const std::string filePaths[6]);
+	TextureCube* GetTextureCubeFromFileName(char const* firstFilePath);
+	TextureCube* CreateCubeTextureFromFiles(const std::string filePaths[6]);
+	void		 BindTextureCube(TextureCube* textureCube);
 	
 	BitmapFont* CreateOrGetBitmapFont(char const* imageFilePath);
 	BitmapFont* GetBitmapFontFromFileName(char const* imageFilePath);
@@ -114,6 +124,8 @@ public:
 
 	void SetModelConstants(const Mat44& modelToWorldTransform = Mat44(), const Rgba8& modelColor = Rgba8::WHITE);
 	void SetLightConstants(Vec3 const& sunDirection= Vec3(2.f, 1.f, -1.f), float sunIntensity=0.85f, float ambientIntensity=0.35f);
+	void SetPointLightsConstants(const std::vector<PointLight>& lights);
+	void SetSpotLightsConstants(const std::vector<SpotLight>& lights);
 
 	Shader* CreateShaderFromFile(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
 	void			BindShader(Shader* shader);
@@ -123,6 +135,7 @@ public:
 	
 public:
 	std::vector<Texture*>		m_loadedTextures;
+	std::vector<TextureCube*>       m_loadedCubeTextures;
 	std::vector<BitmapFont*>	m_loadedFonts;
 
 private:
@@ -147,6 +160,8 @@ protected:
 	ConstantBuffer*			m_cameraCBO = nullptr;
 	ConstantBuffer*         m_modelCBO = nullptr;
 	ConstantBuffer*			m_lightCBO = nullptr;
+	ConstantBuffer*			m_pointLightCBO = nullptr;
+	ConstantBuffer*			m_spotLightCBO = nullptr;
 	const Texture*			m_defaultTexture = nullptr;
 protected:
 	Shader*			CreateShaderFromSource(char const* shaderName, char const* shaderSource, VertexType vertexType = VertexType::VERTEX_PCU);

@@ -41,8 +41,8 @@ void DebugDrawRing(float thickness,float innerRadius,Rgba8 color,Vec2 ori)
 		vertices[i + 2] = Vertex_PCU(Vec3(InnerSecond.x, InnerSecond.y, 0.f), color, Vec2(0.f, 0.f));
 
 		vertices[i + 3] = Vertex_PCU(Vec3(InnerSecond.x, InnerSecond.y, 0.f), color, Vec2(0.f, 0.f));
-		vertices[i + 4] = Vertex_PCU(Vec3(OuterSecond.x, OuterSecond.y, 0.f), color, Vec2(0.f, 0.f));
-		vertices[i + 5] = Vertex_PCU(Vec3(OuterFirst.x, OuterFirst.y, 0.f), color, Vec2(0.f, 0.f));
+		vertices[i + 4] = Vertex_PCU(Vec3(OuterFirst.x, OuterFirst.y, 0.f), color, Vec2(0.f, 0.f)); 
+		vertices[i + 5] = Vertex_PCU(Vec3(OuterSecond.x, OuterSecond.y, 0.f), color, Vec2(0.f, 0.f));
 
 		i += 6;
 		j += 1;
@@ -96,14 +96,15 @@ void DebugDrawBox(Vec2 botLeft, Vec2 topRight, Rgba8 color)
 {
 	Vertex_PCU vertices[6];
 	vertices[0] = Vertex_PCU(Vec3(botLeft.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
-	vertices[1] = Vertex_PCU(Vec3(botLeft.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
-	vertices[2] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[1] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[2] = Vertex_PCU(Vec3(botLeft.x, topRight.y, 0.f), color, Vec2(0.f, 0.f)); 
 
 	vertices[3] = Vertex_PCU(Vec3(botLeft.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
 	vertices[4] = Vertex_PCU(Vec3(topRight.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
 	vertices[5] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
 
 	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetModelConstants();
 	g_theRenderer->DrawVertexArray(6, vertices);
 }
 

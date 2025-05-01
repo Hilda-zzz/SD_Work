@@ -1,6 +1,7 @@
 #include "Engine/Renderer/SpriteAnimDefinition.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "../Core/XmlUtils.hpp"
 
 SpriteAnimDefinition::SpriteAnimDefinition(SpriteSheet const& sheet, int startSpriteIndex, 
 	int endSpriteIndex, float framesPerSecond, SpriteAnimPlaybackType playbackType)
@@ -9,10 +10,39 @@ SpriteAnimDefinition::SpriteAnimDefinition(SpriteSheet const& sheet, int startSp
 {
 }
 
+SpriteAnimDefinition::SpriteAnimDefinition(const XmlElement& element, SpriteSheet const& sheet):m_spriteSheet(sheet)
+{
+	m_startSpriteIndex = ParseXmlAttribute(&element, "startFrame", m_startSpriteIndex);
+	m_endSpriteIndex = ParseXmlAttribute(&element, "endFrame", m_endSpriteIndex);
+	m_framesPerSecond = ParseXmlAttribute(&element, "framesPerSecond", m_framesPerSecond);
+	float secondsPerFrame= ParseXmlAttribute(&element, "secondsPerFrame",-1.f);
+	if (secondsPerFrame > 0.f)
+	{
+		m_framesPerSecond = 1.f / secondsPerFrame;
+	}
+	std::string playbackType = ParseXmlAttribute(&element, "playbackType", "");
+	if (playbackType == "ONCE")
+	{
+		m_playbackType = SpriteAnimPlaybackType::ONCE;
+	}
+	else if (playbackType == "LOOP")
+	{
+		m_playbackType = SpriteAnimPlaybackType::LOOP;
+	}
+	else if (playbackType == "PINGPONG")
+	{
+		m_playbackType = SpriteAnimPlaybackType::PINGPONG;
+	}
+	else
+	{
+		m_playbackType = SpriteAnimPlaybackType::ONCE;
+	}
+}
+
 SpriteDefinition const& SpriteAnimDefinition::GetSpriteDefAtTime(float seconds) const
 {
 	//# todo change (int) to round down int in math utils
-	
+	//# todo check pingpong
 	float totalFrames = seconds * m_framesPerSecond;
 	int animLen = m_endSpriteIndex - m_startSpriteIndex + 1;
 	int loopCount = (int)totalFrames / animLen;
@@ -63,6 +93,28 @@ SpriteDefinition const& SpriteAnimDefinition::GetSpriteDefAtTime(float seconds) 
 	ERROR_AND_DIE("there is not such mode of sprite animation");
 }
 
+bool SpriteAnimDefinition::LoadFromXmlElement(const XmlElement& element)
+{
+	m_startSpriteIndex = ParseXmlAttribute(&element, "startSpriteIndex", m_startSpriteIndex);
+	m_endSpriteIndex = ParseXmlAttribute(&element, "endSpriteIndex", m_endSpriteIndex);
+	m_framesPerSecond = ParseXmlAttribute(&element, "framesPerSecond", m_framesPerSecond);
+	std::string playbackType = ParseXmlAttribute(&element, "playbackType", "");
+	if (playbackType == "ONCE")
+	{
+		m_playbackType = SpriteAnimPlaybackType::ONCE;
+	}
+	else if (playbackType == "LOOP")
+	{
+		m_playbackType = SpriteAnimPlaybackType::LOOP;
+	}
+	else if (playbackType == "PINGPONG")
+	{
+		m_playbackType = SpriteAnimPlaybackType::PINGPONG;
+	}
+	return false;
+}
+
+
 bool SpriteAnimDefinition::IsPlayOnceFinished(float seconds)
 {
 	int animLen = m_endSpriteIndex - m_startSpriteIndex + 1;
@@ -74,3 +126,22 @@ bool SpriteAnimDefinition::IsPlayOnceFinished(float seconds)
 	else
 		return false;
 }
+
+float SpriteAnimDefinition::GetAnimTime()
+{
+	int animLen = m_endSpriteIndex - m_startSpriteIndex + 1;
+	float playeOnceTime = animLen / m_framesPerSecond;
+	return playeOnceTime;
+}
+
+void SpriteAnimDefinition::SetFramesPerSecond(float time)
+{
+	m_framesPerSecond = time;
+}
+
+SpriteAnimPlaybackType SpriteAnimDefinition::GetPlaybackType()
+{
+	return m_playbackType;
+}
+
+

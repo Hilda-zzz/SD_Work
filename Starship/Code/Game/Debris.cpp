@@ -76,7 +76,8 @@ void Debris::Render() const
 	}
 
 	TransformVertexArrayXY3D(NUM_DEBRIS_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
-
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(NUM_DEBRIS_VERTS, temp_vertices); //NUM_SHIP_VERTS
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "Engine/Renderer/SpriteSheet.hpp"
-
+#include "Engine/Core/XmlUtils.hpp"
 //------------------------------------------------------------------------------------------------
 enum class SpriteAnimPlaybackType
 {
@@ -15,8 +15,20 @@ public:
 	SpriteAnimDefinition(SpriteSheet const& sheet, int startSpriteIndex, int endSpriteIndex,
 		float framesPerSecond, SpriteAnimPlaybackType playbackType = SpriteAnimPlaybackType::LOOP);
 
+	SpriteAnimDefinition(const XmlElement& element, SpriteSheet const& sheet);
+
 	SpriteDefinition const& GetSpriteDefAtTime(float seconds) const; 
+
+	bool LoadFromXmlElement(const XmlElement& element);
+
 	bool IsPlayOnceFinished(float seconds);
+
+	float GetAnimTime();
+
+	void SetFramesPerSecond(float time);
+
+	SpriteAnimPlaybackType GetPlaybackType();
+
 private:
 	SpriteSheet const&	m_spriteSheet;
 	int					m_startSpriteIndex = -1;

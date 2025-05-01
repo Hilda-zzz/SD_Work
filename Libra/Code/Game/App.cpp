@@ -8,6 +8,7 @@
 #include "ThirdParty/TinyXML2/tinyxml2.h"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/Clock.hpp"
 
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
@@ -16,8 +17,8 @@ InputSystem*	g_theInput = nullptr;
 AudioSystem*	g_theAudio = nullptr;
 //Window*			g_theWindow = nullptr;
 Game*			g_theGame = nullptr;
-
-BitmapFont* g_testFont = nullptr;
+Clock* g_systemClock = nullptr;
+//BitmapFont* g_testFont = nullptr;
 
 
 App::~App()
@@ -59,7 +60,9 @@ void App::Startup()
 
 	g_testFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont"); //#todo: move it to renderer start up 
 
-	DevConsoleConfig devConsoleConfig(g_testFont, 1.f,29.5f);
+	g_systemClock = new Clock();
+
+	DevConsoleConfig devConsoleConfig("Data/Fonts/SquirrelFixedFont", 1.f,29.5f);
 	g_theDevConsole = new DevConsole(devConsoleConfig); //#todo maybe use name to get the font in devConsole startup
 	//#then i can put all start() together below
 	g_theDevConsole->Startup();

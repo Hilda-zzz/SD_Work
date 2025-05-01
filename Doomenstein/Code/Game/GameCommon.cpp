@@ -66,6 +66,7 @@ void DebugDrawCircle(float radius, Vec2 ori,Rgba8 color)
 		i += 3;
 		j += 1;
 	}
+	g_theRenderer->SetModelConstants();
 	g_theRenderer->DrawVertexArray(48, vertices);
 }
 
@@ -83,6 +84,7 @@ void DebugDrawHighCircle(float radius, Vec2 ori, Rgba8 color)
 		i += 3;
 		j += 1;
 	}
+	g_theRenderer->SetModelConstants();
 	g_theRenderer->DrawVertexArray(96, vertices);
 }
 
@@ -98,12 +100,12 @@ void DebugDrawBox(Vec2 botLeft, Vec2 topRight, Rgba8 color)
 {
 	Vertex_PCU vertices[6];
 	vertices[0] = Vertex_PCU(Vec3(botLeft.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
-	vertices[1] = Vertex_PCU(Vec3(botLeft.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
-	vertices[2] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[1] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f)); 
+	vertices[2] = Vertex_PCU(Vec3(botLeft.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
 
 	vertices[3] = Vertex_PCU(Vec3(botLeft.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
 	vertices[4] = Vertex_PCU(Vec3(topRight.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
 	vertices[5] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
-
+	g_theRenderer->SetModelConstants();
 	g_theRenderer->DrawVertexArray(6, vertices);
 }

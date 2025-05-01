@@ -33,8 +33,8 @@ PlayerShip::PlayerShip(Game* game, float x, float y): Entity(game, x, y)
 
 	//tail verts
 	tail_vertices[0]= Vertex_PCU(Vec3(-2.f, 1.f, 0.f), Rgba8(189,29,56), Vec2(0.f, 0.f));
-	tail_vertices[1] = Vertex_PCU(Vec3(-2.f, -1.f, 0.f), Rgba8(189, 29, 56), Vec2(0.f, 0.f));
-	tail_vertices[2] = Vertex_PCU(Vec3(-2.f,0.f, 0.f), Rgba8(71, 229, 180,10), Vec2(0.f, 0.f));
+	tail_vertices[1] = Vertex_PCU(Vec3(-2.f, 0.f, 0.f), Rgba8(71, 229, 180, 10), Vec2(0.f, 0.f));
+	tail_vertices[2] = Vertex_PCU(Vec3(-2.f, -1.f, 0.f), Rgba8(189, 29, 56), Vec2(0.f, 0.f));
 }
 
 PlayerShip::~PlayerShip()
@@ -206,7 +206,7 @@ void PlayerShip::Update(float deltaTime)
 		//trail tail
 		float tailLen = RangeMapClamped(m_thrustFraction, 0.f, 1.f, 5.f, 12.f);
 		float offset=m_game->m_rng->RollRandomFloatInRange(-0.5f, 0.5f);
-		tail_vertices[2] = Vertex_PCU(Vec3(-tailLen+ offset, 0.f, 0.f), Rgba8(214, 116, 207, 10), Vec2(0.f, 0.f));
+		tail_vertices[1] = Vertex_PCU(Vec3(-tailLen+ offset, 0.f, 0.f), Rgba8(214, 116, 207, 10), Vec2(0.f, 0.f));
 	}
 	
 	if (m_isDead == true && g_theInput->WasKeyJustPressed('N') && m_lives > 1)
@@ -280,7 +280,7 @@ void PlayerShip::UpdateFromController(float deltaSeconds)
 		{
 			m_game->PlayerShipJustShoot();
 		}
-		if (controller.IsButtongDown(XboxButtonID::A) && m_FirstWeaponState == 1)
+		if (controller.IsButtonDown(XboxButtonID::A) && m_FirstWeaponState == 1)
 		{
 			m_game->PlayerShipKeepShoot();
 		}
@@ -298,7 +298,7 @@ void PlayerShip::UpdateFromController(float deltaSeconds)
 			}
 		}
 		//light saber
-		if (controller.IsButtongDown(XboxButtonID::Y) && m_magicPoint > MIN_SABER_MP)
+		if (controller.IsButtonDown(XboxButtonID::Y) && m_magicPoint > MIN_SABER_MP)
 		{
 			m_isControllerSaber = true;
 			m_lightSaber->Update(deltaSeconds);
@@ -394,6 +394,8 @@ void PlayerShip::Render() const
 {
 	if (m_isDead == false)
 	{
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+		g_theRenderer->BindTexture(nullptr);
 		if (m_isTriggerQuickDash)
 		{
 			RenderQuickDashUI();
@@ -428,6 +430,8 @@ void PlayerShip::Render() const
 			//temp_tail_vertices[i].m_color = curShipColor;
 		}
 		TransformVertexArrayXY3D(3, temp_tail_vertices, 1.f, m_orientationDegrees, m_position);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+		g_theRenderer->BindTexture(nullptr);
 		g_theRenderer->DrawVertexArray(3, temp_tail_vertices); //NUM_SHIP_VERTS
 
 	}	
@@ -497,8 +501,8 @@ void PlayerShip::RespawnShip()
 void PlayerShip::InitializedVerts(Vertex_PCU* vertsToFillIn, Rgba8 const& color)
 {
 	vertsToFillIn[0] = Vertex_PCU(Vec3(-2, 1, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[1] = Vertex_PCU(Vec3(0, 2, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[2] = Vertex_PCU(Vec3(2, 1, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[1] = Vertex_PCU(Vec3(2, 1, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[2] = Vertex_PCU(Vec3(0, 2, 0.f), color, Vec2(0.f, 0.f)); 
 
 	vertsToFillIn[3] = Vertex_PCU(Vec3(-2, 1, 0.f), color, Vec2(0.f, 0.f));
 	vertsToFillIn[4] = Vertex_PCU(Vec3(-2, -1, 0.f), color, Vec2(0.f, 0.f));
@@ -513,6 +517,6 @@ void PlayerShip::InitializedVerts(Vertex_PCU* vertsToFillIn, Rgba8 const& color)
 	vertsToFillIn[11] = Vertex_PCU(Vec3(0, 1, 0.f), color, Vec2(0.f, 0.f));
 
 	vertsToFillIn[12] = Vertex_PCU(Vec3(-2, -1, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[13] = Vertex_PCU(Vec3(2, -1, 0.f), color, Vec2(0.f, 0.f));
-	vertsToFillIn[14] = Vertex_PCU(Vec3(0, -2, 0.f), color, Vec2(0.f, 0.f));
+	vertsToFillIn[13] = Vertex_PCU(Vec3(0, -2, 0.f), color, Vec2(0.f, 0.f)); 
+	vertsToFillIn[14] = Vertex_PCU(Vec3(2, -1, 0.f), color, Vec2(0.f, 0.f));
 }

@@ -1,6 +1,7 @@
 C:\p4\Personal\SD\Engine\Code\ThirdParty\TinyXML2\tinyxml2.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\tinyxml2.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Audio\AudioSystem.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\AudioSystem.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\Clock.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Clock.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Core\DebugRenderSystem.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\DebugRenderSystem.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\DevConsole.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\DevConsole.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\EngineCommon.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\EngineCommon.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\ErrorWarningAssert.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\ErrorWarningAssert.obj
@@ -15,6 +16,7 @@ C:\p4\Personal\SD\Engine\Code\Engine\Core\Time.cpp;C:\p4\Personal\SD\Starship\Te
 C:\p4\Personal\SD\Engine\Code\Engine\Core\Timer.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Timer.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\VertexUtils.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\VertexUtils.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\Vertex_PCU.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Vertex_PCU.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Core\Vertex_PCUTBN.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Vertex_PCUTBN.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Core\XmlUtils.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\XmlUtils.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Input\AnalogJoystick.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\AnalogJoystick.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Input\InputSystem.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\InputSystem.obj
@@ -23,6 +25,10 @@ C:\p4\Personal\SD\Engine\Code\Engine\Input\XboxController.cpp;C:\p4\Personal\SD\
 C:\p4\Personal\SD\Engine\Code\Engine\Math\AABB2.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\AABB2.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\AABB3.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\AABB3.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\Capsule2.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Capsule2.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Math\CubicBezierCurve2D.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\CubicBezierCurve2D.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Math\CubicHermiteCurve2D.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\CubicHermiteCurve2D.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Math\CubicHermiteSpline2D.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\CubicHermiteSpline2D.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Math\Easing.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Easing.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\EulerAngles.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\EulerAngles.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\FloatRange.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\FloatRange.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\IntRange.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\IntRange.obj
@@ -38,14 +44,18 @@ C:\p4\Personal\SD\Engine\Code\Engine\Math\Triangle2.cpp;C:\p4\Personal\SD\Starsh
 C:\p4\Personal\SD\Engine\Code\Engine\Math\Vec4.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Vec4.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\Vec2.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Vec2.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\Vec3.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Vec3.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Math\ZCylinder.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\ZCylinder.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\BitmapFont.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\BitmapFont.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Camera.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Camera.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\ConstantBuffer.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\ConstantBuffer.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\CubeSkyBox.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\CubeSkyBox.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\IndexBuffer.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\IndexBuffer.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Renderer.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Renderer.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Shader.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Shader.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\SpriteAnimDefinition.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\SpriteAnimDefinition.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\SpriteDefinition.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\SpriteDefinition.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\SpriteSheet.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\SpriteSheet.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Texture.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Texture.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\TextureCube.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\TextureCube.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\VertexBuffer.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\VertexBuffer.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Window\Window.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Window.obj

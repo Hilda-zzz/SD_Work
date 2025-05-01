@@ -22,6 +22,8 @@ void Canon::Update(float deltaTime)
 
 void Canon::Render() const
 {
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	g_theRenderer->BindTexture(nullptr);
 	if (m_level == 1)
 	{
 		Vertex_PCU temp_vertices[NUM_CANONL1_VERTS];
@@ -64,35 +66,38 @@ void Canon::Die()
 
 void Canon::InitializedVertsL1(Vertex_PCU* vertsToFillIn)
 {
-	vertsToFillIn[0] = Vertex_PCU(Vec3(0, -1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[1] = Vertex_PCU(Vec3(1, 0, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[2] = Vertex_PCU(Vec3(0, 1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[0] = Vertex_PCU(Vec3(0.f, -1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[1] = Vertex_PCU(Vec3(1.f, 0.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[2] = Vertex_PCU(Vec3(0.f, 1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
 }
 
 void Canon::InitializedVertsL2(Vertex_PCU* vertsToFillIn)
 {
-	//a
-	vertsToFillIn[0] = Vertex_PCU(Vec3(-2, 1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[1] = Vertex_PCU(Vec3(0, 2, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[2] = Vertex_PCU(Vec3(2, 1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	//a 
+	vertsToFillIn[0] = Vertex_PCU(Vec3(-2.f, 1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[1] = Vertex_PCU(Vec3(2.f, 1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[2] = Vertex_PCU(Vec3(0.f, 2.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+
 	//e
-	vertsToFillIn[3] = Vertex_PCU(Vec3(-2, -1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[4] = Vertex_PCU(Vec3(2, -1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[5] = Vertex_PCU(Vec3(0, -2, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[3] = Vertex_PCU(Vec3(-2.f, -1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[4] = Vertex_PCU(Vec3(0.f, -2.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f)); 
+	vertsToFillIn[5] = Vertex_PCU(Vec3(2.f, -1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
 }
 
 void Canon::InitializedVertsL3(Vertex_PCU* vertsToFillIn)
 {
-	//d
-	vertsToFillIn[0] = Vertex_PCU(Vec3(0, -1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[1] = Vertex_PCU(Vec3(1, 0, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[2] = Vertex_PCU(Vec3(0, 1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	//e
-	vertsToFillIn[3] = Vertex_PCU(Vec3(-2, -1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[4] = Vertex_PCU(Vec3(2, -1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[5] = Vertex_PCU(Vec3(0, -2, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	//d 
+	vertsToFillIn[0] = Vertex_PCU(Vec3(0.f, -1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[1] = Vertex_PCU(Vec3(1.f, 0.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[2] = Vertex_PCU(Vec3(0.f, 1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+
+	//e 
+	vertsToFillIn[3] = Vertex_PCU(Vec3(-2.f, -1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[4] = Vertex_PCU(Vec3(0.f, -2.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f)); 
+	vertsToFillIn[5] = Vertex_PCU(Vec3(2.f, -1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+
 	//a
-	vertsToFillIn[6] = Vertex_PCU(Vec3(-2, 1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[7] = Vertex_PCU(Vec3(0, 2, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
-	vertsToFillIn[8] = Vertex_PCU(Vec3(2, 1, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[6] = Vertex_PCU(Vec3(-2.f, 1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
+	vertsToFillIn[7] = Vertex_PCU(Vec3(2.f, 1.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f)); 
+	vertsToFillIn[8] = Vertex_PCU(Vec3(0.f, 2.f, 0.f), Rgba8(239, 141, 67), Vec2(0.f, 0.f));
 }

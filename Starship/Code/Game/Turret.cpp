@@ -19,8 +19,8 @@ Turret::Turret(Game* game, float x, float y) : Entity(game, x, y)
 	Rgba8 darkRed = Rgba8(117, 51, 62);
 	Rgba8 lightRed = Rgba8(142, 62, 75);
 	vertices_base[0] = Vertex_PCU(Vec3(-5.f, -1.5f, 0.f), lightRed, Vec2(0.f, 0.f));
-	vertices_base[1] = Vertex_PCU(Vec3(5.f, 1.5f, 0.f), lightRed, Vec2(0.f, 0.f));
-	vertices_base[2] = Vertex_PCU(Vec3(5.f, -1.5f, 0.f), lightRed, Vec2(0.f, 0.f));
+	vertices_base[1] = Vertex_PCU(Vec3(5.f, -1.5f, 0.f), lightRed, Vec2(0.f, 0.f));
+	vertices_base[2] = Vertex_PCU(Vec3(5.f, 1.5f, 0.f), lightRed, Vec2(0.f, 0.f)); 
 	
 	vertices_base[3] = Vertex_PCU(Vec3(-5.f, -1.5f, 0.f), lightRed, Vec2(0.f, 0.f));
 	vertices_base[4] = Vertex_PCU(Vec3(5.f, 1.5f, 0.f), lightRed, Vec2(0.f, 0.f));
@@ -31,8 +31,8 @@ Turret::Turret(Game* game, float x, float y) : Entity(game, x, y)
 	vertices_base[8] = Vertex_PCU(Vec3(-5.f, 1.8f, 0.f), darkRed, Vec2(0.f, 0.f));
 
 	vertices_base[9] = Vertex_PCU(Vec3(-5.5f, -1.8f, 0.f), darkRed, Vec2(0.f, 0.f));
-	vertices_base[10] = Vertex_PCU(Vec3(-5.5f, 1.8f, 0.f), darkRed, Vec2(0.f, 0.f));
-	vertices_base[11] = Vertex_PCU(Vec3(-5.f, 1.8f, 0.f), darkRed, Vec2(0.f, 0.f));
+	vertices_base[10] = Vertex_PCU(Vec3(-5.f, 1.8f, 0.f), darkRed, Vec2(0.f, 0.f));
+	vertices_base[11] = Vertex_PCU(Vec3(-5.5f, 1.8f, 0.f), darkRed, Vec2(0.f, 0.f)); 
 
 	vertices_base[12] = Vertex_PCU(Vec3(5.f, -1.8f, 0.f), darkRed, Vec2(0.f, 0.f));
 	vertices_base[13] = Vertex_PCU(Vec3(5.5f, -1.8f, 0.f), darkRed, Vec2(0.f, 0.f));
@@ -45,7 +45,6 @@ Turret::Turret(Game* game, float x, float y) : Entity(game, x, y)
 
 void Turret::Update(float deltaTime)
 {
-
 	m_position.y = m_oriPosition.y+ CosDegrees((float)GetCurrentTimeSeconds() * 300.f) * TURRET_FLOAT_SPEED * deltaTime;
 	
 	if (m_health <= 0)
@@ -86,6 +85,8 @@ void Turret::Render() const
 		temp_vertices2[i] = vertices_base[i];
 		//temp_vertices[i].m_color = m_asteroidCurColor;
 	}
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	g_theRenderer->BindTexture(nullptr);
 
 	TransformVertexArrayXY3D(NUM_TURRET_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
 	g_theRenderer->DrawVertexArray(NUM_TURRET_VERTS, temp_vertices);

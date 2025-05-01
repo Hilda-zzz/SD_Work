@@ -124,7 +124,7 @@ void Player::UpdateControllerInput(float deltaSeconds)
 	if (controller.IsConnected())
 	{
 		float curMoveSpeed;
-		if (controller.IsButtongDown(XboxButtonID::A))
+		if (controller.IsButtonDown(XboxButtonID::A))
 		{
 			curMoveSpeed = m_moveSpeed * 10.f;
 		}
@@ -142,11 +142,11 @@ void Player::UpdateControllerInput(float deltaSeconds)
 			moveDirection += controller.GetLeftStick().GetPosition().y* fwdDirection;
 
 		}
-		if (controller.IsButtongDown(XboxButtonID::LEFT_SHOULDER))
+		if (controller.IsButtonDown(XboxButtonID::LEFT_SHOULDER))
 		{
 			m_position += Vec3(0.f, 0.f, 1.f) * curMoveSpeed*deltaSeconds;
 		}
-		if (controller.IsButtongDown(XboxButtonID::RIGHT_SHOULDER))
+		if (controller.IsButtonDown(XboxButtonID::RIGHT_SHOULDER))
 		{
 			m_position += Vec3(0.f, 0.f, -1.f) * curMoveSpeed * deltaSeconds;
 		}
@@ -175,7 +175,7 @@ void Player::UpdateControllerInput(float deltaSeconds)
 		m_orientation.m_pitchDegrees = GetClamped(m_orientation.m_pitchDegrees, -85.f, 85.f);
 		m_position += m_velocity * deltaSeconds;
 
-		if (controller.IsButtongDown(XboxButtonID::START))
+		if (controller.IsButtonDown(XboxButtonID::START))
 		{
 			m_orientation.m_pitchDegrees = 0.f;
 			m_orientation.m_rollDegrees = 0.f;

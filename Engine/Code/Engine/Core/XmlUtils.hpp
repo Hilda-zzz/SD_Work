@@ -5,6 +5,8 @@
 #include <Engine/Math/IntVec2.hpp>
 #include <string>
 #include "StringUtils.hpp"
+#include "../Math/Vec3.hpp"
+#include "../Math/EulerAngles.hpp"
 
 
 typedef tinyxml2::XMLDocument		XmlDocument;
@@ -18,6 +20,8 @@ bool	ParseXmlAttribute(XmlElement const* element, char const* attributeName, boo
 float	ParseXmlAttribute(XmlElement const* element, char const* attributeName, float defaultValue);
 Rgba8	ParseXmlAttribute(XmlElement const* element, char const* attributeName, Rgba8 const& defaultValue);
 Vec2	ParseXmlAttribute(XmlElement const* element, char const* attributeName, Vec2 const& defaultValue);
+Vec3	ParseXmlAttribute(XmlElement const* element, char const* attributeName, Vec3 const& defaultValue);
+EulerAngles	ParseXmlAttribute(XmlElement const* element, char const* attributeName, EulerAngles const& defaultValue);
 IntVec2 ParseXmlAttribute(XmlElement const* element, char const* attributeName, IntVec2 const& defaultValue);
 std::string ParseXmlAttribute(XmlElement const* element, char const* attributeName, std::string const& defaultValue);
 Strings ParseXmlAttribute(XmlElement const* element, char const* attributeName, Strings const& defaultValues);

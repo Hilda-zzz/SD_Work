@@ -182,6 +182,10 @@
     <ClCompile Include="Math\AABB2.cpp" />
     <ClCompile Include="Math\AABB3.cpp" />
     <ClCompile Include="Math\Capsule2.cpp" />
+    <ClCompile Include="Math\CubicBezierCurve2D.cpp" />
+    <ClCompile Include="Math\CubicHermiteCurve2D.cpp" />
+    <ClCompile Include="Math\CubicHermiteSpline2D.cpp" />
+    <ClCompile Include="Math\Easing.cpp" />
     <ClCompile Include="Math\EulerAngles.cpp" />
     <ClCompile Include="Math\FloatRange.cpp" />
     <ClCompile Include="Math\IntRange.cpp" />
@@ -201,13 +205,17 @@
     <ClCompile Include="Renderer\BitmapFont.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
     <ClCompile Include="Renderer\ConstantBuffer.cpp" />
+    <ClCompile Include="Renderer\CubeSkyBox.cpp" />
     <ClCompile Include="Renderer\IndexBuffer.cpp" />
+    <ClCompile Include="Renderer\PointLight.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="Renderer\Shader.cpp" />
+    <ClCompile Include="Renderer\SpotLight.cpp" />
     <ClCompile Include="Renderer\SpriteAnimDefinition.cpp" />
     <ClCompile Include="Renderer\SpriteDefinition.cpp" />
     <ClCompile Include="Renderer\SpriteSheet.cpp" />
     <ClCompile Include="Renderer\Texture.cpp" />
+    <ClCompile Include="Renderer\TextureCube.cpp" />
     <ClCompile Include="Renderer\VertexBuffer.cpp" />
     <ClCompile Include="Window\Window.cpp" />
   </ItemGroup>
@@ -248,6 +256,10 @@
     <ClInclude Include="Input\XboxController.hpp" />
     <ClInclude Include="Math\AABB2.hpp" />
     <ClInclude Include="Math\Capsule2.hpp" />
+    <ClInclude Include="Math\CubicBezierCurve2D.hpp" />
+    <ClInclude Include="Math\CubicHermiteCurve2D.hpp" />
+    <ClInclude Include="Math\CubicHermiteSpline2D.hpp" />
+    <ClInclude Include="Math\Easing.hpp" />
     <ClInclude Include="Math\EulerAngles.hpp" />
     <ClInclude Include="Math\FloatRange.hpp" />
     <ClInclude Include="Math\IntRange.hpp" />
@@ -267,14 +279,18 @@
     <ClInclude Include="Renderer\BitmapFont.hpp" />
     <ClInclude Include="Renderer\Camera.hpp" />
     <ClInclude Include="Renderer\ConstantBuffer.hpp" />
+    <ClInclude Include="Renderer\CubeSkyBox.hpp" />
     <ClInclude Include="Renderer\DefaultShader.hpp" />
     <ClInclude Include="Renderer\IndexBuffer.hpp" />
+    <ClInclude Include="Renderer\PointLight.hpp" />
     <ClInclude Include="Renderer\Renderer.hpp" />
     <ClInclude Include="Renderer\Shader.hpp" />
+    <ClInclude Include="Renderer\SpotLight.hpp" />
     <ClInclude Include="Renderer\SpriteAnimDefinition.hpp" />
     <ClInclude Include="Renderer\SpriteDefinition.hpp" />
     <ClInclude Include="Renderer\SpriteSheet.hpp" />
     <ClInclude Include="Renderer\Texture.hpp" />
+    <ClInclude Include="Renderer\TextureCube.hpp" />
     <ClInclude Include="Renderer\VertexBuffer.hpp" />
     <ClInclude Include="Window\Window.hpp" />
   </ItemGroup>

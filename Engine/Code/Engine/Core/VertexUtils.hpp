@@ -39,6 +39,13 @@ void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, std::vector<unsigned int>
 void AddVertsForQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
 	const Rgba8& color, const AABB2& UVs);
+void AddVertsForQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts,
+	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
+	const Rgba8& color, const AABB2& UVs);
+
+void AddVertsForRoundedQuad3D(std::vector<Vertex_PCUTBN>& vertexes, const Vec3& bottomLeft, const Vec3& bottomRight, 
+	const Vec3& topRight, const Vec3& topLeft, const Rgba8& color, const AABB2& UVs);;
+
 void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, const AABB3& bounds, 
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius,
@@ -56,3 +63,5 @@ void AddVertsForCylinder3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& 
 	const Rgba8 color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
 
 AABB2 GetVertexBounds2D(const std::vector<Vertex_PCU>& verts);
+
+void AddVertsForCubeSkyBox(std::vector<Vertex_PCU>& verts, const Vec3& center, float size, const Rgba8& color);

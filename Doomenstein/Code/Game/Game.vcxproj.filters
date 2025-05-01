@@ -14,6 +14,15 @@
     <Filter Include="XML">
       <UniqueIdentifier>{f9cf3001-52b0-4690-a7e6-c3c15dc50ff0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Definitions">
+      <UniqueIdentifier>{e1e5ecd8-7e44-4230-a0a3-346bde724c35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gameplay\Controller">
+      <UniqueIdentifier>{3e5ae1c2-b6c5-484b-b02d-985bc5289fd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gameplay\Actor">
+      <UniqueIdentifier>{c43b2e19-8058-402b-b6cb-e91a79ddf9da}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -28,32 +37,56 @@
     <ClCompile Include="GameCommon.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Entity.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="Player.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
     <ClCompile Include="Map.cpp">
-      <Filter>Map</Filter>
-    </ClCompile>
-    <ClCompile Include="TileDefinition.cpp">
-      <Filter>Map</Filter>
-    </ClCompile>
-    <ClCompile Include="MapDefinition.cpp">
       <Filter>Map</Filter>
     </ClCompile>
     <ClCompile Include="Tile.cpp">
       <Filter>Map</Filter>
     </ClCompile>
-    <ClCompile Include="Actor.cpp">
+    <ClCompile Include="ActorHandle.cpp">
       <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="SpawnInfo.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="MapDefinition.cpp">
+      <Filter>Definitions</Filter>
+    </ClCompile>
+    <ClCompile Include="TileDefinition.cpp">
+      <Filter>Definitions</Filter>
+    </ClCompile>
+    <ClCompile Include="ActorDefinition.cpp">
+      <Filter>Definitions</Filter>
+    </ClCompile>
+    <ClCompile Include="WeaponDefinition.cpp">
+      <Filter>Definitions</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerController.cpp">
+      <Filter>Gameplay\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="Controller.cpp">
+      <Filter>Gameplay\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor.cpp">
+      <Filter>Gameplay\Actor</Filter>
     </ClCompile>
     <ClCompile Include="Enemy.cpp">
-      <Filter>Gameplay</Filter>
+      <Filter>Gameplay\Actor</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Gameplay\Actor</Filter>
     </ClCompile>
     <ClCompile Include="Projectile.cpp">
-      <Filter>Gameplay</Filter>
+      <Filter>Gameplay\Actor</Filter>
+    </ClCompile>
+    <ClCompile Include="Weapon.cpp">
+      <Filter>Gameplay\Actor</Filter>
+    </ClCompile>
+    <ClCompile Include="AIController.cpp">
+      <Filter>Gameplay\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="SpriteAnimationGroupDefinition.cpp">
+      <Filter>Definitions</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -69,32 +102,56 @@
     <ClInclude Include="EngineBuildPreferences.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Entity.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
     <ClInclude Include="Map.hpp">
-      <Filter>Map</Filter>
-    </ClInclude>
-    <ClInclude Include="MapDefinition.hpp">
       <Filter>Map</Filter>
     </ClInclude>
     <ClInclude Include="Tile.hpp">
       <Filter>Map</Filter>
     </ClInclude>
+    <ClInclude Include="ActorHandle.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="SpawnInfo.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="MapDefinition.hpp">
+      <Filter>Definitions</Filter>
+    </ClInclude>
     <ClInclude Include="TileDefinition.hpp">
-      <Filter>Map</Filter>
+      <Filter>Definitions</Filter>
+    </ClInclude>
+    <ClInclude Include="ActorDefinition.hpp">
+      <Filter>Definitions</Filter>
+    </ClInclude>
+    <ClInclude Include="WeaponDefinition.hpp">
+      <Filter>Definitions</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerController.hpp">
+      <Filter>Gameplay\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="Controller.hpp">
+      <Filter>Gameplay\Controller</Filter>
     </ClInclude>
     <ClInclude Include="Actor.hpp">
-      <Filter>Gameplay</Filter>
+      <Filter>Gameplay\Actor</Filter>
     </ClInclude>
     <ClInclude Include="Enemy.hpp">
-      <Filter>Gameplay</Filter>
+      <Filter>Gameplay\Actor</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Gameplay\Actor</Filter>
     </ClInclude>
     <ClInclude Include="Projectile.hpp">
-      <Filter>Gameplay</Filter>
+      <Filter>Gameplay\Actor</Filter>
+    </ClInclude>
+    <ClInclude Include="Weapon.hpp">
+      <Filter>Gameplay\Actor</Filter>
+    </ClInclude>
+    <ClInclude Include="AIController.hpp">
+      <Filter>Gameplay\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="SpriteAnimationGroupDefinition.hpp">
+      <Filter>Definitions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -111,6 +168,9 @@
       <Filter>XML</Filter>
     </Xml>
     <Xml Include="..\..\Run\Data\Definitions\WeaponDefinitions.xml">
+      <Filter>XML</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\GameConfig.xml">
       <Filter>XML</Filter>
     </Xml>
   </ItemGroup>

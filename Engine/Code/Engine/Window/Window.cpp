@@ -212,7 +212,7 @@ bool Window::IsCursorVisible()
 	{
 		return (cursorInfo.flags & CURSOR_SHOWING) != 0;
 	}
-	return true;
+	ERROR_AND_DIE("Can not get the cursor info!");
 }
 
 void Window::SetCursorVisible(bool aimState)

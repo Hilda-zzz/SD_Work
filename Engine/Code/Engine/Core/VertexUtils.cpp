@@ -1,4 +1,4 @@
-#include "Engine/Core/VertexUtils.hpp"
+﻿#include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Vertex_PCU.hpp"
@@ -238,6 +238,60 @@ void AddVertsForQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<un
 	indexes.push_back(startIndex + 3);
 }
 
+void AddVertsForQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft, const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 edge1 = bottomRight - bottomLeft;
+	Vec3 edge2 = topLeft - bottomLeft;
+	Vec3 normal = CrossProduct3D(edge1, edge2).GetNormalized();
+	Vec3 tangent = edge1.GetNormalized();
+	Vec3 bitangent = CrossProduct3D(normal, tangent);
+
+	verts.push_back(Vertex_PCUTBN(bottomLeft, color, UVs.m_mins, tangent, bitangent, normal));
+	verts.push_back(Vertex_PCUTBN(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, normal));
+	verts.push_back(Vertex_PCUTBN(topRight, color, UVs.m_maxs, tangent, bitangent, normal));
+
+	verts.push_back(Vertex_PCUTBN(bottomLeft, color, UVs.m_mins, tangent, bitangent, normal));
+	verts.push_back(Vertex_PCUTBN(topRight, color, UVs.m_maxs, tangent, bitangent, normal));
+	verts.push_back(Vertex_PCUTBN(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, normal));
+}
+
+void AddVertsForRoundedQuad3D(std::vector<Vertex_PCUTBN>& vertexes, const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft, const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 edge1 = bottomRight - bottomLeft;
+	Vec3 edge2 = topLeft - bottomLeft;
+	Vec3 normal = CrossProduct3D(edge1, edge2).GetNormalized();
+	Vec3 tangent = edge1.GetNormalized();
+	Vec3 bitangent = CrossProduct3D(normal, tangent);
+	
+	Vec3 bottomMiddle = (bottomLeft + bottomRight) * 0.5f;
+	Vec3 topMiddle = (topLeft + topRight) * 0.5f;
+
+	Vec2 bottomUV = Vec2(UVs.m_mins.x + (UVs.m_maxs.x - UVs.m_mins.x) * 0.5f, UVs.m_mins.y);
+	Vec2 topUV = Vec2(UVs.m_mins.x + (UVs.m_maxs.x - UVs.m_mins.x) * 0.5f, UVs.m_maxs.y);
+	Vec2 leftUV = Vec2(UVs.m_mins.x, UVs.m_mins.y + (UVs.m_maxs.y - UVs.m_mins.y) * 0.5f);
+	Vec2 rightUV = Vec2(UVs.m_maxs.x, UVs.m_mins.y + (UVs.m_maxs.y - UVs.m_mins.y) * 0.5f);
+
+	Vec3 leftNormal = -tangent; 
+	Vec3 rightNormal = tangent; 
+
+	vertexes.push_back(Vertex_PCUTBN(bottomLeft, color, UVs.m_mins, tangent, bitangent, leftNormal));
+	vertexes.push_back(Vertex_PCUTBN(bottomMiddle, color, bottomUV, tangent, bitangent, normal));
+	vertexes.push_back(Vertex_PCUTBN(topMiddle, color, topUV, tangent, bitangent, normal));
+
+	vertexes.push_back(Vertex_PCUTBN(bottomLeft, color, UVs.m_mins, tangent, bitangent, leftNormal));
+	vertexes.push_back(Vertex_PCUTBN(topMiddle, color, topUV, tangent, bitangent, normal));
+	vertexes.push_back(Vertex_PCUTBN(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, leftNormal));
+
+	vertexes.push_back(Vertex_PCUTBN(bottomMiddle, color, bottomUV, tangent, bitangent, normal));
+	vertexes.push_back(Vertex_PCUTBN(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, rightNormal));
+	vertexes.push_back(Vertex_PCUTBN(topMiddle, color, topUV, tangent, bitangent, normal));
+
+	vertexes.push_back(Vertex_PCUTBN(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, rightNormal));
+	vertexes.push_back(Vertex_PCUTBN(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y), tangent, bitangent, rightNormal));
+	vertexes.push_back(Vertex_PCUTBN(topMiddle, color, topUV, tangent, bitangent, normal));
+}
+
+
 void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, const AABB3& bounds, const Rgba8& color, const AABB2& UVs)
 {
 	Vec3 mins = bounds.m_mins;
@@ -431,6 +485,7 @@ void AddVertsForCylinder3D(std::vector<Vertex_PCU>& verts, const Vec3& start, co
 
 void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius, const Rgba8 color, const AABB2& UVs, int numSlices)
 {
+	size_t originalSize = verts.size();
 	float height = (end - start).GetLength();
 
 	Vec3 localStart(0.0f, 0.0f, 0.f);
@@ -474,9 +529,13 @@ void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const 
 	}
 
 	Mat44 rotateMat = Mat44::MakeYRotationDegrees(90.f);
-	TransformVertexArray3D(verts, rotateMat);
 	Mat44 lookAtMatrix = GetLookAtMatrix(start, end);
-	TransformVertexArray3D(verts, lookAtMatrix);
+	lookAtMatrix.Append(rotateMat);
+
+	for (size_t i = originalSize; i < verts.size(); i++)
+	{
+		verts[i].m_position = lookAtMatrix.TransformPosition3D(verts[i].m_position);
+	}
 }
 
 void AddVertsForAABB3DWireFrame(std::vector<Vertex_PCU>& verts, const AABB3& bounds, const Rgba8& color, const AABB2& UVs)
@@ -631,4 +690,58 @@ AABB2 GetVertexBounds2D(const std::vector<Vertex_PCU>& verts)
 		if (pos.y > maxY) maxY = pos.y;
 	}
 	return AABB2(Vec2(minX, minY), Vec2(maxX, maxY));
+}
+
+void AddVertsForCubeSkyBox(std::vector<Vertex_PCU>& verts, const Vec3& center, float size, const Rgba8& color)
+{
+	float halfSize = size * 0.5f;
+	Vec3 mins = center - Vec3(halfSize, halfSize, halfSize);
+	Vec3 maxs = center + Vec3(halfSize, halfSize, halfSize);
+
+	// +X  ft
+	AddVertsForQuad3D(verts,
+		Vec3(maxs.x, mins.y, mins.z),
+		Vec3(maxs.x, mins.y, maxs.z),
+		Vec3(maxs.x, maxs.y, maxs.z),
+		Vec3(maxs.x, maxs.y, mins.z),
+		color, AABB2(Vec2(0, 0), Vec2(1, 1)));
+
+	// -X bk
+	AddVertsForQuad3D(verts,
+		Vec3(mins.x, mins.y, mins.z),  
+		Vec3(mins.x, maxs.y, mins.z),
+		Vec3(mins.x, maxs.y, maxs.z),
+		Vec3(mins.x, mins.y, maxs.z),
+		color, AABB2(Vec2(0, 0), Vec2(1, 1)));
+
+	// +Y
+	AddVertsForQuad3D(verts,
+		Vec3(mins.x, maxs.y, mins.z),  
+		Vec3(maxs.x, maxs.y, mins.z),  
+		Vec3(maxs.x, maxs.y, maxs.z),  
+		Vec3(mins.x, maxs.y, maxs.z),  
+		color, AABB2(Vec2(0, 0), Vec2(1, 1)));
+
+	// -Y
+	AddVertsForQuad3D(verts,
+		Vec3(maxs.x, mins.y, mins.z), 
+		Vec3(mins.x, mins.y, mins.z), 
+		Vec3(mins.x, mins.y, maxs.z), 
+		Vec3(maxs.x, mins.y, maxs.z), 
+		color, AABB2(Vec2(0, 0), Vec2(1, 1)));
+
+	// +Z
+	AddVertsForQuad3D(verts,
+		Vec3(maxs.x, maxs.y, maxs.z),
+		Vec3(maxs.x, mins.y, maxs.z),
+		Vec3(mins.x, mins.y, maxs.z),
+		Vec3(mins.x, maxs.y, maxs.z),
+		color, AABB2(Vec2(0, 0), Vec2(1, 1)));
+
+	AddVertsForQuad3D(verts,
+		Vec3(maxs.x, mins.y, mins.z),
+		Vec3(maxs.x, maxs.y, mins.z),
+		Vec3(mins.x, maxs.y, mins.z),
+		Vec3(mins.x, mins.y, mins.z),
+		color, AABB2(Vec2(0, 0), Vec2(1, 1)));
 }

@@ -14,6 +14,9 @@
     <Filter Include="3DTestShapes">
       <UniqueIdentifier>{a6dc6224-e932-4629-83aa-fb393c059467}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pachinko">
+      <UniqueIdentifier>{d78f4749-a4a2-4c79-a0fa-3bbee642859f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -72,6 +75,18 @@
     </ClCompile>
     <ClCompile Include="ZCylinder.cpp">
       <Filter>3DTestShapes</Filter>
+    </ClCompile>
+    <ClCompile Include="GameCurve.cpp">
+      <Filter>GameMode</Filter>
+    </ClCompile>
+    <ClCompile Include="GamePachinko2D.cpp">
+      <Filter>GameMode</Filter>
+    </ClCompile>
+    <ClCompile Include="Bumper2D.cpp">
+      <Filter>Pachinko</Filter>
+    </ClCompile>
+    <ClCompile Include="Ball.cpp">
+      <Filter>Pachinko</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -132,5 +147,22 @@
     <ClInclude Include="ZCylinder.hpp">
       <Filter>3DTestShapes</Filter>
     </ClInclude>
+    <ClInclude Include="GameCurve.hpp">
+      <Filter>GameMode</Filter>
+    </ClInclude>
+    <ClInclude Include="GamePachinko2D.hpp">
+      <Filter>GameMode</Filter>
+    </ClInclude>
+    <ClInclude Include="Bumper2D.hpp">
+      <Filter>Pachinko</Filter>
+    </ClInclude>
+    <ClInclude Include="Ball.hpp">
+      <Filter>Pachinko</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\..\Run\Data\GameConfig.xml">
+      <Filter>Pachinko</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

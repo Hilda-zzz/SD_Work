@@ -2,6 +2,7 @@
 #include <string>
 #include "GameCommon.hpp"
 #include "Engine/Core/Image.hpp"
+#include "SpawnInfo.hpp"
 class Shader;
 class Texture;
 
@@ -22,4 +23,6 @@ public:
 	Shader* m_shader=nullptr;
 	Texture* m_spriteSheetTexture= nullptr;
 	IntVec2 m_spriteSheetCellCount=IntVec2::ZERO;
+
+	std::vector<SpawnInfo> m_spawnInfos;
 };

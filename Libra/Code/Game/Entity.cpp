@@ -236,7 +236,10 @@ void Entity::ImprovedPathFindingToPlayer(bool isTargetVisible, Entity* player, i
 		m_map->GenerateEntityPathToGoal(*m_heatMapToPlayer, m_pathPoints, curCoords, IntVec2(randomAimPointX, randomAimPointY));
 	}
 
-	nextWayPointPosition = m_pathPoints.back();
+	if (!m_pathPoints.empty())
+	{
+		nextWayPointPosition = m_pathPoints.back();
+	}
 }
 
 bool Entity::IsPassToNextPos()
@@ -331,6 +334,7 @@ bool Entity::CheckOverlapVsRubble()
 
 void Entity::DrawDebugMode() const
 {
+	g_theRenderer->SetModelConstants();
 	DebugDrawRing(0.02f, m_cosmeticRadius, Rgba8::MAGNETA, m_position);
 	DebugDrawRing(0.02f, m_physicsRadius, Rgba8::CYAN, m_position);
 

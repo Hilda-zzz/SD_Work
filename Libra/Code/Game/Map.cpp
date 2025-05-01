@@ -13,6 +13,8 @@
 #include "Explosion.hpp"
 #include "Game/Rubble.hpp"
 #include "Game/Tree.hpp"
+#include "Game/GameCommon.hpp"
+#include "Engine/Window/Window.hpp"
 
 float  g_lastFindOutSoundTime;
 Map::Map(MapDefinition const& mapDef) :m_dimensions(mapDef.m_dimensions), m_startCoords(mapDef.m_startCoords), m_exitCoords(mapDef.m_exitCoords),m_mapDef(mapDef)
@@ -344,6 +346,7 @@ void Map::Render() const
 {
 	Texture* tileTexture_8x8 = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Terrain_8x8.png");
 	g_theRenderer->BindTexture(tileTexture_8x8);
+	g_theRenderer->SetModelConstants();
 	g_theRenderer->DrawVertexArray(m_tilemapVerts);
 
 	if (g_theGame->m_isHeatMapCount>0)
@@ -360,6 +363,7 @@ void Map::Render() const
 		{
 			if (list[j] != nullptr)
 			{
+				g_theRenderer->SetModelConstants();
 				list[j]->Render();
 			}
 		}
@@ -1099,7 +1103,9 @@ void Map::CameraFollowPlayer()
 
 	Vec2 blTrans = Vec2(-m_viewLen.x * 0.5f, -m_viewLen.y * 0.5f) + m_followedAim;
 	Vec2 trTrans = Vec2(m_viewLen.x * 0.5f, m_viewLen.y * 0.5f) + m_followedAim;
-	g_theGame->m_worldCamera.SetOrthoView(blTrans, trTrans);
+	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
+	g_theGame->m_worldCamera.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
+	g_theGame->m_worldCamera.SetOrthographicView(blTrans, trTrans);
 }
 
 TileDefinition const& Map::MatchTileDef(std::string const& tileName)

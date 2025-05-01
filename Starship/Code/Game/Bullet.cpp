@@ -14,12 +14,12 @@ Bullet::Bullet(Game* game, float x, float y) : Entity(game, x, y)
 	m_orientationDegrees = 0;
 	//m_velocity = Vec2{ 0.f,0.f };
 
-	vertices[0] = Vertex_PCU(Vec3(-2, 0, 0.f), Rgba8(255, 0, 0,0), Vec2(0.f, 0.f));
-	vertices[1] = Vertex_PCU(Vec3(0, -0.5, 0.f), Rgba8(255, 0, 0,255), Vec2(0.f, 0.f));
-	vertices[2] = Vertex_PCU(Vec3(0, 0.5, 0.f), Rgba8(255, 0, 0, 255), Vec2(0.f, 0.f));
-	vertices[3] = Vertex_PCU(Vec3(0, -0.5, 0.f), Rgba8(255, 0, 0, 255), Vec2(0.f, 0.f));
-	vertices[4] = Vertex_PCU(Vec3(0, 0.5, 0.f), Rgba8(255, 0, 0, 255), Vec2(0.f, 0.f));
-	vertices[5] = Vertex_PCU(Vec3(0.5, 0, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f));
+	vertices[0] = Vertex_PCU(Vec3(-2.f, 0.f, 0.f), Rgba8(255, 0, 0,0), Vec2(0.f, 0.f));
+	vertices[1] = Vertex_PCU(Vec3(0.f, -0.5f, 0.f), Rgba8(255, 0, 0,255), Vec2(0.f, 0.f));
+	vertices[2] = Vertex_PCU(Vec3(0.f, 0.5f, 0.f), Rgba8(255, 0, 0, 255), Vec2(0.f, 0.f));
+	vertices[3] = Vertex_PCU(Vec3(0.f, -0.5f, 0.f), Rgba8(255, 0, 0, 255), Vec2(0.f, 0.f));
+	vertices[4] = Vertex_PCU(Vec3(0.5f, 0.f, 0.f), Rgba8(255, 255, 0, 255), Vec2(0.f, 0.f)); 
+	vertices[5] = Vertex_PCU(Vec3(0.f, 0.5f, 0.f), Rgba8(255, 0, 0, 255), Vec2(0.f, 0.f));
 }
 
 void Bullet::Update(float deltaTime)
@@ -42,7 +42,8 @@ void Bullet::Render() const
 	}
 
 	TransformVertexArrayXY3D(NUM_BULLET_VERTS, temp_vertices, 1.f, m_orientationDegrees, m_position);
-
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(NUM_BULLET_VERTS, temp_vertices); //NUM_SHIP_VERTS
 }
 

@@ -10,7 +10,7 @@ class SpriteSheet
 {
 public:
 	explicit SpriteSheet(Texture& texture, IntVec2 const& simpleGridLayout);
-
+	~SpriteSheet(){}
 	Texture& GetTexture() const;
 	int GetNumSprites() const;
 	SpriteDefinition const& GetSpriteDef(int spriteIndex) const;

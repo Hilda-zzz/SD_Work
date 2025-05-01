@@ -1,6 +1,8 @@
 #include "Game/GameCommon.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Math/Mat44.hpp"
+#include "Engine/Core/Rgba8.hpp"
 
 void DebugDrawLine(Vec2 const& start, Vec2 const& end, float width,Rgba8 color)
 {
@@ -21,8 +23,10 @@ void DebugDrawLine(Vec2 const& start, Vec2 const& end, float width,Rgba8 color)
 	vertices[2] = Vertex_PCU(Vec3(EL.x, EL.y, 0.f), color, Vec2(0.f, 0.f));
 
 	vertices[3] = Vertex_PCU(Vec3(EL.x, EL.y, 0.f), color, Vec2(0.f, 0.f));
-	vertices[4] = Vertex_PCU(Vec3(ER.x, ER.y, 0.f), color, Vec2(0.f, 0.f));
-	vertices[5] = Vertex_PCU(Vec3(SR.x, SR.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[4] = Vertex_PCU(Vec3(SR.x, SR.y, 0.f), color, Vec2(0.f, 0.f)); 
+	vertices[5] = Vertex_PCU(Vec3(ER.x, ER.y, 0.f), color, Vec2(0.f, 0.f));
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 	g_theRenderer->DrawVertexArray(6, vertices);
 }
 
@@ -42,12 +46,14 @@ void DebugDrawRing(float thickness,float innerRadius,Rgba8 color,Vec2 ori)
 		vertices[i + 2] = Vertex_PCU(Vec3(InnerSecond.x, InnerSecond.y, 0.f), color, Vec2(0.f, 0.f));
 
 		vertices[i + 3] = Vertex_PCU(Vec3(InnerSecond.x, InnerSecond.y, 0.f), color, Vec2(0.f, 0.f));
-		vertices[i + 4] = Vertex_PCU(Vec3(OuterSecond.x, OuterSecond.y, 0.f), color, Vec2(0.f, 0.f));
-		vertices[i + 5] = Vertex_PCU(Vec3(OuterFirst.x, OuterFirst.y, 0.f), color, Vec2(0.f, 0.f));
+		vertices[i + 4] = Vertex_PCU(Vec3(OuterFirst.x, OuterFirst.y, 0.f), color, Vec2(0.f, 0.f)); 
+		vertices[i + 5] = Vertex_PCU(Vec3(OuterSecond.x, OuterSecond.y, 0.f), color, Vec2(0.f, 0.f));
 
 		i += 6;
 		j += 1;
 	}
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 	g_theRenderer->DrawVertexArray(96, vertices);
 }
 
@@ -65,6 +71,8 @@ void DebugDrawCircle(float radius, Vec2 ori,Rgba8 color)
 		i += 3;
 		j += 1;
 	}
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 	g_theRenderer->DrawVertexArray(48, vertices);
 }
 
@@ -82,6 +90,8 @@ void DebugDrawHighCircle(float radius, Vec2 ori, Rgba8 color)
 		i += 3;
 		j += 1;
 	}
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 	g_theRenderer->DrawVertexArray(96, vertices);
 }
 
@@ -97,12 +107,14 @@ void DebugDrawBox(Vec2 botLeft, Vec2 topRight, Rgba8 color)
 {
 	Vertex_PCU vertices[6];
 	vertices[0] = Vertex_PCU(Vec3(botLeft.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
-	vertices[1] = Vertex_PCU(Vec3(botLeft.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
-	vertices[2] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
+	vertices[1] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f)); 
+	vertices[2] = Vertex_PCU(Vec3(botLeft.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
 
 	vertices[3] = Vertex_PCU(Vec3(botLeft.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
 	vertices[4] = Vertex_PCU(Vec3(topRight.x, botLeft.y, 0.f), color, Vec2(0.f, 0.f));
 	vertices[5] = Vertex_PCU(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(0.f, 0.f));
 
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 	g_theRenderer->DrawVertexArray(6, vertices);
 }

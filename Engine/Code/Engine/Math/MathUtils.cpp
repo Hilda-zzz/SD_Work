@@ -10,9 +10,11 @@
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Math/FloatRange.hpp"
 #include <Engine/Core/EngineCommon.hpp>
+#include "RandomNumberGenerator.hpp"
 
 #define PI 3.1415926535897f
 
+RandomNumberGenerator g_rng = RandomNumberGenerator();
 //Angle
 float ConvertDegreesToRadians(float degrees)
 {
@@ -253,7 +255,7 @@ bool IsPointInsideCapsule2D(Vec2 const& point, Capsule2 const& capsule)
 {
 	Vec2 n = GetNearestPointOnLineSegment2D(point, capsule.m_bone);
 	Vec2 pn = n - point;
-	return pn.GetLengthSquared() < capsule.radius * capsule.radius;
+	return pn.GetLengthSquared() < capsule.m_radius * capsule.m_radius;
 }
 
 bool IsPointInsideCapsule2D(Vec2 const& point, Vec2 const& boneStart, Vec2 const& boneEnd, float radius)
@@ -441,20 +443,20 @@ Vec2 const GetNearestPointOnCapsule2D(Vec2 const& referencePosition, Capsule2 co
 		Vec2 ep = referencePosition - capsule.m_bone.m_end;
 		if (DotProduct2D(se, sp) <= 0.f)
 		{
-			sp.SetLength(capsule.radius);
+			sp.SetLength(capsule.m_radius);
 			return capsule.m_bone.m_start + sp;
 		}
 		else if (DotProduct2D(se, ep) >= 0.f)
 		{
-			se.SetLength(capsule.radius);
-			return capsule.m_bone.m_end + se;
+			ep.SetLength(capsule.m_radius);
+			return capsule.m_bone.m_end + ep;
 		}
 		else
 		{
 			Vec2 sn = GetProjectedOnto2D(sp, se);
 			Vec2 n = capsule.m_bone.m_start + sn;
 			Vec2 np = referencePosition - n;
-			np.SetLength(capsule.radius);
+			np.SetLength(capsule.m_radius);
 			return n + np;
 		}
 	}
@@ -570,17 +572,24 @@ Vec3 const GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& b
 bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint)
 {
 	Vec2 cp = fixedPoint - mobileDiscCenter;
-	if (cp.GetLengthSquared() >= discRadius * discRadius)
+	float distanceSquared = discRadius * discRadius;
+	if (cp.GetLengthSquared() >= distanceSquared)
 	{
 		return false;
 	}
-	else
+
+	if (cp.GetLengthSquared() < 0.0000001f)
 	{
-		Vec2 newCp = cp;
-		newCp.SetLength(discRadius);
-		mobileDiscCenter = mobileDiscCenter - (newCp - cp);
+		// disc center is overlap with the nearest point
+		// push the disc in +x (as default)
+		mobileDiscCenter.x += discRadius;
 		return true;
 	}
+
+	Vec2 newCp = cp;
+	newCp.SetLength(discRadius);
+	mobileDiscCenter = mobileDiscCenter - (newCp - cp);
+	return true;
 }
 
 bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius)
@@ -592,6 +601,14 @@ bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 co
 	}
 	else
 	{
+
+		if (cp.GetLengthSquared() < 0.0000001f)
+		{
+			// disc center is overlap with the nearest point
+			// push the disc in +x (as default)
+			mobileDiscCenter.x += mobileDiscRadius;
+			return true;
+		}
 		cp.SetLength(mobileDiscRadius + fixedDiscRadius);
 		mobileDiscCenter =fixedDiscCenter+cp;
 		return true;
@@ -601,18 +618,32 @@ bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 co
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius)
 {
 	Vec2 ab = bCenter - aCenter;
-	if (ab.GetLengthSquared() >= (aRadius + bRadius) * (aRadius + bRadius))
+	float centerDistSq = GetDistanceSquared2D(aCenter, bCenter);
+	float totalRadius = aRadius + bRadius;
+	if (centerDistSq >= totalRadius *totalRadius)
 	{
 		return false;
 	}
-	else
+
+	if (centerDistSq < 0.0001f)
 	{
-		float overlap = aRadius + bRadius - ab.GetLength();
-		ab.SetLength(overlap * 0.5f);
-		aCenter += -ab;
-		bCenter += ab;
+		// disc center is overlap with the nearest point
+		// push the disc in +x (as default)
+// 		float dirX = g_rng.RollRandomFloatZeroToOne();
+// 		float dirY = g_rng.RollRandomFloatZeroToOne();
+// 		Vec2 dir = Vec2(dirX, dirY);
+// 		dir.SetLength((aRadius + bRadius) * 0.5f);
+// 		aCenter += dir;
+// 		bCenter-= dir;
 		return true;
 	}
+	float overlap = totalRadius - std::sqrt(centerDistSq);
+	ab.SetLength(overlap * 0.5f);
+	aCenter += -ab;
+	bCenter += ab;
+	return true;
+
+
 }
 
 bool PushDiscOutOfAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& fixedBox)
@@ -899,7 +930,8 @@ Mat44 GetBillboardMatrix(BillboardType billboardType, Mat44 const& targetMatrix,
 	UNUSED(billboardScale);
 	if (billboardType == BillboardType::WORLD_UP_FACING)
 	{
-		return GetLookAtMatrix(billboardPosition,targetPos);
+		Vec3 curTarget = Vec3(targetPos.x, targetPos.y, billboardPosition.z);
+		return GetLookAtMatrix(billboardPosition, curTarget);
 	}
 	else if (billboardType == BillboardType::WORLD_UP_OPPOSING)
 	{
@@ -913,8 +945,7 @@ Mat44 GetBillboardMatrix(BillboardType billboardType, Mat44 const& targetMatrix,
 	}
 	else if (billboardType == BillboardType::FULL_FACING)
 	{
-		Vec3 curTarget = Vec3(targetPos.x, targetPos.y, billboardPosition.z);
-		return GetLookAtMatrix(billboardPosition, curTarget);
+		return GetLookAtMatrix(billboardPosition, targetPos);
 	}
 	else if (billboardType == BillboardType::FULL_OPPOSING)
 	{
@@ -928,3 +959,111 @@ Mat44 GetBillboardMatrix(BillboardType billboardType, Mat44 const& targetMatrix,
 	}
 	return Mat44();
 }
+
+float ComputeCubicBezier1D(float A, float B, float C, float D, float t)
+{
+	float AB = A * (1.0f - t) + B * t;
+	float BC = B * (1.0f - t) + C * t;
+	float CD = C * (1.0f - t) + D * t;
+
+	float ABC = AB * (1.0f - t) + BC * t;
+	float BCD = BC * (1.0f - t) + CD * t;
+
+	float ABCD = ABC * (1.0f - t) + BCD * t;
+
+	return ABCD;
+}
+
+float ComputeQuinticBezier1D(float A, float B, float C, float D, float E, float F, float t)
+{
+	float points[6] = { A, B, C, D, E, F };
+	int n = 6;
+
+	for (int r = 1; r < n; ++r) 
+	{
+		for (int i = 0; i < n - r; ++i) 
+		{
+			points[i] = (1.0f - t) * points[i] + t * points[i + 1];
+		}
+	}
+
+	return points[0];
+}
+
+void BounceDiscOffPoint(Vec2 const& point, Vec2 const& discCenter, Vec2& discVelocity, float discRadius, float elasity)
+{
+	UNUSED(discRadius);
+	Vec2 normal = (discCenter - point).GetNormalized();
+	float vnLen = DotProduct2D(discVelocity, -normal);
+	Vec2 vn = vnLen * (-normal);
+	Vec2 vt = discVelocity - vn;
+	Vec2 newV = vt + (-vn * elasity);
+	discVelocity = newV;
+}
+
+void BounceDiscOffStaticDisc2D(Vec2 const& bumperCenter, float bumperRadius, Vec2& discCenter, Vec2& discVelocity, float discRadius, 
+	float elastcityBumper, float elastcityBall)
+{
+	if (PushDiscOutOfDisc2D(discCenter, discRadius, bumperCenter, bumperRadius))
+	{
+		Vec2 refPoint=GetNearestPointOnDisc2D(discCenter, bumperCenter, bumperRadius);
+		BounceDiscOffPoint(refPoint, discCenter, discVelocity, discRadius, elastcityBall*elastcityBumper);
+	}
+}
+
+void BounceDiscOffCapsule2D(Capsule2 const& bumper, Vec2& discCenter, float discRadius, Vec2& discVelocity, 
+	float elastcityBumper, float elastcityBall)
+{
+	if (DoDiscsOverlap(bumper.m_bone.m_center, bumper.m_boundRadius, discCenter, discRadius))
+	{
+		Vec2 nearPoint = GetNearestPointOnCapsule2D(discCenter, bumper);
+		if (PushDiscOutOfPoint2D(discCenter, discRadius, nearPoint))
+		{
+			BounceDiscOffPoint(nearPoint, discCenter, discVelocity, discRadius, elastcityBall * elastcityBumper);
+		}
+	}
+}
+
+void BounceDiscOffOBB2D(OBB2 const& bumper, Vec2& discCenter, float discRadius, Vec2& discVelocity, 
+	float elastcityBumper, float elastcityBall)
+{
+	if (DoDiscsOverlap(bumper.m_center, bumper.m_boundRadius, discCenter, discRadius))
+	{
+		Vec2 nearPoint = GetNearestPointOnOBB2D(discCenter, bumper);
+		if (PushDiscOutOfPoint2D(discCenter, discRadius, nearPoint))
+		{
+			BounceDiscOffPoint(nearPoint, discCenter, discVelocity, discRadius, elastcityBall * elastcityBumper);
+		}
+	}
+}
+
+void BounceDiscOffEachOther(Vec2& aCenter, float aRadius, Vec2& aVelocity, float aElasticity,
+	Vec2& bCenter, float bRadius, Vec2& bVelocity,float bElasticity)
+{
+	if (PushDiscsOutOfEachOther2D(aCenter, aRadius, bCenter, bRadius))
+	{
+		float totalEla = aElasticity * bElasticity;
+
+		// can not use get normalized?
+		Vec2 normal = (bCenter - aCenter).GetNormalized();
+		//Vec2 normal = bCenter - aCenter;
+		float aVnLen = DotProduct2D(aVelocity, normal);
+		float bVnLen = DotProduct2D(bVelocity, normal);
+
+		if (aVnLen - bVnLen <=0.f)
+		{
+			return;
+		}
+
+		float newAVnLen = bVnLen * totalEla;
+		float newBVnLen = aVnLen * totalEla;
+
+		Vec2 aVt = aVelocity - (aVnLen * normal);
+		Vec2 bVt = bVelocity - (bVnLen * normal);
+
+		aVelocity = (newAVnLen * normal) + aVt;
+		bVelocity = (newBVnLen * normal) + bVt;
+	}
+}
+
+

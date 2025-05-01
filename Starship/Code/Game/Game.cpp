@@ -13,6 +13,8 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "GameCommon.hpp"
+#include "Engine/Window/Window.hpp"
 //extern App*			g_theApp;
 //extern InputSystem* g_theInput;
 //extern Renderer*	g_theRenderer;
@@ -69,11 +71,14 @@ Game::Game()
 	m_enemyNumInEachWaves[3] = EnemyNumInWave{ 20,4,5,5,3 };
 	m_enemyNumInEachWaves[4] = EnemyNumInWave{ 20,4,6,6,3 };
 
+	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
 	m_worldCamera = new Camera();
+	m_worldCamera->SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
 	m_worldCamera->SetOrthographicView(Vec2{ 0.f,0.f }, Vec2{ 200.f,100.f });
 	m_oriWorldScreenBL = m_worldCamera->GetOrthoBottomLeft();
 	m_oriWorldScreenTR = m_worldCamera->GetOrthoTopRight();
 	m_screenCamera = new Camera();
+	m_screenCamera->SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
 	m_screenCamera->SetOrthographicView(Vec2{ 0.f,0.f }, Vec2{ 1600.f,800.f });
 
 	bgm= g_theAudio->StartSound(attrackmodeBGM,true);
@@ -103,6 +108,8 @@ Game::Game()
 		4		enter wave 4\n\
 		5		enter wave 5";
 	g_theDevConsole->AddLine(DevConsole::EVENT_FEEDBACK, logString);
+
+	m_font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 }
 
 Game::~Game()
@@ -350,8 +357,8 @@ void Game::Renderer() const
 {
 	if (!m_isArractMode)
 	{
-		g_theRenderer->BindTexture(nullptr);
 		g_theRenderer->BeginCamera(*m_worldCamera);
+		g_theRenderer->BindTexture(nullptr);
 		RenderBkg();
 		RenderBullet();
 		m_playerShip->Render();
@@ -645,6 +652,8 @@ void Game::RenderUI() const
 		Vertex_PCU playerShipIcon[NUM_SHIP_VERTS];
 		PlayerShip::InitializedVerts(&playerShipIcon[0], Rgba8(26, 148, 154, 255));
 		TransformVertexArrayXY3D(NUM_SHIP_VERTS, playerShipIcon, 7.5f, 90.f, oriIconPos + Vec2{ i * 40.f,0.f }); //
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 		g_theRenderer->DrawVertexArray(NUM_SHIP_VERTS, playerShipIcon); //NUM_SHIP_VERTS
 	}
 	//small map
@@ -725,6 +734,8 @@ void Game::RenderUI() const
 			Vertex_PCU firstWeaponIcon[NUM_CANONL1_VERTS];
 			Canon::InitializedVertsL1(&firstWeaponIcon[0]);
 			TransformVertexArrayXY3D(NUM_CANONL1_VERTS, firstWeaponIcon, 8.f, 45.f, Vec2(158.f, 83.f)); //
+			g_theRenderer->BindTexture(nullptr);
+			g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 			g_theRenderer->DrawVertexArray(NUM_CANONL1_VERTS, firstWeaponIcon);
 		}
 		else if (m_playerShip->m_Canon->m_level == 2)
@@ -732,6 +743,8 @@ void Game::RenderUI() const
 			Vertex_PCU firstWeaponIcon[NUM_CANONL2_VERTS];
 			Canon::InitializedVertsL2(&firstWeaponIcon[0]);
 			TransformVertexArrayXY3D(NUM_CANONL2_VERTS, firstWeaponIcon, 8.f, 45.f, Vec2(155.f, 80.f)); //
+			g_theRenderer->BindTexture(nullptr);
+			g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 			g_theRenderer->DrawVertexArray(NUM_CANONL2_VERTS, firstWeaponIcon);
 		}
 		else if (m_playerShip->m_Canon->m_level == 3)
@@ -739,6 +752,8 @@ void Game::RenderUI() const
 			Vertex_PCU firstWeaponIcon[NUM_CANONL3_VERTS];
 			Canon::InitializedVertsL3(&firstWeaponIcon[0]);
 			TransformVertexArrayXY3D(NUM_CANONL3_VERTS, firstWeaponIcon, 8.f, 45.f, Vec2(155.f, 80.f)); //
+			g_theRenderer->BindTexture(nullptr);
+			g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 			g_theRenderer->DrawVertexArray(NUM_CANONL3_VERTS, firstWeaponIcon);
 		}
 		
@@ -750,6 +765,8 @@ void Game::RenderUI() const
 			Vertex_PCU firstWeaponIcon[NUM_LASER_CANON_VERTS];
 			LaserExplosionCanon::InitializedVertsL1(&firstWeaponIcon[0]);
 			TransformVertexArrayXY3D(NUM_LASER_CANON_VERTS-6, &firstWeaponIcon[6], 8.f, 45.f, Vec2(158.f, 83.f)); //
+			g_theRenderer->BindTexture(nullptr);
+			g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 			g_theRenderer->DrawVertexArray(NUM_LASER_CANON_VERTS-6, &firstWeaponIcon[6]);
 		}
 	}
@@ -766,15 +783,15 @@ void Game::RenderUI() const
 
 	DebugDrawBoxLine(Vec2(125.f, 50.f), Vec2(185.f, 110.f), 2.f, Rgba8(80, 80, 125, 255));
 	std::vector<Vertex_PCU> textVerts;
-	g_testFont->AddVertsForText2D(textVerts, Vec2(115.f, 113.f), 12.f, "C/B Switch Light Saber Bullet Time", Rgba8(150, 150, 100, 255), 0.618f);
-	g_testFont->AddVertsForText2D(textVerts, Vec2(105.f, 30.f), 12.f, "   Space/A      J/Y       RT+X", Rgba8(180, 120, 100, 255), 0.618f);
+	m_font->AddVertsForText2D(textVerts, Vec2(115.f, 113.f), 12.f, "C/B Switch Light Saber Bullet Time", Rgba8(150, 150, 100, 255), 0.618f);
+	m_font->AddVertsForText2D(textVerts, Vec2(105.f, 30.f), 12.f, "   Space/A      J/Y       RT+X", Rgba8(180, 120, 100, 255), 0.618f);
 	if (m_waveState + 1 <= 5)
 	{
-		g_testFont->AddVertsForText2D(textVerts, Vec2(700.f, 700.f), 30.f, "MISSION  " + std::to_string(m_waveState + 1), Rgba8::HILDA, 0.618f);
+		m_font->AddVertsForText2D(textVerts, Vec2(700.f, 700.f), 30.f, "MISSION  " + std::to_string(m_waveState + 1), Rgba8::HILDA, 0.618f);
 	}
 	else
-		g_testFont->AddVertsForText2D(textVerts, Vec2(700.f, 700.f), 30.f, " SUCCESS", Rgba8(0,150,200,255), 0.618f);
-	g_theRenderer->BindTexture(&g_testFont->GetTexture());
+		m_font->AddVertsForText2D(textVerts, Vec2(700.f, 700.f), 30.f, " SUCCESS", Rgba8(0,150,200,255), 0.618f);
+	g_theRenderer->BindTexture(&m_font->GetTexture());
 	g_theRenderer->DrawVertexArray(textVerts);
 }
 void Game::RenderAttractMode() const
@@ -802,32 +819,36 @@ void Game::RenderAttractMode() const
 	TransformVertexArrayXY3D(NUM_SHIP_VERTS, playerShipIcon3, m_shipScale, m_shipRevolutionDeg+90.f, orbitCenter+shipOriPos);
 	if ((orbitCenter + shipOriPos).y >= orbitCenter.y)
 	{
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 		g_theRenderer->DrawVertexArray(NUM_SHIP_VERTS, playerShipIcon3);
-		//DebugDrawHighCircle(200.f, orbitCenter, Rgba8(243, 243, 197));
+
 		g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Moon.png"));
 		AABB2 texturedAABB2_menu(550.f, 150.f, 1050.f, 650.f);
 		std::vector<Vertex_PCU> moonVerts;
 		AddVertsForAABB2D(moonVerts, texturedAABB2_menu, Rgba8(255, 255, 255, 255), Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 		g_theRenderer->DrawVertexArray(moonVerts);
-		g_theRenderer->BindTexture(nullptr);
 	}
 	else
 	{
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 		g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Moon.png"));
 		AABB2 texturedAABB2_menu(550.f, 150.f, 1050.f, 650.f);
 		std::vector<Vertex_PCU> moonVerts;
 		AddVertsForAABB2D(moonVerts, texturedAABB2_menu, Rgba8(255, 255, 255, 255), Vec2(0.f, 0.f), Vec2(1.f, 1.f));
 		g_theRenderer->DrawVertexArray(moonVerts);
-		g_theRenderer->BindTexture(nullptr);
 
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 		g_theRenderer->DrawVertexArray(NUM_SHIP_VERTS, playerShipIcon3);
 	}
 	std::vector<Vertex_PCU> textVerts;
-	g_testFont->AddVertsForText2D(textVerts, Vec2(115.f, 80.f),80.f, "Starship Gold",Rgba8(150,150,100,100),0.618f);
-	g_testFont->AddVertsForText2D(textVerts, Vec2(112.f, 78.f),80.f, "Starship Gold", Rgba8::HILDA, 0.618f);
-	g_testFont->AddVertsForText2D(textVerts, Vec2(1100.f, 90.f), 30.f, "Press Space/A to Start", Rgba8(243, 243, 197), 0.618f);
+	m_font->AddVertsForText2D(textVerts, Vec2(115.f, 80.f),80.f, "Starship Gold",Rgba8(150,150,100,100),0.618f);
+	m_font->AddVertsForText2D(textVerts, Vec2(112.f, 78.f),80.f, "Starship Gold", Rgba8::HILDA, 0.618f);
+	m_font->AddVertsForText2D(textVerts, Vec2(1100.f, 90.f), 30.f, "Press Space/A to Start", Rgba8(243, 243, 197), 0.618f);
 	//g_testFont->AddVertsForText2D(textVerts, Vec2(250.f, 400.f), 15.f, "It's nice to have options!", Rgba8::RED, 0.6f);
-	g_theRenderer->BindTexture(&g_testFont->GetTexture());
+	g_theRenderer->BindTexture(&m_font->GetTexture());
 	g_theRenderer->DrawVertexArray(textVerts);
 }
 

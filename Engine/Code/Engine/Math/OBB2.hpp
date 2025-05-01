@@ -10,6 +10,7 @@ public:
 	Vec2 m_center;
 	Vec2 m_iBasisNormal;
 	Vec2 m_halfDimensions;
+	float m_boundRadius;
 public:
 	void GetCornerPoints(Vec2* out_fourCornerWorldPositions) const; // for drawing! 
 	Vec2 const GetLocalPosForWorldPos(Vec2 const& worldPos) const;

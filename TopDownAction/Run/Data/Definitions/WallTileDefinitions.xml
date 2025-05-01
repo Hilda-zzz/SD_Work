@@ -1,10 +1,11 @@
 <WallTileDefinitions>
+	<TileDefinition name="NONE" mapImagePixelColor="255,255,255,255"	     spriteCoords="-1,-1"	tint="255,255,255,255"/>
 	<TileDefinition name="w00" mapImagePixelColor="255,0,0,255"	     spriteCoords="0,0"	tint="255,255,255,255"/>
 	<TileDefinition name="w01" mapImagePixelColor="0,255,0,255"			 spriteCoords="1,0"	tint="255,255,255,255"/>
 	<TileDefinition name="w02" mapImagePixelColor="0,0,255,255"			 spriteCoords="2,0"	tint="255,255,255,255"/>
 	<TileDefinition name="w03" mapImagePixelColor="0,255,255,255"			 spriteCoords="3,0"	tint="255,255,255,255"/>
 	<TileDefinition name="w04" mapImagePixelColor="255,255,0,255"			 spriteCoords="0,1"	tint="255,255,255,255"/>
 	<TileDefinition name="w05" mapImagePixelColor="255,0,255,255"		 spriteCoords="1,1"	tint="255,255,255,255"/>
-	<TileDefinition name="w06" mapImagePixelColor="161,8,8,255"			 spriteCoords="1,2"	tint="255,255,255,255"/>
-	<TileDefinition name="w07" mapImagePixelColor="38,105,38,255"		 spriteCoords="1,3"	tint="255,255,255,255"/>
+	<TileDefinition name="w06" mapImagePixelColor="161,8,8,255"			 spriteCoords="2,1"	tint="255,255,255,255"/>
+	<TileDefinition name="w07" mapImagePixelColor="38,105,38,255"		 spriteCoords="3,1"	tint="255,255,255,255"/>
 </WallTileDefinitions>

@@ -1,8 +1,10 @@
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include <cmath>
 
 OBB2::OBB2(Vec2 center, Vec2 ibasis, Vec2 halfDimensions):m_center(center),m_iBasisNormal(ibasis),m_halfDimensions(halfDimensions)
 {
+	m_boundRadius = sqrt(m_halfDimensions.x * m_halfDimensions.x + m_halfDimensions.y * m_halfDimensions.y);
 }
 
 void OBB2::GetCornerPoints(Vec2* out_fourCornerWorldPositions) const

@@ -5,6 +5,10 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Game/Tile.hpp"
+#include "ActorHandle.hpp"
+#include "SpawnInfo.hpp"
+#include "Engine/Core/Timer.hpp"
+
 
 class Actor;
 class MapDefinition;
@@ -18,6 +22,7 @@ public:
 
 	void InitializeMap();
 	void InitializeTileMapFromImage(std::string const& imagePath);
+	void InitializeActors();
 	void CreateEachTile(int columnIndex, int rowIndex, std::string& tileTypeName);
 	void CreateGeometry();
 	void AddGeometryForWall(std::vector<Vertex_PCUTBN>& vertexs, std::vector<unsigned int>& indexs,
@@ -28,8 +33,8 @@ public:
 		const AABB3& bounds, const AABB2& UVs) const;
 	void CreateBuffers();
 
-	void InitializeEnemies();
-	void SetPlayer(Player* player);
+// 	void InitializeEnemies();
+// 	void SetPlayer(Player* player);
 
 	//-----------------
 	const Tile* GetTile(int x, int y) const;
@@ -41,35 +46,48 @@ public:
 	TileDefinition const& MatchTileDef(std::string const& tileName) const;
 	bool IsPositionInBounds(Vec3 position, const float tolerance = 0.01f) const;
 	bool AreCoordsInBounds(int x, int y) const;
-
-	
+	//------------------
+	ActorHandle* SpawnActor(const SpawnInfo& spawnInfo);
+	ActorHandle* SpawnProjectile(const SpawnInfo& spawnInfo,ActorHandle* ownerHandle);
+	ActorHandle* SpawnPlayer(PlayerController* curPlayerController,int viewPortType);
+	Actor* GetActorByHandle(const ActorHandle handle) const;
+	void DeleteDestroyedActors();
 	//------------------
 	void Update(float deltaTime);
+	void FixedUpdate(float deltaTime);
  	void CollideActors();
- 	//void CollideActor(Actor* actorA, Actor* actorB);
  	void CollideActorsWithMap();
- 	//void CollideActorWithMap(Actor* actor);
 	void PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhyRadius);
 	//---------------------------------------------------------------------------------
- 	RaycastResult3D RaycastAll(const Vec3& start, const Vec3& direction, float distance) const;
- 	RaycastResult3D RaycastWorldActors(const Vec3& start, const Vec3& direction, float distance) const;
+ 	RaycastResult3D RaycastAll(const Vec3& start, const Vec3& direction, float distance,ActorHandle* sourceActorHandle);
+ 	RaycastResult3D RaycastWorldActors(const Vec3& start, const Vec3& direction, float distance, ActorHandle* sourceActorHandle, ActorHandle& resultActor) const;
  	RaycastResult3D RaycastWorldXY(const Vec3& start, const Vec3& direction, float distance) const;
  	RaycastResult3D RaycastWorldZ(const Vec3& start, const Vec3& direction, float distance) const;
-
+	bool IsEyeSightBlock(const Vec3& start, const Vec3& direction, float distance, ActorHandle* sourceActorHandle, float aimDist);
 	//---------------------------------------------------------------------------------
 	void UpdateLight();
-	void UpdatePlayerMode(float deltaSeconds);
-	void UpdateRaycastTest();
-	void CalculateAndDrawRaycastResult(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist);
+	//void UpdateSprint();
+	//void UpdatePlayerMode(float deltaSeconds);
+	//void UpdateRaycastTest();
+	//void CalculateAndDrawRaycastResult(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist);
 	//------------------
 	void Render() const;
 	//------------------
-
-
+	ActorHandle* GetClosestVisibleEnemy(Actor* myActor, Faction const& aimFaction);
+	ActorHandle* GetMeleeTarget(Actor* myActor, Faction const& aimFaction, float meleeRadius, float meleeDegrees);
+	//------------------
+	void DebugPossessNext();
 public:
 	Game* m_game = nullptr;
+	//Actor* m_player = nullptr;
 	//---------------------------------------
 	bool m_isPlayerMode = false;
+	bool m_isSprint = false;
+
+	Projectile* m_projectile = nullptr;
+	std::vector<Actor*> m_actors;
+	std::vector<Actor*> m_spawnPoint;
+	unsigned int m_nextActorUID = 1;
 
 protected:
 	const MapDefinition*	m_definition = nullptr;
@@ -87,9 +105,14 @@ protected:
 	float m_sunIntensity = 0.85f;
 	float m_ambientIntensity = 0.35f;
 
-private:
-	Player* m_player = nullptr;
-	std::vector<Actor*> m_actors;
-	Projectile* m_projectile = nullptr;
 
+	Timer m_physicsTimer;
+
+	int m_curPlayerActorIndex = 0;
+	
+	float m_physicsUpdateAccumulator = 0.f;
+	float m_fixedTimeStep = 1.0f / 500.0f;
+
+	std::vector<PointLight> m_pointLights;
+	std::vector<SpotLight> m_spotLights;
 };
