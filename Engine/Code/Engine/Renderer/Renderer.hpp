@@ -29,6 +29,7 @@ struct ID3D11BlendState;
 struct ID3D11SamplerState;
 struct ID3D11DepthStencilView;
 struct ID3D11DepthStencilState;
+struct D3D11_VIEWPORT;
 
 #if defined(OPAQUE)
 #undef OPAQUE
@@ -53,6 +54,7 @@ enum class RasterizerMode
 {
 	SOLID_CULL_NONE,
 	SOLID_CULL_BACK,
+	SOLID_CULL_FRONT,
 	WIREFRAME_CULL_NONE,
 	WIREFRAME_CULL_BACK,
 	COUNT
@@ -91,6 +93,7 @@ public:
 	void		ClearScreen(const Rgba8& clearColor);
 	void		BeginCamera(const Camera& camera);
 	void		EndCamera(const Camera& camera);
+
 	void		DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs);
 	void		DrawVertexArray(const std::vector<Vertex_PCU>& vertexs);
 	void		DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs);
@@ -99,40 +102,51 @@ public:
 	void		DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs, std::vector<unsigned int> const& indexes,
 					VertexBuffer* vertexBuffer, IndexBuffer* indexBuffer);
 	
-	//void		DrawVertexArrayTest(const std::vector<Vertex_PCU>& vertexs,Mat44 const& localToWorld);
-
+	//-----------------------Texture2D/ Image------------------------------------------------------------
 	Image*		CreateImageFromFile(char const* imagePath);
 	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath);
 	Texture*	GetTextureFromFileName(char const* imageFilePath);
 	Texture*	CreateTextureFromImage(const Image& image);
 	void		BindTexture(Texture* texture);
 
+	//----------------Cube Sky Box/ Cube Texture---------------------------------------------------
 	TextureCube* CreateOrGetCubeTextureFromFiles(const std::string filePaths[6]);
 	TextureCube* GetTextureCubeFromFileName(char const* firstFilePath);
 	TextureCube* CreateCubeTextureFromFiles(const std::string filePaths[6]);
 	void		 BindTextureCube(TextureCube* textureCube);
 	
+	//-----------------------BitmapFont------------------------------------------------------------
 	BitmapFont* CreateOrGetBitmapFont(char const* imageFilePath);
 	BitmapFont* GetBitmapFontFromFileName(char const* imageFilePath);
 	BitmapFont* CreateBitmapFont(char const* imageFilePath);
 	
+	//-----------------------Set render mode------------------------------------------------------------
 	void		SetBlendMode(BlendMode blendMode);
 	void		SetSamplerMode(SamplerMode samplerMode);
 	void        SetDepthMode(DepthMode depthMode);
 	void        SetRasterizerMode(RasterizerMode rasterizerMode);
 
-
+	//-----------------------Set Constants------------------------------------------------------------
 	void SetModelConstants(const Mat44& modelToWorldTransform = Mat44(), const Rgba8& modelColor = Rgba8::WHITE);
 	void SetLightConstants(Vec3 const& sunDirection= Vec3(2.f, 1.f, -1.f), float sunIntensity=0.85f, float ambientIntensity=0.35f);
 	void SetPointLightsConstants(const std::vector<PointLight>& lights);
 	void SetSpotLightsConstants(const std::vector<SpotLight>& lights);
+	void SetShadowConstants(Mat44 const& lightViewProjectionMat);
 
+	//-----------------------Shader-------------------------------------------------------------------
 	Shader* CreateShaderFromFile(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
 	void			BindShader(Shader* shader);
 
+	//-----------------------Buffer-------------------------------------------------------------------
 	VertexBuffer* CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride);
 	IndexBuffer* CreateIndexBuffer(unsigned int size);
-	
+
+	//-----------------------Shadow-------------------------------------------------------------------
+	void InitializeShadowMapping();
+	void BeginShadowMapRender(Mat44 const& lightViewProjection);
+	void EndShadowMapRender();
+	Mat44 GetDirectLightProjectionMat(Vec3 const& sunDirection, Vec3 const& sceneCenter, float sceneRadius);
+
 public:
 	std::vector<Texture*>		m_loadedTextures;
 	std::vector<TextureCube*>       m_loadedCubeTextures;
@@ -148,21 +162,23 @@ protected:
 	ID3D11RenderTargetView* m_renderTargetView = nullptr;
 	ID3D11RasterizerState*	m_rasterizerState = nullptr;
 
-// 	std::vector<uint8_t>	m_vertexShaderByteCode;
-// 	std::vector<uint8_t>	m_pixelShaderByteCode;
-
 	std::vector<Shader*>	m_loadedShaders;
 	Shader*					m_currentShader = nullptr;
 	Shader*					m_defaultShader = nullptr;
+
 	VertexBuffer*			m_immediateVBO = nullptr;
 	VertexBuffer*			m_immediateVBO_WithTBN = nullptr;
 	IndexBuffer*			m_immediateIBO = nullptr;
+
 	ConstantBuffer*			m_cameraCBO = nullptr;
 	ConstantBuffer*         m_modelCBO = nullptr;
 	ConstantBuffer*			m_lightCBO = nullptr;
 	ConstantBuffer*			m_pointLightCBO = nullptr;
 	ConstantBuffer*			m_spotLightCBO = nullptr;
+	ConstantBuffer*			m_shadowCBO = nullptr;
+
 	const Texture*			m_defaultTexture = nullptr;
+
 protected:
 	Shader*			CreateShaderFromSource(char const* shaderName, char const* shaderSource, VertexType vertexType = VertexType::VERTEX_PCU);
 	
@@ -202,4 +218,12 @@ protected:
 	ID3D11DepthStencilState* m_depthStencilStates[(int)(DepthMode::COUNT)] = {};
 	ID3D11DepthStencilState* m_depthStencilState = nullptr;
 	DepthMode m_desiredDepthMode = DepthMode::DISABLED;
+	//------------------------shadow map------------------------------
+	ID3D11Texture2D* m_shadowMapTexture = nullptr;
+	ID3D11DepthStencilView* m_shadowDepthView = nullptr;
+	ID3D11ShaderResourceView* m_shadowResourceView = nullptr;
+	ID3D11SamplerState* m_comparisonSampler_point=nullptr;
+	ID3D11RasterizerState* m_shadowGenerateRasterizerStates= m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)];
+	ID3D11RasterizerState* m_shadowDrawRasterizerStates= m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)];
+	D3D11_VIEWPORT* m_shadowViewport=nullptr;
 };

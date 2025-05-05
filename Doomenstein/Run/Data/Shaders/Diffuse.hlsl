@@ -110,16 +110,6 @@ v2p_t VertexMain(vs_input_t input)
 //------------------------------------------------------------------------------------------------
 float4 PixelMain(v2p_t input) : SV_Target0
 {
-//  	float ambient = AmbientIntensity;
-//  	float directional = SunIntensity * saturate(dot(normalize(input.worldNormal.xyz), -SunDirection));
-//  	float4 lightColor = float4((ambient + directional).xxx, 1);
-//  	float4 textureColor = diffuseTexture.Sample(samplerState, input.uv);
-//  	float4 vertexColor = input.color;
-//  	float4 modelColor = ModelColor;
-//  	float4 color = lightColor * textureColor * vertexColor * modelColor;
-//  	clip(color.a - 0.01f);
-//  	return color;
-
     float ambient = AmbientIntensity;
     float directional = SunIntensity * saturate(dot(normalize(input.worldNormal.xyz), -SunDirection));
     float3 totalLighting = float3(ambient + directional, ambient + directional, ambient + directional);

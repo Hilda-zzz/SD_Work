@@ -1,5 +1,6 @@
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include <cmath>
 
 Mat44::Mat44()
 {
@@ -229,6 +230,14 @@ Vec3 const Mat44::TransformPosition3D(Vec3 const& position3D) const
 	float Py = m_values[Iy] * position3D.x + m_values[Jy] * position3D.y + m_values[Ky] * position3D.z + m_values[Ty];
 	float Pz = m_values[Iz] * position3D.x + m_values[Jz] * position3D.y + m_values[Kz] * position3D.z + m_values[Tz];
 	return Vec3(Px, Py, Pz);								
+}
+
+Vec3 const Mat44::TransformDirection3D(Vec3 const& direction3D) const
+{
+	float Px = m_values[Ix] * direction3D.x + m_values[Jx] * direction3D.y + m_values[Kx] * direction3D.z;
+	float Py = m_values[Iy] * direction3D.x + m_values[Jy] * direction3D.y + m_values[Ky] * direction3D.z;
+	float Pz = m_values[Iz] * direction3D.x + m_values[Jz] * direction3D.y + m_values[Kz] * direction3D.z;
+	return Vec3(Px, Py, Pz);
 }
 
 Vec4 const Mat44::TransformHomogeneous3D(Vec4 const& homogeneousPoint3D) const
@@ -567,3 +576,5 @@ void Mat44::AppendScaleNonUniform3D(Vec3 const& nonUNiformSccaleXYZ)
 {
 	Append(MakeNonUniformScale3D(nonUNiformSccaleXYZ));
 }
+
+

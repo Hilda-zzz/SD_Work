@@ -17,6 +17,7 @@ extern Renderer* g_theRenderer;
 
 Actor::Actor(int actorDefIndex, Map* curMap, Vec3 const& positon, EulerAngles const& orientaion, bool isProjectile)
 {
+	m_shadowShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/ShadowMap",VertexType::VERTEX_PCUTBN);
 	if (isProjectile)
 	{
 		m_actorDef = ActorDefinition::s_projectileActorDefinitions[actorDefIndex];
@@ -403,49 +404,36 @@ void Actor::Render(PlayerController* curPlayer) const
 	g_theRenderer->SetRasterizerMode(RasterizerMode::WIREFRAME_CULL_BACK);
 	g_theRenderer->DrawVertexArray(m_vertexsWire);
 
-	Vec2 relativePos = -Vec2(m_actorDef->m_spritePivot.x * m_actorDef->m_spriteSize.x,
-		m_actorDef->m_spritePivot.y * m_actorDef->m_spriteSize.y);
-	Mat44 relativeMatt= Mat44::MakeTranslation3D(Vec3(0.f, relativePos.x, relativePos.y));
-
-	Mat44 billboardMatrix = Mat44();
-	switch (m_actorDef->m_billboardType)
-	{
-	case BillboardType::NONE:
-		billboardMatrix = modelMatt;
-		break;
-	case BillboardType::WORLD_UP_FACING:
-		billboardMatrix = GetBillboardMatrix(BillboardType::WORLD_UP_FACING,
-			curPlayer->m_playerCam.GetOrientation().GetAsMatrix_IFwd_JLeft_KUp(),
-			curPlayer->m_playerCam.GetPosition(),
-			m_position);
-		break;
-	case BillboardType::WORLD_UP_OPPOSING:
-		billboardMatrix = GetBillboardMatrix(BillboardType::WORLD_UP_OPPOSING,
-			curPlayer->m_playerCam.GetOrientation().GetAsMatrix_IFwd_JLeft_KUp(),
-			curPlayer->m_playerCam.GetPosition(),
-			m_position);
-		break;
-	case BillboardType::FULL_OPPOSING:
-		billboardMatrix = GetBillboardMatrix(BillboardType::FULL_OPPOSING,
-			curPlayer->m_playerCam.GetOrientation().GetAsMatrix_IFwd_JLeft_KUp(),
-			curPlayer->m_playerCam.GetPosition(),
-			m_position);
-		break;
-	}
-
-	billboardMatrix.Append(relativeMatt);
+	Mat44 finalModelMat = GetFinalModelMat(curPlayer);
 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 	g_theRenderer->BindTexture(&m_actorDef->m_spriteSheet->GetTexture());
 	g_theRenderer->BindShader(nullptr);
-	g_theRenderer->SetModelConstants(billboardMatrix, tintColor);
+	g_theRenderer->SetModelConstants(finalModelMat, tintColor);
 	g_theRenderer->DrawVertexArray(m_vertexsSprite);
 
 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 	g_theRenderer->BindTexture(&m_actorDef->m_spriteSheet->GetTexture());
 	g_theRenderer->BindShader(m_actorDef->m_shader);
-	g_theRenderer->SetModelConstants(billboardMatrix, tintColor);
+	g_theRenderer->SetModelConstants(finalModelMat, tintColor);
 	g_theRenderer->DrawVertexArray_WithTBN(m_vertexsSpriteNorm);
 
+	//m_modelMat = billboardMatrix;
+
+}
+
+void Actor::RenderShadowTexture(PlayerController* curPlayer) const
+{
+	g_theRenderer->BindShader(m_shadowShader);
+	Mat44 modelMat = GetFinalModelMat(curPlayer);
+	g_theRenderer->SetModelConstants(modelMat, Rgba8::WHITE);
+
+	g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
+	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_FRONT);
+	g_theRenderer->BindTexture(nullptr);
+
+	g_theRenderer->DrawVertexArray(m_vertexsSprite);
+	g_theRenderer->DrawVertexArray_WithTBN(m_vertexsSpriteNorm);
 }
 
 Mat44 Actor::GetModelMat() const
@@ -573,6 +561,43 @@ bool Actor::PlayAnimation(std::string const& animName)
 	}
 	m_animState = AnimState::IDLE;
 	return false;
+}
+
+Mat44 Actor::GetFinalModelMat(PlayerController* curPlayer) const
+{
+	Mat44 modelMatt = GetModelMat();
+
+	Vec2 relativePos = -Vec2(m_actorDef->m_spritePivot.x * m_actorDef->m_spriteSize.x,
+		m_actorDef->m_spritePivot.y * m_actorDef->m_spriteSize.y);
+	Mat44 relativeMatt = Mat44::MakeTranslation3D(Vec3(0.f, relativePos.x, relativePos.y));
+
+	Mat44 billboardMatrix = Mat44();
+	switch (m_actorDef->m_billboardType)
+	{
+	case BillboardType::NONE:
+		billboardMatrix = modelMatt;
+		break;
+	case BillboardType::WORLD_UP_FACING:
+		billboardMatrix = GetBillboardMatrix(BillboardType::WORLD_UP_FACING,
+			curPlayer->m_playerCam.GetOrientation().GetAsMatrix_IFwd_JLeft_KUp(),
+			curPlayer->m_playerCam.GetPosition(),
+			m_position);
+		break;
+	case BillboardType::WORLD_UP_OPPOSING:
+		billboardMatrix = GetBillboardMatrix(BillboardType::WORLD_UP_OPPOSING,
+			curPlayer->m_playerCam.GetOrientation().GetAsMatrix_IFwd_JLeft_KUp(),
+			curPlayer->m_playerCam.GetPosition(),
+			m_position);
+		break;
+	case BillboardType::FULL_OPPOSING:
+		billboardMatrix = GetBillboardMatrix(BillboardType::FULL_OPPOSING,
+			curPlayer->m_playerCam.GetOrientation().GetAsMatrix_IFwd_JLeft_KUp(),
+			curPlayer->m_playerCam.GetPosition(),
+			m_position);
+		break;
+	}
+	billboardMatrix.Append(relativeMatt);
+	return billboardMatrix;
 }
 
 // bool Actor::PlayWeaponAnimation(std::string const& animName)

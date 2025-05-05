@@ -2,6 +2,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec4.hpp"
+
 class Mat44
 {
 public:
@@ -34,6 +35,7 @@ public:
 
 	Vec2 const TransformPosition2D(Vec2 const& positionXY) const;
 	Vec3 const TransformPosition3D(Vec3 const& position3D) const;
+	Vec3 const TransformDirection3D(Vec3 const& position3D) const;
 	Vec4 const TransformHomogeneous3D(Vec4 const& homogeneousPoint3D) const;
 
 	float*			GetAsFloatArray();
@@ -74,4 +76,6 @@ public:
 	void AppendScaleUniform3D(float uniformScaleXYZ);
 	void AppendScaleNonUniform2D(Vec2 const& nonUniformScaleXY);
 	void AppendScaleNonUniform3D(Vec3 const& nonUNiformSccaleXYZ);
+
+	
 };

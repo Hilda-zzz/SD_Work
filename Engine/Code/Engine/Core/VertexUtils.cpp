@@ -5,6 +5,7 @@
 #include "Engine/Math/AABB3.hpp"
 #include "EngineCommon.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "../Math/OBB3.hpp"
 constexpr int DISCS_SLICES_COUNT = 64;
 constexpr int SEMICIRCLE_SLICES_COUNT = 16;
 void TransformVertexArrayXY3D(int numVerts, Vertex_PCU* verts, float uniformScaleXY, 
@@ -351,6 +352,9 @@ void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, const AABB3& bounds, cons
 void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius, const Rgba8& color, const AABB2& UVs, int numSlices, int numStacks)
 {
 	UNUSED(center);
+
+	
+
 	std::vector<Vec3>	sphereVerts;
 	sphereVerts.reserve(numSlices * (numStacks - 1) + 2);
 	sphereVerts.push_back(Vec3(0.f, 0.f, -radius));
@@ -538,6 +542,18 @@ void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const 
 	}
 }
 
+void AddVertsForOBB3D(std::vector<Vertex_PCU>& verts, const OBB3& box, const Rgba8& color, const AABB2& UVs)
+{
+	size_t originalSize = verts.size();
+	AddVertsForAABB3D(verts, AABB3(-box.m_halfDimensions, box.m_halfDimensions));
+
+	Mat44 mat = Mat44(box.m_iBasis, box.m_jBasis, box.m_kBasis, box.m_center);
+	for (size_t i= originalSize; i < verts.size(); i++)
+	{
+		verts[i].m_position=mat.TransformPosition3D(verts[i].m_position);
+	}
+}
+
 void AddVertsForAABB3DWireFrame(std::vector<Vertex_PCU>& verts, const AABB3& bounds, const Rgba8& color, const AABB2& UVs)
 {
 	Vec3 mins = bounds.m_mins;
@@ -664,6 +680,76 @@ void AddVertsForCylinder3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& 
 	for (size_t i = originalSize; i < verts.size(); i++)
 	{
 		verts[i].m_position = lookAtMatrix.TransformPosition3D(verts[i].m_position);
+	}
+}
+
+void AddVertsForOBB3DWireFrame(std::vector<Vertex_PCU>& verts, const OBB3& box, const Rgba8& color, const AABB2& UVs)
+{
+	size_t originalSize = verts.size();
+	AddVertsForAABB3DWireFrame(verts, AABB3(-box.m_halfDimensions, box.m_halfDimensions));
+
+	Mat44 mat = Mat44(box.m_iBasis, box.m_jBasis, box.m_kBasis, box.m_center);
+	for (size_t i = originalSize; i < verts.size(); i++)
+	{
+		verts[i].m_position = mat.TransformPosition3D(verts[i].m_position);
+	}
+}
+
+void AddVertsForPlane3D(std::vector<Vertex_PCU>& verts, Plane3 const& plane)
+{
+	Vec3 planeOrigin = plane.m_normal * plane.m_distance;
+
+	size_t originalSize = verts.size();
+	AddVertsForSphere3D(verts, planeOrigin, 0.05f, Rgba8(100, 100, 100));
+	for (size_t i = originalSize; i < verts.size(); i++)
+	{
+		verts[i].m_position = Mat44::MakeTranslation3D(planeOrigin).TransformPosition3D(verts[i].m_position);
+	}
+
+	AddVertsForCylinder3D(verts, Vec3(0.f, 0.f, 0.f), planeOrigin, 0.02f, Rgba8(150, 150, 150, 100), AABB2::ZERO_TO_ONE, 4);
+	
+	AddVertsForCylinder3D(verts, planeOrigin, planeOrigin+plane.m_normal, 0.02f, Rgba8::HILDA);
+	AddVertsForCone3D(verts, planeOrigin + plane.m_normal, planeOrigin + plane.m_normal*1.1f, 0.02 * 1.5f, Rgba8::HILDA);
+
+	Vec3 basisX = Vec3(0.f, 0.f, 0.f);
+	Vec3 basisY = Vec3(0.f, 0.f, 0.f);
+
+	if (fabsf(plane.m_normal.x) < fabsf(plane.m_normal.y) &&
+		fabsf(plane.m_normal.x) < fabsf(plane.m_normal.z)) 
+	{
+		basisX = CrossProduct3D(Vec3(1.f, 0.f, 0.f), plane.m_normal).GetNormalized();
+	}
+	else if (fabsf(plane.m_normal.y) < fabsf(plane.m_normal.z)) 
+	{
+		basisX = CrossProduct3D(Vec3(0.f, 1.f, 0.f), plane.m_normal).GetNormalized();
+	}
+	else 
+	{
+		basisX = CrossProduct3D(Vec3(0.f, 0.f, 1.f), plane.m_normal).GetNormalized();
+	}
+
+	basisY = CrossProduct3D(plane.m_normal, basisX).GetNormalized();
+
+	//int numLines = static_cast<int>(gridSize / gridSpacing) * 2 + 1;
+	//float halfSize = gridSize * 0.5f;
+	int numLines = 50;
+	float halfSize = 25.f;
+
+	for (int i = 0; i < numLines; i++) 
+	{
+		float offset = -halfSize + i * 1.f;
+		Vec3 start = planeOrigin + basisX * offset - basisY * halfSize;
+		Vec3 end = planeOrigin + basisX * offset + basisY * halfSize;
+
+		AddVertsForCylinder3D(verts, start, end, 0.02f, Rgba8(255,0,0,100),AABB2::ZERO_TO_ONE,4);
+	}
+
+	for (int i = 0; i < numLines; i++) {
+		float offset = -halfSize + i * 1.f;
+		Vec3 start = planeOrigin - basisX * halfSize + basisY * offset;
+		Vec3 end = planeOrigin + basisX * halfSize + basisY * offset;
+
+		AddVertsForCylinder3D(verts, start, end, 0.02f, Rgba8(0, 255, 0, 100), AABB2::ZERO_TO_ONE, 4);
 	}
 }
 

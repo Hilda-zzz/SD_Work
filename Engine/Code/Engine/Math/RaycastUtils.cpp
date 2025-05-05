@@ -3,6 +3,8 @@
 #include <cmath> 
 #include <cfloat>
 #include <algorithm>
+#include "Engine/Math/OBB3.hpp"
+#include "../Core/DebugRenderSystem.hpp"
 
 RaycastResult2D::RaycastResult2D(Vec2 fwdNormal, Vec2 startPos, float len) :m_rayFwdNormal(fwdNormal), m_rayStartPos(startPos), m_rayMaxLength(len)
 {
@@ -488,6 +490,81 @@ RaycastResult3D RaycastVsZCylinder3D(Vec3 const& startPos, Vec3 const& fwdNormal
 			}
 		}
 	}
+	return result;
+}
+
+RaycastResult3D RaycastVsPlane3(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist, Plane3 const& plane)
+{
+	//if the length just reach the plane, it should not impact
+	RaycastResult3D result = RaycastResult3D(fwdNormal, startPos, maxDist);
+	float h = 0.f;
+	if (IsPointFrontOfPlane3(startPos,plane))
+	{
+		h = -DotProduct3D(fwdNormal, plane.m_normal);
+		result.m_impactNormal = plane.m_normal;
+	}
+	else
+	{
+		h = DotProduct3D(fwdNormal, plane.m_normal);
+		result.m_impactNormal = -plane.m_normal;
+	}
+
+	if (h <= 0.f)
+	{
+		result.m_didImpact = false;
+		return result;
+	}
+
+	float altitude = DotProduct3D(startPos, plane.m_normal)-plane.m_distance;
+	if (altitude == 0.f)
+	{
+		//if start point on the plane
+		result.m_didImpact = false;
+		return result;
+	}
+	if (abs(altitude) >= maxDist)
+	{
+		result.m_didImpact = false;
+		return result;
+	}
+	result.m_impactDist = abs(altitude) / h;
+	if (result.m_impactDist >= maxDist)
+	{
+		result.m_didImpact = false;
+		return result;
+	}
+
+	result.m_didImpact = true;
+	result.m_impactPos = startPos + fwdNormal * result.m_impactDist;
+
+	return result;
+}
+
+RaycastResult3D RaycastVsOBB3(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist, OBB3 const& box)
+{
+	RaycastResult3D result = RaycastResult3D(fwdNormal, startPos, maxDist);
+
+	Mat44 mat = Mat44(box.m_iBasis, box.m_jBasis, box.m_kBasis, box.m_center);
+	Mat44 invMat = mat.GetOrthonormalInverse();
+
+	Vec3 relativePos = invMat.TransformPosition3D(startPos);
+	Vec3 relativeFwd = invMat.TransformDirection3D(fwdNormal);
+
+	relativeFwd.Normalized();
+
+	RaycastResult3D aabbResult = RaycastVsAABB3D(relativePos, relativeFwd, maxDist,
+		AABB3(-box.m_halfDimensions, box.m_halfDimensions));
+
+	result.m_didImpact = aabbResult.m_didImpact;
+
+	if (result.m_didImpact)
+	{
+		result.m_impactPos = mat.TransformPosition3D(aabbResult.m_impactPos);
+		result.m_impactNormal = mat.TransformDirection3D(aabbResult.m_impactNormal);
+		result.m_impactDist = aabbResult.m_impactDist;
+	}
+
+	//DebugAddWorldPoint(result.m_impactPos, 0.2f, 0.f,Rgba8::HILDA);
 	return result;
 }
 

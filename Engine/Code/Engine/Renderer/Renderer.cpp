@@ -40,6 +40,7 @@ void* m_dxgiDebugModule = nullptr;
 #endif
 #include "TextureCube.hpp"
 #include "PointLight.hpp"
+#include "../Math/MathUtils.hpp"
 //-------------------------------------------------------------
 constexpr int MAX_POINT_LIGHTS= 10;
 constexpr int MAX_SPOT_LIGHTS = 10;
@@ -97,6 +98,11 @@ struct SpotLightConstants
 };
 static const int k_spotLightConstantsSlot = 5;
 
+struct ShadowConstants
+{
+	Mat44 LightViewProjection; 
+};
+static const int k_shadowConstantsSlot = 6;
 
 //-------------------------------------------------------------
 BitmapFont* g_testFont = nullptr;
@@ -222,6 +228,19 @@ void Renderer::Startup()
 		ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_BACK failed");
 	}
 
+	//SOLID_CULL_FRONT
+	rasterizerDesc = {};
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_FRONT;
+	rasterizerDesc.FrontCounterClockwise = true;
+	rasterizerDesc.DepthClipEnable = true;
+	rasterizerDesc.AntialiasedLineEnable = true;
+	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)RasterizerMode::SOLID_CULL_FRONT]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_FRONT failed");
+	}
+
 	//WIREFRAME_CULL_NONE
 	rasterizerDesc = {};
 	rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
@@ -257,6 +276,7 @@ void Renderer::Startup()
 	m_lightCBO = CreateConstantBuffer(sizeof(LightConstants));
 	m_pointLightCBO = CreateConstantBuffer(sizeof(PointLightConstants));
 	m_spotLightCBO= CreateConstantBuffer(sizeof(SpotLightConstants));
+	m_shadowCBO = CreateConstantBuffer(sizeof(ShadowConstants));
 	//---------------------------------------------------------
 	// OPAQUE
 	D3D11_BLEND_DESC blendDesc = {};
@@ -397,6 +417,9 @@ void Renderer::Startup()
 	m_defaultTexture = CreateTextureFromImage(defaultImage);
 	BindTexture(nullptr);
 	//g_testFont =CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+
+	//---------------------------------------------------------------------
+	InitializeShadowMapping();
 }
 
 void Renderer::BeginFrame()
@@ -458,6 +481,9 @@ void Renderer::Shutdown()
 	delete m_spotLightCBO;
 	m_spotLightCBO = nullptr;
 
+	delete m_shadowCBO;
+	m_shadowCBO = nullptr;
+
 	for (int i = 0; i < (int)BlendMode::COUNT; i++)
 	{
 		DX_SAFE_RELEASE(m_blendStates[i]);
@@ -495,6 +521,30 @@ void Renderer::Shutdown()
 		delete textureCube;
 	}
 
+	if (m_shadowMapTexture)
+	{
+		DX_SAFE_RELEASE( m_shadowMapTexture);
+	}
+	
+	if (m_shadowDepthView)
+	{
+		DX_SAFE_RELEASE(m_shadowDepthView);
+	}
+
+	if (m_shadowResourceView)
+	{
+		DX_SAFE_RELEASE(m_shadowResourceView);
+	}
+	if (m_comparisonSampler_point)
+	{
+		DX_SAFE_RELEASE(m_comparisonSampler_point);
+	}
+	if (m_shadowViewport)
+	{
+		delete m_shadowViewport;
+		m_shadowViewport=nullptr;
+	}
+
 #if defined(ENGINE_DEBUG_RENDER)
 	((IDXGIDebug*)m_dxgiDebug)->ReportLiveObjects(
 		DXGI_DEBUG_ALL,
@@ -517,6 +567,8 @@ void Renderer::ClearScreen(const Rgba8& clearColor)
 	clearColor.GetAsFloats(colorAsFloats);
 	m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
 	m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
+
+	m_deviceContext->ClearDepthStencilView(m_shadowDepthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void Renderer::BeginCamera(const Camera& camera)
@@ -938,7 +990,7 @@ void Renderer::SetRasterizerMode(RasterizerMode rasterizerMode)
 
 Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* shaderSource,VertexType vertexType)
 {
-	ShaderConfig config =ShaderConfig("defaultConfig");
+	ShaderConfig config =ShaderConfig(shaderName);
 	m_currentShader = new Shader(config);
 	CompileShaderToByteCode(m_currentShader->m_vertexShaderByteCode,shaderName,shaderSource, "VertexMain", "vs_5_0");
 	HRESULT hr;
@@ -1012,13 +1064,19 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 	{
 		ERROR_AND_DIE(Stringf("Could not create vertex layout"));
 	}
-
 	m_loadedShaders.push_back(m_currentShader);
 	return m_currentShader;
 }
 
 Shader* Renderer::CreateShaderFromFile(char const* shaderName,VertexType vertexType)
 {
+	for (Shader* curShader:m_loadedShaders)
+	{
+		if (curShader->GetName() == shaderName)
+		{
+			return curShader;
+		}
+	}
 	std::string shaderPath = std::string(shaderName)+".hlsl";
 	std::string outShaderString;
 	FileReadToString(outShaderString,shaderPath);
@@ -1137,6 +1195,201 @@ IndexBuffer* Renderer::CreateIndexBuffer(unsigned int size)
 	//size=count*stride
 	IndexBuffer* curIndexBuffer = new IndexBuffer(m_device, size);
 	return curIndexBuffer;
+}
+
+void Renderer::InitializeShadowMapping()
+{
+	D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT isD3D9ShadowSupported;
+	ZeroMemory(&isD3D9ShadowSupported, sizeof(isD3D9ShadowSupported));
+	m_device->CheckFeatureSupport(
+		D3D11_FEATURE_D3D9_SHADOW_SUPPORT,
+		&isD3D9ShadowSupported,
+		sizeof(D3D11_FEATURE_D3D9_SHADOW_SUPPORT)
+	);
+
+	if (isD3D9ShadowSupported.SupportsDepthAsTextureWithLessEqualComparisonFilter)
+	{
+		//create depth buffer
+		D3D11_TEXTURE2D_DESC shadowMapDesc;
+		ZeroMemory(&shadowMapDesc, sizeof(D3D11_TEXTURE2D_DESC));
+		shadowMapDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+		shadowMapDesc.MipLevels = 1;
+		shadowMapDesc.ArraySize = 1;
+		shadowMapDesc.SampleDesc.Count = 1;
+		shadowMapDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
+		shadowMapDesc.Height = static_cast<UINT>(1024);
+		shadowMapDesc.Width = static_cast<UINT>(1024);
+
+		HRESULT hr = m_device->CreateTexture2D(
+			&shadowMapDesc,
+			nullptr,
+			&m_shadowMapTexture
+		);
+
+		if (!SUCCEEDED(hr))
+		{
+			ERROR_AND_DIE(Stringf("Could not createe shadow depth buffer."));
+		}
+
+		// create 2 views
+		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
+		ZeroMemory(&depthStencilViewDesc, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
+		depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		depthStencilViewDesc.Texture2D.MipSlice = 0;
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+		ZeroMemory(&shaderResourceViewDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+		shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		shaderResourceViewDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+		hr = m_device->CreateDepthStencilView(
+			m_shadowMapTexture,
+			&depthStencilViewDesc,
+			&m_shadowDepthView
+		);
+
+		if (!SUCCEEDED(hr))
+		{
+			ERROR_AND_DIE(Stringf("Could not createe shadow CreateDepthStencilView."));
+		}
+
+		hr = m_device->CreateShaderResourceView(
+			m_shadowMapTexture,
+			&shaderResourceViewDesc,
+			&m_shadowResourceView
+		);
+
+		if (!SUCCEEDED(hr))
+		{
+			ERROR_AND_DIE(Stringf("Could not createe shadow CreateShaderResourceView."));
+		}
+
+		// create compare state
+		D3D11_SAMPLER_DESC comparisonSamplerDesc;
+		ZeroMemory(&comparisonSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
+		comparisonSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+		comparisonSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+		comparisonSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+		comparisonSamplerDesc.BorderColor[0] = 1.0f;
+		comparisonSamplerDesc.BorderColor[1] = 1.0f;
+		comparisonSamplerDesc.BorderColor[2] = 1.0f;
+		comparisonSamplerDesc.BorderColor[3] = 1.0f;
+		comparisonSamplerDesc.MinLOD = 0.f;
+		comparisonSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+		comparisonSamplerDesc.MipLODBias = 0.f;
+		comparisonSamplerDesc.MaxAnisotropy = 0;
+		comparisonSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+		comparisonSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+
+		// Point filtered shadows can be faster, and may be a good choice when
+		// rendering on hardware with lower feature levels. This sample has a
+		// UI option to enable/disable filtering so you can see the difference
+		// in quality and speed.
+
+		hr = m_device->CreateSamplerState(
+			&comparisonSamplerDesc,
+			&m_comparisonSampler_point
+		);
+		if (!SUCCEEDED(hr))
+		{
+			ERROR_AND_DIE(Stringf("Could not createe shadow CreateSamplerState."));
+		}
+	}	
+
+	m_shadowViewport = new D3D11_VIEWPORT();
+	ZeroMemory(m_shadowViewport, sizeof(D3D11_VIEWPORT));
+	m_shadowViewport->TopLeftX = 0.0f;
+	m_shadowViewport->TopLeftY = 0.0f;
+	m_shadowViewport->Width = 1024.0f;  
+	m_shadowViewport->Height = 1024.0f; 
+	m_shadowViewport->MinDepth = 0.0f;
+	m_shadowViewport->MaxDepth = 1.0f;
+}
+
+void Renderer::BeginShadowMapRender(Mat44 const& lightViewProjection)
+{
+	// Set render target
+	m_deviceContext->OMSetRenderTargets(0, nullptr, m_shadowDepthView);
+
+	// clear depth view
+	m_deviceContext->ClearDepthStencilView(m_shadowDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	// Set viewport
+	m_deviceContext->RSSetViewports(1, m_shadowViewport);
+
+	m_deviceContext->PSSetShader(nullptr, nullptr, 0);
+
+	// bind shadow constants
+// 	ShadowConstants shadowConstants;
+// 	shadowConstants.LightViewProjection = lightViewProjection;
+//  	CopyCPUToGPU(&shadowConstants, sizeof(ShadowConstants), m_shadowCBO);
+//  	BindConstantBuffer(k_shadowConstantsSlot, m_shadowCBO);
+	SetShadowConstants(lightViewProjection);
+
+	// set raster state
+	m_deviceContext->RSSetState(m_shadowDrawRasterizerStates);
+}
+
+void Renderer::EndShadowMapRender()
+{
+	// not sure
+	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
+}
+
+Mat44 Renderer::GetDirectLightProjectionMat( Vec3 const& sunDirection,Vec3 const& sceneCenter,float sceneRadius)
+{		
+	// 1. 标准化光照方向
+	Vec3 normalizedSunDir = sunDirection.GetNormalized();
+
+	// 2. 计算光源位置
+	Vec3 lightPos = sceneCenter - normalizedSunDir * sceneRadius;
+
+	// 3. 创建视图空间基向量
+	// 注意：光源的前方向是光线方向的反向，所以是normalizedSunDir
+	Vec3 forward = normalizedSunDir;
+	Vec3 worldUp = Vec3(0.0f, 0.0f, 1.0f);
+
+	// 处理特殊情况：前向量和上向量近乎平行
+	if (abs(DotProduct3D(forward, worldUp)) > 0.99f)
+	{
+		worldUp = Vec3(0.0f, 1.0f, 0.0f);
+	}
+
+	// 计算右向量和上向量
+	Vec3 right = CrossProduct3D(worldUp, forward).GetNormalized();
+	Vec3 up = CrossProduct3D(forward, right).GetNormalized();
+
+	// 4. 使用列主序或行主序创建模型矩阵（取决于您的引擎）
+	// 假设您的引擎使用列主序矩阵
+	Mat44 modelMatrix;
+	modelMatrix.SetIJK3D(forward, right, up); // 设置旋转部分
+	modelMatrix.SetTranslation3D(lightPos);   // 设置平移部分
+
+	// 5. 计算视图矩阵（模型矩阵的逆）
+	// 这种方法避免了手动计算正交逆矩阵
+	Mat44 viewMatrix = modelMatrix.GetOrthonormalInverse();
+
+	Mat44 renderMat(Vec3(0.f, 0.f, 1.f), Vec3(-1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f));
+	//BMat44 renderMat;
+	renderMat.Append(viewMatrix);
+
+	// 6. 创建正交投影矩阵
+	float orthoSize = sceneRadius * 1.f; // 调整尺寸
+	float nearPlane = 0.1f;
+	float farPlane = sceneRadius * 2.5f;
+
+	Mat44 projMatrix = Mat44::MakeOrthoProjection(
+		-orthoSize, orthoSize,
+		-orthoSize, orthoSize,
+		nearPlane, farPlane);
+
+	// 7. 组合视图和投影矩阵
+	Mat44 viewProjMatrix = projMatrix;
+	viewProjMatrix.Append(renderMat);
+
+	return viewProjMatrix;
 }
 
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)
@@ -1267,6 +1520,14 @@ void Renderer::SetSpotLightsConstants(const std::vector<SpotLight>& lights)
 	spotLightConstants.ActiveSpotLightCount = lights.size();
 	CopyCPUToGPU(&spotLightConstants, sizeof(spotLightConstants), m_spotLightCBO);
 	BindConstantBuffer(k_spotLightConstantsSlot, m_spotLightCBO);
+}
+
+void Renderer::SetShadowConstants(Mat44 const& lightViewProjectionMat)
+{
+	ShadowConstants shadowConstants;
+	shadowConstants.LightViewProjection = lightViewProjectionMat;
+	CopyCPUToGPU(&shadowConstants, sizeof(shadowConstants), m_shadowCBO);
+	BindConstantBuffer(k_shadowConstantsSlot, m_shadowCBO);
 }
 
 

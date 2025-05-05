@@ -47,7 +47,6 @@ Shader::Shader(const ShaderConfig& config):m_config(config)
 //	{
 //		errorBlob->Release();
 //	}
-
 }
 
 Shader::~Shader()

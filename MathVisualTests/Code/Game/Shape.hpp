@@ -14,6 +14,8 @@ enum class ShapeType
 	TYPE_SHPERE,
 	TYPE_BOX3D,
 	TYPE_ZCYLINDER,
+	TYPE_PLANE,
+	TYPE_OBB3D,
 	COUNT
 };
 

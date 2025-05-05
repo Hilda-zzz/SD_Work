@@ -2,6 +2,8 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/AABB3.hpp"
+#include "Plane3.hpp"
+#include "Engine/Math/EulerAngles.hpp"
 struct Vec2;
 struct Vec3;
 struct Vec4;
@@ -11,6 +13,9 @@ class LineSegment2;
 class Capsule2;
 class Triangle2;
 class FloatRange;
+class OBB3;
+
+#define PI 3.1415926535897f
 
 enum class BillboardType
 {
@@ -68,6 +73,7 @@ bool IsPointInsideTriangle2D(Vec2 const& point, Triangle2 const& triangle);
 bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
 bool IsPointInsideCylinder3D(Vec3 const& point, Vec3 const& center, float radius, float halfHeight);
 bool IsPointInsideAABB3D(Vec3 const& point, AABB3 const& box);
+bool IsPointInsideOBB3D(Vec3 const& point, OBB3 const& box);
 //GetNearest
 Vec2 const GetNearestPointOnDisc2D(Vec2 const& referencePosition, Vec2 const& discCenter, float discRadius);
 Vec2 const GetNearestPointOnAABB2D(Vec2 const& referencePosition, AABB2 const& box);
@@ -83,6 +89,10 @@ Vec2 const GetNearestPointOnTriangle2D(Vec2 const& referencePosition, Triangle2 
 Vec3 const GetNearestPointOnSphere3D(Vec3 const& referencePosition, Vec3 const& sphereCenter, float sphereRadius);
 Vec3 const GetNearestPointOnZCylinder3D(Vec3 const& referencePosition, Vec3 const& cylinderCenter, float cylinderRadius,float halfHeight);
 Vec3 const GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& box);
+Vec3 const GetNearestPointOnPlane3D(Vec3 const& referencePosition, Plane3 const& plane);
+Vec3 const GetNearestPointOnOBB3D(Vec3 const& referencePosition, OBB3 const& box);
+
+bool IsPointFrontOfPlane3(Vec3 const& referencePosition, Plane3 const& plane);
 
 //Geometric query utilities
 bool DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB);
@@ -101,10 +111,10 @@ bool DoSphereAndAABBOverlap3D(Vec3 const& sphereCenter, float sphereRadius, AABB
 bool DoZCylinderAndAABBOverlap3D(Vec3 cylinderCenter, float cylinderRadius, float halfHeight, AABB3 const& box);
 bool DoZCylinderAndShpereOVerlap3D(Vec3 cylinderCenter, float cylinderRadius, float halfHeight,
 	Vec3 const& sphereCenter, float sphereRadius);
-// bool PushZCylinderOutOfZCylinderFromZ3D(Vec3& mobileCylinderCenter, float mobileCylinderRadius, 
-// 	Vec3 const& fixedCylinderCenter, float fixedCylinderRadius);
-// bool PushZCylinderOutOfEachOtherFromZ3D(Vec3& aCenter, float aRadius, Vec3& bCenter, float bRadius);
-
+bool DoAABB3AndPlane3Overlap3D(AABB3 const& aabb, Plane3 const& plane);
+bool DoSphereAndPlane3Overlap3D(Vec3 const& center,float radius, Plane3 const& plane);
+bool DoOBB3AndPlane3Overlap3D(OBB3 const& obb, Plane3 const& plane);
+bool DoOBB3AndSphereOverlap3D(OBB3 const& obb, Vec3 const& center, float radius);
 
 //transform
 void TransformPosition2D(Vec2& posToTransform, float uniformScale, 
@@ -146,3 +156,6 @@ void BounceDiscOffOBB2D(OBB2 const& bumper, Vec2& discCenter, float discRadius, 
 	float elastcityBumper, float elastcityBall);
 void BounceDiscOffEachOther(Vec2& aCenter, float aRadius, Vec2& aVelocity,float aElasticity,
 	Vec2& bCenter, float bRadius, Vec2& bVelocity, float bElasticity);
+
+
+EulerAngles GetEulerFromRotationMat(Mat44 const& mat);

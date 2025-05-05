@@ -11,8 +11,10 @@
 #include "Engine/Math/FloatRange.hpp"
 #include <Engine/Core/EngineCommon.hpp>
 #include "RandomNumberGenerator.hpp"
+#include "OBB3.hpp"
+#include "Mat44.hpp"
 
-#define PI 3.1415926535897f
+
 
 RandomNumberGenerator g_rng = RandomNumberGenerator();
 //Angle
@@ -339,6 +341,22 @@ bool IsPointInsideAABB3D(Vec3 const& point, AABB3 const& box)
 	return false;
 }
 
+bool IsPointInsideOBB3D(Vec3 const& point, OBB3 const& box)
+{
+	Vec3 boxOriginToPoint = point - box.m_center;
+	Vec3 relativePos = Vec3(DotProduct3D(boxOriginToPoint, box.m_iBasis),
+		DotProduct3D(boxOriginToPoint, box.m_jBasis),
+		DotProduct3D(boxOriginToPoint, box.m_kBasis));
+
+	if (relativePos.x > -box.m_halfDimensions.x && relativePos.x<box.m_halfDimensions.x
+		&& relativePos.y>box.m_halfDimensions.y && relativePos.y < box.m_halfDimensions.y
+		&& relativePos.z>box.m_halfDimensions.z && relativePos.z < box.m_halfDimensions.z)
+	{
+		return true;
+	}
+	return false;
+}
+
 Vec2 const GetNearestPointOnDisc2D(Vec2 const& referencePosition, Vec2 const& discCenter, float discRadius)
 {
 	if (GetDistance2D(referencePosition, discCenter) <= discRadius)
@@ -569,6 +587,36 @@ Vec3 const GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& b
 	return Vec3(x, y, z);
 }
 
+Vec3 const GetNearestPointOnPlane3D(Vec3 const& referencePosition, Plane3 const& plane)
+{
+	float altitude = DotProduct3D(plane.m_normal, referencePosition)-plane.m_distance;
+	return referencePosition - altitude * plane.m_normal;
+}
+
+Vec3 const GetNearestPointOnOBB3D(Vec3 const& referencePosition, OBB3 const& box)
+{
+	Vec3 boxOriginToPoint = referencePosition - box.m_center;
+	Vec3 relativePos = Vec3(DotProduct3D(boxOriginToPoint, box.m_iBasis),
+		DotProduct3D(boxOriginToPoint, box.m_jBasis),
+		DotProduct3D(boxOriginToPoint, box.m_kBasis));
+
+	float relativeX = GetClamped( relativePos.x, -box.m_halfDimensions.x, box.m_halfDimensions.x);
+	float relativeY = GetClamped( relativePos.y, -box.m_halfDimensions.y, box.m_halfDimensions.y);
+	float relativeZ = GetClamped( relativePos.z, -box.m_halfDimensions.z, box.m_halfDimensions.z); 
+
+	Mat44 mat = Mat44(box.m_iBasis, box.m_jBasis, box.m_kBasis, box.m_center);
+	return mat.TransformPosition3D(Vec3(relativeX, relativeY, relativeZ));
+}
+
+bool IsPointFrontOfPlane3(Vec3 const& referencePosition, Plane3 const& plane)
+{
+	if (DotProduct3D(plane.m_normal, referencePosition) > plane.m_distance)
+	{
+		return true;
+	}
+	return false;
+}
+
 bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint)
 {
 	Vec2 cp = fixedPoint - mobileDiscCenter;
@@ -711,6 +759,51 @@ bool DoZCylinderAndShpereOVerlap3D(Vec3 cylinderCenter, float cylinderRadius, fl
 {
 	Vec3 nearPoint = GetNearestPointOnZCylinder3D(sphereCenter,cylinderCenter,cylinderRadius,halfHeight);
 	if (GetDistanceSquared3D(sphereCenter, nearPoint) < sphereRadius * sphereRadius)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool DoAABB3AndPlane3Overlap3D(AABB3 const& aabb, Plane3 const& plane)
+{
+	Vec3 halfSize = (aabb.m_maxs - aabb.m_mins) * 0.5f;
+	Vec3 center = (aabb.m_mins + aabb.m_maxs) * 0.5f;
+
+	float r = halfSize.x * abs(plane.m_normal.x) +
+		halfSize.y * abs(plane.m_normal.y) +
+		halfSize.z * abs(plane.m_normal.z);
+
+	float distance = DotProduct3D(plane.m_normal, center) - plane.m_distance;
+
+	return abs(distance) <= r;
+}
+
+bool DoSphereAndPlane3Overlap3D(Vec3 const& center, float radius, Plane3 const& plane)
+{
+	float altitude = DotProduct3D(plane.m_normal, center) - plane.m_distance;
+	if (abs(altitude) < radius)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool DoOBB3AndPlane3Overlap3D(OBB3 const& obb, Plane3 const& plane)
+{
+	float r = fabsf(obb.m_halfDimensions.x * DotProduct3D(obb.m_iBasis, plane.m_normal)) +
+		fabsf(obb.m_halfDimensions.y * DotProduct3D(obb.m_jBasis, plane.m_normal)) +
+		fabsf(obb.m_halfDimensions.z * DotProduct3D(obb.m_kBasis, plane.m_normal));
+
+	float s = DotProduct3D(plane.m_normal, obb.m_center) - plane.m_distance;
+
+	return fabsf(s) <= r;
+}
+
+bool DoOBB3AndSphereOverlap3D(OBB3 const& obb, Vec3 const& center, float radius)
+{
+	Vec3 nearPoint = GetNearestPointOnOBB3D(center, obb);
+	if (GetDistanceSquared3D(center, nearPoint) < radius * radius)
 	{
 		return true;
 	}
@@ -1064,6 +1157,30 @@ void BounceDiscOffEachOther(Vec2& aCenter, float aRadius, Vec2& aVelocity, float
 		aVelocity = (newAVnLen * normal) + aVt;
 		bVelocity = (newBVnLen * normal) + bVt;
 	}
+}
+
+EulerAngles GetEulerFromRotationMat(Mat44 const& mat)
+{
+	EulerAngles euler;
+
+	if (mat.m_values[Mat44::Jz] > 0.998f)
+	{
+		euler.m_yawDegrees = atan2f(-mat.m_values[Mat44::Ix], mat.m_values[Mat44::Kx]) * 180.0f / PI;
+		euler.m_pitchDegrees = -90.0f;
+		euler.m_rollDegrees = 0.0f;
+	}
+	else if (mat.m_values[Mat44::Jz] < -0.998f) {
+		euler.m_yawDegrees = atan2f(mat.m_values[Mat44::Ix], -mat.m_values[Mat44::Kx]) * 180.0f / PI;
+		euler.m_pitchDegrees = 90.0f;
+		euler.m_rollDegrees = 0.0f;
+	}
+	else {
+		euler.m_pitchDegrees = asinf(-mat.m_values[Mat44::Jz]) * 180.0f / PI;
+		euler.m_yawDegrees = atan2f(mat.m_values[Mat44::Iz], mat.m_values[Mat44::Kz]) * 180.0f / PI;
+		euler.m_rollDegrees = atan2f(mat.m_values[Mat44::Jx], mat.m_values[Mat44::Jy]) * 180.0f / PI;
+	}
+
+	return euler;
 }
 
 

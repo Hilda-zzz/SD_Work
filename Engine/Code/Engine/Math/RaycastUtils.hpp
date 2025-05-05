@@ -4,6 +4,10 @@
 #include "Engine/Math/Ray.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
+#include "Engine/Math/Plane3.hpp"
+
+class OBB3;
+
 struct RaycastResult2D
 {
 public:
@@ -49,5 +53,7 @@ RaycastResult3D RaycastVsSphere3D(Vec3 const& startPos, Vec3 const& fwdNormal, f
 	Vec3 sphereCenter, float sphereRadius);
 RaycastResult3D RaycastVsAABB3D(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist, AABB3 const& box);
 RaycastResult3D RaycastVsZCylinder3D(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist, Vec3 const& cylinderCenter, float cylinderRadius, float halfHeight);
+RaycastResult3D	RaycastVsPlane3(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist, Plane3 const& plane);
+RaycastResult3D	RaycastVsOBB3(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist, OBB3 const& box);
 
 float GetMaxOrMinFromThree(float a, float b, float c,bool isMax);

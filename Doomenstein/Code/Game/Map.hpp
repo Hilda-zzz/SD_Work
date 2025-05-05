@@ -101,6 +101,7 @@ protected:
 	VertexBuffer*				m_vertexBuffer = nullptr;
 	IndexBuffer*				m_indexBuffer = nullptr;
 
+	EulerAngles m_lightOrientation = EulerAngles(45.f, 45.f, 45.f);
 	Vec3 m_sunDirection = Vec3(2.f, 1.f, -1.f);
 	float m_sunIntensity = 0.85f;
 	float m_ambientIntensity = 0.35f;

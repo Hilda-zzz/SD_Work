@@ -49,6 +49,7 @@ public:
 	void TurnInDirection(Vec3 const& direction,float maxDeg);
 
 	virtual void Render(PlayerController* curPlayer) const;
+	virtual void RenderShadowTexture(PlayerController* curPlayer) const;
 	Mat44 GetModelMat() const;
 
 	void OnPossessed(Controller* newController);
@@ -67,6 +68,7 @@ public:
 	bool PlayAnimation(std::string const& animName);
 	//bool PlayWeaponAnimation(std::string const& animName);
 
+	Mat44 GetFinalModelMat(PlayerController* curPlayer) const;
 private:
 	
 
@@ -109,6 +111,7 @@ public:
 	//std::vector<unsigned int>	m_indexs;
 	Texture* m_texture = nullptr;
 	Shader* m_shader = nullptr;
+	Shader* m_shadowShader = nullptr;
 	
 	Clock* m_animClock = nullptr;
 	Timer m_animTimer;
@@ -116,8 +119,6 @@ public:
 	int m_curAnimGroupIndex =0;
 	int m_nextAnimGroupIndex = 0;
 	AnimState m_animState = AnimState::IDLE;
-
-
 
 	//VertexBuffer* m_vertexBuffer = nullptr;
 	//IndexBuffer* m_indexBuffer = nullptr;

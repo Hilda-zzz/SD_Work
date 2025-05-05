@@ -1195,6 +1195,27 @@ void Map::Render() const
 	//-----------------------------------------------------------------------
 	if (m_game->m_playerController0)
 	{
+		Mat44 lightViewProjection=g_theRenderer->GetDirectLightProjectionMat(m_sunDirection,Vec3(m_dimensions.x*0.5f-1.f,m_dimensions.y*0.5f-1.f,0.f), m_dimensions.GetLength() * 0.5f);
+
+ 		g_theRenderer->BeginShadowMapRender(lightViewProjection);
+ 		for (Actor* actor : m_actors)
+ 		{
+			if (actor)
+			{
+				if (actor->m_isVisible)
+				{
+					//actor->UpdateAnimation(m_game->m_playerController0);
+					actor->RenderShadowTexture(m_game->m_playerController0);
+				}
+			}
+ 			
+ 		}
+		g_theRenderer->SetModelConstants();
+		g_theRenderer->DrawVertexArray_WithTBN(m_vertexs, m_indexs, m_vertexBuffer, m_indexBuffer);
+ 		g_theRenderer->EndShadowMapRender();
+
+		//--------------------------------------------------------------------
+
 		g_theRenderer->BeginCamera(m_game->m_playerController0->m_playerCam);
 
 		g_theRenderer->SetBlendMode(BlendMode::ALPHA);
