@@ -19,6 +19,7 @@ struct v2p_t
  	float4 worldBitangent : BITANGENT;
  	float4 worldNormal : NORMAL;
     float4 worldPosition : POSITION;
+    float4 lightSpacePos : TEXCOORD1;
 };
 
 //------------------------------------------------------------------------------------------------
@@ -61,6 +62,10 @@ cbuffer SpotLightBuffer : register(b5)
     uint ActiveSpotLightCount;
 }
 
+cbuffer ShadowConstants : register(b6)
+{
+    float4x4 LightViewProjection;     
+};
 
 //------------------------------------------------------------------------------------------------
 cbuffer CameraConstants : register(b2)
@@ -79,10 +84,10 @@ cbuffer ModelConstants : register(b3)
 
 //------------------------------------------------------------------------------------------------
 Texture2D diffuseTexture : register(t0);
-
+Texture2D shadowmapTexture: register(t1);
 //------------------------------------------------------------------------------------------------
 SamplerState samplerState : register(s0);
-
+SamplerComparisonState shadowSamplerState : register(s1);
 //------------------------------------------------------------------------------------------------
 v2p_t VertexMain(vs_input_t input)
 {
@@ -95,6 +100,7 @@ v2p_t VertexMain(vs_input_t input)
  	float4 worldTangent = mul(ModelToWorldTransform, float4(input.modelNormal, 0.0f));
  	float4 worldBitangent = mul(ModelToWorldTransform, float4(input.modelNormal, 0.0f));
  	float4 worldNormal = mul(ModelToWorldTransform, float4(input.modelNormal, 0.0f));
+    float4 lightSpacePos=mul(LightViewProjection,worldPosition);
 
 	v2p_t v2p;
 	v2p.clipPosition = clipPosition;
@@ -104,15 +110,52 @@ v2p_t VertexMain(vs_input_t input)
  	v2p.worldBitangent = worldBitangent;
  	v2p.worldNormal = worldNormal;
     v2p.worldPosition=worldPosition;
+    v2p.lightSpacePos=lightSpacePos;
 	return v2p;
 }
 
 //------------------------------------------------------------------------------------------------
 float4 PixelMain(v2p_t input) : SV_Target0
 {
+    //---------- shadow-------------------------------------------------
+    float2 shadowTexCoords;
+    shadowTexCoords.x = 0.5f + (input.lightSpacePos.x / input.lightSpacePos.w * 0.5f);
+    shadowTexCoords.y = 0.5f - (input.lightSpacePos.y / input.lightSpacePos.w * 0.5f);
+    float pixelDepth = input.lightSpacePos.z / input.lightSpacePos.w;
+
+    float shadowFactor = 1.0f;
+
+    if ((saturate(shadowTexCoords.x) == shadowTexCoords.x) &&
+    (saturate(shadowTexCoords.y) == shadowTexCoords.y) &&
+    (pixelDepth > 0.0f))
+    {
+        //calculate epsilon
+        float NdotL = max(dot(normalize(input.worldNormal.xyz), -normalize(SunDirection)), 0.0f);
+
+        float margin = acos(saturate(NdotL));
+        #ifdef LINEAR
+        float epsilon = 0.0005f / margin;
+        #else
+        float epsilon = 0.001f / margin;
+        #endif
+
+        epsilon = clamp(epsilon, 0.0f, 0.1f);
+        
+        //depth test
+        shadowFactor = float(shadowmapTexture.SampleCmpLevelZero(
+            shadowSamplerState,
+            shadowTexCoords,
+            pixelDepth + epsilon));
+        //if shadowFactor is 0.0---------in shadow
+        // shadowFactor is 1.0------------not in shadow
+
+    }
+    //------------------------------------------------------------------
+
     float ambient = AmbientIntensity;
     float directional = SunIntensity * saturate(dot(normalize(input.worldNormal.xyz), -SunDirection));
-    float3 totalLighting = float3(ambient + directional, ambient + directional, ambient + directional);
+    float shadedSunLight = directional * shadowFactor;
+    float3 totalLighting = float3(ambient + shadedSunLight, ambient + shadedSunLight, ambient + shadedSunLight);
     
     for(uint i = 0; i < ActivePointLightCount; i++)
     {
@@ -155,8 +198,10 @@ float4 PixelMain(v2p_t input) : SV_Target0
         }
     }
     
-    
     float4 lightColor = float4(totalLighting, 1);
+
+
+       
     
     float4 textureColor = diffuseTexture.Sample(samplerState, input.uv);
     float4 vertexColor = input.color;

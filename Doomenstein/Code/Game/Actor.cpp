@@ -415,6 +415,11 @@ void Actor::Render(PlayerController* curPlayer) const
 	g_theRenderer->BindTexture(&m_actorDef->m_spriteSheet->GetTexture());
 	g_theRenderer->BindShader(m_actorDef->m_shader);
 	g_theRenderer->SetModelConstants(finalModelMat, tintColor);
+	//shadow
+	Mat44 lightViewProjection = g_theRenderer->GetDirectLightProjectionMat(m_map->m_sunDirection, Vec3(m_map->m_dimensions.x * 0.5f - 1.f, m_map->m_dimensions.y * 0.5f - 1.f, 0.f), m_map->m_dimensions.GetLength() * 0.5f);
+	g_theRenderer->SetShadowConstants(lightViewProjection);
+	g_theRenderer->SetShadowSampleState();
+	g_theRenderer->BindShadowTexture();
 	g_theRenderer->DrawVertexArray_WithTBN(m_vertexsSpriteNorm);
 
 	//m_modelMat = billboardMatrix;
@@ -429,8 +434,9 @@ void Actor::RenderShadowTexture(PlayerController* curPlayer) const
 
 	g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_FRONT);
-	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+	g_theRenderer->BindTexture(&m_actorDef->m_spriteSheet->GetTexture());
+	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
 
 	g_theRenderer->DrawVertexArray(m_vertexsSprite);
 	g_theRenderer->DrawVertexArray_WithTBN(m_vertexsSpriteNorm);

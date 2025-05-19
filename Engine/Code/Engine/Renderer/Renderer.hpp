@@ -78,6 +78,7 @@ enum class VertexType
 struct RendererConfig
 {
 	Window* m_window = nullptr;
+	bool m_enableShadow = false;
 };
 
 class Renderer
@@ -146,6 +147,8 @@ public:
 	void BeginShadowMapRender(Mat44 const& lightViewProjection);
 	void EndShadowMapRender();
 	Mat44 GetDirectLightProjectionMat(Vec3 const& sunDirection, Vec3 const& sceneCenter, float sceneRadius);
+	void BindShadowTexture();
+	void SetShadowSampleState();
 
 public:
 	std::vector<Texture*>		m_loadedTextures;
@@ -198,6 +201,7 @@ protected:
 	ConstantBuffer* CreateConstantBuffer(const unsigned int size);
 	void			CopyCPUToGPU(const void* data, unsigned int size, ConstantBuffer* cbo);
 	void			BindConstantBuffer(int slot, ConstantBuffer* cbo);
+	
 	//----------------------------------------------------------------
 	
 	//----------------------------------------------------------------
@@ -223,7 +227,10 @@ protected:
 	ID3D11DepthStencilView* m_shadowDepthView = nullptr;
 	ID3D11ShaderResourceView* m_shadowResourceView = nullptr;
 	ID3D11SamplerState* m_comparisonSampler_point=nullptr;
-	ID3D11RasterizerState* m_shadowGenerateRasterizerStates= m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)];
-	ID3D11RasterizerState* m_shadowDrawRasterizerStates= m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)];
+// 	ID3D11RasterizerState* m_shadowGenerateRasterizerStates= m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)];
+// 	ID3D11RasterizerState* m_shadowDrawRasterizerStates= m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_NONE)];
 	D3D11_VIEWPORT* m_shadowViewport=nullptr;
+
+	float m_shadowDimensionX = 2048;
+	float m_shadowDimensionY = 2048;
 };

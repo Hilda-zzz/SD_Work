@@ -196,31 +196,43 @@ void Game3DTestShapes::Update()
 			if (g_theInput->WasKeyJustPressed('O'))
 			{
 				obb->m_euler.m_yawDegrees -= 10.f;
+				obb->m_euler.GetAsVectors_IFwd_JLeft_KUp(obb->m_box.m_iBasis, obb->m_box.m_jBasis, obb->m_box.m_kBasis);
+
+				Vec3 i, j, k;
+				obb->m_euler.GetAsVectors_IFwd_JLeft_KUp(i, j, k);
+				OBB3 newBox = OBB3(i, j, k, obb->m_box.m_halfDimensions, Vec3(0.f, 0.f, 0.f));
+				//OBB3 newBox = OBB3(i,Vec3(xHalfLen, yHalfLen, zHalfLen), Vec3(0.f, 0.f, 0.f));
+				obb->m_box = newBox;
 			}
 
 			if (g_theInput->WasKeyJustPressed('I'))
 			{
 				obb->m_euler.m_yawDegrees += 10.f;
+				obb->m_euler.GetAsVectors_IFwd_JLeft_KUp(obb->m_box.m_iBasis, obb->m_box.m_jBasis, obb->m_box.m_kBasis);
 			}
 
 			if (g_theInput->WasKeyJustPressed('J'))
 			{
 				obb->m_euler.m_pitchDegrees -= 10.f;
+				obb->m_euler.GetAsVectors_IFwd_JLeft_KUp(obb->m_box.m_iBasis, obb->m_box.m_jBasis, obb->m_box.m_kBasis);
 			}
 
 			if (g_theInput->WasKeyJustPressed('K'))
 			{
 				obb->m_euler.m_pitchDegrees += 10.f;
+				obb->m_euler.GetAsVectors_IFwd_JLeft_KUp(obb->m_box.m_iBasis, obb->m_box.m_jBasis, obb->m_box.m_kBasis);
 			}
 
 			if (g_theInput->WasKeyJustPressed('N'))
 			{
 				obb->m_euler.m_rollDegrees -= 10.f;
+				obb->m_euler.GetAsVectors_IFwd_JLeft_KUp(obb->m_box.m_iBasis, obb->m_box.m_jBasis, obb->m_box.m_kBasis);
 			}
 
 			if (g_theInput->WasKeyJustPressed('M'))
 			{
 				obb->m_euler.m_rollDegrees += 10.f;
+				obb->m_euler.GetAsVectors_IFwd_JLeft_KUp(obb->m_box.m_iBasis, obb->m_box.m_jBasis, obb->m_box.m_kBasis);
 			}
 
 			if (g_theInput->WasKeyJustPressed('U'))
@@ -228,6 +240,7 @@ void Game3DTestShapes::Update()
 				obb->m_euler.m_yawDegrees = 0.f;
 				obb->m_euler.m_pitchDegrees = 0.f;
 				obb->m_euler.m_rollDegrees = 0.f;
+				obb->m_euler.GetAsVectors_IFwd_JLeft_KUp(obb->m_box.m_iBasis, obb->m_box.m_jBasis, obb->m_box.m_kBasis);
 			}
 		}
 	}

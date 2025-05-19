@@ -48,6 +48,11 @@
     <Inventory>
       <Weapon name="Pistol" />
       <Weapon name="PlasmaRifle" />
+	  <Weapon name="ManMelee" />
+	  <Weapon name="ManStrong" />
+	  <Weapon name="ManDig" />
+	  <Weapon name="ManWater" />
+	  <Weapon name="ManBasket" />
     </Inventory>
   </ActorDefinition>
   <!-- Demon -->

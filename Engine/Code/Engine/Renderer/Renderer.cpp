@@ -240,6 +240,7 @@ void Renderer::Startup()
 	{
 		ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_FRONT failed");
 	}
+	
 
 	//WIREFRAME_CULL_NONE
 	rasterizerDesc = {};
@@ -267,6 +268,8 @@ void Renderer::Startup()
 		ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed");
 	}
 
+
+	//m_shadowDrawRasterizerStates = m_rasterizerStates[(int)RasterizerMode::SOLID_CULL_NONE];
 	//m_deviceContext->RSSetState(m_rasterizerState);
 
 	//---------------------------------------------------------
@@ -419,7 +422,10 @@ void Renderer::Startup()
 	//g_testFont =CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 
 	//---------------------------------------------------------------------
-	InitializeShadowMapping();
+	if (m_config.m_enableShadow)
+	{
+		InitializeShadowMapping();
+	}
 }
 
 void Renderer::BeginFrame()
@@ -568,7 +574,11 @@ void Renderer::ClearScreen(const Rgba8& clearColor)
 	m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
 	m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
-	m_deviceContext->ClearDepthStencilView(m_shadowDepthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	if (m_shadowDepthView)
+	{
+		m_deviceContext->ClearDepthStencilView(m_shadowDepthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	}
+	
 }
 
 void Renderer::BeginCamera(const Camera& camera)
@@ -1217,8 +1227,8 @@ void Renderer::InitializeShadowMapping()
 		shadowMapDesc.ArraySize = 1;
 		shadowMapDesc.SampleDesc.Count = 1;
 		shadowMapDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-		shadowMapDesc.Height = static_cast<UINT>(1024);
-		shadowMapDesc.Width = static_cast<UINT>(1024);
+		shadowMapDesc.Height = static_cast<UINT>(m_shadowDimensionX);
+		shadowMapDesc.Width = static_cast<UINT>(m_shadowDimensionY);
 
 		HRESULT hr = m_device->CreateTexture2D(
 			&shadowMapDesc,
@@ -1302,17 +1312,26 @@ void Renderer::InitializeShadowMapping()
 	ZeroMemory(m_shadowViewport, sizeof(D3D11_VIEWPORT));
 	m_shadowViewport->TopLeftX = 0.0f;
 	m_shadowViewport->TopLeftY = 0.0f;
-	m_shadowViewport->Width = 1024.0f;  
-	m_shadowViewport->Height = 1024.0f; 
+	m_shadowViewport->Width = m_shadowDimensionX;  
+	m_shadowViewport->Height = m_shadowDimensionY;
 	m_shadowViewport->MinDepth = 0.0f;
 	m_shadowViewport->MaxDepth = 1.0f;
 }
 
 void Renderer::BeginShadowMapRender(Mat44 const& lightViewProjection)
 {
+	// 首先解绑阴影贴图的着色器资源视图（从槽位1）
+	ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+	m_deviceContext->PSSetShaderResources(1, 1, nullSRV);  // 注意是槽位1
+
+	// 暂时解绑所有渲染目标
+	ID3D11RenderTargetView* nullRTV[1] = { nullptr };
+	ID3D11DepthStencilView* nullDSV = nullptr;
+	m_deviceContext->OMSetRenderTargets(1, nullRTV, nullDSV);
+
 	// Set render target
 	m_deviceContext->OMSetRenderTargets(0, nullptr, m_shadowDepthView);
-
+	//m_deviceContext->PSSetShaderResources(1, 1, &m_shadowResourceView);
 	// clear depth view
 	m_deviceContext->ClearDepthStencilView(m_shadowDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
@@ -1329,12 +1348,16 @@ void Renderer::BeginShadowMapRender(Mat44 const& lightViewProjection)
 	SetShadowConstants(lightViewProjection);
 
 	// set raster state
-	m_deviceContext->RSSetState(m_shadowDrawRasterizerStates);
+	//m_deviceContext->RSSetState(m_rasterizerStates[(int)RasterizerMode::SOLID_CULL_NONE]);
 }
 
 void Renderer::EndShadowMapRender()
 {
-	// not sure
+	ID3D11RenderTargetView* nullRTV[1] = { nullptr };
+	ID3D11DepthStencilView* nullDSV = nullptr;
+	m_deviceContext->OMSetRenderTargets(1, nullRTV, nullDSV);
+
+	// 只有在完全解绑阴影贴图的深度视图后，才重新设置主渲染目标
 	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
 }
 
@@ -1390,6 +1413,28 @@ Mat44 Renderer::GetDirectLightProjectionMat( Vec3 const& sunDirection,Vec3 const
 	viewProjMatrix.Append(renderMat);
 
 	return viewProjMatrix;
+}
+
+void Renderer::BindShadowTexture()
+{
+	if (m_shadowMapTexture)
+	{
+		m_deviceContext->PSSetShaderResources(1, 1, &m_shadowResourceView);
+	}
+	else
+	{
+		ERROR_AND_DIE("Try to bind shadow textuer but the shadow map is nullptr.");
+	}
+	
+// 	else
+// 	{
+// 		m_deviceContext->PSSetShaderResources(0, 1, &m_defaultTexture->m_shaderResourceView);
+// 	}
+}
+
+void Renderer::SetShadowSampleState()
+{
+	m_deviceContext->PSSetSamplers(1, 1, &m_comparisonSampler_point);
 }
 
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)
@@ -1501,11 +1546,11 @@ void Renderer::SetLightConstants(Vec3 const& sunDirection, float sunIntensity, f
 void Renderer::SetPointLightsConstants(const std::vector<PointLight>& lights)
 {
 	PointLightConstants pointLightConstants;
-	for (int i = 0; i < lights.size(); i++)
+	for (int i = 0; i < (int)lights.size(); i++)
 	{
 		pointLightConstants.PointLights[i] = lights[i];
 	}	
-	pointLightConstants.ActivePointLightCount = lights.size();
+	pointLightConstants.ActivePointLightCount =(int) lights.size();
 	CopyCPUToGPU(&pointLightConstants, sizeof(pointLightConstants), m_pointLightCBO);
 	BindConstantBuffer(k_pointLightConstantsSlot, m_pointLightCBO);
 }
@@ -1513,11 +1558,11 @@ void Renderer::SetPointLightsConstants(const std::vector<PointLight>& lights)
 void Renderer::SetSpotLightsConstants(const std::vector<SpotLight>& lights)
 {
 	SpotLightConstants spotLightConstants;
-	for (int i = 0; i < lights.size(); i++)
+	for (int i = 0; i < (int)lights.size(); i++)
 	{
 		spotLightConstants.SpotLights[i] = lights[i];
 	}
-	spotLightConstants.ActiveSpotLightCount = lights.size();
+	spotLightConstants.ActiveSpotLightCount = (int)lights.size();
 	CopyCPUToGPU(&spotLightConstants, sizeof(spotLightConstants), m_spotLightCBO);
 	BindConstantBuffer(k_spotLightConstantsSlot, m_spotLightCBO);
 }

@@ -108,6 +108,9 @@ void GameNearestPoint::Renderer() const
 void GameNearestPoint::UpdateCamera(float deltaTime)
 {
 	UNUSED(deltaTime);
+	IntVec2 dimensions = g_theWindow->GetClientDimensions();
+
+	m_screenCamera.SetViewport(AABB2(Vec2::ZERO, Vec2((float)dimensions.x, (float)dimensions.y)));
 	m_screenCamera.SetOrthographicView(Vec2(0.f, 0.f), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
 }
 

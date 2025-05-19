@@ -50,6 +50,7 @@ void App::Startup()
 	
 	RendererConfig rendererConfig;
 	rendererConfig.m_window = g_theWindow;
+	rendererConfig.m_enableShadow = true;
 	g_theRenderer = new Renderer(rendererConfig);
 	
 	g_systemClock = new Clock();

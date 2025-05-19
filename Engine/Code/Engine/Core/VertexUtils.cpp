@@ -334,18 +334,18 @@ void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, const AABB3& bounds, cons
 
 	// Z
 	AddVertsForQuad3D(verts,
+		Vec3(mins.x, mins.y, maxs.z),
 		Vec3(maxs.x, mins.y, maxs.z),  
 		Vec3(maxs.x, maxs.y, maxs.z),  
-		Vec3(mins.x, maxs.y, maxs.z),  
-		Vec3(mins.x, mins.y, maxs.z),  
+		Vec3(mins.x, maxs.y, maxs.z),   
 		color,AABB2(uvMins, uvMaxs));
 
 	// -Z
 	AddVertsForQuad3D(verts,
-		Vec3(maxs.x, mins.y, mins.z),
-		Vec3(mins.x, mins.y, mins.z),
 		Vec3(mins.x, maxs.y, mins.z),
 		Vec3(maxs.x, maxs.y, mins.z),
+		Vec3(maxs.x, mins.y, mins.z),
+		Vec3(mins.x, mins.y, mins.z),
 		color, AABB2(uvMins, uvMaxs));
 }
 
@@ -545,7 +545,7 @@ void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const 
 void AddVertsForOBB3D(std::vector<Vertex_PCU>& verts, const OBB3& box, const Rgba8& color, const AABB2& UVs)
 {
 	size_t originalSize = verts.size();
-	AddVertsForAABB3D(verts, AABB3(-box.m_halfDimensions, box.m_halfDimensions));
+	AddVertsForAABB3D(verts, AABB3(-box.m_halfDimensions, box.m_halfDimensions),color, UVs);
 
 	Mat44 mat = Mat44(box.m_iBasis, box.m_jBasis, box.m_kBasis, box.m_center);
 	for (size_t i= originalSize; i < verts.size(); i++)
@@ -686,7 +686,7 @@ void AddVertsForCylinder3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& 
 void AddVertsForOBB3DWireFrame(std::vector<Vertex_PCU>& verts, const OBB3& box, const Rgba8& color, const AABB2& UVs)
 {
 	size_t originalSize = verts.size();
-	AddVertsForAABB3DWireFrame(verts, AABB3(-box.m_halfDimensions, box.m_halfDimensions));
+	AddVertsForAABB3DWireFrame(verts, AABB3(-box.m_halfDimensions, box.m_halfDimensions),color,UVs);
 
 	Mat44 mat = Mat44(box.m_iBasis, box.m_jBasis, box.m_kBasis, box.m_center);
 	for (size_t i = originalSize; i < verts.size(); i++)
@@ -709,7 +709,7 @@ void AddVertsForPlane3D(std::vector<Vertex_PCU>& verts, Plane3 const& plane)
 	AddVertsForCylinder3D(verts, Vec3(0.f, 0.f, 0.f), planeOrigin, 0.02f, Rgba8(150, 150, 150, 100), AABB2::ZERO_TO_ONE, 4);
 	
 	AddVertsForCylinder3D(verts, planeOrigin, planeOrigin+plane.m_normal, 0.02f, Rgba8::HILDA);
-	AddVertsForCone3D(verts, planeOrigin + plane.m_normal, planeOrigin + plane.m_normal*1.1f, 0.02 * 1.5f, Rgba8::HILDA);
+	AddVertsForCone3D(verts, planeOrigin + plane.m_normal, planeOrigin + plane.m_normal*1.1f, 0.02f * 1.5f, Rgba8::HILDA);
 
 	Vec3 basisX = Vec3(0.f, 0.f, 0.f);
 	Vec3 basisY = Vec3(0.f, 0.f, 0.f);

@@ -13,36 +13,87 @@
 #include "Game/PlayerController.hpp"
 #include "Game/Actor.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Renderer/CubeSkyBox.hpp"
+#include "FieldObject.hpp"
+#include "PointLightAsset.hpp"
 extern SpriteSheet* g_terrianSpriteSheet;
 
-Map::Map(Game* game, const MapDefinition* definition) 
-	:m_game(game), m_definition(definition),m_physicsTimer(Timer(1.f/60.f,game->m_gameClock))
+static const Vec3 s_presetPositions[10] = {
+	Vec3(13.5f, 8.5f, 0.6f),
+	Vec3(15.5f, 8.5f, 0.6f),
+	Vec3(11.5f, 21.5f, 0.6f),
+	Vec3(18.5f, 21.5f, 0.6f),
+	Vec3(13.5f, 39.5f, 0.6f),
+	Vec3(17.5f, 39.5f, 0.6f),
+
+	Vec3(-3.5f, 3.0f, 1.0f),
+	Vec3(3.0f, -3.0f, 1.0f),
+	Vec3(-3.0f, -3.0f, 1.0f),
+	Vec3(0.0f, 0.0f, 5.0f)
+};
+
+
+Map::Map(Game* game, const MapDefinition* definition, bool isGold)
+	:m_game(game), m_definition(definition),m_physicsTimer(Timer(1.f/60.f,game->m_gameClock)),m_isGold(isGold)
 {
 	m_texture = m_definition->m_spriteSheetTexture;
 	m_shader = m_definition->m_shader;
+	m_shadowShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/ShadowMap", VertexType::VERTEX_PCUTBN);
 
-	m_pointLights.reserve(10);
-	PointLight pointLight = PointLight(
-		Vec3(3.f, 3.f, 0.5f),  
-		20.f,                  
-		Rgba8::CYAN,           
-		2.0f,                  
-		Vec3(1.0f, 0.09f, 0.032f) 
-	);
-	m_pointLights.push_back(pointLight);
+	m_pointLights.reserve(20);
+// 	PointLight pointLight = PointLight(
+// 		Vec3(3.f, 3.f, 0.5f),  
+// 		20.f,                  
+// 		Rgba8::CYAN,           
+// 		2.0f,                  
+// 		Vec3(1.0f, 0.09f, 0.032f) 
+// 	);
+// 	m_pointLights.push_back(pointLight);
 
 
 	m_spotLights.reserve(10);
-	SpotLight spotLight = SpotLight(
-		Vec3(10.f, 1.f, 1.5f),
+	SpotLight spotLight1 = SpotLight(
+		Vec3(13.5f, 9.5f, 0.6f),
 		20.f,
-		Rgba8::RED,
-		2.0f,
-		Vec3(1.0f, 0.09f, 0.032f),
-		20.f,Vec3(0.f,0.f,-1.f),20.f
+		Rgba8::BLUE,
+		2.5f,
+		Vec3(1.0f, 0.02f, 0.01f),
+		10.f,Vec3(1.2f,0.f,-1.f).GetNormalized(),20.f
 	);
-	m_spotLights.push_back(spotLight);
+	SpotLight spotLight2 = SpotLight(
+		Vec3(15.5f, 9.5f, 0.6f),
+		20.f,
+		Rgba8::MAGNETA,
+		2.5f,
+		Vec3(1.0f, 0.02f, 0.01f),
+		10.f, Vec3(-1.2f, 0.f, -1.f).GetNormalized(), 20.f
+	);
+	m_spotLights.push_back(spotLight1);
+	m_spotLights.push_back(spotLight2);
 	//m_mapClock = new Clock(*m_game->m_gameClock);
+
+	//----------sky box--------------------
+	std::string skyboxPaths[] = {
+	"Data/Images/SkyBox1/skyhsky_lf.png",
+	"Data/Images/SkyBox1/skyhsky_rt.png",
+	"Data/Images/SkyBox1/skyhsky_dn.png",
+	"Data/Images/SkyBox1/skyhsky_up.png",
+	"Data/Images/SkyBox1/skyhsky_ft.png",
+	"Data/Images/SkyBox1/skyhsky_bk.png",
+	};
+
+	std::string skyBoxShaderPath = "Data/Shaders/CubeSkyBox";
+
+	m_cubeSkybox = new CubeSkyBox(g_theRenderer, skyboxPaths, &skyBoxShaderPath);
+
+	m_field.reserve(12);
+
+	m_lanterns.reserve(10);
+	for (int i = 0; i < 10; ++i)
+	{
+		PointLightAsset* lantern = new PointLightAsset(s_presetPositions[i], this);
+		m_lanterns.push_back(lantern);
+	}
 }
 
 Map::~Map()
@@ -66,6 +117,18 @@ Map::~Map()
 	for (Actor* spawnPoint : m_spawnPoint)
 	{
 		spawnPoint = nullptr;
+	}
+
+	delete m_cubeSkybox;
+	m_cubeSkybox = nullptr;
+
+	for (FieldObject* field : m_field)
+	{
+		if (field)
+		{
+			delete field;
+			field = nullptr;
+		}
 	}
 }
 
@@ -496,6 +559,11 @@ void Map::Update(float deltaTime)
 
 	UpdateLight();
 
+	if (m_isGold)
+	{
+		UpdateGold(deltaTime);
+	}
+
 	if (!(m_game->m_playerController0 && m_game->m_playerController1))
 	{
 		if (g_theInput->WasKeyJustPressed('N'))
@@ -572,6 +640,61 @@ void Map::Update(float deltaTime)
 
 	//UpdatePlayerMode(deltaTime);
 	//UpdateRaycastTest();
+}
+
+void Map::UpdateGold(float deltaTime)
+{
+	m_curDayTime += deltaTime;
+	if (m_curDayTime > m_totalDayTime)
+	{
+		m_isSun = true;
+		m_curDayTime = 0.f;
+	}
+	else if (m_curDayTime > m_totalDayTime / 2.f)
+	{
+		m_isSun = false;
+	}
+
+// 	for (FieldObject* field : m_field)
+// 	{
+// 		if (field)
+// 		{
+// 			if (field->m_isDie)
+// 			{
+// 				delete field;
+// 				field = nullptr;
+// 			}
+// 		}
+// 
+// 	}
+// 	for (FieldObject* field : m_field)
+// 	{
+// 		if (field)
+// 		{
+// 			field->Update(deltaTime);
+// 		}
+// 	}
+
+	for (auto it = m_field.begin(); it != m_field.end();)
+	{
+		if ((*it) && (*it)->m_isDie)
+		{
+			delete* it;
+			it = m_field.erase(it); 
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	for (FieldObject* field : m_field)
+	{
+		if (field)
+		{
+			field->Update(deltaTime);
+		}
+	}
 }
 
 void Map::FixedUpdate(float deltaTime)
@@ -984,87 +1107,114 @@ bool Map::IsEyeSightBlock(const Vec3& start, const Vec3& direction, float distan
 	return false;
 }
 
+FieldObject* Map::RaycastAllFields(const Vec3& start, const Vec3& direction, float distance) const
+{
+	for (FieldObject* field : m_field)
+	{
+		if (field)
+		{
+			if (field->RaycastAgainst(start, direction, distance))
+			{
+				return field;
+			}
+		}
+	}
+	return nullptr;
+}
+
 void Map::UpdateLight()
 {
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
+	m_lightOrientation.m_pitchDegrees = (m_curDayTime / m_totalDayTime) * 360.f;
+	if (m_lightOrientation.m_pitchDegrees >= 180.f)
 	{
-		m_sunDirection.x -= 1.f;
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"LightDirection x: %.2f",
-			m_sunDirection.x);
-		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+		m_lightOrientation.m_pitchDegrees -= 180.f;
+		m_sunIntensity = 0.2f;
 	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
+	else
 	{
-		m_sunDirection.x += 1.f;
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"LightDirection x: %.2f",
-			m_sunDirection.x);
-		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+		m_sunIntensity = 0.85f;
 	}
-
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
-	{
-		m_sunDirection.y -= 1.f;
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"LightDirection y: %.2f",
-			m_sunDirection.y);
-		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
-	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F5))
-	{
-		m_sunDirection.y += 1.f;
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"LightDirection y: %.2f",
-			m_sunDirection.y);
-		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
-	}
-
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
-	{
-		m_sunIntensity -= 0.05f;
-		m_sunIntensity = GetClamped(m_sunIntensity, 0.f, 1.f);
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"LightIntensity: %.2f",
-			m_sunIntensity);
-		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
-	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
-	{
-		m_sunIntensity += 0.05f;
-		m_sunIntensity = GetClamped(m_sunIntensity, 0.f, 1.f);
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"LightIntensity: %.2f",
-			m_sunIntensity);
-		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
-	}
-
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F8))
-	{
-		m_ambientIntensity -= 0.05f;
-		m_ambientIntensity = GetClamped(m_ambientIntensity, 0.f, 1.f);
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"AmbientIntensity: %.2f",
-			m_ambientIntensity);
-		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
-	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_F9))
-	{
-		m_ambientIntensity += 0.05f;
-		m_ambientIntensity = GetClamped(m_ambientIntensity, 0.f, 1.f);
-		char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			"AmbientIntensity: %.2f",
-			m_ambientIntensity);
-		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
-	}
+	Vec3 right, up;
+	m_lightOrientation.GetAsVectors_IFwd_JLeft_KUp(m_sunDirection,right,up);
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
+// 	{
+// 		m_sunDirection.x -= 1.f;
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"LightDirection x: %.2f",
+// 			m_sunDirection.x);
+// 		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+// 	}
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
+// 	{
+// 		m_sunDirection.x += 1.f;
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"LightDirection x: %.2f",
+// 			m_sunDirection.x);
+// 		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+// 	}
+// 
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
+// 	{
+// 		m_sunDirection.y -= 1.f;
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"LightDirection y: %.2f",
+// 			m_sunDirection.y);
+// 		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+// 	}
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_F5))
+// 	{
+// 		m_sunDirection.y += 1.f;
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"LightDirection y: %.2f",
+// 			m_sunDirection.y);
+// 		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+// 	}
+// 
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
+// 	{
+// 		m_sunIntensity -= 0.05f;
+// 		m_sunIntensity = GetClamped(m_sunIntensity, 0.f, 1.f);
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"LightIntensity: %.2f",
+// 			m_sunIntensity);
+// 		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+// 	}
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
+// 	{
+// 		m_sunIntensity += 0.05f;
+// 		m_sunIntensity = GetClamped(m_sunIntensity, 0.f, 1.f);
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"LightIntensity: %.2f",
+// 			m_sunIntensity);
+// 		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+// 	}
+// 
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_F8))
+// 	{
+// 		m_ambientIntensity -= 0.05f;
+// 		m_ambientIntensity = GetClamped(m_ambientIntensity, 0.f, 1.f);
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"AmbientIntensity: %.2f",
+// 			m_ambientIntensity);
+// 		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+// 	}
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_F9))
+// 	{
+// 		m_ambientIntensity += 0.05f;
+// 		m_ambientIntensity = GetClamped(m_ambientIntensity, 0.f, 1.f);
+// 		char buffer[256];
+// 		snprintf(buffer, sizeof(buffer),
+// 			"AmbientIntensity: %.2f",
+// 			m_ambientIntensity);
+// 		DebugAddMessage(std::string(buffer), 2.f, Rgba8::HILDA, Rgba8::RED);
+// 	}
 }
 
 //void Map::UpdateSprint()
@@ -1195,6 +1345,8 @@ void Map::Render() const
 	//-----------------------------------------------------------------------
 	if (m_game->m_playerController0)
 	{
+		
+		//generate shadow map
 		Mat44 lightViewProjection=g_theRenderer->GetDirectLightProjectionMat(m_sunDirection,Vec3(m_dimensions.x*0.5f-1.f,m_dimensions.y*0.5f-1.f,0.f), m_dimensions.GetLength() * 0.5f);
 
  		g_theRenderer->BeginShadowMapRender(lightViewProjection);
@@ -1210,13 +1362,29 @@ void Map::Render() const
 			}
  			
  		}
+		for (FieldObject* field : m_field)
+		{
+			if (field)
+			{
+				field->RenderShadowTexture(m_game->m_playerController0);
+			}
+		}
+		g_theRenderer->BindTexture(m_texture);
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_FRONT);
 		g_theRenderer->SetModelConstants();
+		g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
+		g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+		g_theRenderer->BindShader(m_shadowShader);
+
 		g_theRenderer->DrawVertexArray_WithTBN(m_vertexs, m_indexs, m_vertexBuffer, m_indexBuffer);
+
  		g_theRenderer->EndShadowMapRender();
 
 		//--------------------------------------------------------------------
 
 		g_theRenderer->BeginCamera(m_game->m_playerController0->m_playerCam);
+
+		m_cubeSkybox->Render();
 
 		g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 		g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
@@ -1229,7 +1397,14 @@ void Map::Render() const
 		g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
 		g_theRenderer->SetPointLightsConstants(m_pointLights);
 		g_theRenderer->SetSpotLightsConstants(m_spotLights);
+		
+		//shadow
+		g_theRenderer->SetShadowConstants(lightViewProjection);
+		g_theRenderer->SetShadowSampleState();
+		g_theRenderer->BindShadowTexture();
+
 		g_theRenderer->DrawVertexArray_WithTBN(m_vertexs, m_indexs, m_vertexBuffer, m_indexBuffer);
+
 		if (m_game->m_playerController1)
 		{
 			m_game->m_playerController1->GetActor()->UpdateAnimation(m_game->m_playerController0);
@@ -1248,14 +1423,41 @@ void Map::Render() const
 
 		}
 
+		for (FieldObject* field : m_field)
+		{
+			if (field)
+			{
+				field->Render(m_game->m_playerController0);
+			}
+		}
+
+		for (PointLightAsset* lantern : m_lanterns)
+		{
+			if (lantern)
+			{
+				lantern->Render(m_game->m_playerController0);
+			}
+		}
+
 		g_theRenderer->EndCamera(m_game->m_playerController0->m_playerCam);
-		m_game->m_playerController0->RenderPlayerHUD();
+
+		if (!m_isGold)
+		{
+			m_game->m_playerController0->RenderPlayerHUD();
+		}
+		else
+		{
+			m_game->m_playerController0->RenderGoldHUD();
+		}
 	}
 	
 	//-----------------------------------------------------------------------
 	if (m_game->m_playerController1)
 	{
+		m_cubeSkybox->Render();
 		g_theRenderer->BeginCamera(m_game->m_playerController1->m_playerCam);
+
+		m_cubeSkybox->Render();
 
 		g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 		g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
@@ -1284,8 +1486,33 @@ void Map::Render() const
 				}
 			}
 		}
+		for (FieldObject* field : m_field)
+		{
+			if (field)
+			{
+				field->Render(m_game->m_playerController1);
+			}
+		}
+
+		for (PointLightAsset* lantern : m_lanterns)
+		{
+			if (lantern)
+			{
+				lantern->Render(m_game->m_playerController1);
+			}
+		}
+
 		g_theRenderer->EndCamera(m_game->m_playerController1->m_playerCam);
-		m_game->m_playerController1->RenderPlayerHUD();
+
+
+		if (!m_isGold)
+		{
+			m_game->m_playerController0->RenderPlayerHUD();
+		}
+		else
+		{
+			m_game->m_playerController0->RenderGoldHUD();
+		}
 	}
 }
 
@@ -1382,4 +1609,11 @@ void Map::DebugPossessNext()
 		m_game->m_playerController0->Possess(*m_actors[m_curPlayerActorIndex]->m_actorHandle,-1);
 	}
 
+}
+
+void Map::SpawnPlantField(IntVec2 const& tileCoords)
+{
+	Vec3 position = Vec3((float)tileCoords.x + 0.5f, (float)tileCoords.y + 0.5f, 0.05f);
+	FieldObject* newField = new FieldObject(position, this);
+	m_field.push_back(newField);
 }

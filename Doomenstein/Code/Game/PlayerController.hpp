@@ -27,6 +27,7 @@ public:
 	void UpdateKBInputCam(float deltaSeconds);
 	void UpdateControllerInputCam(float deltaSeconds,int controllerID);
 	void UpdateKBInputPlayer(float deltaSeconds);
+	
 
 	void SetWeaponAnimDef();
 
@@ -34,8 +35,10 @@ public:
 	void UpdateControllerInputPlayer(float deltaSeconds, int controllerID);
 	void UpdateCamera(float deltaSeconds);
 	void UpdateHUD();
+	void UpdateGoldHUD();
 
 	void RenderPlayerHUD() const;
+	void RenderGoldHUD() const;
 
 	void Possess(ActorHandle actorHandle, int viewPortType);
 	Actor* GetActor() const;
@@ -49,6 +52,7 @@ public:
 	Camera m_playerCam;
 	Camera m_hudCam;
 
+	int m_coinCount = 10;
 
 private:
 	int m_playerIndex = -1;
@@ -72,6 +76,13 @@ private:
 	std::vector<Vertex_PCU> m_rectileVerts;
 	std::vector<Vertex_PCU> m_textVerts; 
 	std::vector<Vertex_PCU> m_blackVerts;
+	//clock
+	std::vector<Vertex_PCU> m_clockBaseVerts;
+	std::vector<Vertex_PCU> m_sunIconVerts;
+	Vec2 m_clockBasePos=Vec2(90.f,720.f);
+	Vec2 m_sunIconPos;
+	Vec2 m_clockHalfExtent = Vec2(64.f, 64.f);
+	Vec2 m_sunHalfExtent = Vec2(16.f, 16.f);
 
 	Timer m_weaponAnimTimer;
 	SpriteSheet* m_curWeaponSheet=nullptr;

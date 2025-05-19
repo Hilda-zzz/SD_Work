@@ -27,6 +27,6 @@ private:
 private:
 	Game* m_theGame;
 	float m_timeLastFrameStart=0;
-	GameMode m_curGameMode = GAME_MODE_PACHINKO2D;
+	GameMode m_curGameMode = GAME_MODE_3DSHAPES;
 };
 bool OnQuitEvent(EventArgs& args);

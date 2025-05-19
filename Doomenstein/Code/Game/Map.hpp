@@ -13,11 +13,15 @@
 class Actor;
 class MapDefinition;
 class Projectile;
+class CubeSkyBox;
+class FieldObject;
+class PointLightAsset;
+
 
 class Map
 {
 public:
-	Map(Game* game, const MapDefinition* definition);	
+	Map(Game* game, const MapDefinition* definition,bool isGold);	
 	~Map();
 
 	void InitializeMap();
@@ -54,6 +58,7 @@ public:
 	void DeleteDestroyedActors();
 	//------------------
 	void Update(float deltaTime);
+	void UpdateGold(float deltaTime);
 	void FixedUpdate(float deltaTime);
  	void CollideActors();
  	void CollideActorsWithMap();
@@ -64,6 +69,7 @@ public:
  	RaycastResult3D RaycastWorldXY(const Vec3& start, const Vec3& direction, float distance) const;
  	RaycastResult3D RaycastWorldZ(const Vec3& start, const Vec3& direction, float distance) const;
 	bool IsEyeSightBlock(const Vec3& start, const Vec3& direction, float distance, ActorHandle* sourceActorHandle, float aimDist);
+	FieldObject* RaycastAllFields(const Vec3& start, const Vec3& direction, float distance) const;
 	//---------------------------------------------------------------------------------
 	void UpdateLight();
 	//void UpdateSprint();
@@ -77,6 +83,8 @@ public:
 	ActorHandle* GetMeleeTarget(Actor* myActor, Faction const& aimFaction, float meleeRadius, float meleeDegrees);
 	//------------------
 	void DebugPossessNext();
+
+	void SpawnPlantField(IntVec2 const& tileCoords);
 public:
 	Game* m_game = nullptr;
 	//Actor* m_player = nullptr;
@@ -88,23 +96,38 @@ public:
 	std::vector<Actor*> m_actors;
 	std::vector<Actor*> m_spawnPoint;
 	unsigned int m_nextActorUID = 1;
+	Vec3 m_sunDirection = Vec3(2.f, 1.f, -1.f);
+	IntVec2					m_dimensions;
+
+	bool m_isGold = false;
+
+	//day night time
+	float m_curDayTime = 0;
+	float m_totalDayTime =240.f;
+	bool m_isSun = true;
+
+	Shader* m_shader = nullptr;
+	Shader* m_shadowShader = nullptr;
+
+	std::vector<PointLight> m_pointLights;
+	std::vector<SpotLight> m_spotLights;
 
 protected:
 	const MapDefinition*	m_definition = nullptr;
 	std::vector<Tile>		m_tiles;
-	IntVec2					m_dimensions;
+	
 
 	std::vector<Vertex_PCUTBN>	m_vertexs;
 	std::vector<unsigned int>	m_indexs;
 	Texture*					m_texture = nullptr;
-	Shader*						m_shader = nullptr;
+	
 	VertexBuffer*				m_vertexBuffer = nullptr;
 	IndexBuffer*				m_indexBuffer = nullptr;
 
-	EulerAngles m_lightOrientation = EulerAngles(45.f, 45.f, 45.f);
-	Vec3 m_sunDirection = Vec3(2.f, 1.f, -1.f);
+	EulerAngles m_lightOrientation = EulerAngles(45.f, 0.f, 0.f);
+	
 	float m_sunIntensity = 0.85f;
-	float m_ambientIntensity = 0.35f;
+	float m_ambientIntensity = 0.25f;
 
 
 	Timer m_physicsTimer;
@@ -114,6 +137,16 @@ protected:
 	float m_physicsUpdateAccumulator = 0.f;
 	float m_fixedTimeStep = 1.0f / 500.0f;
 
-	std::vector<PointLight> m_pointLights;
-	std::vector<SpotLight> m_spotLights;
+
+
+	
+
+	CubeSkyBox* m_cubeSkybox = nullptr;
+
+	
+	std::vector<FieldObject*> m_field;
+
+	std::vector<PointLightAsset*> m_lanterns;
+
+
 };

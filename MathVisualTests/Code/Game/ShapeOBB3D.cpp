@@ -72,13 +72,13 @@ void ShapeOBB3D::Render() const
 
 Vec3 ShapeOBB3D::GetNearestPoint(Vec3 const& referPos) const
 {
-	OBB3 realBox = OBB3(m_box.m_iBasis, m_box.m_halfDimensions, m_center);
+	OBB3 realBox = OBB3(m_box.m_iBasis, m_box.m_jBasis, m_box.m_kBasis, m_box.m_halfDimensions, m_center);
 	return GetNearestPointOnOBB3D(referPos, realBox);
 }
 
 RaycastResult3D ShapeOBB3D::GetRaycastResult(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist) const
 {
-	OBB3 realBox = OBB3(m_box.m_iBasis, m_box.m_halfDimensions, m_center);
+	OBB3 realBox = OBB3(m_box.m_iBasis, m_box.m_jBasis, m_box.m_kBasis, m_box.m_halfDimensions, m_center);
 	return RaycastVsOBB3(startPos, fwdNormal, maxDist, realBox);
 }
 
@@ -93,6 +93,7 @@ void ShapeOBB3D::RandomSize()
 	Vec3 i, j, k;
 	m_euler.GetAsVectors_IFwd_JLeft_KUp(i, j, k);
 	OBB3 newBox = OBB3(i,j,k,Vec3(xHalfLen, yHalfLen, zHalfLen),Vec3(0.f,0.f,0.f));
+	//OBB3 newBox = OBB3(i,Vec3(xHalfLen, yHalfLen, zHalfLen), Vec3(0.f, 0.f, 0.f));
 	m_box = newBox;
 
 	m_verts.clear();

@@ -26,6 +26,8 @@ PlayerController::PlayerController(Map* map):Controller(map)
 // 	m_playerCam.SetCameraToRenderTransform(Mat44(Vec3(0.f, 0.f, 1.f), Vec3(-1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f)));
 // 	m_playerCam.SetPositionAndOrientation(m_camPosition, m_camOrientation);
 // 	//viewport.GetDimensions().x/viewport.GetDimensions().y
+
+	AddVertsForAABB2D(m_clockBaseVerts, AABB2(-m_clockHalfExtent + m_clockBasePos, m_clockHalfExtent + m_clockBasePos), Rgba8::WHITE);
 }
 
 PlayerController::~PlayerController()
@@ -58,7 +60,14 @@ void PlayerController::Update(float deltaSeconds)
 	UpdatePlayerInput(deltaSeconds);
 	UpdateCamera(deltaSeconds);
 
-	UpdateHUD();
+	if (!m_curMap->m_isGold)
+	{
+		UpdateHUD();
+	}
+	else
+	{
+		UpdateGoldHUD();
+	}
 }
 
 void PlayerController::UpdatePlayerInput(float deltaSeconds)
@@ -383,6 +392,72 @@ void PlayerController::UpdateKBInputPlayer(float deltaSeconds)
 	}
 }
 
+void PlayerController::UpdateGoldHUD()
+{
+	m_hudBaseVerts.clear();
+	m_hudWeaponVerts.clear();
+	m_rectileVerts.clear();
+	m_blackVerts.clear();
+	if (GetActor()->m_isDead)
+	{
+		AABB2 blackBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
+		AddVertsForAABB2D(m_hudBaseVerts, blackBox, Rgba8::TRANSP_BLACK, Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+	}
+	if (GetActor()->m_weapon->m_def.m_animDefs.size() != 0)
+	{
+		if (m_weaponAnimDef->GetPlaybackType() == SpriteAnimPlaybackType::ONCE && m_weaponAnimTimer.GetElapsedFraction() > 1.f)
+		{
+			PlayWeaponAnimationHud("Idle");
+		}
+		SpriteDefinition weaponSpriteDef = m_weaponAnimDef->GetSpriteDefAtTime((float)m_weaponAnimTimer.GetElapsedTime());
+
+
+		AABB2 hudBaseBox = AABB2(Vec2::ZERO, Vec2(1600.f, 166.f));
+		AddVertsForAABB2D(m_hudBaseVerts, hudBaseBox, Rgba8::WHITE, Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+
+
+		IntVec2 weaponSpriteSize = GetActor()->m_weapon->m_def.m_spriteSize;
+		IntVec2 rectileSpriteSize = GetActor()->m_weapon->m_def.m_reticleSize;
+		AABB2 weaponBox;
+		AABB2 rectileBox;
+
+		if (GetActor()->m_map->m_game->m_playerController0 && GetActor()->m_map->m_game->m_playerController1)
+		{
+			weaponBox = AABB2(Vec2(800.f, 255.f) - Vec2(0.5f * (float)weaponSpriteSize.x, (float)weaponSpriteSize.y),
+				Vec2(800.f, 220.f) + Vec2(0.5f * (float)weaponSpriteSize.x, (float)weaponSpriteSize.y));
+			rectileBox = AABB2(Vec2(800.f, 400.f) - Vec2(0.5f * (float)rectileSpriteSize.x, (float)rectileSpriteSize.y),
+				Vec2(800.f, 400.f) + Vec2(0.5f * (float)rectileSpriteSize.x, (float)rectileSpriteSize.y));
+		}
+		else
+		{
+			weaponBox = AABB2(Vec2(800.f, 235.f) - Vec2(0.5f * (float)weaponSpriteSize.x, 0.5f * (float)weaponSpriteSize.y),
+				Vec2(800.f, 220.f) + Vec2(0.5f * (float)weaponSpriteSize.x, 0.5f * (float)weaponSpriteSize.y));
+			rectileBox = AABB2(Vec2(800.f, 400.f) - Vec2(0.5f * (float)rectileSpriteSize.x, 0.5f * (float)rectileSpriteSize.y),
+				Vec2(800.f, 400.f) + Vec2(0.5f * (float)rectileSpriteSize.x, 0.5f * (float)rectileSpriteSize.y));
+		}
+
+		AddVertsForAABB2D(m_hudWeaponVerts, weaponBox, Rgba8::WHITE, weaponSpriteDef.GetUVs().m_mins, weaponSpriteDef.GetUVs().m_maxs);
+		AddVertsForAABB2D(m_rectileVerts, rectileBox, Rgba8::WHITE, Vec2::ZERO, Vec2::ONE);
+	}
+	int healthInInt = (int)GetActor()->m_curHealth;
+	std::string curPlayerHealth = std::to_string(healthInInt);
+	std::string curCoin = std::to_string(m_coinCount);
+
+	m_textVerts.clear();
+	m_font->AddVertsForTextInBox2D(m_textVerts, curPlayerHealth, AABB2(Vec2(700.f, 15.f), Vec2(850.f, 50.f)), 30.f);
+	m_font->AddVertsForTextInBox2D(m_textVerts, curCoin, AABB2(Vec2(700.f, 45.f), Vec2(850.f, 100.f)), 30.f);
+// 	m_font->AddVertsForTextInBox2D(m_textVerts, std::to_string(GetActor()->m_controller->m_kills), AABB2(Vec2(50.f, 50.f), Vec2(150.f, 100.f)), 50.f);
+// 	m_font->AddVertsForTextInBox2D(m_textVerts, std::to_string(GetActor()->m_controller->m_death), AABB2(Vec2(1450.f, 50.f), Vec2(1550.f, 100.f)), 50.f);
+
+	m_sunIconVerts.clear();
+	float sunIconAngle = -(m_curMap->m_curDayTime / m_curMap->m_totalDayTime) * 720.f-90.f;
+	Vec2 sunDirection=Vec2::MakeFromPolarDegrees(sunIconAngle);
+	sunDirection.Normalize();
+	m_sunIconPos = m_clockBasePos + 45.f * sunDirection;
+	AABB2 sunIconBox = AABB2(m_sunIconPos - m_sunHalfExtent, m_sunIconPos + m_sunHalfExtent);
+	AddVertsForAABB2D(m_sunIconVerts, sunIconBox, Rgba8::WHITE);
+}
+
 void PlayerController::SetWeaponAnimDef()
 {
 	auto spriteAnimDef = GetActor()->m_weapon->m_def.m_animDefs.find("Idle");
@@ -688,6 +763,59 @@ void PlayerController::RenderPlayerHUD() const
 
 		g_theRenderer->BindTexture(&m_font->GetTexture());
 		g_theRenderer->DrawVertexArray(m_textVerts);
+
+		g_theRenderer->EndCamera(m_hudCam);
+	}
+
+
+}
+
+void PlayerController::RenderGoldHUD() const
+{
+	Actor* actor = GetActor();
+	Texture* hudBase = g_theRenderer->CreateOrGetTextureFromFile(actor->m_weapon->m_def.m_baseTexturePath.c_str());
+	Texture* rectile = g_theRenderer->CreateOrGetTextureFromFile(actor->m_weapon->m_def.m_reticleTexturePath.c_str());
+	Texture* m_weaponAnimTexture = nullptr;
+	auto it = actor->m_weapon->m_def.m_animSheet.find("Idle");
+	if (it != actor->m_weapon->m_def.m_animSheet.end())
+	{
+		SpriteSheet* weaponAnimSheet = it->second;
+		m_weaponAnimTexture = &weaponAnimSheet->GetTexture();
+	}
+	if (hudBase)
+	{
+		g_theRenderer->BeginCamera(m_hudCam);
+
+		g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+		g_theRenderer->BindShader(nullptr);
+		g_theRenderer->SetModelConstants();
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->DrawVertexArray(m_blackVerts);
+
+		g_theRenderer->BindTexture(m_weaponAnimTexture);
+		g_theRenderer->DrawVertexArray(m_hudWeaponVerts);
+		g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/DoomUIBot.png"));
+		g_theRenderer->DrawVertexArray(m_hudBaseVerts);
+		g_theRenderer->BindTexture(rectile);
+		g_theRenderer->DrawVertexArray(m_rectileVerts);
+
+		g_theRenderer->BindTexture(&m_font->GetTexture());
+		g_theRenderer->DrawVertexArray(m_textVerts);
+
+		g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/ClockBase.png"));
+		g_theRenderer->DrawVertexArray(m_clockBaseVerts);
+
+		if (m_curMap->m_isSun)
+		{
+			g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/SunIcon.png"));
+		}
+		else
+		{
+			g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/MoonIcon.png"));
+		}
+		
+		g_theRenderer->DrawVertexArray(m_sunIconVerts);
 
 		g_theRenderer->EndCamera(m_hudCam);
 	}

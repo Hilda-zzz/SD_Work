@@ -4,6 +4,9 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
+#include "Button.hpp"
+#include "Engine/Core/EventSystem.hpp"
+
 class Clock;
 class Player;
 class Texture;
@@ -17,8 +20,10 @@ enum class GameState
 {
 	NONE,
 	ATTRACT,
+	Menu,
 	LOBBY,
 	PLAYING,
+	GOLD,
 	COUNT
 };
 
@@ -35,11 +40,15 @@ public:
 	void ExitState(GameState state);
 
 	void EnterAttractMode();
-	//void EnterLobbyMode();
-	void EnterPlayingMode();
+	void EnterPlayingMode(bool isGold);
 
 	void ExitLobbyMode();
 	void ExitPlayingMode();
+
+	// event
+	static bool BtnEvent_NormalMode(EventArgs& args);
+	static bool BtnEvent_GoldlMode(EventArgs& args);
+	static bool BtnEvent_TutorialMode(EventArgs& args);
 
 private:
 	void UpdateAttractMode(float deltaTime);
@@ -59,14 +68,19 @@ private:
 
 	void ParseGameConfig();
 
+	void UpdateMenuMode();
+	void RenderMenuMode() const;
+
+	void InitializeMenuButtons();
+
 public:
 	Clock* m_gameClock = nullptr;
 	Camera m_screenCamera;
 	RandomNumberGenerator m_rng;
 
 	bool m_isDevConsole = false;
-	GameState m_curGameState = GameState::ATTRACT;
-	GameState m_nextState = GameState::ATTRACT;
+	static GameState m_curGameState;
+	static GameState m_nextState;
 
 	std::vector<Map*> m_maps;
 	Map* m_curMap = nullptr;
@@ -80,6 +94,7 @@ private:
 	bool m_pauseAfterUpdate = false;
 
 	BitmapFont* m_font = nullptr;
+	BitmapFont* m_menuBtnFont = nullptr;
 	std::vector<Vertex_PCU> m_lobbyTextVerts;
 
 	float m_musicVolume = 0.1f;
@@ -90,4 +105,9 @@ private:
 
 	SoundPlaybackID m_menuMusic;
 	SoundPlaybackID m_gameMusic;
+
+	//Menu UI
+	Button m_btnMenuNormalMode;
+	Button m_btnMenuGoldMode;
+	Button m_btnMenuTutorialMode;
 };

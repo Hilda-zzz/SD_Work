@@ -27,6 +27,9 @@ extern bool g_isDebugDraw;
 extern Renderer* g_theRenderer;
 extern Clock* g_systemClock;
 
+GameState Game::m_curGameState = GameState::ATTRACT;
+GameState Game::m_nextState = GameState::ATTRACT;
+
 SpriteSheet* g_terrianSpriteSheet = nullptr;
 
 Game::Game()
@@ -34,6 +37,7 @@ Game::Game()
 	ParseGameConfig();
 	m_gameClock = new Clock();
 	m_font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+	m_menuBtnFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/DariniaFont");
 
 	IntVec2 clientDimensions = g_theWindow->GetClientDimensions();
 	m_screenCamera.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)clientDimensions.x, (float)clientDimensions.y)));
@@ -56,6 +60,11 @@ Game::Game()
 
 	Texture* tileMapTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Terrain_8x8.png");
 	g_terrianSpriteSheet = new SpriteSheet(*tileMapTexture, IntVec2(8, 8));
+
+	g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Attract.png");
+	g_theRenderer->CreateOrGetTextureFromFile("Data/Images/MainMenu.png");
+
+	InitializeMenuButtons();
 
 	TileDefinition::InitializeTileDefinitionFromFile();
 	MapDefinition::InitializeMapDefinitionFromFile();
@@ -131,11 +140,17 @@ void Game::Update()
 	{
 	case GameState::NONE:
 		break;
+	case GameState::Menu:
+		UpdateMenuMode();
+		break;
 	case GameState::ATTRACT:
 		UpdateAttractMode(deltaSeconds);
 		break;
 	case GameState::LOBBY:
 		UpdateLobbyMode(deltaSeconds);
+		break;
+	case GameState::GOLD:
+		UpdateGameplayMode(deltaSeconds);
 		break;
 	case GameState::PLAYING:
 		UpdateGameplayMode(deltaSeconds);
@@ -155,11 +170,17 @@ void Game::Renderer() const
 	{
 	case GameState::NONE:
 		break;
+	case GameState::Menu:
+		RenderMenuMode();
+		break;
 	case GameState::ATTRACT:
 		RenderAttractMode();
 		break;
 	case GameState::LOBBY:
 		RenderLobbyMode();
+		break;
+	case GameState::GOLD:
+		RenderPlayingMode();
 		break;
 	case GameState::PLAYING:
 		RenderPlayingMode();
@@ -186,8 +207,11 @@ void Game::EnterState(GameState state)
 		break;
 	case GameState::LOBBY:
 		break;
+	case GameState::GOLD:
+		EnterPlayingMode(true);
+		break;
 	case GameState::PLAYING:
-		EnterPlayingMode();
+		EnterPlayingMode(false);
 		break;
 	case GameState::COUNT:
 		break;
@@ -206,6 +230,9 @@ void Game::ExitState(GameState state)
 		break;
 	case GameState::LOBBY:
 		ExitLobbyMode();
+		break;
+	case GameState::GOLD:
+		ExitPlayingMode();
 		break;
 	case GameState::PLAYING:
 		ExitPlayingMode();
@@ -230,7 +257,7 @@ void Game::EnterAttractMode()
 	
 }
 
-void Game::EnterPlayingMode()
+void Game::EnterPlayingMode(bool isGold)
 {
 	g_theAudio->StopSound(m_menuMusic);
 
@@ -241,19 +268,28 @@ void Game::EnterPlayingMode()
 	g_theApp->SetCursorMode(CursorMode::FPS);
 
 	m_maps.reserve(10);
-	Map* map1 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
-	// 	Map* map2 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
-	// 	Map* map3 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
-	// 	Map* map4 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
-	// 	Map* map5 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
-	// 	Map* map6 = new Map(this, &MapDefinition::s_mapDefinitions[0]);
+	Map* map1 = new Map(this, &MapDefinition::s_mapDefinitions[0], false);
+	Map* map2 = new Map(this, &MapDefinition::s_mapDefinitions[1], true);
+	Map* map3 = new Map(this, &MapDefinition::s_mapDefinitions[2], true);
+
 	m_maps.push_back(map1);
-	// 	m_maps.push_back(map2);
-	// 	m_maps.push_back(map3);
-	// 	m_maps.push_back(map4);
-	// 	m_maps.push_back(map5);
-	// 	m_maps.push_back(map6);
-	m_curMap = m_maps[m_curMapIndex];
+	m_maps.push_back(map2);
+	m_maps.push_back(map3);
+
+	if (isGold)
+	{
+		m_curMapIndex = 2;
+		m_curMap = m_maps[m_curMapIndex];
+		m_curMap->m_isGold = true;
+	}
+	else
+	{
+		m_curMapIndex = 0;
+		m_curMap = m_maps[m_curMapIndex];
+		m_curMap->m_isGold = false;
+	}
+	
+
 
 	if (m_playerController0)
 	{
@@ -295,6 +331,27 @@ void Game::ExitPlayingMode()
 	}
 }
 
+bool Game::BtnEvent_NormalMode(EventArgs& args)
+{
+	UNUSED(args);
+	m_nextState = GameState::LOBBY;
+	return true;
+}
+
+bool Game::BtnEvent_GoldlMode(EventArgs& args)
+{
+	UNUSED(args);
+	m_nextState = GameState::GOLD;
+	return true;
+}
+
+bool Game::BtnEvent_TutorialMode(EventArgs& args)
+{
+	UNUSED(args);
+	m_nextState = GameState::PLAYING;
+	return true;
+}
+
 void Game::UpdateAttractMode(float deltaTime)
 {
 	UNUSED(deltaTime);
@@ -312,7 +369,7 @@ void Game::UpdateAttractMode(float deltaTime)
 	if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE) || g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
 	{
 		g_theAudio->StartSound(clickSoundID);
-		m_nextState = GameState::LOBBY;
+		m_nextState = GameState::Menu;
 		if (m_playerController0 == nullptr)
 		{
 			m_playerController0 = new PlayerController(nullptr);
@@ -733,9 +790,9 @@ void Game::UpdateGameplayMode(float deltaTime)
 
 	char timeBuffer[256];
 	snprintf(timeBuffer, sizeof(timeBuffer),
-		"[Game Clock] Time: %.2f  FPS: %.2f  Scale: %.2f",
-		m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), 1.f);
-	DebugAddScreenText(std::string(timeBuffer), AABB2(Vec2(1100.f, 720.f), Vec2(1590.f, 790.f)), 20.f, Vec2(1.f, 1.f), 0.f, Rgba8::WHITE, Rgba8::WHITE);
+		"FPS: %.2f",
+		1.f / m_gameClock->GetDeltaSeconds());
+	DebugAddScreenText(std::string(timeBuffer), AABB2(Vec2(1100.f, 770.f), Vec2(1590.f, 790.f)), 10.f, Vec2(1.f, 1.f), 0.f, Rgba8::WHITE, Rgba8::WHITE);
 
 	m_curMap->Update(deltaTime);
 	//----------------------------------------------------------------------------------------
@@ -860,7 +917,30 @@ void Game::RenderAttractMode() const
 {
 	g_theRenderer->BeginCamera(m_screenCamera);
 	g_theRenderer->BindTexture(nullptr);
-	DebugDrawRing(4.f, 20.f, Rgba8::WHITE,Vec2(SCREEN_SIZE_X*0.5f,SCREEN_SIZE_Y*0.5f));
+
+	std::vector<Vertex_PCU> verts;
+	verts.reserve(100);
+	AddVertsForAABB2D(verts, AABB2(Vec2(0.f, 0.f), Vec2(1600.f, 800.f)),Rgba8::WHITE);
+
+	AABB2 textBox = AABB2(Vec2(250.f, 50.f), Vec2(1450.f, 120.f));
+
+	AddVertsForAABB2D(verts, textBox, Rgba8::TRANSP_BLACK);
+	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+	g_theRenderer->BindShader(nullptr);
+	g_theRenderer->SetModelConstants();
+	Texture* bkgTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Attract.png");
+	g_theRenderer->BindTexture(bkgTex);
+	g_theRenderer->DrawVertexArray(verts);
+
+	std::vector<Vertex_PCU> textVerts;
+	textVerts.reserve(100);
+	m_menuBtnFont->AddVertsForTextInBox2D(textVerts, "Press Space to Start", textBox,30.f);
+	
+	g_theRenderer->BindTexture(&m_menuBtnFont->GetTexture());
+	g_theRenderer->DrawVertexArray(textVerts);
+
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 }
@@ -935,6 +1015,97 @@ void Game::ParseGameConfig()
 	m_gameMusicPath = ParseXmlAttribute(gameDefElement, "gameMusic", "");
 	m_buttonClickSoundPath = ParseXmlAttribute(gameDefElement, "buttonClickSound", "");
 
+}
+
+void Game::UpdateMenuMode()
+{
+	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
+
+	SoundID clickSoundID = g_theAudio->CreateOrGetSound(m_buttonClickSoundPath, true);
+	//input
+	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
+	{
+		g_theAudio->StartSound(clickSoundID);
+		g_theApp->m_isQuitting = true;
+	}
+	//Controller Input
+	XboxController const& controller0 = g_theInput->GetController(0);
+	if (controller0.IsConnected())
+	{
+		if (controller0.WasButtonJustPressed(XboxButtonID::BACK))
+		{
+			g_theAudio->StartSound(clickSoundID);
+			g_theApp->m_isQuitting = true;
+		}
+	}
+
+	m_btnMenuNormalMode.Update(deltaSeconds);
+	m_btnMenuGoldMode.Update(deltaSeconds);
+	m_btnMenuTutorialMode.Update(deltaSeconds);
+}
+
+void Game::RenderMenuMode() const
+{
+	g_theRenderer->BeginCamera(m_screenCamera);
+
+	std::vector<Vertex_PCU> verts;
+	verts.reserve(100);
+	AddVertsForAABB2D(verts, AABB2(Vec2(0.f, 0.f), Vec2(1600.f, 800.f)), Rgba8::WHITE);
+
+	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+	g_theRenderer->BindShader(nullptr);
+	g_theRenderer->SetModelConstants();
+	Texture* bkgTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/MainMenu.png");
+	g_theRenderer->BindTexture(bkgTex);
+	g_theRenderer->DrawVertexArray(verts);
+
+	m_btnMenuNormalMode.Render();
+	m_btnMenuGoldMode.Render();
+	m_btnMenuTutorialMode.Render();
+
+	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
+	g_theRenderer->EndCamera(m_screenCamera);
+}
+
+void Game::InitializeMenuButtons()
+{
+	Texture* menuBtnTexture1 = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/MenuBtn1.png");
+	Texture* menuBtnTexture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/MenuBtn2.png");
+	Texture* menuBtnTexture3 = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/MenuBtn3.png");
+
+	float btnWidth = 307.0f;
+	float btnHeight = 74.0f;
+
+	float leftMargin = 100.0f; 
+	float startY = 500.0f;     
+	float buttonSpacing = 100.0f; 
+
+	AABB2 bkgExtent = AABB2(-btnWidth / 2.0f, -btnHeight / 2.0f, btnWidth / 2.0f, btnHeight / 2.0f);
+
+	AABB2 textExtent = AABB2(-btnWidth / 2.0f + 10.0f, -btnHeight / 2.0f + 10.0f,
+		btnWidth / 2.0f - 10.0f, btnHeight / 2.0f - 10.0f);
+
+	BitmapFont* gameFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/DariniaFont");
+
+	float textHeight = 30.0f; 
+
+	Vec2 btnNormalPos = Vec2(leftMargin + btnWidth / 2.0f, startY);
+	m_btnMenuNormalMode = Button(btnNormalPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+		bkgExtent, textExtent, "Normal", textHeight, gameFont, "StartNormalMode");
+
+	Vec2 btnGoldPos = Vec2(leftMargin + btnWidth / 2.0f, startY - buttonSpacing);
+	m_btnMenuGoldMode = Button(btnGoldPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+		bkgExtent, textExtent, "Gold", textHeight, gameFont, "StartGoldMode");
+
+	Vec2 btnTutorialPos = Vec2(leftMargin + btnWidth / 2.0f, startY - 2 * buttonSpacing);
+	m_btnMenuTutorialMode = Button(btnTutorialPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+		bkgExtent, textExtent, "Tutorial", textHeight, gameFont, "StartTutorial");
+
+	//call back
+	g_theEventSystem->SubscribeEventCallbackFuction("StartNormalMode", BtnEvent_NormalMode, true);
+	g_theEventSystem->SubscribeEventCallbackFuction("StartGoldMode", BtnEvent_GoldlMode, true);
+	g_theEventSystem->SubscribeEventCallbackFuction("StartTutorial", BtnEvent_TutorialMode, true);
 }
 
 

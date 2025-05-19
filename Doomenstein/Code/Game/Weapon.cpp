@@ -5,6 +5,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Game/PlayerController.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
+#include "FieldObject.hpp"
 Weapon::Weapon(int defIndex, Actor* owner) 
 	:m_weaponDefIndex(defIndex), m_def(WeaponDefinition::s_weaponDefinitions[defIndex]),m_owner(owner)
 {
@@ -48,6 +49,43 @@ bool Weapon::Fire(Vec3 const& dir,PlayerController* curPlayerController)
 			Vec3 rayEnd = rayRenderStart + m_def.m_rayRange * shootDir.GetNormalized();
 // 			DebugAddWorldLine(rayRenderStart, rayEnd,
 // 				0.01f,1.f,Rgba8::BLUE,Rgba8::WHITE,DebugRenderMode::X_RAY);
+
+			//plant
+			if (m_def.m_name == "ManDig")
+			{
+				// spawn field
+				if (m_owner->m_map->RaycastAllFields(rayRenderStart, shootDir.GetNormalized(), m_def.m_rayRange)==nullptr)
+				{
+					RaycastResult3D raycastResultWithGroud = m_owner->m_map->RaycastWorldZ(rayRenderStart, shootDir.GetNormalized(), m_def.m_rayRange);
+					if (raycastResultWithGroud.m_didImpact)
+					{
+						IntVec2 coords = m_owner->m_map->GetTileCoordsFromPoint(Vec2(raycastResultWithGroud.m_impactPos.x, raycastResultWithGroud.m_impactPos.y));
+						std::string tileName = m_owner->m_map->GetTileTypeNameFromCoords(coords.x, coords.y);
+						if (tileName == "PlantGrass")
+						{
+							m_owner->m_map->SpawnPlantField(coords);
+							curPlayerController->m_coinCount--;
+						}
+					}
+				}
+			}
+			else if (m_def.m_name == "ManWater")
+			{
+				FieldObject* curField = m_owner->m_map->RaycastAllFields(rayRenderStart, shootDir.GetNormalized(), m_def.m_rayRange);
+				if(curField)
+				{
+					curField->PourWater();
+				}
+			}
+			else if (m_def.m_name == "ManBasket")
+			{
+				FieldObject* curField = m_owner->m_map->RaycastAllFields(rayRenderStart, shootDir.GetNormalized(), m_def.m_rayRange);
+				if (curField)
+				{
+					curField->Harvest(curPlayerController);
+				}
+			}
+
 			m_owner->m_map->RaycastAll(rayRenderStart, shootDir.GetNormalized(), m_def.m_rayRange,m_owner->m_actorHandle);
 		}
 		for (int i = 0; i < m_def.m_projectileCount; i++)

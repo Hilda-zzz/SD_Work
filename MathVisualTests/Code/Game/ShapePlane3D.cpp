@@ -14,6 +14,7 @@ ShapePlane3D::ShapePlane3D(Plane3 const& plane, Vec3 position, Texture* tex, Gam
 
 void ShapePlane3D::Update(float deltaTime)
 {
+	UNUSED(deltaTime);
 }
 
 void ShapePlane3D::Render() const

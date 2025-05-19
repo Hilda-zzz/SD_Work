@@ -1,8 +1,18 @@
 <Definitions>
-  <TileDefinition name="StoneFloor" isSolid="false" mapImagePixelColor="0,0,0" floorSpriteCoords="3,6" />
+  <TileDefinition name="StoneFloor" isSolid="false" mapImagePixelColor="0,0,0" floorSpriteCoords="3,6" ceilingSpriteCoords="2,6" />
   <TileDefinition name="WoodFloor" isSolid="false" mapImagePixelColor="48,48,48" floorSpriteCoords="0,6" ceilingSpriteCoords="2,6"/>
   <TileDefinition name="BrickWall" isSolid="true" mapImagePixelColor="255,255,255" wallSpriteCoords="0,5"/>
   <TileDefinition name="WoodWall" isSolid="true" mapImagePixelColor="143,136,82" wallSpriteCoords="1,6"/>
   <TileDefinition name="OpenGrass" isSolid="false" mapImagePixelColor="0,128,0" floorSpriteCoords="2,1" ceilingSpriteCoords="4,3"/>
   <TileDefinition name="OpenDirt" isSolid="false" mapImagePixelColor="127,51,0" floorSpriteCoords="5,2" ceilingSpriteCoords="4,3"/>
+  <TileDefinition name="GardenGrass" isSolid="false" mapImagePixelColor="55,148,110" floorSpriteCoords="1,0"/>
+  <TileDefinition name="PlantGrass" isSolid="false" mapImagePixelColor="153,229,80" floorSpriteCoords="1,1"/>
+  <TileDefinition name="OutsideGrass" isSolid="false" mapImagePixelColor="106,190,48" floorSpriteCoords="1,1"/>
+  <TileDefinition name="EvilLava" isSolid="false" mapImagePixelColor="172,50,50" floorSpriteCoords="6,7"/>
+  <TileDefinition name="EvilRockRoad" isSolid="false" mapImagePixelColor="132,126,135" floorSpriteCoords="0,3"/>
+  <TileDefinition name="GardenWall" isSolid="true" mapImagePixelColor="34,32,52" wallSpriteCoords="4,3"/>
+  <TileDefinition name="GrassWall" isSolid="true" mapImagePixelColor="0,90,63" wallSpriteCoords="6,0"/>
+  <TileDefinition name="EvilDoorWall" isSolid="true" mapImagePixelColor="63,63,116" wallSpriteCoords="6,5"/>
+  <TileDefinition name="RoomFloor" isSolid="false" mapImagePixelColor="223,113,38" floorSpriteCoords="0,6" ceilingSpriteCoords="2,6"/>
+  <TileDefinition name="RoomWall" isSolid="true" mapImagePixelColor="251,242,54" wallSpriteCoords="1,5"/>
 </Definitions>

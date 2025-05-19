@@ -9,7 +9,7 @@ CubicHermiteCurve2D::CubicHermiteCurve2D(Vec2 startPos, Vec2 startVelocity, Vec2
 
 CubicHermiteCurve2D::CubicHermiteCurve2D(CubicBezierCurve2D const& fromBezier)
 	:m_startPos(fromBezier.m_startPos),m_startVelocity(3.f*(fromBezier.m_guidePos1-m_startPos)),
-	m_endPos(fromBezier.m_endPos),m_endVelocity(fromBezier.m_endPos-fromBezier.m_guidePos2)
+	m_endPos(fromBezier.m_endPos),m_endVelocity(3.f * (fromBezier.m_endPos-fromBezier.m_guidePos2))
 {
 }
 

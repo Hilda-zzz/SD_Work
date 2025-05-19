@@ -69,7 +69,7 @@ void App::Startup()
 	debugRenderConfig.m_renderer = g_theRenderer;
 	DebugRenderSystemStartup(debugRenderConfig);
 
-	m_theGame = new GamePachinko2D();
+	m_theGame = new Game3DTestShapes();
 }
 
 void App::Shutdown()

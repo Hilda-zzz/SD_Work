@@ -1,30 +1,48 @@
-9.30
-It seems that all the functions required by the A3 document have been completed.
+--------------------Doom Harvest------------------------
 
------------key board-------------
-N/ space	enter the play mode/ respawn player ship   
-esc		quit play mode/ quit the game
+Mouse                               Aim
+A / D / Left stick x-axis           Move 
+W / S / Left stick y-axis           Move 
+Z / C                               Elevate
+1                                   Pistol
+2                                   Plasma Rifle
+L/R Arrow                           Change Weapon
+Shift / A button                    Sprint
 
-S/F 		rotate
-E 		thrust
-space 		shoot
+P                                   Pause the game
+O                                   Single step frame
+T                                   Slow motion mode
 
-I		add an asteroid
-F1 		developer mode
-F8 		restart the game
+====================Gold Feature=========================
 
-P		pause the game
-T		slow the game
-O		update the game by each frame
+[Rendering & Lighting]
+1. Point Lights
+2. Spot Lights
+3. Real-time Shadow Mapping
+4. Cube-Mapped Skybox 
 
-K		kill all enemies of this wave
-1		enter wave 1
-2		enter wave 2
-3		enter wave 3
-4		enter wave 4
-5		enter wave 5
------------controller------------
-Left joystick 	rotate & thrust
-Start		enter the play mode/ respawn player ship     
-A		shoot
----------------------------------
+[User Interface]
+5. Extensible UI Button Framework
+
+[Gameplay Systems]
+6. Dynamic Day-Night Cycle
+   • Real-time shadow progression
+   • On-screen clock HUD display
+   
+7. Farming Mode
+   • Multiple specialized farming tools
+   • Interactive crop field objects
+   • Plant growth mechanics
+
+8. Weapon Variety
+   • A little bit variation in weapons
+
+====================How to play===========================
+Use the left and right arrow keys to quickly browse through all your weapons and tools. Aim the shovel at plantable terrain to sow seeds. 
+
+After planting, follow the indicator signs next to the field and use the watering to help the plants grow. Finally, harvest with the basket to collect coins. 
+
+(Unfortunately, I haven't implemented any spending mechanics for the coins yet.)
+
+
+

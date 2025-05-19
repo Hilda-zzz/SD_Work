@@ -103,6 +103,9 @@ Game::~Game()
 
 	delete m_gameClock;
 	m_gameClock = nullptr;
+
+	delete m_cubeSkybox;
+	m_cubeSkybox = nullptr;
 }
 
 

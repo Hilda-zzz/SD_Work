@@ -23,6 +23,9 @@
     <Filter Include="Gameplay\Actor">
       <UniqueIdentifier>{c43b2e19-8058-402b-b6cb-e91a79ddf9da}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{3cbfc2c9-eaf7-4a42-8f2d-b6b170116334}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -88,6 +91,18 @@
     <ClCompile Include="SpriteAnimationGroupDefinition.cpp">
       <Filter>Definitions</Filter>
     </ClCompile>
+    <ClCompile Include="Button.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="MapGold.cpp">
+      <Filter>Map</Filter>
+    </ClCompile>
+    <ClCompile Include="FieldObject.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLightAsset.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -152,6 +167,18 @@
     </ClInclude>
     <ClInclude Include="SpriteAnimationGroupDefinition.hpp">
       <Filter>Definitions</Filter>
+    </ClInclude>
+    <ClInclude Include="Button.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="MapGold.hpp">
+      <Filter>Map</Filter>
+    </ClInclude>
+    <ClInclude Include="FieldObject.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLightAsset.hpp">
+      <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
