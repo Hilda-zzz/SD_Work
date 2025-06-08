@@ -353,8 +353,6 @@ void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, flo
 {
 	UNUSED(center);
 
-	
-
 	std::vector<Vec3>	sphereVerts;
 	sphereVerts.reserve(numSlices * (numStacks - 1) + 2);
 	sphereVerts.push_back(Vec3(0.f, 0.f, -radius));
@@ -830,4 +828,279 @@ void AddVertsForCubeSkyBox(std::vector<Vertex_PCU>& verts, const Vec3& center, f
 		Vec3(mins.x, maxs.y, mins.z),
 		Vec3(mins.x, mins.y, mins.z),
 		color, AABB2(Vec2(0, 0), Vec2(1, 1)));
+}
+
+void AddVertsForAABB3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, const Vec3& bottomLeft, const Vec3& topRight, const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 mins = bottomLeft;
+	Vec3 maxs = topRight;
+	Vec2 uvMins = UVs.m_mins;
+	Vec2 uvMaxs = UVs.m_maxs;
+
+	// +X
+	AddVertsForQuad3D_WithTBN(verts, indexes,
+		Vec3(maxs.x, mins.y, mins.z),
+		Vec3(maxs.x, maxs.y, mins.z),
+		Vec3(maxs.x, maxs.y, maxs.z),
+		Vec3(maxs.x, mins.y, maxs.z),
+		color, UVs);
+
+	// -X
+	AddVertsForQuad3D_WithTBN(verts, indexes,
+		Vec3(mins.x, maxs.y, mins.z),
+		Vec3(mins.x, mins.y, mins.z),
+		Vec3(mins.x, mins.y, maxs.z),
+		Vec3(mins.x, maxs.y, maxs.z),
+		color, UVs);
+
+	// +Y
+	AddVertsForQuad3D_WithTBN(verts, indexes,
+		Vec3(maxs.x, maxs.y, mins.z),
+		Vec3(mins.x, maxs.y, mins.z),
+		Vec3(mins.x, maxs.y, maxs.z),
+		Vec3(maxs.x, maxs.y, maxs.z),
+		color, UVs);
+
+	// -Y
+	AddVertsForQuad3D_WithTBN(verts, indexes,
+		Vec3(mins.x, mins.y, mins.z),
+		Vec3(maxs.x, mins.y, mins.z),
+		Vec3(maxs.x, mins.y, maxs.z),
+		Vec3(mins.x, mins.y, maxs.z),
+		color, UVs);
+
+	// +Z
+	AddVertsForQuad3D_WithTBN(verts, indexes,
+		Vec3(mins.x, mins.y, maxs.z),
+		Vec3(maxs.x, mins.y, maxs.z),
+		Vec3(maxs.x, maxs.y, maxs.z),
+		Vec3(mins.x, maxs.y, maxs.z),
+		color, UVs);
+
+	// -Z
+	AddVertsForQuad3D_WithTBN(verts, indexes,
+		Vec3(mins.x, maxs.y, mins.z),
+		Vec3(maxs.x, maxs.y, mins.z),
+		Vec3(maxs.x, mins.y, mins.z),
+		Vec3(mins.x, mins.y, mins.z),
+		color, UVs);
+
+}
+
+void AddVertsForOBB3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, const OBB3& box, const Rgba8& color, const AABB2& UVs)
+{
+	size_t originalSize = verts.size();
+	AddVertsForAABB3D_WithTBN(verts,indexes, -box.m_halfDimensions, box.m_halfDimensions, color, UVs);
+
+	Mat44 mat = Mat44(box.m_iBasis, box.m_jBasis, box.m_kBasis, box.m_center);
+	for (size_t i = originalSize; i < verts.size(); i++)
+	{
+		verts[i].m_position = mat.TransformPosition3D(verts[i].m_position);
+	}
+}
+
+void AddVertsForSphere3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, 
+	const Vec3& center, float radius, const Rgba8& color, const AABB2& UVs,
+	int numSlices, int numStacks)
+{
+	std::vector<Vec3>	sphereVerts;
+	sphereVerts.reserve(numSlices * (numStacks - 1) + 2);
+	sphereVerts.push_back(Vec3(0.f, 0.f, -radius)+center);
+	float eachLongitude = 360.f / numSlices;
+	float eachLatitude = 180.f / numStacks;
+	for (int curStack = 0; curStack < numStacks - 1; curStack++)
+	{
+		float curLatitude = -90.f + (curStack + 1) * eachLatitude;
+		for (int curSlice = 0; curSlice < numSlices; curSlice++)
+		{
+			float curLongitude = curSlice * eachLongitude;
+			sphereVerts.push_back(Vec3::MakeFromPolarDegrees(curLatitude, curLongitude, radius)+center);
+		}
+	}
+	sphereVerts.push_back(Vec3(0.f, 0.f, radius) + center);
+
+
+	float eachUVHeight = (1.f / numStacks) * UVs.GetDimensions().y;
+	float eachUVWidth = 1.f / numSlices * UVs.GetDimensions().x;
+	//east
+	for (int curSlice = 0; curSlice < numSlices; curSlice++)
+	{
+		int tl = 1 + curSlice;
+		int tr = 1 + (curSlice + 1);
+
+		Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, eachUVHeight);
+		Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, eachUVHeight);
+
+		AddVertsForSphereQuad3D_WithTBN(verts, indexes, sphereVerts[0], sphereVerts[0], sphereVerts[tr], sphereVerts[tl], center,color, AABB2(blUV, trUV));
+	}
+	//mid
+	for (int curStack = 0; curStack < numStacks - 2; curStack++)
+	{
+		for (int curSlice = 0; curSlice < numSlices; curSlice++)
+		{
+			int baseIndex = 1 + curStack * numSlices;
+			int bl = baseIndex + curSlice;
+			int br = baseIndex + ((curSlice + 1) % numSlices);
+			int tl = bl + numSlices;
+			int tr = br + numSlices;
+
+			Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, (curStack + 1) * eachUVHeight);
+			Vec2 trUV = UVs.m_mins + Vec2(((curSlice + 1)) * eachUVWidth, (curStack + 2) * eachUVHeight);
+			AddVertsForSphereQuad3D_WithTBN(verts, indexes,sphereVerts[bl], sphereVerts[br], sphereVerts[tr], sphereVerts[tl],center, color, AABB2(blUV, trUV));
+		}
+	}
+
+	//north
+	int northPole = (int)sphereVerts.size() - 1;
+	int lastRingStart = northPole - numSlices;
+	for (int curSlice = 0; curSlice < numSlices; curSlice++)
+	{
+		int bl = lastRingStart + curSlice;
+		int br = lastRingStart + (curSlice + 1) % numSlices;
+
+		Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, (numStacks - 1) * eachUVHeight);
+		Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, numStacks * eachUVHeight);
+
+		AddVertsForSphereQuad3D_WithTBN(verts, indexes, sphereVerts[bl], sphereVerts[br], sphereVerts[northPole], sphereVerts[northPole],center, color, AABB2(blUV, trUV));
+	}
+}
+
+void AddVertsForSphereQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Vec3& center, const Rgba8& color, const AABB2& UVs)
+{
+	unsigned int startIndex = (unsigned int)verts.size();
+
+	Vec3 normal0 = (p0 - center).GetNormalized();
+	Vec3 normal1 = (p1 - center).GetNormalized();
+	Vec3 normal2 = (p2 - center).GetNormalized();
+	Vec3 normal3 = (p3 - center).GetNormalized();
+
+	Vec3 tangent = Vec3(1.f, 0.f, 0.f);  
+	Vec3 bitangent = Vec3(0.f, 1.f, 0.f);
+
+	Vec2 uvMins = UVs.m_mins;
+	Vec2 uvMaxs = UVs.m_maxs;
+
+	verts.push_back(Vertex_PCUTBN(p0, color, Vec2(uvMins.x, uvMins.y), tangent, bitangent, normal0));
+	verts.push_back(Vertex_PCUTBN(p1, color, Vec2(uvMaxs.x, uvMins.y), tangent, bitangent, normal1));
+	verts.push_back(Vertex_PCUTBN(p2, color, Vec2(uvMaxs.x, uvMaxs.y), tangent, bitangent, normal2));
+	verts.push_back(Vertex_PCUTBN(p3, color, Vec2(uvMins.x, uvMaxs.y), tangent, bitangent, normal3));
+
+	indexes.push_back(startIndex + 0);
+	indexes.push_back(startIndex + 1);
+	indexes.push_back(startIndex + 2);
+
+	indexes.push_back(startIndex + 0);
+	indexes.push_back(startIndex + 2);
+	indexes.push_back(startIndex + 3);
+}
+
+void AddVertsForCylinder3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, 
+	const Vec3& start, const Vec3& end, float radius, 
+	const Rgba8 color, const AABB2& UVs, int numSlices)
+{
+	//size_t originalSize = verts.size();
+
+	//float height = (end - start).GetLength();
+
+// 	Vec3 localStart(0.0f, 0.0f, 0.f);
+// 	Vec3 localEnd(0.f, 0.f, height);
+
+	std::vector<Vec3> bottomCircle;
+	std::vector<Vec3> topCircle;
+	for (int i = 0; i < numSlices; i++)
+	{
+		float x = radius * CosDegrees(i * 360.f / numSlices);
+		float y = radius * SinDegrees(i * 360.f / numSlices);
+		bottomCircle.push_back(Vec3(x, y, start.z));
+		topCircle.push_back(Vec3(x, y, end.z));
+	}
+
+	//side
+	float eachUVWidth = (1.f / numSlices) * UVs.GetDimensions().x;
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+		Vec2 blUV = UVs.m_mins + Vec2(i * eachUVWidth, 0.f);
+		Vec2 trUV = blUV + Vec2(eachUVWidth, UVs.GetDimensions().y);
+		AddVertsForCylinderQuad3D_WithTBN(verts, indexes,
+			bottomCircle[i], bottomCircle[nextI], topCircle[nextI], topCircle[i], 
+			start,end,
+			color, AABB2(blUV, trUV));
+	}
+
+	//bot
+	Vec2 uvCenter = Vec2(UVs.GetCenter().x, UVs.GetCenter().y);
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+
+		float u1 = (UVs.GetDimensions().x / 2.f) * CosDegrees((numSlices - i) * 360.f / numSlices);
+		float v1 = (UVs.GetDimensions().y / 2.f) * SinDegrees((numSlices - i) * 360.f / numSlices);
+		float u2 = (UVs.GetDimensions().x / 2.f) * CosDegrees((numSlices - i - 1) * 360.f / numSlices);
+		float v2 = (UVs.GetDimensions().y / 2.f) * SinDegrees((numSlices - i - 1) * 360.f / numSlices);
+		Vec3 tangent = Vec3(1.f, 0.f, 0.f);
+		Vec3 bitangent = Vec3(0.f, 1.f, 0.f);
+		verts.push_back(Vertex_PCUTBN(start, color, uvCenter,
+			tangent,bitangent,Vec3(0.f,0.f,-1.f)));
+		verts.push_back(Vertex_PCUTBN(bottomCircle[nextI], color, uvCenter + Vec2(u2, v2), 
+			tangent, bitangent, Vec3(0.f, 0.f, -1.f)));
+		verts.push_back(Vertex_PCUTBN(bottomCircle[i], color, uvCenter + Vec2(u1, v1),
+			tangent, bitangent, Vec3(0.f, 0.f, -1.f)));
+		unsigned int startIndex = (unsigned int)verts.size();
+		indexes.push_back(startIndex + 0);
+		indexes.push_back(startIndex + 1);
+		indexes.push_back(startIndex + 2);
+	}
+
+	//top
+	for (int i = 0; i < numSlices; i++)
+	{
+		int nextI = (i + 1) % numSlices;
+		float u1 = (UVs.GetDimensions().x / 2.f) * CosDegrees(i * 360.f / numSlices);
+		float v1 = (UVs.GetDimensions().y / 2.f) * SinDegrees(i * 360.f / numSlices);
+		float u2 = (UVs.GetDimensions().x / 2.f) * CosDegrees((i + 1) * 360.f / numSlices);
+		float v2 = (UVs.GetDimensions().y / 2.f) * SinDegrees((i + 1) * 360.f / numSlices);
+		Vec3 tangent = Vec3(1.f, 0.f, 0.f);
+		Vec3 bitangent = Vec3(0.f, 1.f, 0.f);
+		verts.push_back(Vertex_PCUTBN(end, color, uvCenter, 
+			tangent, bitangent, Vec3(0.f, 0.f, 1.f)));
+		verts.push_back(Vertex_PCUTBN(topCircle[i], color, uvCenter + Vec2(u1, v1),
+			tangent, bitangent, Vec3(0.f, 0.f, 1.f)));
+		verts.push_back(Vertex_PCUTBN(topCircle[nextI], color, uvCenter + Vec2(u2, v2),
+			tangent, bitangent, Vec3(0.f, 0.f, 1.f)));
+		unsigned int startIndex = (unsigned int)verts.size();
+		indexes.push_back(startIndex + 0);
+		indexes.push_back(startIndex + 1);
+		indexes.push_back(startIndex + 2);
+	}
+}
+
+void AddVertsForCylinderQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes, 
+	const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Vec3& centerBot, const Vec3& centerTop, const Rgba8& color, const AABB2& UVs)
+{
+	unsigned int startIndex = (unsigned int)verts.size();
+
+	Vec3 normal0 = (p0 - centerBot).GetNormalized();
+	Vec3 normal1 = (p1 - centerBot).GetNormalized();
+	Vec3 normal2 = (p2 - centerTop).GetNormalized();
+	Vec3 normal3 = (p3 - centerTop).GetNormalized();
+
+	Vec3 tangent = Vec3(1.f, 0.f, 0.f);
+	Vec3 bitangent = Vec3(0.f, 1.f, 0.f);
+
+	Vec2 uvMins = UVs.m_mins;
+	Vec2 uvMaxs = UVs.m_maxs;
+
+	verts.push_back(Vertex_PCUTBN(p0, color, Vec2(uvMins.x, uvMins.y), tangent, bitangent, normal0));
+	verts.push_back(Vertex_PCUTBN(p1, color, Vec2(uvMaxs.x, uvMins.y), tangent, bitangent, normal1));
+	verts.push_back(Vertex_PCUTBN(p2, color, Vec2(uvMaxs.x, uvMaxs.y), tangent, bitangent, normal2));
+	verts.push_back(Vertex_PCUTBN(p3, color, Vec2(uvMins.x, uvMaxs.y), tangent, bitangent, normal3));
+
+	indexes.push_back(startIndex + 0);
+	indexes.push_back(startIndex + 1);
+	indexes.push_back(startIndex + 2);
+
+	indexes.push_back(startIndex + 0);
+	indexes.push_back(startIndex + 2);
+	indexes.push_back(startIndex + 3);
 }

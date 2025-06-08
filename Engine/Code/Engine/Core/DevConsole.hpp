@@ -84,6 +84,7 @@ public:
 	static const	Rgba8 INVALID;
 	static const	Rgba8 EVENT_FEEDBACK;
 	static const	Rgba8 BKG;
+	static const	Rgba8 PLAYER_TIP;
 
 protected:
 	void Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont& font, float fontAspect = 1.f) const;

@@ -1207,6 +1207,22 @@ IndexBuffer* Renderer::CreateIndexBuffer(unsigned int size)
 	return curIndexBuffer;
 }
 
+void Renderer::CopyGameVertexBufferToGPU(const void* data, unsigned int verticeCount, VertexBuffer* vbo)
+{
+	CopyCPUToGPU(data, verticeCount, vbo);
+}
+
+void Renderer::CopyGameIndexBufferToGPU(const void* data, unsigned int count, IndexBuffer* ibo)
+{
+	CopyCPUToGPU(data, count, ibo);
+}
+
+void Renderer::DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo)
+{
+	unsigned int count=ibo->GetCount();
+	DrawIndexedVertexBuffer(vbo, ibo, count);
+}
+
 void Renderer::InitializeShadowMapping()
 {
 	D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT isD3D9ShadowSupported;

@@ -19,6 +19,7 @@ const Rgba8 DevConsole::UNKNOWN = Rgba8(188,76,116);
 const Rgba8 DevConsole::INVALID = Rgba8(209,187,55);
 const Rgba8 DevConsole::EVENT_FEEDBACK = Rgba8(142,217,115);
 const Rgba8 DevConsole::BKG = Rgba8(0, 0, 0,180);
+const Rgba8 DevConsole::PLAYER_TIP = Rgba8(192, 79, 21, 255);
 
 DevConsole::DevConsole(DevConsoleConfig const& config):m_config(config)
 {
@@ -80,7 +81,7 @@ void DevConsole::Execute(std::string const& consoleCommandText, bool echoCommand
 	{
 		//" "
 		std::vector<std::string> eventNameWithArgs;
-		eventNameWithArgs.reserve(2);
+		eventNameWithArgs.reserve(5);
 		eventNameWithArgs = SplitStringOnDelimiter(eachLine[i], ' ');
 
 		if ((int)eventNameWithArgs.size() == 0)
@@ -93,19 +94,36 @@ void DevConsole::Execute(std::string const& consoleCommandText, bool echoCommand
 			continue;
 		}
 		//=
-		std::vector<std::string> argsPair;
-		argsPair.reserve(2);
-		argsPair = SplitStringOnDelimiter(eventNameWithArgs[1], '=');
-		if (argsPair.size() == 2)
+		EventArgs args;
+		for (int j = 1; j < (int)eventNameWithArgs.size(); j++)
 		{
-			EventArgs args;
-			args.SetValue(argsPair[0], argsPair[1]);
-			g_theEventSystem->FireEvent(eventNameWithArgs[0], args);
+			std::vector<std::string> argsPair;
+			argsPair.reserve(2);
+			argsPair = SplitStringOnDelimiter(eventNameWithArgs[j], '=');
+			if (argsPair.size() == 2)
+			{
+				args.SetValue(argsPair[0], argsPair[1]);
+				//g_theEventSystem->FireEvent(eventNameWithArgs[0], args);
+			}
+			else
+			{
+				g_theDevConsole->AddLine(DevConsole::INVALID, "#Invalid Format# " + consoleCommandText);
+			}
 		}
-		else
-		{
-			g_theDevConsole->AddLine(DevConsole::INVALID, "#Invalid Format# "+consoleCommandText);
-		}
+		g_theEventSystem->FireEvent(eventNameWithArgs[0], args);
+		//std::vector<std::string> argsPair;
+		//argsPair.reserve(2);
+		//argsPair = SplitStringOnDelimiter(eventNameWithArgs[1], '=');
+		//if (argsPair.size() == 2)
+		//{
+		//	EventArgs args;
+		//	args.SetValue(argsPair[0], argsPair[1]);
+		//	g_theEventSystem->FireEvent(eventNameWithArgs[0], args);
+		//}
+		//else
+		//{
+		//	g_theDevConsole->AddLine(DevConsole::INVALID, "#Invalid Format# "+consoleCommandText);
+		//}
 	}
 }
 
@@ -177,15 +195,15 @@ bool DevConsole::Event_KeyPressed(EventArgs& args)
 	{
 		if (keyCode == KEYCODE_ESC)
 		{
-			if (g_theDevConsole->m_inputText.size() == 0)
-			{
-				g_theDevConsole->SetMode(HIDDEN);
-			}
-			else
-			{
+// 			if (g_theDevConsole->m_inputText.size() == 0)
+// 			{
+// 				g_theDevConsole->SetMode(HIDDEN);
+// 			}
+// 			else
+// 			{
 				g_theDevConsole->m_inputText.clear();
 				g_theDevConsole->m_insertionPointPosition = 0;
-			}
+			//}
 		}
 		else if (keyCode == KEYCODE_ENTER)
 		{

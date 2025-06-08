@@ -76,3 +76,24 @@ void AddVertsForPlane3D(std::vector<Vertex_PCU>& verts, Plane3 const& plane);
 AABB2 GetVertexBounds2D(const std::vector<Vertex_PCU>& verts);
 
 void AddVertsForCubeSkyBox(std::vector<Vertex_PCU>& verts, const Vec3& center, float size, const Rgba8& color);
+
+
+void AddVertsForAABB3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
+	const Vec3& bottomLeft, const Vec3& topRight,
+	const Rgba8& color, const AABB2& UVs);
+void AddVertsForOBB3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
+	const OBB3& box,
+	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForSphere3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
+	const Vec3& center, float radius,
+	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE,
+	int numSlices = 32, int numStacks = 16);
+void AddVertsForSphereQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
+	const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3,
+	const Vec3& center, const Rgba8& color, const AABB2& UVs);
+void AddVertsForCylinder3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
+	const Vec3& start, const Vec3& end, float radius,
+	const Rgba8 color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 16);
+void AddVertsForCylinderQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
+	const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3,
+	const Vec3& centerBot,const Vec3& centerTop, const Rgba8& color, const AABB2& UVs);

@@ -142,6 +142,11 @@ public:
 	VertexBuffer* CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride);
 	IndexBuffer* CreateIndexBuffer(unsigned int size);
 
+public:
+	void CopyGameVertexBufferToGPU(const void* data, unsigned int verticeCount, VertexBuffer* vbo);
+	void CopyGameIndexBufferToGPU(const void* data, unsigned int count, IndexBuffer* ibo);
+	void DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo);
+
 	//-----------------------Shadow-------------------------------------------------------------------
 	void InitializeShadowMapping();
 	void BeginShadowMapRender(Mat44 const& lightViewProjection);

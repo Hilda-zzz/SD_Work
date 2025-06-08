@@ -37,6 +37,8 @@ C:\p4\Personal\SD\Engine\Code\Engine\Math\LineSegment2.cpp;C:\p4\Personal\SD\Sta
 C:\p4\Personal\SD\Engine\Code\Engine\Math\Mat44.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Mat44.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\MathUtils.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\MathUtils.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\OBB2.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\OBB2.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Math\OBB3.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\OBB3.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Math\Plane3.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Plane3.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\RandomNumberGenerator.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\RandomNumberGenerator.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\Ray.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Ray.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Math\RaycastUtils.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\RaycastUtils.obj
@@ -50,8 +52,10 @@ C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Camera.cpp;C:\p4\Personal\SD\Stars
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\ConstantBuffer.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\ConstantBuffer.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\CubeSkyBox.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\CubeSkyBox.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\IndexBuffer.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\IndexBuffer.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\PointLight.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\PointLight.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Renderer.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Renderer.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\Shader.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\Shader.obj
+C:\p4\Personal\SD\Engine\Code\Engine\Renderer\SpotLight.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\SpotLight.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\SpriteAnimDefinition.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\SpriteAnimDefinition.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\SpriteDefinition.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\SpriteDefinition.obj
 C:\p4\Personal\SD\Engine\Code\Engine\Renderer\SpriteSheet.cpp;C:\p4\Personal\SD\Starship\Temporary\Engine_x64_Release\SpriteSheet.obj
