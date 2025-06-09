@@ -28,7 +28,7 @@ A space-themed game project featuring spacecraft and top-down shooting mechanics
 
 #### TopDownAction
 Top-down action game demonstrating 2D gameplay mechanics and camera systems.
-- **Status**: Regular backup
+- **Status**: Developing
 - **Description**: 2D action game with top-down perspective
 
 #### Libra
@@ -121,7 +121,7 @@ Most projects show active development with recent updates, indicating ongoing le
 
 #### TopDownAction
 展示2D游戏机制和摄像机系统的俯视动作游戏。
-- **状态**: 定期备份
+- **状态**: 开发中
 - **描述**: 具有俯视视角的2D动作游戏
 
 #### Libra
@@ -177,16 +177,3 @@ Most projects show active development with recent updates, indicating ongoing le
 - **测试和质量保证**
 - **工具开发**
 - **版本控制和项目管理**
-
-## 开发时间线
-
-大多数项目显示活跃的开发状态和最近的更新，表明在整个项目期间持续的学习和改进。从基础概念(FirstTriangle)到复杂实现(Chess3D, Engine)的进展展示了全面的学习历程。
-
----
-
-*This collection represents the culmination of intensive study and practical application in game development at one of the industry's leading educational institutions.*
----
-
-*This collection represents the culmination of intensive study and practical application in game development at one of the industry's leading educational institutions.*
-
-*这个合集代表了在业界领先教育机构进行游戏开发集中学习和实践应用的成果。*
