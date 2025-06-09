@@ -8,8 +8,10 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
+
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
+
 Game::Game()
 {
 	m_gameClock = new Clock();
@@ -17,42 +19,82 @@ Game::Game()
 
 Game::~Game()
 {
+	delete m_gameClock;
+	m_gameClock = nullptr;
 }
-
 
 void Game::Update()
 {
 	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
+
 	UpdateCamera(deltaSeconds);
+
+	// Update Game State
+	if (m_curGameState != m_nextGameState)
+	{
+		ExitState(m_curGameState);
+		EnterState(m_nextGameState);
+		m_curGameState = m_nextGameState;
+	}
+
+	// Update DevConsole
 	if (g_theInput->WasKeyJustPressed(KEYCODE_TILDE))
 	{
 		if (g_theDevConsole->GetMode() == HIDDEN)
 		{
 			g_theDevConsole->SetMode(OPEN_FULL);
+			m_isDevConsole = true;
 		}
 		else
 		{
 			g_theDevConsole->SetMode(HIDDEN);
+			m_isDevConsole = false;
 		}
 	}
-	if (m_isAttractMode)
+
+	// Call Specific Update()
+	switch (m_curGameState)
 	{
+	case GameState::GAME_STATE_ATTRACT:
 		UpdateAttractMode(deltaSeconds);
-		return;
+		break;
+	case GameState::GAME_STATE_MENU:
+		break;
+	case GameState::GAME_STATE_SAVELOAD:
+		break;
+	case GameState::GAME_STATE_SETTINGS:
+		break;
+	case GameState::GAME_STATE_GAMEPLAY:
+		UpdateGameplayMode(deltaSeconds);
+		break;
+	default:
+		break;
 	}
+
 	UpdateDeveloperCheats(deltaSeconds);
-	UpdateGameplayMode(deltaSeconds);
 }
 
 void Game::Renderer() const
 {
-	if (m_isAttractMode)
+	switch (m_curGameState)
 	{
+	case GameState::GAME_STATE_ATTRACT:
 		RenderAttractMode();
-		return;
+		break;
+	case GameState::GAME_STATE_MENU:
+		break;
+	case GameState::GAME_STATE_SAVELOAD:
+		break;
+	case GameState::GAME_STATE_SETTINGS:
+		break;
+	case GameState::GAME_STATE_GAMEPLAY:
+		RenderGameplayMode();
+		break;
+	default:
+		break;
 	}
+	
 	g_theRenderer->BeginCamera(m_screenCamera);
-	RenderUI();
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 }
@@ -66,7 +108,7 @@ void Game::UpdateAttractMode(float deltaTime)
 	}
 	if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE)|| g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
 	{
-		m_isAttractMode = false;
+		m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
 	}
 }
 
@@ -75,7 +117,7 @@ void Game::UpdateGameplayMode(float deltaTime)
 	UNUSED(deltaTime);
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
 	{
-		m_isAttractMode=true;
+		m_nextGameState = GameState::GAME_STATE_ATTRACT;
 	}
 }
 
@@ -138,7 +180,14 @@ void Game::RenderAttractMode() const
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
-void Game::RenderUI() const
+void Game::RenderGameplayMode() const
+{
+	g_theRenderer->BeginCamera(m_screenCamera);
+	RenderGameplayUI();
+	g_theRenderer->EndCamera(m_screenCamera);
+}
+
+void Game::RenderGameplayUI() const
 {
 	g_theRenderer->BindTexture(nullptr);
 	DebugDrawLine(Vec2(100.f, 100.f), Vec2(1500.f, 700.f), 4.f, Rgba8(180, 0, 100));
@@ -148,6 +197,14 @@ void Game::RenderUI() const
 void Game::RenderDebugMode()const
 {
 
+}
+
+void Game::EnterState(GameState state)
+{
+}
+
+void Game::ExitState(GameState state)
+{
 }
 
 

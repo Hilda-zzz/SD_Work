@@ -5,6 +5,15 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="TiledMapLoader">
+      <UniqueIdentifier>{d471aada-1700-466d-aa58-6a4467135ac5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Map">
+      <UniqueIdentifier>{908e97e9-22ba-4479-8cfd-c0206e05d8e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Player">
+      <UniqueIdentifier>{0da57449-8a1c-4de7-9f48-39038fc7707c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -19,6 +28,30 @@
     <ClCompile Include="GameCommon.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="TileMap.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="TileLayer.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="TileChunk.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="Tileset.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="Map.cpp">
+      <Filter>Map</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Player</Filter>
+    </ClCompile>
+    <ClCompile Include="TileManager.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="TileMapLoader.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -32,6 +65,30 @@
     </ClInclude>
     <ClInclude Include="EngineBuildPreferences.hpp">
       <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="TileMap.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="TileLayer.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="TileChunk.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="Tileset.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="Map.hpp">
+      <Filter>Map</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Player</Filter>
+    </ClInclude>
+    <ClInclude Include="TileManager.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="TileMapLoader.hpp">
+      <Filter>TiledMapLoader</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
