@@ -2,8 +2,6 @@
 #include <string>
 #include <vector>
 #include "Engine/Core/XmlUtils.hpp"
-
-
 class TileMap;
 class TileLayer;
 class Tileset;
@@ -15,6 +13,7 @@ public:
 	~TileMapLoader();
 
 	TileMap* LoadFromFile(const std::string& filePath);
+	Tileset* LoadTileset(const std::string& tilesetPath);
 
 private:
 	//std::string m_mapDirectory; 
@@ -30,6 +29,4 @@ private:
 		const std::string& compression,
 		const std::string& data,
 		int expectedCount);
-	bool LoadTileset(const std::string& tilesetPath, Tileset& tileset);
-
 };

@@ -1,20 +1,40 @@
 #pragma once
 #include <unordered_map>
 #include <string>
+#include "Game/TileMapLoader.hpp"
 
 class TileMap;
 
 class TileMapManager 
 {
 private:
-	static std::unordered_map<std::string, TileMap*> s_loadedMaps;
-	static TileMap* s_currentMap;
+	// Singleton
+	static TileMapManager* s_tileManagerInstance;
+	TileMapManager() = default;    // constructor is private
+	~TileMapManager() = default;
+	TileMapManager(const TileMapManager&) = delete;  // delete copy constructor
+	TileMapManager& operator=(const TileMapManager&) = delete;
+
+	std::unordered_map<std::string, TileMap*> m_loadedMaps;
+	std::unordered_map<std::string, Tileset*> m_loadedTilesets;
+
+	TileMap* m_curMap=nullptr;
+	TileMapLoader m_loader;
 
 public:
-	static TileMap* LoadMap(const std::string& mapPath);
-	static TileMap* GetMap(const std::string& mapName);
-	static TileMap* GetCurrentMap() { return s_currentMap; }
-	static void SetCurrentMap(const std::string& mapName);
-	static void UnloadMap(const std::string& mapName);
-	static void UnloadAllMaps();
+	static TileMapManager& GetInstance();
+	static void DestroyInstance();
+
+	void InitAllTilemapResources();
+	void LoadAllTilesets();
+	Tileset* LoadTileset(const std::string& tilesetPath);
+	void LoadAllMaps();
+	TileMap* LoadMap(const std::string& mapPath);
+	TileMap* GetMap(const std::string& mapName);
+
+	void UnloadAllMaps();
+	void UnloadMap(const std::string& mapName);
+
+	TileMap* GetCurrentMap();                       //maybe no need it 
+	void SetCurrentMap(const std::string& mapName);
 };

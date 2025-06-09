@@ -5,6 +5,7 @@
 
 class Clock;
 class Map;
+class TileMapManager;
 
 enum class GameState
 {
@@ -41,7 +42,7 @@ private:
 	void RenderGameplayUI() const;
 	void RenderDebugMode() const;
 
-	//------Process Control--------------
+	//------Process Control------
 	void EnterState(GameState state);
 	void ExitState(GameState state);
 
@@ -55,6 +56,7 @@ public:
 	Map* m_curMap = nullptr;
 
 private:
+	TileMapManager* g_tileManager;
 	Camera m_screenCamera;
 	bool m_isPause = false;
 	bool m_isSlow = false;

@@ -8,6 +8,7 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
+#include "TileManager.hpp"
 
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
@@ -15,12 +16,17 @@ extern Window* g_theWindow;
 Game::Game()
 {
 	m_gameClock = new Clock();
+	g_tileManager = &TileMapManager::GetInstance();
+	g_tileManager->InitAllTilemapResources();
 }
 
 Game::~Game()
 {
 	delete m_gameClock;
 	m_gameClock = nullptr;
+
+	TileMapManager::DestroyInstance();
+	g_tileManager = nullptr;
 }
 
 void Game::Update()
