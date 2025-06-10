@@ -67,9 +67,24 @@ void ChessPiece::SetGridPos(IntVec2 const& gridPos)
 	m_gridPos = gridPos;
 }
 
+IntVec2 ChessPiece::GetPrevGridPos()
+{
+	return m_prevCoord;
+}
+
+void ChessPiece::SetPrevGridPos(IntVec2 const& gridPos)
+{
+	m_prevCoord = gridPos;
+}
+
 PieceType ChessPiece::GetPieceType()
 {
 	return m_pieceType;
+}
+
+void ChessPiece::SetPieceType(PieceType newType)
+{
+	m_pieceType = newType;
 }
 
 Faction ChessPiece::GetFaction()

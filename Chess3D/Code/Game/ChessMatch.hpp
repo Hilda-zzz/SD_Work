@@ -3,6 +3,7 @@
 #include "ChessPlayer.hpp"
 #include "ChessPiece.hpp"
 #include <string>
+#include "Game/Game.hpp"
 
 class Game;
 
@@ -26,7 +27,8 @@ public:
 	void Renderer() const;
 
 	std::string const& GetBoardStateString();
-	void MoveTheChessPiece(std::string fromStr, std::string toStr);
+	void MoveTheChessPiece(std::string fromStr, std::string toStr, ChessMoveResult moveResult);
+	void ChangeChessType(std::string posStr, PieceType pieceType);
 	int GetTurnNumber();
 	void AddTurnNum();
 

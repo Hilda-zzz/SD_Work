@@ -4,6 +4,7 @@
 #include "Game/TileMapLoader.hpp"
 
 class TileMap;
+class Tileset;
 
 class TileMapManager 
 {
@@ -15,6 +16,7 @@ private:
 	TileMapManager(const TileMapManager&) = delete;  // delete copy constructor
 	TileMapManager& operator=(const TileMapManager&) = delete;
 
+public:
 	std::unordered_map<std::string, TileMap*> m_loadedMaps;
 	std::unordered_map<std::string, Tileset*> m_loadedTilesets;
 

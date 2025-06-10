@@ -21,7 +21,10 @@ public:
 
 	IntVec2 GetGridPos();
 	void SetGridPos(IntVec2 const& gridPos);
+	IntVec2 GetPrevGridPos();
+	void SetPrevGridPos(IntVec2 const& gridPos);
 	PieceType GetPieceType();
+	void SetPieceType(PieceType newType);
 	Faction GetFaction();
 	bool GetIsFirstMove();
 	void SetIsFirstMove(bool isFirstMove);
@@ -33,8 +36,13 @@ private:
 	Faction m_faction = Faction::NONE;
 	PieceType m_pieceType = PieceType::NONE;
 	IntVec2 m_gridPos = IntVec2(0, 0);
+	IntVec2 m_prevCoord = IntVec2(0, 0);
 	EulerAngles m_orientaion = EulerAngles(0.f, 0.f, 0.f);
 	Texture* m_texWhite = nullptr;
 	Texture* m_texBlack = nullptr;
 	bool m_isFirstMove = true;
+
+	//new 
+	float secondSinceMoved;
+	int m_turnLastMoved;
 };

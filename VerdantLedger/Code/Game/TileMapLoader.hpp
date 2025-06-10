@@ -12,8 +12,8 @@ public:
 	TileMapLoader();
 	~TileMapLoader();
 
-	TileMap* LoadFromFile(const std::string& filePath);
-	Tileset* LoadTileset(const std::string& tilesetPath);
+	TileMap* LoadTileMapFromFile(const std::string& filePath);
+	Tileset* LoadTilesetFromFile(const std::string& tilesetPath);
 
 private:
 	//std::string m_mapDirectory; 

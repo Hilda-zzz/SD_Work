@@ -14,6 +14,9 @@
     <Filter Include="Player">
       <UniqueIdentifier>{0da57449-8a1c-4de7-9f48-39038fc7707c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TiledDef">
+      <UniqueIdentifier>{64199b9f-90fd-4f11-b491-e7060ecabe25}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -90,5 +93,13 @@
     <ClInclude Include="TileMapLoader.hpp">
       <Filter>TiledMapLoader</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx">
+      <Filter>TiledDef</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Tiled\HouseMap.tmx">
+      <Filter>TiledDef</Filter>
+    </None>
   </ItemGroup>
 </Project>

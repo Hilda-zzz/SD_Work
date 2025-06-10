@@ -8,13 +8,13 @@
 class TileMap
 {
 public:
-	TileMap();
+	TileMap(XmlElement* rootElement);
 	~TileMap();
 
 	const std::vector<TileLayer>& GetLayers() const { return m_layers; }
-	const std::vector<Tileset>& GetTilesets() const { return m_tilesets; }
+	const std::vector<Tileset*>& GetTilesets() const { return m_tilesets; }
 	IntVec2 GetSize() const { return m_size; }
-	Vec2 GetTileSize() const { return m_tileSize; }
+	IntVec2 GetTileSize() const { return m_tileSize; }
 	bool IsInfinite() const { return m_isInfinite; }
 
 	TileLayer* FindLayer(const std::string& name);
@@ -27,9 +27,9 @@ public:
 private:
 	std::string m_name;
 	std::vector<TileLayer> m_layers;
-	std::vector<Tileset> m_tilesets;
+	std::vector<Tileset*> m_tilesets;
 	IntVec2 m_size;                          // Tile Map size (count of tile)
-	Vec2 m_tileSize;                         // tile size (example: 16x16)
+	IntVec2 m_tileSize;                         // tile size (example: 16x16)
 	int m_nextLayerId = 1;
 	int m_nextObjId = 1;
 

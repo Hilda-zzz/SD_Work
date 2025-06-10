@@ -36,11 +36,11 @@ enum class ChessGameState
 enum class ChessMoveResult
 {
 	VALID_MOVE_NORMAL,					//d
-	VALID_MOVE_PROMOTION,
+	VALID_MOVE_PROMOTION,				//d
 	VALID_CASTLE_KINGSIDE,
 	VALID_CASTLE_QUEENSIDE,
 	VALID_CAPTURE_NORMAL,				//d
-	VALID_CAPTURE_ENPASSANT, 
+	VALID_CAPTURE_ENPASSANT,			//d
 
 	INVALID_MOVE_BAD_LOCATION,			//d
 	INVALID_MOVE_NO_PIECE,				//d
@@ -52,7 +52,7 @@ enum class ChessMoveResult
 	INVALID_MOVE_ENDS_IN_CHECK,
 	INVALID_MOVE_KING_TOO_CLOSE,
 
-	INVALID_ENPASSANT_STALE, //?
+	INVALID_ENPASSANT_STALE,			//?
 	INVALID_CASTLE_KING_HAS_MOVED,
 	INVALID_CASTLE_ROOK_HAS_MOVED,
 	INVALID_CASTLE_PATH_BLOCKED,
@@ -104,7 +104,7 @@ private:
 	static bool ValidateBishopMove(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
 	static bool ValidateKnightMove(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
 	static bool ValidatePawnMove(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
-
+	static bool ValidateCastling(int kingIndex, int targetIndex, bool isQueenside, ChessMoveResult& out_result);
 	static void AddLineForMoveResult(ChessMoveResult result);
 
 public:

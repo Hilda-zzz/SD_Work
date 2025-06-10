@@ -25,13 +25,17 @@ public:
 	int GetIndexFromCharNum(std::string const& charNum);
 	IntVec2 GetGridPosFromIndex(int index);
 	ChessPiece* GetChessFromIndex(int index);
+	ChessPiece* GetChessFromGridPos(IntVec2 gridPos);
 	bool DestroyChess(ChessPiece* curPiece);
-
+	bool IsGridPosValid(IntVec2 gridPos);
 
 private:
 	void PopulateDefaultChess();
 	void AddVertsForBoard();
 	
+public:
+	ChessPiece* m_lastMovingChess = nullptr;
+
 private:
 	std::vector<ChessPiece*> m_chessPieces;
 	std::string m_boardStateVisionString;

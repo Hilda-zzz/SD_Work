@@ -51,6 +51,10 @@
     <ClInclude Include="TileMapLoader.hpp" />
     <ClInclude Include="Tileset.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx" />
+    <None Include="..\..\Run\Data\Tiled\HouseMap.tmx" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

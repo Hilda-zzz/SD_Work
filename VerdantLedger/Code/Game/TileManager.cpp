@@ -1,4 +1,5 @@
 #include "TileManager.hpp"
+#include "Game/Tileset.hpp"
 
 TileMapManager* TileMapManager::s_tileManagerInstance = nullptr;
 
@@ -19,32 +20,33 @@ void TileMapManager::DestroyInstance()
 
 void TileMapManager::InitAllTilemapResources()
 {
+	LoadAllTilesets();
 	LoadAllMaps();
 }
 
 void TileMapManager::LoadAllTilesets()
 {
-	LoadTileset("Data/GrassSpring.tsx");
+	Tileset* newTileset=LoadTileset("Data/Tiled/GrassSpring.tsx");
 }
 
 Tileset* TileMapManager::LoadTileset(const std::string& tilesetPath)
 {
-	Tileset* newTileset = m_loader.LoadTileset(tilesetPath);
-	if (!newTileset)
+	Tileset* newTileset = m_loader.LoadTilesetFromFile(tilesetPath);
+	if (newTileset)
 	{
-		m_loadedTilesets[tilesetPath] = newTileset;
+		m_loadedTilesets[newTileset->GetName()] = newTileset;
 	}
 	return newTileset;
 }
 
 void TileMapManager::LoadAllMaps()
 {
-	LoadMap("Data/Tiled/HouseMap.tmx");
+	TileMap* newMap=LoadMap("Data/Tiled/HouseMap.tmx");
 }
 
 TileMap* TileMapManager::LoadMap(const std::string& mapPath)
 {
-	TileMap* newMap=m_loader.LoadFromFile(mapPath);
+	TileMap* newMap=m_loader.LoadTileMapFromFile(mapPath);
 	if (!newMap)
 	{
 		m_loadedMaps[mapPath] = newMap;
@@ -55,6 +57,14 @@ TileMap* TileMapManager::LoadMap(const std::string& mapPath)
 TileMap* TileMapManager::GetMap(const std::string& mapName)
 {
 	return nullptr;
+}
+
+void TileMapManager::UnloadAllMaps()
+{
+}
+
+void TileMapManager::UnloadMap(const std::string& mapName)
+{
 }
 
 TileMap* TileMapManager::GetCurrentMap()

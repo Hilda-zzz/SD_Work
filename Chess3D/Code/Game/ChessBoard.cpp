@@ -203,6 +203,10 @@ void ChessBoard::AddVertsForBoard()
 
 int ChessBoard::GetIndexFromGridPos(IntVec2 const& gridPos)
 {
+	if (!IsGridPosValid(gridPos))
+	{
+		return -1;
+	}
 	return gridPos.y * 8 + gridPos.x;
 }
 
@@ -239,6 +243,16 @@ ChessPiece* ChessBoard::GetChessFromIndex(int index)
 	return nullptr;
 }
 
+ChessPiece* ChessBoard::GetChessFromGridPos(IntVec2 gridPos)
+{
+	if (IsGridPosValid(gridPos))
+	{
+		int index = GetIndexFromGridPos(gridPos);
+		return GetChessFromIndex(index);
+	}
+	return nullptr;
+}
+
 bool ChessBoard::DestroyChess(ChessPiece* curPiece)
 {
 	auto it = std::find(m_chessPieces.begin(), m_chessPieces.end(), curPiece);
@@ -246,6 +260,15 @@ bool ChessBoard::DestroyChess(ChessPiece* curPiece)
 	{
 		delete* it;
 		m_chessPieces.erase(it);
+		return true;
+	}
+	return false;
+}
+
+bool ChessBoard::IsGridPosValid(IntVec2 gridPos)
+{
+	if (gridPos.x >= 0 && gridPos.x <= 7 && gridPos.y >= 0 && gridPos.y <= 7)
+	{
 		return true;
 	}
 	return false;
