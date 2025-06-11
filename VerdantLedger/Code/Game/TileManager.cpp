@@ -47,7 +47,7 @@ void TileMapManager::LoadAllMaps()
 TileMap* TileMapManager::LoadMap(const std::string& mapPath)
 {
 	TileMap* newMap=m_loader.LoadTileMapFromFile(mapPath);
-	if (!newMap)
+	if (newMap)
 	{
 		m_loadedMaps[mapPath] = newMap;
 	}

@@ -11,6 +11,8 @@ public:
 	TileMap(XmlElement* rootElement);
 	~TileMap();
 
+	void Render() const;
+
 	const std::vector<TileLayer>& GetLayers() const { return m_layers; }
 	const std::vector<Tileset*>& GetTilesets() const { return m_tilesets; }
 	IntVec2 GetSize() const { return m_size; }

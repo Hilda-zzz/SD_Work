@@ -22,10 +22,14 @@ Tileset::Tileset(XmlElement* rootElement)
 	int imageWidth = ParseXmlAttribute(imageElement, "width", tileWidth);
 	int imageHeight = ParseXmlAttribute(imageElement, "height", tileHeight);
 	m_imageSize = IntVec2(imageWidth, imageHeight);
+
+	m_spriteSheet = new SpriteSheet(*m_texture, IntVec2(m_columns, m_tileCount / m_columns));
 }
 
 Tileset::~Tileset()
 {
+	delete m_spriteSheet;
+	m_spriteSheet = nullptr;
 }
 
 IntVec2 Tileset::GetTileTextureCoord(uint32_t gid) const

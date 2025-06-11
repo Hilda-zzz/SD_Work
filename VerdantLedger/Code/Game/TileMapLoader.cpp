@@ -23,6 +23,7 @@ TileMap* TileMapLoader::LoadTileMapFromFile(const std::string& filePath)
 	GUARANTEE_OR_DIE(rootElement, "Faile to find root element");
 
 	TileMap* newTileMap = new TileMap(rootElement);
+	return newTileMap;
 }
 
 Tileset* TileMapLoader::LoadTilesetFromFile(const std::string& tilesetPath)

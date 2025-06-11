@@ -3,12 +3,16 @@
 #include <vector>
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Renderer/TextureAtlas.hpp"
+
+//struct AtlasMember;
 
 class Image
 {
 	friend class Renderer;
 public:
 	Image(char const* imageFilePath);
+	Image(std::vector<AtlasMember>& atlasMembers);
 	Image(IntVec2 size, Rgba8 color);
 public:
 	std::string const&	GetImageFilePath() const;

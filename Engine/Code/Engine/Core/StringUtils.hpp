@@ -10,6 +10,7 @@ const std::string Stringf( int maxLength, char const* format, ... );
 
 Strings SplitStringOnDelimiter(std::string const& originalString, char delimiterToSplitOn);
 Strings SplitStringOnDelimiterIgnoreSpace(std::string const& originalString, char delimiterToSplitOn);
+Strings SplitStringOnDelimiterIgnoreChangeLine(std::string const& originalString, char delimiterToSplitOn);
 
 
 

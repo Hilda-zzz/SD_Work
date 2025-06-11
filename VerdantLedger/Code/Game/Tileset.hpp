@@ -2,6 +2,7 @@
 #include <string>
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Core/XmlUtils.hpp"
+#include "Engine/Renderer/SpriteSheet.hpp"
 
 class Texture;
 
@@ -39,6 +40,7 @@ private:
 	int m_columns=0;            
 	std::string m_imagePath;    
 	Texture* m_texture = nullptr;
+	SpriteSheet* m_spriteSheet;
 	IntVec2 m_imageSize = IntVec2(0, 0);         // 图片尺寸
 	int m_margin = 0;            // 边距
 	int m_spacing = 0;           // 间距

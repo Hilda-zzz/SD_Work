@@ -14,6 +14,9 @@ public:
 	void Render() const;
 
 private:
+	void TileMapRender() const;
+
+private:
 	Game* m_game = nullptr;
 	TileMap* m_tileMap = nullptr;
 	Player* m_player = nullptr;

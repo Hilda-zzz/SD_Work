@@ -6,6 +6,7 @@
 class Clock;
 class Map;
 class TileMapManager;
+class Player;
 
 enum class GameState
 {
@@ -54,6 +55,7 @@ public:
 	GameState m_nextGameState = GameState::GAME_STATE_ATTRACT;
 	
 	Map* m_curMap = nullptr;
+	Player* m_player = nullptr;
 
 private:
 	TileMapManager* g_tileManager;

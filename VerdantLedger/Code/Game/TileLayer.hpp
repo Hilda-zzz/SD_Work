@@ -34,18 +34,18 @@ public:
 	std::string GetProperty(const std::string& key, const std::string& defaultValue = "") const;
 
 public:
-
-
-private:
 	TileLayerType m_type = TileLayerType::TILE_LAYER;
 	int m_id;
 	std::string m_name;
-	IntVec2 m_size;                          
+	IntVec2 m_size;
 	float m_opacity = 1.0f;
 	bool m_visible = true;
 
 	std::vector<TileChunk> m_chunks;         // infinite
 	std::vector<uint32_t> m_data;           // finite
+
+private:
+
 
 	//std::vector<TileObject> m_objects; 
 

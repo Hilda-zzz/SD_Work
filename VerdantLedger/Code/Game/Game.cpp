@@ -9,6 +9,8 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
 #include "TileManager.hpp"
+#include "Map.hpp"
+#include "Player.hpp"
 
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
@@ -18,6 +20,9 @@ Game::Game()
 	m_gameClock = new Clock();
 	g_tileManager = &TileMapManager::GetInstance();
 	g_tileManager->InitAllTilemapResources();
+
+	m_player = new Player();
+	m_curMap = new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/HouseMap.tmx"], m_player);
 }
 
 Game::~Game()
@@ -27,6 +32,9 @@ Game::~Game()
 
 	TileMapManager::DestroyInstance();
 	g_tileManager = nullptr;
+
+	delete m_curMap;
+	m_curMap = nullptr;
 }
 
 void Game::Update()
@@ -121,6 +129,9 @@ void Game::UpdateAttractMode(float deltaTime)
 void Game::UpdateGameplayMode(float deltaTime)
 {
 	UNUSED(deltaTime);
+
+	m_curMap->Update(deltaTime);
+
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
 	{
 		m_nextGameState = GameState::GAME_STATE_ATTRACT;
@@ -188,6 +199,8 @@ void Game::RenderAttractMode() const
 
 void Game::RenderGameplayMode() const
 {
+	m_curMap->Render();
+
 	g_theRenderer->BeginCamera(m_screenCamera);
 	RenderGameplayUI();
 	g_theRenderer->EndCamera(m_screenCamera);

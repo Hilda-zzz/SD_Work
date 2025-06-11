@@ -3,6 +3,7 @@
 #include "Engine/Core/Image.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
+
 Image::Image(char const* imageFilePath):m_imageFilePath(imageFilePath)
 {
 	int originalChannels;
@@ -31,6 +32,10 @@ Image::Image(char const* imageFilePath):m_imageFilePath(imageFilePath)
 	}
 
 	stbi_image_free(pixelData);
+}
+
+Image::Image(std::vector<AtlasMember>& atlasMembers)
+{
 }
 
 Image::Image(IntVec2 size, Rgba8 color)
