@@ -22,10 +22,13 @@ public:
 	TileLayer* FindLayer(const std::string& name);
 	TileLayer* FindLayer(int id);
 	Tileset* FindTileset(int firstGid);
+
+	uint32_t GetTileGidFromLayerID(int layerID,IntVec2 const& gridPos);
+
 private:
 
 public:
-
+	uint32_t m_markLayerIndex = 0;
 private:
 	std::string m_name;
 	std::vector<TileLayer> m_layers;
@@ -34,6 +37,8 @@ private:
 	IntVec2 m_tileSize;                         // tile size (example: 16x16)
 	int m_nextLayerId = 1;
 	int m_nextObjId = 1;
+
+	
 
 	bool m_isInfinite = false;
 	std::string m_orientation = "orthogonal";

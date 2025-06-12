@@ -49,7 +49,7 @@
     <ClCompile Include="Player.cpp">
       <Filter>Player</Filter>
     </ClCompile>
-    <ClCompile Include="TileManager.cpp">
+    <ClCompile Include="TileMapManager.cpp">
       <Filter>TiledMapLoader</Filter>
     </ClCompile>
     <ClCompile Include="TileMapLoader.cpp">
@@ -87,7 +87,7 @@
     <ClInclude Include="Player.hpp">
       <Filter>Player</Filter>
     </ClInclude>
-    <ClInclude Include="TileManager.hpp">
+    <ClInclude Include="TileMapManager.hpp">
       <Filter>TiledMapLoader</Filter>
     </ClInclude>
     <ClInclude Include="TileMapLoader.hpp">
@@ -99,6 +99,9 @@
       <Filter>TiledDef</Filter>
     </None>
     <None Include="..\..\Run\Data\Tiled\HouseMap.tmx">
+      <Filter>TiledDef</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Tiled\TileMark.tsx">
       <Filter>TiledDef</Filter>
     </None>
   </ItemGroup>

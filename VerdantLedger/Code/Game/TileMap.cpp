@@ -1,5 +1,5 @@
 ﻿#include "TileMap.hpp"
-#include "TileManager.hpp"
+#include "TileMapManager.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 
@@ -23,12 +23,16 @@ TileMap::TileMap(XmlElement* rootElement)
 	{
 		std::string tilesetSource = ParseXmlAttribute(tilesetElement, "source", "");
 		Strings sourceArr=SplitStringOnDelimiter(tilesetSource, '.');
-		Tileset* tilesetRef=TileMapManager::GetInstance().m_loadedTilesets[sourceArr[0]];
+		Tileset* tilesetRef=TileMapManager::GetInstance().m_loadedTilesetsByName[sourceArr[0]];
 		if (tilesetRef)
 		{
-			int firstGid = ParseXmlAttribute(tilesetElement, "firstgid", 1);
+			uint32_t firstGid = ParseXmlAttribute(tilesetElement, "firstgid", 1);
 			tilesetRef->SetFirstGid(firstGid);
+            TileMapManager::GetInstance().m_loadedTilesetsByGID[firstGid] = tilesetRef;
 			m_tilesets.push_back(tilesetRef);
+
+            TileMapManager::AddGidToPropertyMaskForEachTileset(tilesetRef);
+
 		}
 	}
 
@@ -36,7 +40,13 @@ TileMap::TileMap(XmlElement* rootElement)
  		layerElement; layerElement = layerElement->NextSiblingElement("layer")) 
  	{
  		TileLayer layer;
- 		layer.m_name = ParseXmlAttribute(layerElement, "name", std::string());
+        layer.m_name = ParseXmlAttribute(layerElement, "name", "");
+        layer.m_id = ParseXmlAttribute(layerElement, "id", 0);
+        layer.m_class= ParseXmlAttribute(layerElement, "class", layer.m_class);
+        if (layer.m_class == "TileMark")
+        {
+            m_markLayerIndex=layer.m_id;
+        }
  		int width = ParseXmlAttribute(layerElement, "width", 0);
  		int height = ParseXmlAttribute(layerElement, "height", 0);
         m_size = IntVec2(width, height);
@@ -64,6 +74,10 @@ TileMap::TileMap(XmlElement* rootElement)
                         chunk.m_data.push_back(value);
                     }
  				}
+                if (layer.m_name == "TileMarkLayer")
+                {
+                    int k = 1;
+                }
                 chunk.InitializeChunkVerts();
  				layer.m_chunks.push_back(chunk);
  			}
@@ -82,7 +96,20 @@ void TileMap::Render() const
     {
         for (int j = 0; j < m_layers[i].m_chunks.size(); j++)
         {
+            Texture* grassTex=g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/TilesetGrassSpring.png");
+            Texture* tileMarkTex= g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
+            g_theRenderer->BindTexture(grassTex);
+            if (i == 3)
+            {
+                g_theRenderer->BindTexture(tileMarkTex);
+            }
+            g_theRenderer->SetModelConstants();
             g_theRenderer->DrawVertexArray(m_layers[i].m_chunks[j].m_verts);
         }
     }
+}
+
+uint32_t TileMap::GetTileGidFromLayerID(int layerID, IntVec2 const& gridPos)
+{
+    return m_layers[layerID - 1].GetGidFromGridPos(gridPos);
 }

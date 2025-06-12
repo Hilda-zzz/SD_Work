@@ -15,7 +15,7 @@ public:
 	IntVec2 GetSize() const { return m_size; }
 	bool IsEmpty() const { return m_isEmpty; }
 
-	uint32_t GetTile(int localX, int localY) const;
+	uint32_t GetTile(IntVec2 const& gridPos) const;
 	void SetTile(int localX, int localY, uint32_t tileId);
 
 	IntVec2 ToWorldPos(int localX, int localY) const {
@@ -28,6 +28,7 @@ public:
 	bool m_isEmpty = false;   
 	std::vector<Vertex_PCU> m_verts;
 
+	
 private:
 	
 };

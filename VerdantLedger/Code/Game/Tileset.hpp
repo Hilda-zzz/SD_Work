@@ -1,10 +1,18 @@
 ﻿#pragma once
 #include <string>
+#include <unordered_map>
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 
 class Texture;
+
+struct TileProperty
+{
+	uint32_t m_localID;
+	std::string m_propertyName;
+	bool m_value=false;
+};
 
 class Tileset
 {
@@ -18,7 +26,7 @@ public:
 	int GetTileCount() const { return m_tileCount; }
 	const std::string& GetImagePath() const { return m_imagePath; }
 
-	// 检查GID是否属于这个tileset
+	AABB2 GetTileUVByInnerIndex(int index) const;
 	bool ContainsGid(uint32_t gid) const {
 		return gid >= m_firstGid && gid < m_firstGid + m_tileCount;
 	}
@@ -31,10 +39,12 @@ public:
 private:
 
 
+public:
+	std::vector<TileProperty> m_properties;
 
 private:
 	std::string m_name;
-	int m_firstGid=0;              // 起始GID
+	uint32_t m_firstGid=0;              // 起始GID
 	int m_tileCount=0;            
 	IntVec2 m_tileSize=IntVec2(0,0);          
 	int m_columns=0;            
@@ -46,7 +56,8 @@ private:
 	int m_spacing = 0;           // 间距
 
 	// 瓦片属性（稀疏存储）
-	//std::unordered_map<int, TileProperties> m_tileProperties;
+	//std::unordered_map<std::string, bool> m_tileProperties; //property name to bool
+	
 
 
 };

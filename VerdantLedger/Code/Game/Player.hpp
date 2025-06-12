@@ -22,9 +22,8 @@ public:
 	Vec2	m_velocity = Vec2(0.f, 0.f);
 	float   m_speed = 20.f;
 	Camera  m_gameplayCam;
-
-private:
 	float	m_physicsRadius = 0.f;
+private:
 	float	m_cosmeticRadius = 0.f;
 	std::vector<Vertex_PCU> m_verts;
 	

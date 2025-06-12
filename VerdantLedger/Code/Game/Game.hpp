@@ -56,9 +56,9 @@ public:
 	
 	Map* m_curMap = nullptr;
 	Player* m_player = nullptr;
-
-private:
 	TileMapManager* g_tileManager;
+private:
+	
 	Camera m_screenCamera;
 	bool m_isPause = false;
 	bool m_isSlow = false;

@@ -33,10 +33,14 @@ public:
 
 	std::string GetProperty(const std::string& key, const std::string& defaultValue = "") const;
 
+	uint32_t GetGidFromGridPos(IntVec2 const& gridPos);
+	bool IsPositionInChunk(IntVec2 const& gridPos, const TileChunk& chunk) const;
+
 public:
 	TileLayerType m_type = TileLayerType::TILE_LAYER;
 	int m_id;
 	std::string m_name;
+	std::string m_class = "Normal";
 	IntVec2 m_size;
 	float m_opacity = 1.0f;
 	bool m_visible = true;

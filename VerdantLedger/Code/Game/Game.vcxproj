@@ -32,7 +32,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="TileChunk.cpp" />
     <ClCompile Include="TileLayer.cpp" />
-    <ClCompile Include="TileManager.cpp" />
+    <ClCompile Include="TileMapManager.cpp" />
     <ClCompile Include="TileMap.cpp" />
     <ClCompile Include="TileMapLoader.cpp" />
     <ClCompile Include="Tileset.cpp" />
@@ -46,7 +46,7 @@
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="TileChunk.hpp" />
     <ClInclude Include="TileLayer.hpp" />
-    <ClInclude Include="TileManager.hpp" />
+    <ClInclude Include="TileMapManager.hpp" />
     <ClInclude Include="TileMap.hpp" />
     <ClInclude Include="TileMapLoader.hpp" />
     <ClInclude Include="Tileset.hpp" />
@@ -54,6 +54,7 @@
   <ItemGroup>
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx" />
     <None Include="..\..\Run\Data\Tiled\HouseMap.tmx" />
+    <None Include="..\..\Run\Data\Tiled\TileMark.tsx" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

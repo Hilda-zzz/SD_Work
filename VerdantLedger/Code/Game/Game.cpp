@@ -8,7 +8,7 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
-#include "TileManager.hpp"
+#include "TileMapManager.hpp"
 #include "Map.hpp"
 #include "Player.hpp"
 
@@ -208,9 +208,9 @@ void Game::RenderGameplayMode() const
 
 void Game::RenderGameplayUI() const
 {
-	g_theRenderer->BindTexture(nullptr);
-	DebugDrawLine(Vec2(100.f, 100.f), Vec2(1500.f, 700.f), 4.f, Rgba8(180, 0, 100));
-	DebugDrawLine(Vec2(100.f, 700.f), Vec2(1500.f, 100.f), 4.f, Rgba8(180, 0, 100));
+// 	g_theRenderer->BindTexture(nullptr);
+// 	DebugDrawLine(Vec2(100.f, 100.f), Vec2(1500.f, 700.f), 4.f, Rgba8(180, 0, 100));
+// 	DebugDrawLine(Vec2(100.f, 700.f), Vec2(1500.f, 100.f), 4.f, Rgba8(180, 0, 100));
 }
 
 void Game::RenderDebugMode()const

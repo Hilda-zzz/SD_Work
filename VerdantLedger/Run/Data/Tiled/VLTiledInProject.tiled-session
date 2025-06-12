@@ -1,0 +1,49 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "HouseMap.tmx",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "GrassSpring.tsx": {
+            "scaleInDock": 1.5,
+            "scaleInEditor": 1
+        },
+        "HouseMap.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 321.33333333333326,
+                "y": 325.99999999999994
+            }
+        },
+        "TileMark.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.imagePath": "C:/p4/Personal/SD/VerdantLedger/Run/Data/Art",
+    "map.fixedSize": false,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "openFiles": [
+        "GrassSpring.tsx",
+        "TileMark.tsx",
+        "HouseMap.tmx"
+    ],
+    "project": "VLTiledInProject.tiled-project",
+    "property.type": "bool",
+    "recentFiles": [
+        "GrassSpring.tsx",
+        "TileMark.tsx",
+        "HouseMap.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
