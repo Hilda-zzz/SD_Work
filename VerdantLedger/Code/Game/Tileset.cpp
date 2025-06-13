@@ -29,8 +29,8 @@ Tileset::Tileset(XmlElement* rootElement)
 	for (XmlElement* tilesetElement = rootElement->FirstChildElement("tile");
 		tilesetElement; tilesetElement = tilesetElement->NextSiblingElement("tile"))
 	{
-		uint32_t localID= ParseXmlAttribute(tilesetElement, "id", 0);
-		if (localID != 0)
+		uint32_t localID= ParseXmlAttribute(tilesetElement, "id", -1);
+		if (localID != -1)
 		{
 			XmlElement* propertyElements= tilesetElement->FirstChildElement("properties");
 			for (XmlElement* propElement = propertyElements->FirstChildElement("property");
@@ -48,7 +48,7 @@ Tileset::Tileset(XmlElement* rootElement)
 				}
 			}
 		}
-	}
+ 	}
 }
 
 Tileset::~Tileset()

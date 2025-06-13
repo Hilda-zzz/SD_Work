@@ -13,6 +13,7 @@
  </tile>
  <tile id="22">
   <properties>
+   <property name="IsSolid" type="bool" value="true"/>
    <property name="IsWater" type="bool" value="true"/>
   </properties>
  </tile>

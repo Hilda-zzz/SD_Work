@@ -67,7 +67,7 @@ IntVec2 Map::GetTileCoordsFromPoint(Vec2 const& point)
 void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhyRadius)
 {
     uint32_t gid= m_tileMap->GetTileGidFromLayerID(m_tileMap->m_markLayerIndex, tileCoords);
-    uint32_t flag =m_game->g_tileManager->m_gidToTilePropertyFlag[gid];
+	uint32_t flag =m_game->g_tileManager->m_gidToTilePropertyFlag[gid];
 	if (flag & static_cast<uint32_t>(TileFlags::SOLID))
 	{
 		AABB2 thisTileBox = AABB2(static_cast<float>(tileCoords.x), static_cast<float>(tileCoords.y),
