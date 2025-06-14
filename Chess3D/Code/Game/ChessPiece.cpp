@@ -19,9 +19,14 @@ ChessPiece::ChessPiece(Faction facion, PieceType type, IntVec2 const& gridPos):C
 		}
 	}
 
+	if (m_faction == Faction::WHITE)
+	{
+		m_orientaion = EulerAngles(90.f, 0.f, 0.f);
+	}
+
 	if (m_faction == Faction::BLACK)
 	{
-		m_orientaion = EulerAngles(180.f, 0.f, 0.f);
+		m_orientaion = EulerAngles(-90.f, 0.f, 0.f);
 	}
 }
 

@@ -91,6 +91,7 @@ void AddVertsForSphere3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<
 void AddVertsForSphereQuad3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
 	const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3,
 	const Vec3& center, const Rgba8& color, const AABB2& UVs);
+Vec3 GetTangentForSphereQuad(Vec3 const& curNormal);
 void AddVertsForCylinder3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes,
 	const Vec3& start, const Vec3& end, float radius,
 	const Rgba8 color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 16);

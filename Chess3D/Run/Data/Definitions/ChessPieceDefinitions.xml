@@ -9,7 +9,7 @@
 			<Component type="ZCylinder" start="0,0,0.7" end="0,0,0.8" radius="0.2" color="Body"/>
 			<Component type="ZCylinder" start="0,0,0.8" end="0,0,0.85" radius="0.1" color="Accent"/>
 			<Component type="AABB3" bl="-0.025,-0.025,0.85" tr="0.025,0.025,1.05" color="Crown"/>
-			<Component type="AABB3" bl="-0.075,-0.025,0.925" tr="0.075,0.025,0.975" color="Crown"/>
+			<Component type="AABB3" bl="-0.025,-0.075,0.925" tr="0.025,0.075,0.975" color="Crown"/>
 		</Geometry>
 	</PieceDefinition>
 
@@ -21,10 +21,10 @@
 			<Component type="ZCylinder" start="0,0,0.3" end="0,0,0.7" radius="0.15" color="Body"/>
 			<Component type="ZCylinder" start="0,0,0.7" end="0,0,0.8" radius="0.2" color="Body"/>
 			<Component type="ZCylinder" start="0,0,0.8" end="0,0,0.85" radius="0.1" color="Accent"/>
+			<Component type="ZSphere" position="0,-0.15,0.85" radius="0.05" color="Crown"/>
+			<Component type="ZSphere" position="0,0.15,0.85" radius="0.05" color="Crown"/>
 			<Component type="ZSphere" position="0.15,0,0.85" radius="0.05" color="Crown"/>
 			<Component type="ZSphere" position="-0.15,0,0.85" radius="0.05" color="Crown"/>
-			<Component type="ZSphere" position="0,0.15,0.85" radius="0.05" color="Crown"/>
-			<Component type="ZSphere" position="0,-0.15,0.85" radius="0.05" color="Crown"/>
 			<Component type="ZSphere" position="0,0,0.9" radius="0.08" color="Crown"/>
 		</Geometry>
 	</PieceDefinition>
@@ -34,14 +34,14 @@
 			<Component type="ZCylinder" start="0,0,0" end="0,0,0.1" radius="0.35" color="Base"/>
 			<Component type="ZCylinder" start="0,0,0.1" end="0,0,0.7" radius="0.25" color="Body"/>
 			<Component type="ZCylinder" start="0,0,0.7" end="0,0,0.8" radius="0.3" color="Crown"/>
-			<Component type="OBB3" center="0.25,0,0.85" euler="0,0,0" halfDimensions="0.05,0.05,0.075" color="Crown"/>
-			<Component type="OBB3" center="0.177,0.177,0.85" euler="45,0,0" halfDimensions="0.05,0.05,0.075" color="Crown"/>
-			<Component type="OBB3" center="0,0.25,0.85" euler="90,0,0" halfDimensions="0.05,0.05,0.075" color="Crown"/>
-			<Component type="OBB3" center="-0.177,0.177,0.85" euler="135,0,0" halfDimensions="0.05,0.05,0.075" color="Crown"/>
-			<Component type="OBB3" center="-0.25,0,0.85" euler="180,0,0" halfDimensions="0.05,0.05,0.075" color="Crown"/>
-			<Component type="OBB3" center="-0.177,-0.177,0.85" euler="225,0,0" halfDimensions="0.05,0.05,0.075" color="Crown"/>
-			<Component type="OBB3" center="0,-0.25,0.85" euler="270,0,0" halfDimensions="0.05,0.05,0.075" color="Crown"/>
-			<Component type="OBB3" center="0.177,-0.177,0.85" euler="315,0,0" halfDimensions="0.05,0.05,0.075" color="Crown"/>
+			<Component type="OBB3" center="0,-0.25,0.85" euler="0,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
+			<Component type="OBB3" center="0.177,-0.177,0.85" euler="45,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
+			<Component type="OBB3" center="0.25,0,0.85" euler="90,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
+			<Component type="OBB3" center="0.177,0.177,0.85" euler="135,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
+			<Component type="OBB3" center="0,0.25,0.85" euler="180,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
+			<Component type="OBB3" center="-0.177,0.177,0.85" euler="225,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
+			<Component type="OBB3" center="-0.25,0,0.85" euler="270,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
+			<Component type="OBB3" center="-0.177,-0.177,0.85" euler="315,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
 		</Geometry>
 	</PieceDefinition>
 
@@ -57,17 +57,22 @@
 		</Geometry>
 	</PieceDefinition>
 
-	<!-- Knight -->
+	<!-- Knight - 最明显的变化在这里 -->
 	<PieceDefinition type="KNIGHT" glyph="N">
 		<Geometry>
 			<Component type="ZCylinder" start="0,0,0" end="0,0,0.08" radius="0.28" color="Base"/>
-			<Component type="AABB3" bl="-0.15,-0.25,0.08" tr="0.15,0.25,0.4" color="Body"/>
-			<Component type="AABB3" bl="-0.12,-0.08,0.4" tr="0.12,0.25,0.7" color="Body"/>
-			<Component type="AABB3" bl="-0.1,0.12,0.25" tr="0.1,0.28,0.42" color="Body"/>
-			<Component type="AABB3" bl="0.05,-0.03,0.65" tr="0.1,0.02,0.75" color="Accent"/>
-			<Component type="AABB3" bl="-0.1,-0.03,0.65" tr="-0.05,0.02,0.75" color="Accent"/>
-			<Component type="AABB3" bl="-0.02,-0.05,0.6" tr="0.02,0.05,0.72" color="Accent"/>
-			<Component type="AABB3" bl="-0.08,0.05,0.35" tr="0.08,0.15,0.45" color="Body"/>
+			<!-- 身体：从Y朝向改为X朝向 -->
+			<Component type="AABB3" bl="-0.25,-0.15,0.08" tr="0.25,0.15,0.4" color="Body"/>
+			<!-- 头部：现在朝X轴正方向 -->
+			<Component type="AABB3" bl="-0.08,-0.12,0.4" tr="0.25,0.12,0.7" color="Body"/>
+			<!-- 鼻子部分 -->
+			<Component type="AABB3" bl="0.12,-0.1,0.25" tr="0.28,0.1,0.42" color="Body"/>
+			<!-- 眼睛和鼻孔：现在在X正方向一侧 -->
+			<Component type="AABB3" bl="-0.03,-0.1,0.65" tr="0.02,-0.05,0.75" color="Accent"/>
+			<Component type="AABB3" bl="-0.03,0.05,0.65" tr="0.02,0.1,0.75" color="Accent"/>
+			<Component type="AABB3" bl="-0.05,-0.02,0.6" tr="0.05,0.02,0.72" color="Accent"/>
+			<!-- 马鬃 -->
+			<Component type="AABB3" bl="0.05,-0.08,0.35" tr="0.15,0.08,0.45" color="Body"/>
 		</Geometry>
 	</PieceDefinition>
 

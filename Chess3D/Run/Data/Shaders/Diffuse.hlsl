@@ -58,9 +58,9 @@ v2p_t VertexMain(vs_input_t input)
 	float4 renderPosition = mul(CameraToRenderTransform, cameraPosition);
 	float4 clipPosition = mul(RenderToClipTransform, renderPosition);
 
- 	float4 worldTangent = mul(ModelToWorldTransform, float4(input.modelNormal, 0.0f));
- 	float4 worldBitangent = mul(ModelToWorldTransform, float4(input.modelNormal, 0.0f));
- 	float4 worldNormal = mul(ModelToWorldTransform, float4(input.modelNormal, 0.0f));
+ 	float4 worldTangent = mul(ModelToWorldTransform,float4(input.modelTangent, 0.0f));
+ 	float4 worldBitangent = mul(ModelToWorldTransform,float4(input.modelBitangent, 0.0f));
+ 	float4 worldNormal = mul(ModelToWorldTransform,float4(input.modelNormal, 0.0f));
 
 	v2p_t v2p;
 	v2p.clipPosition = clipPosition;
@@ -81,10 +81,10 @@ float4 PixelMain(v2p_t input) : SV_Target0
  	float4 textureColor = diffuseTexture.Sample(samplerState, input.uv);
  	float4 vertexColor = input.color;
  	float4 modelColor = ModelColor;
- 	float4 color = lightColor * textureColor * vertexColor * modelColor;
+ 	//float4 color = lightColor * textureColor * vertexColor * modelColor;
 
-//  	float3 debugNormal = saturate((input.worldNormal.xyz + 1.0) * 0.5);
-//  	float4 color = float4(debugNormal, 1.0);
+ 	float3 debugNormal = saturate((normalize(input.worldTangent.xyz) + 1.0) * 0.5);
+  	float4 color = float4(debugNormal, 1.0);
 
  	clip(color.a - 0.01f);
  	return color;
