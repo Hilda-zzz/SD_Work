@@ -53,3 +53,11 @@ float SpriteSheet::GetEachSpriteAspect() const
 	float height = (float)texDimension.y / (float)m_gridLayout.y;
 	return width/height;
 }
+
+Vec2 SpriteSheet::GetEachSpriteWidthHeight() const
+{
+	IntVec2 texDimension = m_texture.GetDimensions();
+	float width = (float)texDimension.x / (float)m_gridLayout.x;
+	float height = (float)texDimension.y / (float)m_gridLayout.y;
+	return Vec2(width, height);
+}

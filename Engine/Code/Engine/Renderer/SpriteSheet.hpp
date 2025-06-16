@@ -17,6 +17,7 @@ public:
 	void GetSpriteUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs, int spriteIndex) const;
 	AABB2 GetSpriteUVs(int spriteIndex) const;
 	float GetEachSpriteAspect() const;
+	Vec2 GetEachSpriteWidthHeight() const;
 public:
 	IntVec2 const m_gridLayout;
 protected:

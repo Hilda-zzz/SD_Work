@@ -17,6 +17,15 @@
     <Filter Include="TiledDef">
       <UniqueIdentifier>{64199b9f-90fd-4f11-b491-e7060ecabe25}</UniqueIdentifier>
     </Filter>
+    <Filter Include="AnimStateMachine">
+      <UniqueIdentifier>{9a1c5095-69be-4a8f-b167-3f11a93f4640}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AnimStates">
+      <UniqueIdentifier>{daaf4d80-3d18-42f7-861e-5c8c9840cb0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AnimStates\PlayerBodyAnimStates">
+      <UniqueIdentifier>{af31b0eb-7932-463e-9305-05c749568cf8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -55,6 +64,12 @@
     <ClCompile Include="TileMapLoader.cpp">
       <Filter>TiledMapLoader</Filter>
     </ClCompile>
+    <ClCompile Include="AnimState.cpp">
+      <Filter>AnimStateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerBodyState.cpp">
+      <Filter>AnimStates\PlayerBodyAnimStates</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -92,6 +107,18 @@
     </ClInclude>
     <ClInclude Include="TileMapLoader.hpp">
       <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimState.hpp">
+      <Filter>AnimStateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="StateMachine.hpp">
+      <Filter>AnimStateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimStateEnum.hpp">
+      <Filter>AnimStateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerBodyState.hpp">
+      <Filter>AnimStates\PlayerBodyAnimStates</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

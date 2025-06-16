@@ -24,12 +24,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnimState.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
     <ClCompile Include="Main_Windows.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PlayerBodyState.cpp" />
     <ClCompile Include="TileChunk.cpp" />
     <ClCompile Include="TileLayer.cpp" />
     <ClCompile Include="TileMapManager.cpp" />
@@ -38,12 +40,16 @@
     <ClCompile Include="Tileset.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimState.hpp" />
+    <ClInclude Include="AnimStateEnum.hpp" />
     <ClInclude Include="App.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="Map.hpp" />
     <ClInclude Include="Player.hpp" />
+    <ClInclude Include="PlayerBodyState.hpp" />
+    <ClInclude Include="StateMachine.hpp" />
     <ClInclude Include="TileChunk.hpp" />
     <ClInclude Include="TileLayer.hpp" />
     <ClInclude Include="TileMapManager.hpp" />

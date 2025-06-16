@@ -8,6 +8,8 @@ class Map;
 class TileMapManager;
 class Player;
 
+constexpr int RESOLUTION = 16;
+
 enum class GameState
 {
 	GAME_STATE_ATTRACT,
