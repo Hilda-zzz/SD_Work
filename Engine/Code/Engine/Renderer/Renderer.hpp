@@ -108,7 +108,8 @@ public:
 	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath);
 	Texture*	GetTextureFromFileName(char const* imageFilePath);
 	Texture*	CreateTextureFromImage(const Image& image);
-	void		BindTexture(Texture* texture);
+	void		BindTexture(Texture* texture, Texture* normalTexture=nullptr);
+	//void		BindTextureWithNormal(Texture* diffuseTexture,Texture* normalTexture);
 
 	//----------------Cube Sky Box/ Cube Texture---------------------------------------------------
 	TextureCube* CreateOrGetCubeTextureFromFiles(const std::string filePaths[6]);
@@ -123,7 +124,8 @@ public:
 	
 	//-----------------------Set render mode------------------------------------------------------------
 	void		SetBlendMode(BlendMode blendMode);
-	void		SetSamplerMode(SamplerMode samplerMode);
+	void		SetSamplerMode(SamplerMode samplerMode, 
+		SamplerMode normalSamplerMode=SamplerMode::BILINEAR_WRAP);
 	void        SetDepthMode(DepthMode depthMode);
 	void        SetRasterizerMode(RasterizerMode rasterizerMode);
 
@@ -133,6 +135,7 @@ public:
 	void SetPointLightsConstants(const std::vector<PointLight>& lights);
 	void SetSpotLightsConstants(const std::vector<SpotLight>& lights);
 	void SetShadowConstants(Mat44 const& lightViewProjectionMat);
+	void SetPerFrameConstants(float time,int debugInt,float debugFloat);
 
 	//-----------------------Shader-------------------------------------------------------------------
 	Shader* CreateShaderFromFile(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
@@ -184,6 +187,7 @@ protected:
 	ConstantBuffer*			m_pointLightCBO = nullptr;
 	ConstantBuffer*			m_spotLightCBO = nullptr;
 	ConstantBuffer*			m_shadowCBO = nullptr;
+	ConstantBuffer*			m_perFrameCBO = nullptr;
 
 	const Texture*			m_defaultTexture = nullptr;
 
@@ -216,7 +220,9 @@ protected:
 	ID3D11BlendState*	m_blendStates[(int)(BlendMode::COUNT)] = {};
 	//----------------------------------------------------------------
 	ID3D11SamplerState* m_samplerState = nullptr;
+	ID3D11SamplerState* m_normalSamplerState = nullptr;
 	SamplerMode			m_desiredSamplerMode = SamplerMode::POINT_CLAMP;
+	SamplerMode			m_desiredNormalSamplerMode = SamplerMode::BILINEAR_WRAP;
 	ID3D11SamplerState* m_samplerStates[(int)(SamplerMode::COUNT)] = {};
 	//----------------------------------------------------------------
 	RasterizerMode  m_desiredRasterizerMode = RasterizerMode::SOLID_CULL_BACK;

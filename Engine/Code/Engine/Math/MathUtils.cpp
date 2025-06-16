@@ -917,6 +917,14 @@ float Interpolate(float start, float end, float fractionTowardEnd)
 	return start + (end - start) * fractionTowardEnd;
 }
 
+Vec3 Interpolate(Vec3 const& start, Vec3 const& end, float fractionTowardEnd)
+{
+	float x= start.x + (end.x - start.x) * fractionTowardEnd;
+	float y = start.y + (end.y - start.y) * fractionTowardEnd;
+	float z = start.z + (end.z - start.z) * fractionTowardEnd;
+	return Vec3(x,y,z);
+}
+
 float GetFractionWithinRange(float value, float rangeStart, float rangeEnd)
 {
 	if (rangeEnd != rangeStart) //cannot use rangeEnd>rangeStart cause the order of parameters can be reverted

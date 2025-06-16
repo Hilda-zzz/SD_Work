@@ -1,13 +1,13 @@
-struct vs_input_t
+struct VertexInput
 {
-    float3 modelPosition : POSITION;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD;
+    float3 a_modelPosition : POSITION;
+    float4 a_color : COLOR;
+    float2 a_uv : TEXCOORD;
 };
 
-struct v2p_t
+struct VertexOutPixelIn
 {
-    float4 clipPosition : SV_Position;
+    float4 v_clipPosition : SV_Position;
     float3 texcoord : TEXCOORD;
 };
 
@@ -25,13 +25,13 @@ cbuffer ModelConstants : register(b3)
 };
 
 TextureCube skyboxTexture : register(t0);
-SamplerState samplerState : register(s0);
+SamplerState s_samplerState : register(s0);
 
-v2p_t VertexMain(vs_input_t input)
+VertexOutPixelIn VertexMain(VertexInput input)
 {
-    v2p_t output;
+    VertexOutPixelIn output;
     
-    float4 modelPos = float4(input.modelPosition, 1);
+    float4 modelPos = float4(input.a_modelPosition, 1);
     float4 worldPos = mul(ModelToWorldTransform, modelPos);
     
     float4x4 viewNoTranslation = WorldToCameraTransform;
@@ -47,14 +47,14 @@ v2p_t VertexMain(vs_input_t input)
     
     clipPos.z = clipPos.w;
     
-    output.clipPosition = clipPos;
-    output.texcoord = float3(-input.modelPosition.y,-input.modelPosition.z,input.modelPosition.x);
+    output.v_clipPosition = clipPos;
+    output.texcoord = float3(-input.a_modelPosition.y,-input.a_modelPosition.z,input.a_modelPosition.x);
     //output.texcoord = float3(input.modelPosition.x,-input.modelPosition.z,-input.modelPosition.y);
     
     return output;
 }
 
-float4 PixelMain(v2p_t input) : SV_Target0
+float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 {
-    return skyboxTexture.Sample(samplerState, normalize(input.texcoord));
+    return skyboxTexture.Sample(s_samplerState, normalize(input.texcoord));
 }

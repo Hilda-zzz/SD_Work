@@ -58,7 +58,7 @@ enum class ChessMoveResult
 	INVALID_CASTLE_PATH_BLOCKED,
 	INVALID_CASTLE_THROUGH_CHECK,
 	INVALID_CASTLE_OUT_OF_CHECK,
-
+	VALID_MOVE_CHEAT,
 	UNKNOWN
 };
 
@@ -85,6 +85,7 @@ private:
 	void RenderAttractMode() const;
 	void RenderUI() const;
 	void RenderDebugMode() const;
+	char const*  GetDebugRenderModeDesc(int debugInt) const;
 
 // 	void AddVertsForGroundGrid();
 // 	void AddVertsForCubes();
@@ -94,7 +95,7 @@ private:
 
 	static bool Command_ChessMove(EventArgs& args);
 	static bool Command_ChessBegin(EventArgs& args);
-	static ChessMoveResult CheckMovement(std::string fromStr, std::string toStr);
+	static ChessMoveResult CheckMovement(std::string fromStr, std::string toStr,bool isCheat);
 	static bool IsValidateChessMoveResult(ChessMoveResult result);
 
 	static bool ValidatePieceMovement(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
@@ -117,6 +118,8 @@ public:
 	CamMode m_camMode = CamMode::AUTO;
 
 	ChessGameState m_chessGameState = ChessGameState::WAIT_TO_START_GAME;
+
+	
 
 private:
 	Camera m_screenCamera;

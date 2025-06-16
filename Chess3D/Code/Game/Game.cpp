@@ -174,11 +174,8 @@ void Game::Renderer() const
 	BitmapFont* font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 	font->AddVertsForTextInBox2D(title, "Use the DevVonsole (~) to enter commands.", 
 		AABB2(Vec2(10.f, 770.f), Vec2(1600.f, 790.f)), 15.f, Rgba8(200, 200, 0), 0.7f, Vec2(0.f, 0.f));
-	std::string tips;
-
 
 	std::string cameraMode = (m_camMode == CamMode::FREE) ? "Camera Mode: FREE" : "Camera Mode: AUTO";
-
 	const char* gameStateNames[] = {
 		"WAIT TO START GAME",
 		"FIRST PLAYER TURN",
@@ -187,10 +184,14 @@ void Game::Renderer() const
 		"SECOND PLAYER WIN"
 	};
 	std::string gameState = "Game State: " + std::string(gameStateNames[(int)m_chessGameState]);
+	int debugInt=m_curMatch->m_chessBoard.GetRenderDebugInt();
+	char const* renderMode = GetDebugRenderModeDesc(debugInt);
 	font->AddVertsForTextInBox2D(title, cameraMode,
 		AABB2(Vec2(10.f, 745.f), Vec2(500.f, 765.f)), 15.f, Rgba8(0, 200, 200), 0.7f, Vec2(0.f, 0.f));
 	font->AddVertsForTextInBox2D(title, gameState,
 		AABB2(Vec2(10.f, 720.f), Vec2(700.f, 740.f)), 15.f, Rgba8(0, 200, 200), 0.7f, Vec2(0.f, 0.f));
+	font->AddVertsForTextInBox2D(title, renderMode,
+		AABB2(Vec2(10.f, 695.f), Vec2(700.f, 715.f)), 15.f, Rgba8(0, 200, 200), 0.7f, Vec2(0.f, 0.f));
 
 	g_theRenderer->BindTexture(&font->GetTexture());
 	g_theRenderer->DrawVertexArray(title);
@@ -248,6 +249,7 @@ void Game::UpdateGameplayMode(float deltaTime)
 		g_systemClock->GetTotalSeconds(), 1.f/g_systemClock->GetDeltaSeconds(), 1.f);
 	DebugAddScreenText(std::string(timeBuffer), AABB2(Vec2(1100.f, 720.f), Vec2(1590.f, 790.f)), 20.f, Vec2(1.f, 1.f), 0.f, Rgba8::WHITE, Rgba8::WHITE);
 
+	m_curMatch->Update();
 	//-----------------------------------------------------------------------------------------
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
 	{
@@ -315,6 +317,34 @@ void Game::RenderUI() const
 void Game::RenderDebugMode()const
 {
 
+}
+
+char const* Game::GetDebugRenderModeDesc(int debugInt) const
+{
+	switch (debugInt)
+	{
+	case 0:     return "Lit (including normal maps)";
+	case 1:     return "Lit texel only";
+	case 2:     return "Vertex Color only (C)";
+	case 3:     return "UV TexCoords only (U)";
+	case 4:     return "Vertex Tangents: raw, in Model Space (T)";
+	case 5:     return "Vertex Bitangents: raw, in Model Space (B)";
+	case 6:     return "Vertex Normals: raw, in Model Space (N)";
+	case 7:     return "Normal Map texel only";
+	case 8:     return "Pixel Normal in TBN space (decoded, raw)";
+	case 9:     return "Pixel Normal in World space (decoded, transformed)";
+	case 10:    return "Lit, but without normal maps";
+	case 11:    return "(incomplete)Light strength (vs. pixel normal in world space)";
+	case 12:    return "(incomplete)Light strength (vs. vertex/surface normals only)";
+	case 13:    return "???";
+	case 14:    return "Vertex Tangents: transformed, into World space (T)";
+	case 15:    return "Vertex Bitangents: transformed, into World space (B)";
+	case 16:    return "Vertex Normals: transformed, into World space (N)";
+	case 17:    return "ModelToWorld I (forward) basis vector, in world space (I)";
+	case 18:    return "ModelToWorld J (left) basis vector, in world space (J)";
+	case 19:    return "ModelToWorld K (up) basis vector, in world space (K)";
+	default:    return "???";
+	}
 }
 
 // void Game::AddVertsForGroundGrid()
@@ -458,6 +488,11 @@ void Game::PrintBoardState()
 
 bool Game::Command_ChessMove(EventArgs& args)
 {
+	if (g_theGame->m_curMatch->m_isMovingChess)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "The last turn is not finished");
+		return false;
+	}
 	//Basic Check
 	if (!g_theGame || !g_theGame->m_curMatch)
 	{
@@ -475,8 +510,9 @@ bool Game::Command_ChessMove(EventArgs& args)
 	// get move info str
 	std::string fromStr = args.GetValue("from", "");
 	std::string toStr = args.GetValue("to", "");
+	bool isCheat = args.GetValue("teleport", false);
 
-	ChessMoveResult moveResult = CheckMovement(fromStr, toStr);
+	ChessMoveResult moveResult = CheckMovement(fromStr, toStr,isCheat);
 
 	//----------------------------------------------------------
 
@@ -529,8 +565,10 @@ bool Game::Command_ChessMove(EventArgs& args)
 		{
 			g_theGame->SetObservationCamPosition(g_theGame->m_chessGameState);
 		}
+
 		// print sate
 		g_theGame->PrintBoardState();
+		return true;
 	}
 	else
 	{
@@ -546,7 +584,7 @@ bool Game::Command_ChessBegin(EventArgs& args)
 	return true;
 }
 
-ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr)
+ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr, bool isCheat)
 {
 	// string input validation
 	if (fromStr.empty() || toStr.empty()
@@ -610,12 +648,21 @@ ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr)
 	ChessPiece* curToPiece = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(toIndex);
 	if (curToPiece && curToPiece->GetFaction() == curFaction)
 	{
-		AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_DESTINATION_BLOCKED);
-		return ChessMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
+		if (!(curFromPiece->GetPieceType() == PieceType::KING && curToPiece->GetPieceType() == PieceType::ROOK))
+		{
+			AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_DESTINATION_BLOCKED);
+			return ChessMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
+		}
 	}
 
 	//Chess Piece Rules
 	ChessMoveResult moveResult;
+	if (isCheat)
+	{
+		moveResult = ChessMoveResult::VALID_MOVE_CHEAT;
+		return moveResult;
+	}
+	
 	ValidatePieceMovement(fromIndex, toIndex, moveResult);
 	AddLineForMoveResult(moveResult);
 	return moveResult;
@@ -631,6 +678,7 @@ bool Game::IsValidateChessMoveResult(ChessMoveResult result)
 	case ChessMoveResult::VALID_CASTLE_QUEENSIDE:
 	case ChessMoveResult::VALID_CAPTURE_NORMAL:
 	case ChessMoveResult::VALID_CAPTURE_ENPASSANT:
+	case ChessMoveResult::VALID_MOVE_CHEAT:
 		return true;
 	case ChessMoveResult::INVALID_MOVE_BAD_LOCATION:
 	case ChessMoveResult::INVALID_MOVE_NO_PIECE:
@@ -692,11 +740,11 @@ bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 	IntVec2 moveStep = toGridPos - moveGridPos;
 
 	ChessPiece* movingKing = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(moveChessIndex);
-	ChessPiece* toChess = g_theGame->m_curMatch->m_chessBoard.GetChessFromGridPos(toGridPos);
+	//ChessPiece* toChess = g_theGame->m_curMatch->m_chessBoard.GetChessFromGridPos(toGridPos);
 
 	//Castle
-	if (abs(moveStep.x) == 2 && moveStep.y == 0)
-	{
+	if (abs(moveStep.x) >= 2 && moveStep.y == 0)
+ 	{
 		if (movingKing->GetFaction() == Faction::WHITE)
 		{
 			if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(0, 0))
@@ -739,7 +787,7 @@ bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 				return false;
 			}
 		}
-		out_result = ChessMoveResult::INVALID_CASTLE_OUT_OF_CHECK;
+		out_result = ChessMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 		return false;
 	}
 	
@@ -927,10 +975,11 @@ bool Game::ValidateKnightMove(int moveChessIndex, int toChessIndex, ChessMoveRes
 
 	if (!isValidLMove) 
 	{
-		out_result = ChessMoveResult::INVALID_MOVE_PATH_BLOCKED;
+		out_result = ChessMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 		return false;
 	}
 
+	out_result = ChessMoveResult::VALID_MOVE_NORMAL;
 	return true;
 }
 
@@ -1115,7 +1164,7 @@ bool Game::ValidatePawnMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 bool Game::ValidateCastling(int kingIndex, int targetIndex, bool isQueenside, ChessMoveResult& out_result)
 {
 	ChessPiece* kingChess = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(kingIndex);
-	if (kingChess->GetIsFirstMove())
+	if (!kingChess->GetIsFirstMove())
 	{
 		out_result = ChessMoveResult::INVALID_CASTLE_KING_HAS_MOVED;
 		return false;
@@ -1142,6 +1191,8 @@ bool Game::ValidateCastling(int kingIndex, int targetIndex, bool isQueenside, Ch
 		}
 	}
 
+	isQueenside ? out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE : out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
+	//out_result = ChessMoveResult::INVALID_CASTLE_KING_HAS_MOVED;
 	return true;
 }
 
@@ -1167,6 +1218,9 @@ void Game::AddLineForMoveResult(ChessMoveResult result)
 	case ChessMoveResult::VALID_CAPTURE_ENPASSANT:
 		g_theDevConsole->AddLine(DevConsole::TIPS, "En passant capture successful.");
 		break;
+	case ChessMoveResult::VALID_MOVE_CHEAT:
+		g_theDevConsole->AddLine(DevConsole::TIPS, "Teleporting cheat.");
+		break;
 	case ChessMoveResult::INVALID_MOVE_BAD_LOCATION:
 		g_theDevConsole->AddLine(DevConsole::INVALID, "Invalid move: Position is outside the board (must be a1-h8).");
 		break;
@@ -1183,7 +1237,7 @@ void Game::AddLineForMoveResult(ChessMoveResult result)
 		g_theDevConsole->AddLine(DevConsole::INVALID, "Invalid move: This piece cannot move in that pattern.");
 		break;
 	case ChessMoveResult::INVALID_MOVE_DESTINATION_BLOCKED:
-		g_theDevConsole->AddLine(DevConsole::INVALID, "Invalid move: Cannot capture your own piece.");
+		g_theDevConsole->AddLine(DevConsole::INVALID, "Invalid move: DESTINATION BLOCKED.");
 		break;
 	case ChessMoveResult::INVALID_MOVE_PATH_BLOCKED:
 		g_theDevConsole->AddLine(DevConsole::INVALID, "Invalid move: Path is blocked by another piece.");

@@ -1110,7 +1110,7 @@ void AddVertsForCylinder3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vecto
 
 		unsigned int startIndex = (unsigned int)verts.size();  
 
-		verts.push_back(Vertex_PCUTBN(start, color, uvCenter,
+		verts.push_back(Vertex_PCUTBN(end, color, uvCenter,
 			Vec3(1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 1.f)));
 
 		verts.push_back(Vertex_PCUTBN(topCircle[i], color, uvCenter + Vec2(u1, v1),

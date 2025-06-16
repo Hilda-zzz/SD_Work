@@ -104,6 +104,15 @@ struct ShadowConstants
 };
 static const int k_shadowConstantsSlot = 6;
 
+struct PerFrameConstants
+{
+	float c_time;
+	int c_debugInt;
+	float c_debugFloat;
+	int	EMPTY_PADDING;
+};
+static const int k_perFrameConstantsSlot = 7;
+
 //-------------------------------------------------------------
 BitmapFont* g_testFont = nullptr;
 
@@ -280,6 +289,7 @@ void Renderer::Startup()
 	m_pointLightCBO = CreateConstantBuffer(sizeof(PointLightConstants));
 	m_spotLightCBO= CreateConstantBuffer(sizeof(SpotLightConstants));
 	m_shadowCBO = CreateConstantBuffer(sizeof(ShadowConstants));
+	m_perFrameCBO = CreateConstantBuffer(sizeof(PerFrameConstants));
 	//---------------------------------------------------------
 	// OPAQUE
 	D3D11_BLEND_DESC blendDesc = {};
@@ -489,6 +499,9 @@ void Renderer::Shutdown()
 
 	delete m_shadowCBO;
 	m_shadowCBO = nullptr;
+
+	delete m_perFrameCBO;
+	m_perFrameCBO = nullptr;
 
 	for (int i = 0; i < (int)BlendMode::COUNT; i++)
 	{
@@ -739,17 +752,61 @@ Texture* Renderer::GetTextureFromFileName(char const* imageFilePath)
 	return nullptr;
 }
 
-void Renderer::BindTexture(Texture* texture)
+void Renderer::BindTexture(Texture* diffuseTexture, Texture* normalTexture)
 {
-	if (texture)
+	ID3D11ShaderResourceView* textures[2] = { nullptr, nullptr };
+	if (diffuseTexture)
 	{
-		m_deviceContext->PSSetShaderResources(0, 1, &texture->m_shaderResourceView);
+		textures[0] = diffuseTexture->m_shaderResourceView;
 	}
 	else
 	{
-		m_deviceContext->PSSetShaderResources(0, 1, &m_defaultTexture->m_shaderResourceView);
+		textures[0] = m_defaultTexture->m_shaderResourceView;
 	}
+
+	if (normalTexture)
+	{
+		textures[1] = normalTexture->m_shaderResourceView;
+	}
+	else
+	{
+		textures[1] = m_defaultTexture->m_shaderResourceView;
+	}
+
+	m_deviceContext->PSSetShaderResources(
+		0,
+		2,
+		textures
+	);
 }
+
+// void Renderer::BindTextureWithNormal(Texture* diffuseTexture, Texture* normalTexture)
+// {
+// 	ID3D11ShaderResourceView* textures[2] = { nullptr, nullptr };
+// 	if (diffuseTexture) 
+// 	{
+// 		textures[0] = diffuseTexture->m_shaderResourceView;
+// 	}
+// 	else 
+// 	{
+// 		textures[0] = m_defaultTexture->m_shaderResourceView;
+// 	}
+// 
+// 	if (normalTexture) 
+// 	{
+// 		textures[1] = normalTexture->m_shaderResourceView;
+// 	}
+// 	else 
+// 	{
+// 		textures[1] = m_defaultTexture->m_shaderResourceView;
+// 	}
+// 
+// 	m_deviceContext->PSSetShaderResources(
+// 		0,          
+// 		2,          
+// 		textures    
+// 	);
+// }
 
 TextureCube* Renderer::CreateOrGetCubeTextureFromFiles(const std::string filePaths[6])
 {
@@ -984,9 +1041,11 @@ void Renderer::SetBlendMode(BlendMode blendMode)
 	m_desiredBlendMode = blendMode;
 }
 
-void Renderer::SetSamplerMode(SamplerMode samplerMode)
+void Renderer::SetSamplerMode(SamplerMode samplerMode, 
+	SamplerMode normalSamplerMode)
 {
 	m_desiredSamplerMode = samplerMode;
+	m_desiredNormalSamplerMode = normalSamplerMode;
 }
 void Renderer::SetDepthMode(DepthMode depthMode)
 {
@@ -1527,6 +1586,12 @@ void Renderer::SetStateIfChanged()
 		m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 	}
 
+	if (m_samplerStates[(int)m_desiredNormalSamplerMode] != m_normalSamplerState)
+	{
+		m_normalSamplerState = m_samplerStates[(int)m_desiredNormalSamplerMode];
+		m_deviceContext->PSSetSamplers(1, 1, &m_normalSamplerState);
+	}
+
 	if (m_rasterizerStates[(int)m_desiredRasterizerMode] != m_rasterizerState)
 	{
 		m_rasterizerState = m_rasterizerStates[(int)m_desiredRasterizerMode];
@@ -1589,6 +1654,16 @@ void Renderer::SetShadowConstants(Mat44 const& lightViewProjectionMat)
 	shadowConstants.LightViewProjection = lightViewProjectionMat;
 	CopyCPUToGPU(&shadowConstants, sizeof(shadowConstants), m_shadowCBO);
 	BindConstantBuffer(k_shadowConstantsSlot, m_shadowCBO);
+}
+
+void Renderer::SetPerFrameConstants(float time, int debugInt, float debugFloat)
+{
+	PerFrameConstants perFrameConstants;
+	perFrameConstants.c_time = time;
+	perFrameConstants.c_debugInt = debugInt;
+	perFrameConstants.c_debugFloat = debugFloat;
+	CopyCPUToGPU(&perFrameConstants, sizeof(perFrameConstants), m_perFrameCBO);
+	BindConstantBuffer(k_perFrameConstantsSlot, m_perFrameCBO);
 }
 
 

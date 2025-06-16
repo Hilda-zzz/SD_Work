@@ -24,6 +24,7 @@ class ChessMatch
 public:
 	ChessMatch(Game* game);
 	~ChessMatch() {};
+	void Update();
 	void Renderer() const;
 
 	std::string const& GetBoardStateString();
@@ -32,11 +33,13 @@ public:
 	int GetTurnNumber();
 	void AddTurnNum();
 
+
 public:
 	ChessBoard m_chessBoard;
+	bool m_isMovingChess = false;
+	Game* m_game = nullptr;
 
 private:
-	Game* m_game = nullptr;
 	GameState m_gameState = GameState::PLAYING;
 	ChessPlayer m_playerBlack;
 	ChessPlayer m_playerWhite;

@@ -18,7 +18,7 @@ const Rgba8 DevConsole::INPUT = Rgba8(229,158,221);
 const Rgba8 DevConsole::UNKNOWN = Rgba8(188,76,116);
 const Rgba8 DevConsole::INVALID = Rgba8(209,187,55);
 const Rgba8 DevConsole::EVENT_FEEDBACK = Rgba8(142,217,115);
-const Rgba8 DevConsole::BKG = Rgba8(0, 0, 0,180);
+const Rgba8 DevConsole::BKG = Rgba8(0, 0, 0,100);
 const Rgba8 DevConsole::PLAYER_TIP = Rgba8(192, 79, 21, 255);
 
 DevConsole::DevConsole(DevConsoleConfig const& config):m_config(config)

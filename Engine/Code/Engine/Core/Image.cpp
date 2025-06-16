@@ -2,6 +2,7 @@
 #include "ThirdParty/stb/stb_image.h"
 #include "Engine/Core/Image.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "EngineCommon.hpp"
 
 
 Image::Image(char const* imageFilePath):m_imageFilePath(imageFilePath)
@@ -36,6 +37,7 @@ Image::Image(char const* imageFilePath):m_imageFilePath(imageFilePath)
 
 Image::Image(std::vector<AtlasMember>& atlasMembers)
 {
+	UNUSED(atlasMembers);
 }
 
 Image::Image(IntVec2 size, Rgba8 color)

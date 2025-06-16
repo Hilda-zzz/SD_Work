@@ -14,7 +14,7 @@ bool TextureAtlas::CreateAtlas(const std::vector<std::string>& imagePaths)
 {
 	std::vector<AtlasMember> atlasMembers;
 
-	for (int i = 0; i < imagePaths.size(); i++)
+	for (int i = 0; i < (int)imagePaths.size(); i++)
 	{
 		AtlasMember member;
 		member.m_imagePath = imagePaths[i];
@@ -50,4 +50,5 @@ AABB2 TextureAtlas::GetUVByName(const std::string& imageName) const
 	{
 		return member->m_uvInAtlas;
 	}
+	return AABB2::ZERO_TO_ONE;
 }

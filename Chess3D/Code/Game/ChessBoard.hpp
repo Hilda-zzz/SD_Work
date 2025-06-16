@@ -14,10 +14,14 @@ class Shader;
 class ChessBoard:public ChessObject
 {
 public:
-	ChessBoard();
+	//ChessBoard() {};
+	ChessBoard(ChessMatch* match);
 	~ChessBoard();
 
+	void Update();
 	void Renderer() const;
+
+	void UpdateDebugKeyInput();
 
 	std::string const& UpdateAndGetBoardStateString();
 	char GetPieceChar(PieceType type, Faction faction);
@@ -29,11 +33,14 @@ public:
 	bool DestroyChess(ChessPiece* curPiece);
 	bool IsGridPosValid(IntVec2 gridPos);
 
+	int GetRenderDebugInt();
+
 private:
 	void PopulateDefaultChess();
 	void AddVertsForBoard();
 	
 public:
+	//ChessMatch* m_match = nullptr;
 	ChessPiece* m_lastMovingChess = nullptr;
 
 private:
@@ -47,8 +54,14 @@ private:
  	IndexBuffer* m_indexBuffer = nullptr;
 
 	//Light
-	Vec3 m_sunDirection = Vec3(3.f, 3.f, -2.f);
+	Vec3 m_sunDirection = Vec3(10.f, 2.f, -3.f);
 	float m_sunIntensity = 1.f;
-	float m_ambientIntensity = 0.2f;
+	float m_ambientIntensity = 0.4f;
+
+	// debug int
+	int m_debugInt = 0;
+
+	Texture* m_diffuseTex = nullptr;
+	Texture* m_normalTex = nullptr;
 };
 

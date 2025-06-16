@@ -1,8 +1,16 @@
 #include "ChessMatch.hpp"
 #include "Game/Game.hpp"
-ChessMatch::ChessMatch(Game* game):m_game(game)
-{
+#include "Engine/Math/MathUtils.hpp"
 
+
+ChessMatch::ChessMatch(Game* game):m_game(game),m_chessBoard(this)
+{
+	//m_chessBoard = ChessBoard(this);
+}
+
+void ChessMatch::Update()
+{
+	m_chessBoard.Update();
 }
 
 void ChessMatch::Renderer() const
@@ -39,14 +47,34 @@ void ChessMatch::MoveTheChessPiece(std::string fromStr, std::string toStr,ChessM
 		curToPiece = m_chessBoard.GetChessFromIndex(toIndex);
 	}
 	
-	curFromPiece->SetGridPos(toPos);
+	m_isMovingChess = true;
+
+	if (curFromPiece->GetPieceType() == PieceType::KNIGHT) {
+		curFromPiece->m_isHop = true;
+	}
+	else {
+		curFromPiece->m_isSlide = true;
+	}
+	
+	curFromPiece->m_animationTimer = Timer(2.f, m_game->m_gameClock);
+	curFromPiece->SetAimGridPos(toPos);
 	curFromPiece->SetPrevGridPos(fromPos);
+	int taxiDist= GetTaxicabDistance2D(toPos, fromPos);
+	curFromPiece->m_animationTimer.m_period = 0.2f+taxiDist*0.1f;
+	curFromPiece->m_animationTimer.Start();
+	curFromPiece->SetGridPos(toPos);
 	m_chessBoard.m_lastMovingChess = curFromPiece;
 
 	//delete or reverse toChess
 	if (moveResult == ChessMoveResult::VALID_CASTLE_KINGSIDE
 		|| moveResult == ChessMoveResult::VALID_CASTLE_QUEENSIDE)
 	{
+		curToPiece->m_isSlide = true;
+		curToPiece->m_animationTimer = Timer(2.f, m_game->m_gameClock);
+		curToPiece->SetAimGridPos(fromPos);
+		curToPiece->SetPrevGridPos(toPos);
+		curToPiece->m_animationTimer.m_period = 0.2f + taxiDist * 0.1f;
+		curToPiece->m_animationTimer.Start();
 		curToPiece->SetGridPos(fromPos);
 	}
 	else
@@ -93,6 +121,13 @@ void ChessMatch::ChangeChessType(std::string posStr, PieceType pieceType)
 	ChessPiece* curPiece = m_chessBoard.GetChessFromIndex(pieceIndex);
 
 	curPiece->SetPieceType(pieceType);
+	for (ChessPieceDefinition* def : ChessPieceDefinition::s_chessPieceDefs)
+	{
+		if (def->m_type == pieceType)
+		{
+			curPiece->m_def = def;
+		}
+	}
 }
 
 int ChessMatch::GetTurnNumber()
