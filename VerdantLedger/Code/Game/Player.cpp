@@ -24,6 +24,23 @@ Player::Player()
 
 Player::~Player()
 {
+	for (auto& pair : m_idleDirectionalAnimDefs)
+	{
+		delete pair.second;
+	}
+	m_idleDirectionalAnimDefs.clear();
+
+	for (auto& pair : m_walkDirectionalAnimDefs)
+	{
+		delete pair.second;
+	}
+	m_walkDirectionalAnimDefs.clear();
+
+	for (auto& pair : m_spriteSheets)
+	{
+		delete pair.second;
+	}
+	m_spriteSheets.clear();
 }
 
 void Player::Update(float deltaSeconds)
@@ -60,19 +77,26 @@ void Player::Initialize()
 
 void Player::InitializeAnims()
 {
-	//m_spriteSheets["idle"] = new SpriteSheet(*m_idleTex, IntVec2(4, 3));
-	//m_bodySpriteAnimDefs["idle"] = new SpriteAnimDefinition(*m_spriteSheets["idle"], 0, 3, 6.f, SpriteAnimPlaybackType::LOOP);	
 	m_spriteSheets["idle"] = new SpriteSheet(*m_idleTex, IntVec2(4, 3));
-	m_bodySpriteAnimDefs["idle"] = new SpriteAnimDefinition(*m_spriteSheets["idle"], 0, 3, 6.f, SpriteAnimPlaybackType::LOOP);
+	
+	m_idleDirectionalAnimDefs[Direction::DOWN] = new SpriteAnimDefinition(*m_spriteSheets["idle"], 0, 3, 6.f, SpriteAnimPlaybackType::LOOP);
+	m_idleDirectionalAnimDefs[Direction::UP] = new SpriteAnimDefinition(*m_spriteSheets["idle"], 4, 7, 6.f, SpriteAnimPlaybackType::LOOP);
+	m_idleDirectionalAnimDefs[Direction::RIGHT] = new SpriteAnimDefinition(*m_spriteSheets["idle"], 8, 11, 6.f, SpriteAnimPlaybackType::LOOP);
+	m_idleDirectionalAnimDefs[Direction::LEFT] = new SpriteAnimDefinition(*m_spriteSheets["idle"], 8, 11, 6.f, SpriteAnimPlaybackType::LOOP);
+
 	m_bodyStateMachine.RegisterState(
 		PlayerBodyStates::IDLE,
-		new PlayerBodyIdleState(m_bodySpriteAnimDefs["idle"]));
+		new PlayerBodyIdleState(m_idleDirectionalAnimDefs));
 
 	m_spriteSheets["walk"] = new SpriteSheet(*m_walkTex, IntVec2(6, 3));
-	m_bodySpriteAnimDefs["walk"] = new SpriteAnimDefinition(*m_spriteSheets["walk"], 0, 5, 10.f, SpriteAnimPlaybackType::LOOP);
+	
+	m_walkDirectionalAnimDefs[Direction::DOWN] = new SpriteAnimDefinition(*m_spriteSheets["walk"], 0, 5, 10.f, SpriteAnimPlaybackType::LOOP);
+	m_walkDirectionalAnimDefs[Direction::UP] = new SpriteAnimDefinition(*m_spriteSheets["walk"], 6, 11, 10.f, SpriteAnimPlaybackType::LOOP);
+	m_walkDirectionalAnimDefs[Direction::RIGHT] = new SpriteAnimDefinition(*m_spriteSheets["walk"], 12, 17, 10.f, SpriteAnimPlaybackType::LOOP);
+	m_walkDirectionalAnimDefs[Direction::LEFT] = new SpriteAnimDefinition(*m_spriteSheets["walk"], 12, 17, 10.f, SpriteAnimPlaybackType::LOOP);
 	m_bodyStateMachine.RegisterState(
 		PlayerBodyStates::WALK,
-		new PlayerBodyWalkState(m_bodySpriteAnimDefs["walk"]));
+		new PlayerBodyWalkState(m_walkDirectionalAnimDefs));
 }
 
 void Player::UpdateKeyboard(float deltaTime)
@@ -80,18 +104,22 @@ void Player::UpdateKeyboard(float deltaTime)
 	if (g_theInput->IsKeyDown('W'))
 	{
 		m_velocity += Vec2(0.f, 1.f);
-	}
-	if (g_theInput->IsKeyDown('A'))
-	{
-		m_velocity += Vec2(-1.f, 0.f);
+		m_curDirection = Direction::UP;
 	}
 	if (g_theInput->IsKeyDown('S'))
 	{
 		m_velocity += Vec2(0.f, -1.f);
+		m_curDirection = Direction::DOWN;
+	}
+	if (g_theInput->IsKeyDown('A'))
+	{
+		m_velocity += Vec2(-1.f, 0.f);
+		m_curDirection = Direction::LEFT;
 	}
 	if (g_theInput->IsKeyDown('D'))
 	{
 		m_velocity += Vec2(1.f, 0.f);
+		m_curDirection = Direction::RIGHT;
 	}
 	m_velocity.Normalize();
 	m_velocity *= m_speed;
@@ -103,7 +131,7 @@ void Player::UpdateAnimations(float deltaTime)
 	// Anim Update
 	m_animConditions["isMoving"] = m_velocity.GetLengthSquared() > 0.01f;
 
-	m_bodyStateMachine.Update(deltaTime, m_animConditions);
+	m_bodyStateMachine.Update(deltaTime, m_animConditions,m_curDirection);
 
 	SpriteDefinition const& curBodySpriteDef = m_bodyStateMachine.GetCurrentSprite();
 	m_curBodyTex = &curBodySpriteDef.GetTexture();
@@ -111,6 +139,8 @@ void Player::UpdateAnimations(float deltaTime)
 	Vec2 resizeDimension = spriteDimension / (float)RESOLUTION;
 	m_bodyBox = AABB2(Vec2(-resizeDimension.x/2.f, -resizeDimension.y / 2.f+0.3f), Vec2(resizeDimension.x / 2.f, resizeDimension.y / 2.f+0.3f));
 	m_verts.clear();
+	AABB2 curUV = curBodySpriteDef.GetUVs();
+	m_curDirection == Direction::LEFT ? curUV = curBodySpriteDef.GetUVsReverse() : curUV = curBodySpriteDef.GetUVs();
 	AddVertsForAABB2D(m_verts, m_bodyBox, Rgba8::WHITE,
-		curBodySpriteDef.GetUVs().m_mins, curBodySpriteDef.GetUVs().m_maxs);
+		curUV.m_mins, curUV.m_maxs);
 }

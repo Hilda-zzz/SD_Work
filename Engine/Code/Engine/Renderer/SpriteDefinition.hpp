@@ -12,6 +12,7 @@ public:
 	explicit SpriteDefinition(SpriteSheet const& spriteSheet, int spriteIndex, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs);
 	void GetUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs) const;
 	AABB2 GetUVs() const;
+	AABB2 GetUVsReverse() const;
 	SpriteSheet const& GetSpritesSheet() const;
 	Texture& GetTexture() const;
 	float GetAspect() const;

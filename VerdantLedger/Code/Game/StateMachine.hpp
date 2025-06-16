@@ -48,11 +48,11 @@ public:
 		m_currentState->Enter();
 	}
 
-	void Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions) 
+	void Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions,Direction curDirection) 
 	{
 		if (!m_currentState) return;
 
-		int nextStateEnum = m_currentState->Update(deltaTime, conditions);
+		int nextStateEnum = m_currentState->Update(deltaTime, conditions,curDirection);
 		if (nextStateEnum != m_currentStateEnum) {
 			SetCurrentStateInternal(nextStateEnum);
 		}

@@ -18,6 +18,13 @@ AABB2 SpriteDefinition::GetUVs() const
 	return AABB2(m_uvAtMins,m_uvAtMaxs);
 }
 
+AABB2 SpriteDefinition::GetUVsReverse() const
+{
+	Vec2 reverseMin = Vec2(m_uvAtMaxs.x, m_uvAtMins.y);
+	Vec2 reverseMax = Vec2(m_uvAtMins.x, m_uvAtMaxs.y);
+	return AABB2(reverseMin,reverseMax);
+}
+
 SpriteSheet const& SpriteDefinition::GetSpritesSheet() const
 {
 	return m_spriteSheet;

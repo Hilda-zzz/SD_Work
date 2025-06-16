@@ -23,6 +23,7 @@ private:
 
 public:
 	Vec2	m_position = Vec2(0.f, 0.f);
+	Direction m_curDirection = Direction::DOWN;
 	float	m_orientation = 0.f;
 	Vec2	m_velocity = Vec2(0.f, 0.f);
 	float   m_speed = 5.f;
@@ -44,6 +45,8 @@ private:
 	std::unordered_map<std::string, bool> m_animConditions;
 
 	std::unordered_map<std::string, SpriteSheet*> m_spriteSheets;
-	std::unordered_map<std::string, SpriteAnimDefinition*> m_bodySpriteAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_idleDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_walkDirectionalAnimDefs;
+	//std::unordered_map<std::string, SpriteAnimDefinition*> m_bodySpriteAnimDefs;
 
 };

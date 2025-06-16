@@ -4,13 +4,13 @@
 class PlayerBodyIdleState: public AnimState
 {
 public:
-	PlayerBodyIdleState(SpriteAnimDefinition* anim) :AnimState("11", anim) {}
-	int Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions) override;
+	PlayerBodyIdleState(std::map<Direction, SpriteAnimDefinition*> const& anim) :AnimState("11", anim) {}
+	int Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions, Direction curDirection) override;
 };
 
 class PlayerBodyWalkState : public AnimState
 {
 public:
-	PlayerBodyWalkState(SpriteAnimDefinition* anim):AnimState("22", anim) {}
-	int Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions) override;
+	PlayerBodyWalkState(std::map<Direction, SpriteAnimDefinition*> const& anim):AnimState("22", anim) {}
+	int Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions, Direction curDirection) override;
 };
