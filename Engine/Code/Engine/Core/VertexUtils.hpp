@@ -26,7 +26,7 @@ void TransformVertexArray3D(std::vector<Vertex_PCU>& verts, const Mat44& transfo
 void AddVertsForCapsule2D(std::vector<Vertex_PCU>& verts, Vec2 const& boneStart, Vec2 const& boneEnd, float radius,Rgba8 const& color);
 void AddVertsForDisc2D(std::vector<Vertex_PCU>& verts, Vec2 const& center, float radius, Rgba8 const& color);
 void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds,Rgba8 const& color);
-void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color,Vec2 const& uv_mins, Vec2 const& uv_maxs);
+void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color,Vec2 const& uv_mins, Vec2 const& uv_maxs, float zDepth=0.f);
 void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts,OBB2 const&box, Rgba8 const& color);
 void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts, OBB2 const& box, Rgba8 const& color, Vec2 const& uv_mins, Vec2 const& uv_maxs);
 void AddVertsForTriangle2D(std::vector<Vertex_PCU>& verts, Triangle2 const& triangle, Rgba8 const& color);

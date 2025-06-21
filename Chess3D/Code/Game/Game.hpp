@@ -144,8 +144,6 @@ private:
 	//---------------------Chess Game----------------------------------
 	ChessMatch* m_curMatch;
 	
-
-
 	// Camera Position & Orientation Settings
 	Vec3 m_whiteCamPosition = Vec3(4.f, -2.f, 4.f);
 	Vec3 m_blackCamPosition = Vec3(4.f, 10.f, 4.f);

@@ -17,7 +17,7 @@ enum class Direction
 class AnimState
 {
 public:
-	AnimState(std::string const& name, std::map<Direction, SpriteAnimDefinition*> const& anim);
+	AnimState(std::string const& name, std::map<Direction, SpriteAnimDefinition*>* anim);
 	virtual ~AnimState(){}
 	virtual void Enter();
 	virtual void Exit() {};
@@ -28,7 +28,7 @@ public:
 
 protected:
 	std::string m_name;
-	std::map<Direction, SpriteAnimDefinition*> m_directionalAnims;
+	std::map<Direction, SpriteAnimDefinition*>* m_directionalAnims;
 	Direction m_curDirection;
 	float m_elapsedTime=0.f;
 	int m_stateEnum = 0;

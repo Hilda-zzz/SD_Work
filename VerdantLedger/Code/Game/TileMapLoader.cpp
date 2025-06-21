@@ -16,8 +16,8 @@ TileMap* TileMapLoader::LoadTileMapFromFile(const std::string& filePath)
 {
 	XmlDocument tileMapTMX;
 	XmlResult result = tileMapTMX.LoadFile(filePath.c_str());
-	GUARANTEE_OR_DIE(result == tinyxml2::XML_SUCCESS,
-		Stringf("Failed to open required tile  defs file \"%s\"", filePath));
+	std::string errorMsg = Stringf("Failed to open required tile defs file \"%s\"", filePath.c_str());
+	GUARANTEE_OR_DIE(result == tinyxml2::XML_SUCCESS, errorMsg.c_str());
 
 	XmlElement* rootElement = tileMapTMX.RootElement();
 	GUARANTEE_OR_DIE(rootElement, "Faile to find root element");
@@ -30,8 +30,8 @@ Tileset* TileMapLoader::LoadTilesetFromFile(const std::string& tilesetPath)
 {
 	XmlDocument tilesetTSX;
 	XmlResult result = tilesetTSX.LoadFile(tilesetPath.c_str());
-	GUARANTEE_OR_DIE(result == tinyxml2::XML_SUCCESS, 
-		Stringf("Failed to open required tile  defs file \"%s\"", tilesetPath));
+	std::string errorMsg = Stringf("Failed to open required tile defs file \"%s\"", tilesetPath.c_str());
+	GUARANTEE_OR_DIE(result == tinyxml2::XML_SUCCESS, errorMsg.c_str());
 
 	XmlElement* rootElement = tilesetTSX.RootElement();
 	GUARANTEE_OR_DIE(rootElement, "Faile to find root element");

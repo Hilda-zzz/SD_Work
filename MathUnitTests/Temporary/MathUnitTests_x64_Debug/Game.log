@@ -1,4 +1,6 @@
 ﻿  Main.cpp
+  UnitTests_Custom.cpp
+  UnitTests_MP1A1.cpp
   UnitTests_MP1A2.cpp
 C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(668,16): warning C4189: 'MAX_DEVIATION_COUNT_LESS_THAN_7': local variable is initialized but not referenced
 C:\p4\Personal\SD\MathUnitTests\Code\Game\UnitTests_MP1A2.cpp(669,16): warning C4189: 'MAX_DEVIATION_COUNT_LESS_THAN_300': local variable is initialized but not referenced

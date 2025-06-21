@@ -12,9 +12,10 @@ extern InputSystem* g_theInput;
 
 ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 {
-	m_shader = g_theRenderer->CreateShaderFromFile("Data/Shaders/Diffuse", VertexType::VERTEX_PCUTBN);
-	m_diffuseTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Tree Top_OCC.png");
-	m_normalTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Tree Top_NRM.png");
+	m_shader = g_theRenderer->CreateShaderFromFile("Data/Shaders/DX11BlinnPhong", VertexType::VERTEX_PCUTBN);
+	m_diffuseTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/Bricks_d.png");
+	m_normalTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/Bricks_n.png");
+	m_sgeTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/Bricks_sge.png");
 
 	ChessPieceDefinition::InitializeChessDefinitionFromFile();
 
@@ -68,7 +69,7 @@ void ChessBoard::Renderer() const
 	Vec3 normalSunDirection = m_sunDirection.GetNormalized();
 	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
 	g_theRenderer->BindShader(m_shader);
-	g_theRenderer->BindTexture(m_diffuseTex,m_normalTex);
+	g_theRenderer->BindTexture(m_diffuseTex,m_normalTex,m_sgeTex);
 	g_theRenderer->SetPerFrameConstants(0.f, m_debugInt, 0.f);
 
 	g_theRenderer->DrawVertexArray_WithTBN(m_vertexs, m_indexs, m_vertexBuffer, m_indexBuffer);
@@ -183,7 +184,7 @@ void ChessBoard::AddVertsForBoard()
 				AddVertsForAABB3D_WithTBN(m_vertexs, m_indexs,
 					Vec3((float)col, (float)row, -0.15f),
 					Vec3((float)col + 1.f, (float)row + 1.f, 0.15f),
-					Rgba8::BLACK,
+					Rgba8(150,150,150),
 					AABB2::ZERO_TO_ONE);
 			}
 			else

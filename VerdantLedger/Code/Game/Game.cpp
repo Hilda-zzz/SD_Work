@@ -23,6 +23,10 @@ Game::Game()
 
 	m_player = new Player();
 	m_curMap = new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/HouseMap.tmx"], m_player);
+
+	g_theDevConsole->AddLine(DevConsole::HELPLIST, "WASD: Move around\n\
+Tools: 0-None, 1-Axe, 2-Hoe, 3-Pickaxe, 4-Shovel, 5-Sickle, 6-Water\n\
+Left Mouse Button: Use selected tool");
 }
 
 Game::~Game()
@@ -40,6 +44,8 @@ Game::~Game()
 void Game::Update()
 {
 	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
+
+	m_curDeltaTime = deltaSeconds;
 
 	UpdateCamera(deltaSeconds);
 
@@ -203,6 +209,56 @@ void Game::RenderGameplayMode() const
 
 	g_theRenderer->BeginCamera(m_screenCamera);
 	RenderGameplayUI();
+	std::vector<Vertex_PCU> title;
+	BitmapFont* font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+	std::string curTool;
+	curTool = "Current tool: ";
+	switch (m_player->m_curTool) {
+	case PlayerTools::NONE:
+		curTool += "None";
+		break;
+	case PlayerTools::AXE:
+		curTool += "Axe";
+		break;
+	case PlayerTools::HOE:
+		curTool += "Hoe";
+		break;
+	case PlayerTools::PICKAXE:
+		curTool += "Pickaxe";
+		break;
+	case PlayerTools::SHOVEL:
+		curTool += "Shovel";
+		break;
+	case PlayerTools::SICKLE:
+		curTool += "Sickle";
+		break;
+	case PlayerTools::WATER:
+		curTool += "Water";
+		break;
+	default:
+		curTool += "Unknown";
+		break;
+	}
+	curTool += " || Use 0-6 to switch tools || Use mouse left btn to use the tool (just animation)";
+	font->AddVertsForTextInBox2D(title, curTool,
+		AABB2(Vec2(10.f, 745.f), Vec2(1000.f, 765.f)), 15.f, Rgba8::BLACK, 0.7f, Vec2(0.f, 0.f));
+
+	char buffer[256];
+	sprintf_s(buffer, 
+		"DT = %.2f\n"
+		"Framerate = %.2f\n",
+		m_curDeltaTime * 1000.f,
+		1.f / m_curDeltaTime);
+	std::string statsMessage(buffer);
+
+	font->AddVertsForTextInBox2D(title, statsMessage,
+		AABB2(Vec2(10.f, 500.f), Vec2(600.f, 700.f)), 15.f, Rgba8::WHITE, 0.7f, Vec2(0.f, 1.f));
+
+// 	g_theRenderer->BindTexture(&font->GetTexture());
+// 	g_theRenderer->DrawVertexArray(panelVerts);
+
+	g_theRenderer->BindTexture(&font->GetTexture());
+	g_theRenderer->DrawVertexArray(title);
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
@@ -220,10 +276,12 @@ void Game::RenderDebugMode()const
 
 void Game::EnterState(GameState state)
 {
+	UNUSED(state);
 }
 
 void Game::ExitState(GameState state)
 {
+	UNUSED(state);
 }
 
 

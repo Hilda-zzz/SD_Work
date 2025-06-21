@@ -66,4 +66,6 @@ private:
 	bool m_isSlow = false;
 	bool m_pauseAfterUpdate = false;
 	bool m_isDevConsole = false;
+
+	float m_curDeltaTime = 0.f;
 };

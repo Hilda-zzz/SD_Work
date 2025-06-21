@@ -60,10 +60,10 @@ public:
 
 	SpriteDefinition const& GetCurrentSprite() const 
 	{
-		if (m_currentState) 
-		{
+		//if (m_currentState) 
+		//{
 			return m_currentState->GetCurSprite();
-		}
+		//}
 		//static SpriteDefinition defaultSpriteDef;
 		//return defaultSpriteDef;
 	}

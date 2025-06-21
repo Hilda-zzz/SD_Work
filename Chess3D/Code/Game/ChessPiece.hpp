@@ -63,6 +63,8 @@ private:
 	Texture* m_texBlack = nullptr;
 	Texture* m_texNormalWhite = nullptr;
 	Texture* m_texNormalBlack = nullptr;
+	Texture* m_texSGEWhite = nullptr;
+	Texture* m_texSGEBlack = nullptr;
 	bool m_isFirstMove = true;
 
 	//new 

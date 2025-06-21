@@ -68,16 +68,16 @@ TileMap::TileMap(XmlElement* rootElement)
  				if (csvText) 
  				{
                     Strings dataStrsWithousLineEnd= SplitStringOnDelimiterIgnoreChangeLine(csvText, ',');
-                    for (int i = 0; i < dataStrsWithousLineEnd.size(); i++)
+                    for (int i = 0; i < (int)dataStrsWithousLineEnd.size(); i++)
                     {
 						int value = std::stoi(dataStrsWithousLineEnd[i]);
                         chunk.m_data.push_back(value);
                     }
  				}
-                if (layer.m_name == "TileMarkLayer")
-                {
-                    int k = 1;
-                }
+//                 if (layer.m_name == "TileMarkLayer")
+//                 {
+//                     //int k = 1;
+//                 }
                 chunk.InitializeChunkVerts();
  				layer.m_chunks.push_back(chunk);
  			}
@@ -92,16 +92,17 @@ TileMap::~TileMap()
 
 void TileMap::Render() const
 {
-    for (int i = 0; i < m_layers.size(); i++)
+    for (int i = 0; i < (int)m_layers.size(); i++)
     {
-        for (int j = 0; j < m_layers[i].m_chunks.size(); j++)
+        for (int j = 0; j < (int)m_layers[i].m_chunks.size(); j++)
         {
             Texture* grassTex=g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/TilesetGrassSpring.png");
-            Texture* tileMarkTex= g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
+            //Texture* tileMarkTex= g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
             g_theRenderer->BindTexture(grassTex);
             if (i == 3)
             {
-                g_theRenderer->BindTexture(tileMarkTex);
+                continue;
+                //g_theRenderer->BindTexture(tileMarkTex);
             }
             g_theRenderer->SetModelConstants();
             g_theRenderer->DrawVertexArray(m_layers[i].m_chunks[j].m_verts);

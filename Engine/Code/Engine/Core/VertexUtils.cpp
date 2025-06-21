@@ -104,15 +104,15 @@ void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba
 
 }
 
-void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, Vec2 const& uv_mins, Vec2 const& uv_maxs)
+void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, Vec2 const& uv_mins, Vec2 const& uv_maxs,float z)
 {
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, 0.f), color, uv_mins));
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, 0.f), color, uv_maxs));
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_maxs.y, 0.f), color, Vec2(uv_mins.x, uv_maxs.y)));
-
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, 0.f), color, uv_mins));
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_mins.y, 0.f), color, Vec2(uv_maxs.x, uv_mins.y)));
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, 0.f), color, uv_maxs));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, z), color, uv_mins));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, z), color, uv_maxs));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_maxs.y, z), color, Vec2(uv_mins.x, uv_maxs.y)));
+	
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, z), color, uv_mins));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_mins.y, z), color, Vec2(uv_maxs.x, uv_mins.y)));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, z), color, uv_maxs));
 }
 
 void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts, OBB2 const& box, Rgba8 const& color)

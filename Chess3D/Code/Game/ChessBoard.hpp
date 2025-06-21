@@ -55,13 +55,14 @@ private:
 
 	//Light
 	Vec3 m_sunDirection = Vec3(10.f, 2.f, -3.f);
-	float m_sunIntensity = 1.f;
-	float m_ambientIntensity = 0.4f;
+	float m_sunIntensity =0.6f;
+	float m_ambientIntensity = 0.2f;
 
 	// debug int
 	int m_debugInt = 0;
 
 	Texture* m_diffuseTex = nullptr;
 	Texture* m_normalTex = nullptr;
+	Texture* m_sgeTex = nullptr;
 };
 

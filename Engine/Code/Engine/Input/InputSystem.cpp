@@ -1,4 +1,4 @@
-#include <Windows.h> 
+﻿#include <Windows.h> 
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
@@ -192,6 +192,12 @@ Vec2 InputSystem::GetCursorClientPosition() const
 bool InputSystem::Event_KeyPressed(EventArgs& args)
 {
 	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
+
+// 	if (g_theUISystem && g_theUISystem->HandleKeyPressed(keyCode)) {
+// 		// UI消费了这个事件，不传递给游戏输入
+// 		return true;
+// 	}
+
 	g_theInput->HandleKeyPressed(keyCode);
 	return true;
 }

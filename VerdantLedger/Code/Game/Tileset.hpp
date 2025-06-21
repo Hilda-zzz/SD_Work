@@ -31,10 +31,10 @@ public:
 		return gid >= m_firstGid && gid < m_firstGid + m_tileCount;
 	}
 
-	// 计算瓦片在图片中的位置
+	
 	IntVec2 GetTileTextureCoord(uint32_t gid) const;
 
-	// 获取瓦片属性
+	
 	//const TileProperties* GetTileProperties(uint32_t gid) const;
 private:
 
@@ -44,16 +44,16 @@ public:
 
 private:
 	std::string m_name;
-	uint32_t m_firstGid=0;              // 起始GID
+	uint32_t m_firstGid=0;           
 	int m_tileCount=0;            
 	IntVec2 m_tileSize=IntVec2(0,0);          
 	int m_columns=0;            
 	std::string m_imagePath;    
 	Texture* m_texture = nullptr;
 	SpriteSheet* m_spriteSheet;
-	IntVec2 m_imageSize = IntVec2(0, 0);         // 图片尺寸
-	int m_margin = 0;            // 边距
-	int m_spacing = 0;           // 间距
+	IntVec2 m_imageSize = IntVec2(0, 0);         
+	int m_margin = 0;
+	int m_spacing = 0;
 
 	// 瓦片属性（稀疏存储）
 	//std::unordered_map<std::string, bool> m_tileProperties; //property name to bool

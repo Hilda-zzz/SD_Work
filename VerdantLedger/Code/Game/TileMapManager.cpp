@@ -1,5 +1,6 @@
 #include "TileMapManager.hpp"
 #include "Game/Tileset.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 TileMapManager* TileMapManager::s_tileManagerInstance = nullptr;
 
@@ -29,11 +30,12 @@ std::string TileMapManager::ConvertTiledPathToGamePath(const std::string& tiledP
 	{
 		return tiledPath;
 	}
+	return "";
 }
 
 void TileMapManager::AddGidToPropertyMaskForEachTileset(Tileset* tileset)
 {
-	for (int i = 0; i < tileset->m_properties.size(); i++)
+	for (int i = 0; i < (int)tileset->m_properties.size(); i++)
 	{
 		uint32_t gid = tileset->m_properties[i].m_localID + tileset->GetFirstGid();
 		uint32_t flags = 0;
@@ -72,8 +74,8 @@ void TileMapManager::InitAllTilemapResources()
 
 void TileMapManager::LoadAllTilesets()
 {
-	Tileset* newTileset=LoadTileset("Data/Tiled/GrassSpring.tsx");
-	Tileset* newTileset2 = LoadTileset("Data/Tiled/TileMark.tsx");
+	LoadTileset("Data/Tiled/GrassSpring.tsx");
+	LoadTileset("Data/Tiled/TileMark.tsx");
 }
 
 Tileset* TileMapManager::LoadTileset(const std::string& tilesetPath)
@@ -88,7 +90,7 @@ Tileset* TileMapManager::LoadTileset(const std::string& tilesetPath)
 
 void TileMapManager::LoadAllMaps()
 {
-	TileMap* newMap=LoadMap("Data/Tiled/HouseMap.tmx");
+	LoadMap("Data/Tiled/HouseMap.tmx");
 }
 
 TileMap* TileMapManager::LoadMap(const std::string& mapPath)
@@ -103,6 +105,7 @@ TileMap* TileMapManager::LoadMap(const std::string& mapPath)
 
 TileMap* TileMapManager::GetMap(const std::string& mapName)
 {
+	UNUSED(mapName);
 	return nullptr;
 }
 
@@ -112,6 +115,7 @@ void TileMapManager::UnloadAllMaps()
 
 void TileMapManager::UnloadMap(const std::string& mapName)
 {
+	UNUSED(mapName);
 }
 
 TileMap* TileMapManager::GetCurrentMap()
@@ -121,6 +125,7 @@ TileMap* TileMapManager::GetCurrentMap()
 
 void TileMapManager::SetCurrentMap(const std::string& mapName)
 {
+	UNUSED(mapName);
 }
 
 Tileset const* TileMapManager::FindTilesetByGid(uint32_t gid) const
@@ -140,4 +145,5 @@ Tileset const* TileMapManager::FindTilesetByGid(uint32_t gid) const
 
 void TileMapManager::LoadTilesetProperties(const Tileset& tileset)
 {
+	UNUSED(tileset);
 }

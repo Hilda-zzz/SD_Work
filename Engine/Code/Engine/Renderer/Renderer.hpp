@@ -108,7 +108,7 @@ public:
 	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath);
 	Texture*	GetTextureFromFileName(char const* imageFilePath);
 	Texture*	CreateTextureFromImage(const Image& image);
-	void		BindTexture(Texture* texture, Texture* normalTexture=nullptr);
+	void		BindTexture(Texture* texture, Texture* normalTexture=nullptr,Texture* sgeTexture=nullptr);
 	//void		BindTextureWithNormal(Texture* diffuseTexture,Texture* normalTexture);
 
 	//----------------Cube Sky Box/ Cube Texture---------------------------------------------------

@@ -1,10 +1,22 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "AnimStateEnum.hpp"
 #include "StateMachine.hpp"
+
+enum class PlayerTools
+{
+	NONE,       // 没有工具/空手
+	AXE,        // 斧头
+	HOE,        // 锄头
+	PICKAXE,    // 镐子
+	SHOVEL,     // 铲子
+	SICKLE,     // 镰刀
+	WATER,       // 水（浇水工具）
+	NUM
+};
 
 class Player
 {
@@ -18,17 +30,28 @@ public:
 private:
 	void Initialize();
 	void InitializeAnims();
-	void UpdateKeyboard(float deltaTime);
+	void InitializeStateAnimations(const std::string& stateName,
+		Texture* texture,
+		const IntVec2& gridSize,
+		PlayerBodyStates stateEnum,
+		std::map<Direction, SpriteAnimDefinition*>& directionAnimsMap,
+		AnimState* state, SpriteAnimPlaybackType playbackType, int framePerSecond);
+	void HandleInput();
+	void UpdateMovement(float deltaTime);
 	void UpdateAnimations(float deltaTime);
 
 public:
 	Vec2	m_position = Vec2(0.f, 0.f);
+	Vec2 m_inputDirection = Vec2::ZERO; 
 	Direction m_curDirection = Direction::DOWN;
 	float	m_orientation = 0.f;
 	Vec2	m_velocity = Vec2(0.f, 0.f);
 	float   m_speed = 5.f;
 	Camera  m_gameplayCam;
 	float	m_physicsRadius = 0.f;
+	// Tools
+	PlayerTools m_curTool = PlayerTools::NONE;
+
 private:
 	
 	float	m_cosmeticRadius = 0.f;
@@ -40,6 +63,13 @@ private:
 
 	Texture* m_idleTex = nullptr;
 	Texture* m_walkTex = nullptr;
+	Texture* m_runTex = nullptr;
+	Texture* m_axeTex = nullptr;
+	Texture* m_hoeTex = nullptr;
+	Texture* m_pickaxeTex = nullptr;
+	Texture* m_shovelTex = nullptr;
+	Texture* m_sickleTex = nullptr;
+	Texture* m_waterTex = nullptr;
 
 	StateMachine<PlayerBodyStates>	      m_bodyStateMachine;
 	std::unordered_map<std::string, bool> m_animConditions;
@@ -47,6 +77,14 @@ private:
 	std::unordered_map<std::string, SpriteSheet*> m_spriteSheets;
 	std::map<Direction, SpriteAnimDefinition*> m_idleDirectionalAnimDefs;
 	std::map<Direction, SpriteAnimDefinition*> m_walkDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_runDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_axeDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_hoeDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_pickaxeDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_shovelDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_sickleDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_waterDirectionalAnimDefs;
 	//std::unordered_map<std::string, SpriteAnimDefinition*> m_bodySpriteAnimDefs;
+
 
 };

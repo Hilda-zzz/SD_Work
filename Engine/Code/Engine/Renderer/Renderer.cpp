@@ -752,9 +752,9 @@ Texture* Renderer::GetTextureFromFileName(char const* imageFilePath)
 	return nullptr;
 }
 
-void Renderer::BindTexture(Texture* diffuseTexture, Texture* normalTexture)
+void Renderer::BindTexture(Texture* diffuseTexture, Texture* normalTexture, Texture* sgeTexture)
 {
-	ID3D11ShaderResourceView* textures[2] = { nullptr, nullptr };
+	ID3D11ShaderResourceView* textures[3] = { nullptr, nullptr, nullptr };
 	if (diffuseTexture)
 	{
 		textures[0] = diffuseTexture->m_shaderResourceView;
@@ -773,9 +773,18 @@ void Renderer::BindTexture(Texture* diffuseTexture, Texture* normalTexture)
 		textures[1] = m_defaultTexture->m_shaderResourceView;
 	}
 
+	if (sgeTexture)
+	{
+		textures[2] = sgeTexture->m_shaderResourceView;
+	}
+	else
+	{
+		textures[2] = m_defaultTexture->m_shaderResourceView;
+	}
+
 	m_deviceContext->PSSetShaderResources(
 		0,
-		2,
+		3,
 		textures
 	);
 }

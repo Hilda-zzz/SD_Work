@@ -64,5 +64,6 @@ AABB2 Tileset::GetTileUVByInnerIndex(int index) const
 
 IntVec2 Tileset::GetTileTextureCoord(uint32_t gid) const
 {
+	UNUSED(gid);
 	return IntVec2();
 }

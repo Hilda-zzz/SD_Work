@@ -16,7 +16,7 @@ void TileChunk::InitializeChunkVerts()
 {
 	if (m_size.x != 0 && m_size.y != 0)
 	{
-		for (int i = 0; i < m_data.size(); i++)
+		for (int i = 0; i < (int)m_data.size(); i++)
 		{
 			IntVec2 tileGridPos = IntVec2(i % m_size.x, -(i / m_size.y)) + m_startPosition;
 			AABB2 tileBox = AABB2(Vec2((float)tileGridPos.x, (float)tileGridPos.y), Vec2((float)tileGridPos.x, (float)tileGridPos.y) + Vec2::ONE);
@@ -65,5 +65,5 @@ uint32_t TileChunk::GetTile(IntVec2 const& gridPos) const
 	}
 
 	int index = -localPos.y * m_size.x + localPos.x;
-	return (index >= 0 && index < m_data.size()) ? m_data[index] : 0;
+	return (index >= 0 && index < (int)m_data.size()) ? m_data[index] : 0;
 }

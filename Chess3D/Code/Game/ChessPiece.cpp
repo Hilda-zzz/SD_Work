@@ -9,10 +9,12 @@ extern Renderer* g_theRenderer;
 ChessPiece::ChessPiece(ChessMatch* match,Faction facion, PieceType type, IntVec2 const& gridPos):ChessObject(match)
 {
 	m_match = match;
-	m_texWhite = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Tree Top_COLOR.png");
-	m_texBlack = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/wall3_color.png");
-	m_texNormalWhite = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Tree Top_NRM.png");
-	m_texNormalBlack = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/wall3_n.png");
+	m_texWhite = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/FunkyBricks_d.png");
+	m_texBlack = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/Cobblestone_Diffuse.png");
+	m_texNormalWhite = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/FunkyBricks_n.png");
+	m_texNormalBlack = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/Cobblestone_Normal.png");
+	m_texSGEWhite = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/FunkyBricks_sge.png");
+	m_texSGEBlack = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/Cobblestone_SpecGlossEmit.png");
 
 	m_faction = facion;
 	m_pieceType = type;
@@ -95,10 +97,10 @@ void ChessPiece::Renderer() const
 	Mat44 rotateMat = m_orientaion.GetAsMatrix_IFwd_JLeft_KUp();
 	transMat.Append(rotateMat);
 
-	Rgba8 pieceColor = Rgba8::HILDA;
+	Rgba8 pieceColor = Rgba8::WHITE;
 	if (m_faction == Faction::BLACK)
 	{
-		pieceColor = Rgba8(100,100,100);
+		pieceColor = Rgba8::WHITE;
 	}
 	g_theRenderer->SetModelConstants(transMat, pieceColor);
 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
@@ -109,12 +111,12 @@ void ChessPiece::Renderer() const
 
 	if (m_faction == Faction::WHITE)
 	{
-		g_theRenderer->BindTexture(m_texWhite,m_texNormalWhite);
+		g_theRenderer->BindTexture(m_texWhite,m_texNormalWhite,m_texSGEWhite);
 		g_theRenderer->DrawGameIndexedVertexBuffer(m_def->m_vertexBufferByPlyaer[0], m_def->m_indexBufferByPlyaer[0]);
 	}
 	else
 	{
-		g_theRenderer->BindTexture(m_texBlack,m_texNormalBlack);
+		g_theRenderer->BindTexture(m_texBlack,m_texNormalBlack,m_texSGEBlack);
 		g_theRenderer->DrawGameIndexedVertexBuffer(m_def->m_vertexBufferByPlyaer[1], m_def->m_indexBufferByPlyaer[1]);
 	}
 }

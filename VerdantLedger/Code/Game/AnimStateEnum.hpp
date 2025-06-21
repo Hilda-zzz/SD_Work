@@ -4,5 +4,11 @@ enum class PlayerBodyStates
 {
 	IDLE,
 	WALK,
-	HOE
+	RUN,
+	AXE,
+	HOE,
+	PICKAXE,
+	SHOVEL,
+	SICKLE,
+	WATER
 };
