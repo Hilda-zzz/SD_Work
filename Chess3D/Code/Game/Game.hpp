@@ -5,6 +5,8 @@
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Renderer/PointLight.hpp"
+#include "Engine/Renderer/SpotLight.hpp"
 
 class Clock;
 class Prop;
@@ -151,4 +153,9 @@ private:
 	EulerAngles m_whiteOrientation = EulerAngles(90.f, 40.f, 0.f);
 	EulerAngles m_blackOrientation = EulerAngles(-90.f, 40.f, 0.f);
 	EulerAngles m_winOrientation = EulerAngles(-90.f, 90.f, 0.f);
+
+
+	//--------------------Lighting----------------------------------
+	std::vector<PointLight> m_pointLights;
+	std::vector<SpotLight> m_spotLights;
 };

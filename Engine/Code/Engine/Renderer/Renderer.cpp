@@ -84,25 +84,25 @@ static const int k_lightConstantsSlot = 1;
 
 struct PointLightConstants
 {
-	PointLight PointLights[MAX_POINT_LIGHTS];
-	uint32_t ActivePointLightCount;
-	float Padding[3];
+	PointLight c_pointLights[MAX_POINT_LIGHTS];
+	uint32_t c_activePointLightCount;
+	float c_padding[3];
 };
 static const int k_pointLightConstantsSlot = 4;
 
 struct SpotLightConstants
 {
-	SpotLight SpotLights[MAX_SPOT_LIGHTS];
-	uint32_t ActiveSpotLightCount;
-	float Padding[3];
+	SpotLight c_spotLights[MAX_SPOT_LIGHTS];
+	uint32_t c_activeSpotLightCount;
+	float c_padding[3];
 };
-static const int k_spotLightConstantsSlot = 5;
+static const int k_spotLightConstantsSlot = 6;
 
 struct ShadowConstants
 {
 	Mat44 LightViewProjection; 
 };
-static const int k_shadowConstantsSlot = 6;
+static const int k_shadowConstantsSlot = 8;
 
 struct PerFrameConstants
 {
@@ -1638,9 +1638,9 @@ void Renderer::SetPointLightsConstants(const std::vector<PointLight>& lights)
 	PointLightConstants pointLightConstants;
 	for (int i = 0; i < (int)lights.size(); i++)
 	{
-		pointLightConstants.PointLights[i] = lights[i];
+		pointLightConstants.c_pointLights[i] = lights[i];
 	}	
-	pointLightConstants.ActivePointLightCount =(int) lights.size();
+	pointLightConstants.c_activePointLightCount =(int) lights.size();
 	CopyCPUToGPU(&pointLightConstants, sizeof(pointLightConstants), m_pointLightCBO);
 	BindConstantBuffer(k_pointLightConstantsSlot, m_pointLightCBO);
 }
@@ -1650,9 +1650,9 @@ void Renderer::SetSpotLightsConstants(const std::vector<SpotLight>& lights)
 	SpotLightConstants spotLightConstants;
 	for (int i = 0; i < (int)lights.size(); i++)
 	{
-		spotLightConstants.SpotLights[i] = lights[i];
+		spotLightConstants.c_spotLights[i] = lights[i];
 	}
-	spotLightConstants.ActiveSpotLightCount = (int)lights.size();
+	spotLightConstants.c_activeSpotLightCount = (int)lights.size();
 	CopyCPUToGPU(&spotLightConstants, sizeof(spotLightConstants), m_spotLightCBO);
 	BindConstantBuffer(k_spotLightConstantsSlot, m_spotLightCBO);
 }

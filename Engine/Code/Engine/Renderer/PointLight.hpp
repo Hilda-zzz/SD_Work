@@ -6,13 +6,19 @@ struct PointLight
 {
 	PointLight(){}
 	PointLight(Vec3 const& position, float range, Rgba8 const& color, float intensity, Vec3 const& attenuation) :
-		Position(position), Range(range), Intensity(intensity), Attenuation(attenuation)
+		c_position(position), c_range(range), c_intensity(intensity), c_attenuation(attenuation)
 	{
-		color.GetAsFloats(&Color[0]);
+		color.GetAsFloats(&c_color[0]);
 	}
-	Vec3 Position;
-	float Range;
-	float Color[4];
-	float Intensity;
-	Vec3 Attenuation;
+// 	Vec3 Position;
+// 	float Range;
+// 	float Color[4];
+// 	float Intensity;
+// 	Vec3 Attenuation;
+
+	Vec3 c_position;
+	float c_range;
+	float c_color[4];
+	float c_intensity;
+	Vec3 c_attenuation;
 };

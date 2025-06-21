@@ -1,3 +1,5 @@
+//#pragma target 5.0
+
 struct VertexInput
 {
 	float3 a_modelPosition : POSITION;
@@ -41,6 +43,42 @@ cbuffer ModelConstants : register(b3)
 {
 	float4x4 c_modelToWorldTransform;		// Model transform
 	float4 c_modelColor;
+};
+
+// point light and spot light
+cbuffer PointLightBuffer : register(b4)
+{
+	struct PointLight
+	{
+		float3 c_position;
+		float c_range;
+		float4 c_color;
+		float c_intensity;
+		float3 c_attenuation;
+	};
+	PointLight c_pointLights[10];
+    uint c_activePointLightCount;
+	float3 c_padding;
+};
+
+ 
+cbuffer SpotLightBuffer : register(b6)
+{
+	struct SpotLight
+	{
+		float3 c_position;
+ 		float c_range;
+ 		float4 c_color;
+ 		float c_intensity;
+ 		float3 c_attenuation;
+ 		float c_cone;
+ 		float3 c_direction;
+ 		float c_spotCutoffAngle;
+ 		float3 c_padding;
+	};
+	SpotLight c_spotLights[2];
+	uint c_activeSpotLightCount;
+	//float3 c_padding;
 };
 
 // debug use
@@ -88,6 +126,34 @@ float3 GetCameraWorldPosition(float4x4 viewMatrix)
     float3x3 rotation = transpose((float3x3)viewMatrix);
     float3 translation = -viewMatrix._14_24_34;
     return mul(rotation, translation);
+}
+
+float3 CalculatePointLight(PointLight pointLight, float3 worldPos, 
+    float3 pixelNormalWorldSpace, float3 viewDir, 
+    float3 diffuseColor, float3 specularColor, float shininess)
+{
+    float3 lightVector = pointLight.c_position - worldPos;
+    float distance = length(lightVector);
+    
+    if(distance < pointLight.c_range)
+    {
+        lightVector = normalize(lightVector);   
+        float NdotL = saturate(dot(pixelNormalWorldSpace, lightVector));
+        
+        float attenuation = 1.0 / (pointLight.c_attenuation.x + 
+                                   pointLight.c_attenuation.y * distance + 
+                                   pointLight.c_attenuation.z * distance * distance);
+        
+        float3 diffuse = diffuseColor * pointLight.c_color.xyz * pointLight.c_intensity * NdotL * attenuation;
+        
+        float3 halfVector = normalize(lightVector + viewDir);
+        float specularTerm = pow(max(dot(pixelNormalWorldSpace, halfVector), 0), shininess);
+        float3 specular = specularTerm * specularColor * pointLight.c_intensity * attenuation;
+        
+        return diffuse + specular;
+    }
+    
+    return float3(0.0, 0.0, 0.0);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -175,13 +241,45 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	//  emissive
 	float3 emissive = textureColor.rgb * emission; 
 
+	// point lights
+	float3 pointLighting = float3(0, 0, 0);
+	int pointLightCount=c_activePointLightCount;
+	for(int i=0;i<pointLightCount;i++)
+	{
+ 		PointLight light = c_pointLights[i];
+ 		float3 lightVector = light.c_position - input.v_worldPosition.xyz;
+ 		float distance = length(lightVector);
+     
+ 		if(distance < light.c_range)
+ 		{
+ 			lightVector = normalize(lightVector);   
+ 			float NdotL = saturate(dot(pixelNormalWorldSpace, lightVector));
+         
+ 			float attenuation = 1.0 / (light.c_attenuation.x + 
+ 									   light.c_attenuation.y * distance + 
+ 									   light.c_attenuation.z * distance * distance);
+         
+ 			float3 diffuse = diffuseColor.rgb * light.c_color.xyz * light.c_intensity * NdotL * attenuation;
+         
+ 			float3 halfVector = normalize(lightVector + viewDir);
+ 			float specularTerm = pow(max(dot(pixelNormalWorldSpace, halfVector), 0), shininess);
+ 			float3 specular = specularTerm * float3(specularColor, specularColor, specularColor) * light.c_intensity * attenuation;
+         
+ 			pointLighting = diffuse + specular;
+ 		}
+// 		pointLighting += CalculatePointLight(c_pointLights[i], input.v_worldPosition.xyz, 
+//                                            pixelNormalWorldSpace, viewDir, 
+//                                            diffuseColor.rgb, float3(specularColor,specularColor,specularColor), shininess);
+	}
+
 	// final color without pixel normal map
 	float diffuseIntensityVertexNormal =c_sunIntensity * saturate(dot(surfaceNormalWorldSpace, -sunDir));
-	float diffuseIntensityPixelNormal =c_sunIntensity * saturate(dot(normalize(pixelNormalWorldSpace.xyz), -sunDir));
 	float4 totalLightingVertexNormal= float4((ambient + diffuseIntensityVertexNormal).xxx, 1);
+
+	float diffuseIntensityPixelNormal =c_sunIntensity * saturate(dot(normalize(pixelNormalWorldSpace.xyz), -sunDir));
 	float4 totalLightingPixelNormal=  float4((ambient + diffuseIntensityPixelNormal).xxx, 1);
 
-	float4 finalColor = float4( diffuseColor.rgb * totalLightingPixelNormal.rgb+specular+emissive, diffuseColor.a ); 
+	float4 finalColor = float4( diffuseColor.rgb * totalLightingPixelNormal.rgb+specular+emissive+pointLighting, diffuseColor.a ); 
 
 	if (c_debugInt == 1)
 	{

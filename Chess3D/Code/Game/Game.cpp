@@ -86,11 +86,32 @@ Game::Game()
 	//------------Chess Game---------------------------------------------
 	StartTheMatch();
 
+	//------------Lighting---------------------
+	m_pointLights.reserve(10);
+	PointLight pointLight = PointLight(
+		Vec3(3.f, 3.f, 1.5f),
+		2.f,
+		Rgba8::CYAN,
+		2.0f,
+		Vec3(1.0f, 0.1f, 0.002f)
+	);
+	m_pointLights.push_back(pointLight);
+
+	m_spotLights.reserve(10);
+	SpotLight spotLight1 = SpotLight(
+		Vec3(13.5f, 9.5f, 0.6f),
+		20.f,
+		Rgba8::BLUE,
+		2.5f,
+		Vec3(1.0f, 0.02f, 0.01f),
+		10.f, Vec3(1.2f, 0.f, -1.f).GetNormalized(), 20.f
+	);
+	m_spotLights.push_back(spotLight1);
+
 }
 
 Game::~Game()
 {
-
 // 	delete m_cube;
 // 	m_cube = nullptr;
 // 
@@ -162,6 +183,8 @@ void Game::Renderer() const
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 
 	//chess game
+	g_theRenderer->SetPointLightsConstants(m_pointLights);
+	g_theRenderer->SetSpotLightsConstants(m_spotLights);
 	m_curMatch->Renderer();
 
 	g_theRenderer->EndCamera(m_player->m_playerCam);
