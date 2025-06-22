@@ -2,6 +2,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Time.hpp"
 #include <algorithm>	
+#include "ErrorWarningAssert.hpp"
 
 extern Clock* g_systemClock;
 Clock::Clock()
@@ -12,7 +13,7 @@ Clock::Clock()
 	{
 		m_parent->AddChild(this);
 	}
-	
+	m_lastUpdateTimeInSeconds = GetCurrentTimeSeconds();
 }
 
 Clock::Clock(Clock& parent)
@@ -114,6 +115,7 @@ void Clock::TickSystemClock()
 void Clock::Tick()
 {
 	float deltaTime=GetClamped((float)(GetCurrentTimeSeconds()-m_lastUpdateTimeInSeconds), 0.f, m_maxDeltaSeconds);
+	//DebuggerPrintf(std::to_string(deltaTime).c_str());
 	m_lastUpdateTimeInSeconds = GetCurrentTimeSeconds();
 	Advance((double)deltaTime);
 }

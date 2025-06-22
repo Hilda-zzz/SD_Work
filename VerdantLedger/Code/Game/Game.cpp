@@ -11,6 +11,9 @@
 #include "TileMapManager.hpp"
 #include "Map.hpp"
 #include "Player.hpp"
+#include <iostream>
+#include "Engine/Core/ErrorWarningAssert.hpp"
+
 
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
@@ -44,6 +47,7 @@ Game::~Game()
 void Game::Update()
 {
 	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
+	
 
 	m_curDeltaTime = deltaSeconds;
 

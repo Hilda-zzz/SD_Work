@@ -10,6 +10,8 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Clock.hpp"
+#include <chrono>
+#include <thread>
 //#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
@@ -21,7 +23,8 @@ Game*			g_theGame = nullptr;
 bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
 
-
+constexpr float TARGET_FPS = 60.0f;
+constexpr float TARGET_FRAME_TIME = (1.0f / TARGET_FPS)*1000.f;
 
 App::~App()
 {
@@ -37,7 +40,6 @@ App::App()
 void App::Startup()
 {
 	//LoadingGameConfig("Data/Definitions/GameConfig.xml");
-
 	EventSystemConfig eventSystemConfig;
 	g_theEventSystem = new EventSystem(eventSystemConfig);
 	
@@ -114,9 +116,20 @@ void App::RunFrame()
 
 void App::RunMainLoop()
 {
+	auto lastFrameTime = std::chrono::high_resolution_clock::now();
 	while (!m_isQuitting)
 	{
+		auto frameStartTime = std::chrono::high_resolution_clock::now();
 		g_theApp->RunFrame();
+		auto currentTime = std::chrono::high_resolution_clock::now();
+
+		float actualFrameTime = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - frameStartTime).count();
+
+		while (actualFrameTime < TARGET_FRAME_TIME) {
+			std::this_thread::yield();
+			currentTime = std::chrono::high_resolution_clock::now();
+			actualFrameTime = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - frameStartTime).count();
+		}
 	}
 }
 
