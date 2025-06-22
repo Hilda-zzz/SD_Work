@@ -96,7 +96,7 @@ struct SpotLightConstants
 	uint32_t c_activeSpotLightCount;
 	float c_padding[3];
 };
-static const int k_spotLightConstantsSlot = 6;
+static const int k_spotLightConstantsSlot = 5;
 
 struct ShadowConstants
 {

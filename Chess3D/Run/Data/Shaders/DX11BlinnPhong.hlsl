@@ -62,7 +62,7 @@ cbuffer PointLightBuffer : register(b4)
 };
 
  
-cbuffer SpotLightBuffer : register(b6)
+cbuffer SpotLightBuffer : register(b5)
 {
 	struct SpotLight
 	{
@@ -76,9 +76,9 @@ cbuffer SpotLightBuffer : register(b6)
  		float c_spotCutoffAngle;
  		float3 c_padding;
 	};
-	SpotLight c_spotLights[2];
+	SpotLight c_spotLights[10];
 	uint c_activeSpotLightCount;
-	//float3 c_padding;
+	float3 c_padding_spot;
 };
 
 // debug use
@@ -128,33 +128,33 @@ float3 GetCameraWorldPosition(float4x4 viewMatrix)
     return mul(rotation, translation);
 }
 
-float3 CalculatePointLight(PointLight pointLight, float3 worldPos, 
-    float3 pixelNormalWorldSpace, float3 viewDir, 
-    float3 diffuseColor, float3 specularColor, float shininess)
-{
-    float3 lightVector = pointLight.c_position - worldPos;
-    float distance = length(lightVector);
-    
-    if(distance < pointLight.c_range)
-    {
-        lightVector = normalize(lightVector);   
-        float NdotL = saturate(dot(pixelNormalWorldSpace, lightVector));
-        
-        float attenuation = 1.0 / (pointLight.c_attenuation.x + 
-                                   pointLight.c_attenuation.y * distance + 
-                                   pointLight.c_attenuation.z * distance * distance);
-        
-        float3 diffuse = diffuseColor * pointLight.c_color.xyz * pointLight.c_intensity * NdotL * attenuation;
-        
-        float3 halfVector = normalize(lightVector + viewDir);
-        float specularTerm = pow(max(dot(pixelNormalWorldSpace, halfVector), 0), shininess);
-        float3 specular = specularTerm * specularColor * pointLight.c_intensity * attenuation;
-        
-        return diffuse + specular;
-    }
-    
-    return float3(0.0, 0.0, 0.0);
-}
+// float3 CalculatePointLight(PointLight pointLight, float3 worldPos, 
+//     float3 pixelNormalWorldSpace, float3 viewDir, 
+//     float3 diffuseColor, float3 specularColor, float shininess)
+// {
+//     float3 lightVector = pointLight.c_position - worldPos;
+//     float distance = length(lightVector);
+//     
+//     if(distance < pointLight.c_range)
+//     {
+//         lightVector = normalize(lightVector);   
+//         float NdotL = saturate(dot(pixelNormalWorldSpace, lightVector));
+//         
+//         float attenuation = 1.0 / (pointLight.c_attenuation.x + 
+//                                    pointLight.c_attenuation.y * distance + 
+//                                    pointLight.c_attenuation.z * distance * distance);
+//         
+//         float3 diffuse = diffuseColor * pointLight.c_color.xyz * pointLight.c_intensity * NdotL * attenuation;
+//         
+//         float3 halfVector = normalize(lightVector + viewDir);
+//         float specularTerm = pow(max(dot(pixelNormalWorldSpace, halfVector), 0), shininess);
+//         float3 specular = specularTerm * specularColor * pointLight.c_intensity * attenuation;
+//         
+//         return diffuse + specular;
+//     }
+//     
+//     return float3(0.0, 0.0, 0.0);
+// }
 
 //------------------------------------------------------------------------------------------------
 Texture2D t_diffuseTexture : register(t0);
@@ -265,11 +265,47 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
  			float specularTerm = pow(max(dot(pixelNormalWorldSpace, halfVector), 0), shininess);
  			float3 specular = specularTerm * float3(specularColor, specularColor, specularColor) * light.c_intensity * attenuation;
          
- 			pointLighting = diffuse + specular;
+ 			pointLighting += diffuse + specular;
  		}
-// 		pointLighting += CalculatePointLight(c_pointLights[i], input.v_worldPosition.xyz, 
-//                                            pixelNormalWorldSpace, viewDir, 
-//                                            diffuseColor.rgb, float3(specularColor,specularColor,specularColor), shininess);
+//  		pointLighting += CalculatePointLight(c_pointLights[i], input.v_worldPosition.xyz, 
+//                                             pixelNormalWorldSpace, viewDir, 
+//                                             diffuseColor.rgb, float3(specularColor,specularColor,specularColor), shininess);
+	}
+
+	// spot light
+	float3 spotLighting = float3(0, 0, 0);
+	int spotLightCount=c_activeSpotLightCount;
+	for(int j=0;j<spotLightCount;j++)
+	{
+ 		SpotLight light = c_spotLights[j];
+ 		float3 lightVector = light.c_position - input.v_worldPosition.xyz;
+ 		float distance = length(lightVector);
+     
+ 		if(distance < light.c_range)
+ 		{
+			if(distance > 0.001) 
+			{
+				lightVector /= distance; 
+			}
+			float spotEffect = dot(lightVector, normalize(-light.c_direction));
+            float spotFactor = 0.0;
+			if (spotEffect > cos(light.c_spotCutoffAngle))
+				spotFactor = pow(spotEffect, light.c_cone);
+
+           float diffuseFactor = max(dot(input.v_worldNormal.xyz, lightVector), 0.0);
+
+            float attenuation = 1.0 / (light.c_attenuation.x + 
+                                     light.c_attenuation.y * distance + 
+                                      light.c_attenuation.z * distance * distance);
+
+ 			float3 diffuse = diffuseColor.rgb * light.c_color.xyz * light.c_intensity * attenuation * diffuseFactor*spotFactor;
+         
+ 			float3 halfVector = normalize(lightVector + viewDir);
+ 			float specularTerm = pow(max(dot(input.v_worldNormal.xyz, halfVector), 0.0), shininess);
+ 			float3 specular = specularTerm * float3(specularColor, specularColor, specularColor) * light.c_intensity * attenuation* spotFactor;
+         
+ 			spotLighting += diffuse + specular;
+ 		}
 	}
 
 	// final color without pixel normal map
@@ -279,7 +315,7 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	float diffuseIntensityPixelNormal =c_sunIntensity * saturate(dot(normalize(pixelNormalWorldSpace.xyz), -sunDir));
 	float4 totalLightingPixelNormal=  float4((ambient + diffuseIntensityPixelNormal).xxx, 1);
 
-	float4 finalColor = float4( diffuseColor.rgb * totalLightingPixelNormal.rgb+specular+emissive+pointLighting, diffuseColor.a ); 
+	float4 finalColor = float4( diffuseColor.rgb * totalLightingPixelNormal.rgb+specular+emissive+spotLighting+pointLighting, diffuseColor.a ); 
 
 	if (c_debugInt == 1)
 	{

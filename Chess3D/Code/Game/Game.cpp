@@ -90,7 +90,7 @@ Game::Game()
 	m_pointLights.reserve(10);
 	PointLight pointLight = PointLight(
 		Vec3(3.f, 3.f, 1.5f),
-		2.f,
+		20.f,
 		Rgba8::CYAN,
 		2.0f,
 		Vec3(1.0f, 0.1f, 0.002f)
@@ -99,12 +99,12 @@ Game::Game()
 
 	m_spotLights.reserve(10);
 	SpotLight spotLight1 = SpotLight(
-		Vec3(13.5f, 9.5f, 0.6f),
+		Vec3(3.f, 3.f, 0.6f),
 		20.f,
-		Rgba8::BLUE,
-		2.5f,
-		Vec3(1.0f, 0.02f, 0.01f),
-		10.f, Vec3(1.2f, 0.f, -1.f).GetNormalized(), 20.f
+		Rgba8::YELLOW,
+		2.f,
+		Vec3(1.0f, 0.045f, 0.0075f),
+		2.f, Vec3(0.5f, 0.5f, -0.5f).GetNormalized(), 30.f
 	);
 	m_spotLights.push_back(spotLight1);
 
