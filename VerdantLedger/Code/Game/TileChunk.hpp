@@ -16,6 +16,7 @@ public:
 	bool IsEmpty() const { return m_isEmpty; }
 
 	uint32_t GetTile(IntVec2 const& gridPos) const;
+	IntVec2 GetGridPos(int tileIndex) const;
 	void SetTile(int localX, int localY, uint32_t tileId);
 
 	IntVec2 ToWorldPos(int localX, int localY) const {

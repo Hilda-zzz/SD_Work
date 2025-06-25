@@ -17,4 +17,9 @@
    <property name="IsWater" type="bool" value="true"/>
   </properties>
  </tile>
+ <tile id="40">
+  <properties>
+   <property name="IsNormalRoad" type="bool" value="true"/>
+  </properties>
+ </tile>
 </tileset>

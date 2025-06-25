@@ -8,5 +8,5 @@ public:
 	float RollRandomFloatZeroToOne();
 	float RollRandomFloatInRange(float minInclusive, float maxInclusive);
 private:
-	std::mt19937 rng{ std::random_device{}() };
+	//std::mt19937 rng{ std::random_device{}() };
 };

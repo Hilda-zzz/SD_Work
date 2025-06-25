@@ -37,24 +37,24 @@ enum class ChessGameState
 
 enum class ChessMoveResult
 {
-	VALID_MOVE_NORMAL,					//d
-	VALID_MOVE_PROMOTION,				//d
+	VALID_MOVE_NORMAL,					
+	VALID_MOVE_PROMOTION,				
 	VALID_CASTLE_KINGSIDE,
 	VALID_CASTLE_QUEENSIDE,
-	VALID_CAPTURE_NORMAL,				//d
-	VALID_CAPTURE_ENPASSANT,			//d
+	VALID_CAPTURE_NORMAL,				
+	VALID_CAPTURE_ENPASSANT,			
 
-	INVALID_MOVE_BAD_LOCATION,			//d
-	INVALID_MOVE_NO_PIECE,				//d
-	INVALID_MOVE_NOT_YOUR_PIECE,		//d
-	INVALID_MOVE_ZERO_DISTANCE,			//d
-	INVALID_MOVE_WRONG_MOVE_SHAPE,		//d
-	INVALID_MOVE_DESTINATION_BLOCKED,	//d
-	INVALID_MOVE_PATH_BLOCKED,			//d
+	INVALID_MOVE_BAD_LOCATION,			
+	INVALID_MOVE_NO_PIECE,				
+	INVALID_MOVE_NOT_YOUR_PIECE,		
+	INVALID_MOVE_ZERO_DISTANCE,			
+	INVALID_MOVE_WRONG_MOVE_SHAPE,		
+	INVALID_MOVE_DESTINATION_BLOCKED,	
+	INVALID_MOVE_PATH_BLOCKED,			
 	INVALID_MOVE_ENDS_IN_CHECK,
 	INVALID_MOVE_KING_TOO_CLOSE,
 
-	INVALID_ENPASSANT_STALE,			//?
+	INVALID_ENPASSANT_STALE,			
 	INVALID_CASTLE_KING_HAS_MOVED,
 	INVALID_CASTLE_ROOK_HAS_MOVED,
 	INVALID_CASTLE_PATH_BLOCKED,
@@ -158,4 +158,30 @@ private:
 	//--------------------Lighting----------------------------------
 	std::vector<PointLight> m_pointLights;
 	std::vector<SpotLight> m_spotLights;
+
+	// Selecting chess
+	// ChessRaycast
+	// ChessPiece* selectedPiece;
+	// IntVec2 highlightCoords
+
+	// UpdateHighlight()
+// 	{
+// 		m_highlightCoords = Vec2(-1, -1);
+// 		if(RayCast.m_impactPiece)
+// 		{
+// 			// if the piece is mine
+// 			//highlight coords change to this one
+// 		}
+// 	}
+
+	// UpdateSelect()
+// 	{
+// 	   // if already a selected piece ,if LMB , execute move command
+// 
+// 	   // if no selected piece
+// 		//LMB Click the highlight one become the selected one 
+// 	}
+
+
+	// more addvertsfunction for highlight debug
 };

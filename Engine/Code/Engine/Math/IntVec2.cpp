@@ -2,6 +2,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include <cmath> 
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Math/Vec2.hpp"
 
 const IntVec2 IntVec2::ZERO = IntVec2(0,0);
 
@@ -76,6 +77,12 @@ void IntVec2::operator=(const IntVec2& copyFrom)
 {
 	x = copyFrom.x;
 	y = copyFrom.y;
+}
+
+void IntVec2::operator=(const Vec2& copyFrom)
+{
+	x = static_cast<int>(copyFrom.x);
+	y = static_cast<int>(copyFrom.y);
 }
 
 bool IntVec2::operator==(IntVec2 const& compare) const

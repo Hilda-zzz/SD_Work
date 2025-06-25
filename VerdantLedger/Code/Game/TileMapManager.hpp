@@ -3,24 +3,11 @@
 #include <string>
 #include <map>
 #include "Game/TileMapLoader.hpp"
+#include "DynamicContentGenerator.hpp"
 
 class TileMap;
 class Tileset;
 struct TileProperty;
-
-enum class TileFlags : uint32_t 
-{
-	NONE = 0,
-	SOLID = 1 << 0,        // 0x01
-	FARMABLE = 1 << 1,     // 0x02  
-	WATER = 1 << 2,        // 0x04
-// 	INTERACTABLE = 1 << 3, // 0x08
-// 	BUILDABLE = 1 << 4,    // 0x10
-// 	NPC_PATH = 1 << 5,     // 0x20
-// 	TELEPORT = 1 << 6,     // 0x40
-// 	SHOP = 1 << 7,         // 0x80
-	// can be expanded to 32
-};
 
 class TileMapManager 
 {
@@ -66,4 +53,5 @@ public:
 
 	TileMap* m_curMap = nullptr;
 	TileMapLoader m_loader;
+	DynamicContentGenerator m_dynamicGenerator;
 };

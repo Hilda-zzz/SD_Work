@@ -55,8 +55,8 @@ private:
 
 	//Light
 	Vec3 m_sunDirection = Vec3(10.f, 2.f, -3.f);
-	float m_sunIntensity =0.6f;
-	float m_ambientIntensity = 0.2f;
+	float m_sunIntensity =0.1f;
+	float m_ambientIntensity = 0.1f;
 
 	// debug int
 	int m_debugInt = 0;

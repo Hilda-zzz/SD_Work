@@ -3,6 +3,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include <cmath>
+#include "Engine/Math/Vec2.hpp"
 extern Vec2 ori;
 Vec3::Vec3(float x, float y, float z):x(x),y(y),z(z)
 {
@@ -114,6 +115,12 @@ void Vec3::operator=(Vec3 const& copyFrom)
 	x = copyFrom.x;
 	y = copyFrom.y;
 	z = copyFrom.z;
+}
+
+void Vec3::operator=(Vec2 const& copyFrom)
+{
+	x = copyFrom.x;
+	y = copyFrom.y;
 }
 
 const Vec3 Vec3::MakeFromPolarRadians(float latitudeRadians, float longitudeRadians, float length)

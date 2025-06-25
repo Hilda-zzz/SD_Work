@@ -2,6 +2,8 @@
 #include "MathUtils.hpp"
 #include <Engine/Core/StringUtils.hpp>
 #include <complex>
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 const Vec2 Vec2::ZERO = Vec2(0.f, 0.f);
 const Vec2 Vec2::ONE = Vec2(1.f, 1.f);
@@ -98,6 +100,18 @@ void Vec2::operator=( Vec2 const& copyFrom )
 {
 	x = copyFrom.x;
 	y = copyFrom.y;
+}
+
+void Vec2::operator=(Vec3 const& copyFrom)
+{
+	x = copyFrom.x;
+	y = copyFrom.y;
+}
+
+void Vec2::operator=(IntVec2 const& copyFrom)
+{
+	x = static_cast<float>(copyFrom.x);
+	y = static_cast<float>(copyFrom.y);
 }
 
 //-----------------------------------------------------------------------------------------------

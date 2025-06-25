@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/IntVec2.hpp"
+#include "Engine/Renderer/Camera.hpp"
 
 class Game;
 class TileMap;
@@ -29,4 +30,5 @@ private:
 	Game* m_game = nullptr;
 	TileMap* m_tileMap = nullptr;
 	Player* m_player = nullptr;
+	Camera  m_gameplayCam;
 };

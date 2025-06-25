@@ -1,4 +1,5 @@
 #pragma once
+struct Vec2;
 
 struct IntVec2
 {
@@ -25,6 +26,7 @@ public:
 	void RotateMinus90Degrees();
 
 	void	operator=(const IntVec2& copyFrom);
+	void	operator=(const Vec2& copyFrom);
 	bool	operator==(IntVec2 const& compare) const;
 	bool	operator!=(IntVec2 const& compare) const;
 	IntVec2 const	operator-(IntVec2 const& vecToSubtract) const;	// vec2 - vec2

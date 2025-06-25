@@ -67,3 +67,15 @@ uint32_t TileChunk::GetTile(IntVec2 const& gridPos) const
 	int index = -localPos.y * m_size.x + localPos.x;
 	return (index >= 0 && index < (int)m_data.size()) ? m_data[index] : 0;
 }
+
+// concern about the y +? -?
+IntVec2 TileChunk::GetGridPos(int tileIndex) const
+{
+	if (tileIndex < 0 || tileIndex >= m_size.x * m_size.y)
+	{
+		return IntVec2(0, 0);
+	}
+	int relativeX = tileIndex % m_size.x;
+	int relativeY = tileIndex / m_size.y;
+	return IntVec2(relativeX, relativeY);
+}

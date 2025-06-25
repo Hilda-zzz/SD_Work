@@ -2,7 +2,6 @@
 #include <vector>
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
-#include "Engine/Renderer/Camera.hpp"
 #include "AnimStateEnum.hpp"
 #include "StateMachine.hpp"
 
@@ -47,7 +46,6 @@ public:
 	float	m_orientation = 0.f;
 	Vec2	m_velocity = Vec2(0.f, 0.f);
 	float   m_speed = 5.f;
-	Camera  m_gameplayCam;
 	float	m_physicsRadius = 0.f;
 	// Tools
 	PlayerTools m_curTool = PlayerTools::NONE;

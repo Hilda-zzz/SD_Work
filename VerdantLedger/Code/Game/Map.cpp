@@ -1,17 +1,23 @@
-#include "Map.hpp"
+#include "Game/Map.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Player.hpp"
 #include "GameCommon.hpp"
 #include "Game/TileMap.hpp"
-#include "TileMapManager.hpp"
+#include "Game/TileMapManager.hpp"
 #include "Game/Game.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Window/Window.hpp"
+#include "Game/TileTypesInGame.hpp"
 
 extern Renderer* g_theRenderer;
+extern Window* g_theWindow;
 
 Map::Map(Game* game, TileMap* tileMap, Player* player):
 	m_game(game),m_tileMap(tileMap),m_player(player)
 {
+	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
+	m_gameplayCam.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
+	m_gameplayCam.SetOrthographicView(m_player->m_position - Vec2(30.f, 15.f), m_player->m_position + Vec2(30.f, 15.f));
 }
 
 Map::~Map()
@@ -22,17 +28,18 @@ void Map::Update(float deltaSeconds)
 {
 	m_player->Update(deltaSeconds);
 	CheckPlayerCollWithSolidTiles();
+	m_gameplayCam.SetOrthographicView(m_player->m_position - Vec2(30.f, 15.f), m_player->m_position + Vec2(30.f, 15.f));
 }
 
 void Map::Render() const
 {
-	g_theRenderer->BeginCamera(m_player->m_gameplayCam);
+	g_theRenderer->BeginCamera(m_gameplayCam);
 
 	m_tileMap->Render();
 
 	m_player->Render();
-	
-	g_theRenderer->EndCamera(m_player->m_gameplayCam);
+
+	g_theRenderer->EndCamera(m_gameplayCam);
 }
 
 void Map::CheckPlayerCollWithSolidTiles()
@@ -68,7 +75,7 @@ void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhy
 {
     uint32_t gid= m_tileMap->GetTileGidFromLayerID(m_tileMap->m_markLayerIndex, tileCoords);
 	uint32_t flag =m_game->g_tileManager->m_gidToTilePropertyFlag[gid];
-	if (flag & static_cast<uint32_t>(TileFlags::SOLID))
+	if (flag & static_cast<uint32_t>(TerrainType::SOLID))
 	{
 		AABB2 thisTileBox = AABB2(static_cast<float>(tileCoords.x), static_cast<float>(tileCoords.y),
 			static_cast<float>(tileCoords.x + 1.f), static_cast<float>(tileCoords.y + 1));

@@ -2,6 +2,7 @@
 #include "TileMapManager.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "GroundObstacle.hpp"
 
 extern Renderer* g_theRenderer;
 
@@ -67,10 +68,11 @@ TileMap::TileMap(XmlElement* rootElement)
  				const char* csvText = chunkElement->GetText();
  				if (csvText) 
  				{
-                    Strings dataStrsWithousLineEnd= SplitStringOnDelimiterIgnoreChangeLine(csvText, ',');
-                    for (int i = 0; i < (int)dataStrsWithousLineEnd.size(); i++)
+                    Strings dataStrsWithoutLineEnd= SplitStringOnDelimiterIgnoreChangeLine(csvText, ',');
+                    for (int i = 0; i < (int)dataStrsWithoutLineEnd.size(); i++)
                     {
-						int value = std::stoi(dataStrsWithousLineEnd[i]);
+                        // can be optimized
+						int value = std::stoi(dataStrsWithoutLineEnd[i]);
                         chunk.m_data.push_back(value);
                     }
  				}
@@ -88,6 +90,12 @@ TileMap::TileMap(XmlElement* rootElement)
 
 TileMap::~TileMap()
 {
+	for (GroundObstacle* obstacle : m_obstacles)
+	{
+        delete obstacle;
+        obstacle = nullptr;
+	}
+    m_obstacles.clear();
 }
 
 void TileMap::Render() const
@@ -97,7 +105,7 @@ void TileMap::Render() const
         for (int j = 0; j < (int)m_layers[i].m_chunks.size(); j++)
         {
             Texture* grassTex=g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/TilesetGrassSpring.png");
-            //Texture* tileMarkTex= g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
+            Texture* tileMarkTex= g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
             g_theRenderer->BindTexture(grassTex);
             if (i == 3)
             {
@@ -108,9 +116,36 @@ void TileMap::Render() const
             g_theRenderer->DrawVertexArray(m_layers[i].m_chunks[j].m_verts);
         }
     }
+    for (GroundObstacle* obstacle : m_obstacles)
+    {
+        obstacle->Render();
+    }
 }
 
 uint32_t TileMap::GetTileGidFromLayerID(int layerID, IntVec2 const& gridPos)
 {
     return m_layers[layerID - 1].GetGidFromGridPos(gridPos);
+}
+
+uint64_t TileMap::GetTileKey(IntVec2 const& gridPos) const
+{
+    // deal with the negative grid position
+    // below version can not deal with negative grid pos
+	//return (static_cast<uint64_t>(gridPos.x) << 32) |  // left shift x | y
+		//static_cast<uint32_t>(gridPos.y);
+	uint32_t x_bits = *reinterpret_cast<const uint32_t*>(&gridPos.x);
+	uint32_t y_bits = *reinterpret_cast<const uint32_t*>(&gridPos.y);
+	return (static_cast<uint64_t>(x_bits) << 32) | y_bits;
+}
+
+TileLayer* TileMap::FindLayerById(int layerId)
+{
+	for (TileLayer& layer : m_layers) 
+    {
+		if (layer.m_id == layerId) 
+        {
+			return &layer;
+		}
+	}
+	return nullptr;
 }

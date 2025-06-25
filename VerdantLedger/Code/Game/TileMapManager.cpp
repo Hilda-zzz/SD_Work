@@ -1,6 +1,7 @@
 #include "TileMapManager.hpp"
 #include "Game/Tileset.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "TileTypesInGame.hpp"
 
 TileMapManager* TileMapManager::s_tileManagerInstance = nullptr;
 
@@ -42,15 +43,15 @@ void TileMapManager::AddGidToPropertyMaskForEachTileset(Tileset* tileset)
 
 		if (GetIsPropertyTrue(tileset->m_properties[i], "IsSolid"))
 		{
-			flags |= static_cast<uint32_t>(TileFlags::SOLID);
+			flags |= static_cast<uint32_t>(TerrainType::SOLID);
 		}
 		if (GetIsPropertyTrue(tileset->m_properties[i], "IsFarmable"))
 		{
-			flags |= static_cast<uint32_t>(TileFlags::FARMABLE);
+			flags |= static_cast<uint32_t>(TerrainType::FARMABLE);
 		}
 		if (GetIsPropertyTrue(tileset->m_properties[i], "IsWaater"))
 		{
-			flags |= static_cast<uint32_t>(TileFlags::WATER);
+			flags |= static_cast<uint32_t>(TerrainType::WATER);
 		}
 
 		s_tileManagerInstance->m_gidToTilePropertyFlag[gid] = flags;
@@ -90,7 +91,19 @@ Tileset* TileMapManager::LoadTileset(const std::string& tilesetPath)
 
 void TileMapManager::LoadAllMaps()
 {
+	// change to load and generateAllMaps
 	LoadMap("Data/Tiled/HouseMap.tmx");
+	m_dynamicGenerator.GenerateAllDynamicContentForTheMap(m_loadedMaps["Data/Tiled/HouseMap.tmx"]);
+// save dynamic data for each tile grid
+// 	IntVec2 curGridPos = chunk.GetGridPos(i);
+// 	uint64_t tilePosKey = GetTileKey(curGridPos);
+// 	DynamicTileData curDynamicTileData;
+// 	float possiblity = m_rng.RollRandomFloatZeroToOne();
+// 	if (possiblity > 0.4f)
+// 	{
+// 		curDynamicTileData.m_obstacleType == ObstacleType::ROCK;
+// 	}
+// 	m_dynamicTiles[tilePosKey] = curDynamicTileData;
 }
 
 TileMap* TileMapManager::LoadMap(const std::string& mapPath)

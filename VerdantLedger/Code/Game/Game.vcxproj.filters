@@ -26,6 +26,9 @@
     <Filter Include="AnimStates\PlayerBodyAnimStates">
       <UniqueIdentifier>{af31b0eb-7932-463e-9305-05c749568cf8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TilemapObjects">
+      <UniqueIdentifier>{4f8f9327-1902-4bee-8cab-23f22ff99dcc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -69,6 +72,12 @@
     </ClCompile>
     <ClCompile Include="PlayerBodyState.cpp">
       <Filter>AnimStates\PlayerBodyAnimStates</Filter>
+    </ClCompile>
+    <ClCompile Include="DynamicContentGenerator.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="GroundObstacle.cpp">
+      <Filter>TilemapObjects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -119,6 +128,15 @@
     </ClInclude>
     <ClInclude Include="PlayerBodyState.hpp">
       <Filter>AnimStates\PlayerBodyAnimStates</Filter>
+    </ClInclude>
+    <ClInclude Include="TileTypesInGame.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicContentGenerator.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="GroundObstacle.hpp">
+      <Filter>TilemapObjects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

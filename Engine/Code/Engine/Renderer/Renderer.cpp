@@ -86,7 +86,7 @@ struct PointLightConstants
 {
 	PointLight c_pointLights[MAX_POINT_LIGHTS];
 	uint32_t c_activePointLightCount;
-	float c_padding[3];
+	float c_padding_point[3];
 };
 static const int k_pointLightConstantsSlot = 4;
 
@@ -94,7 +94,7 @@ struct SpotLightConstants
 {
 	SpotLight c_spotLights[MAX_SPOT_LIGHTS];
 	uint32_t c_activeSpotLightCount;
-	float c_padding[3];
+	float c_padding_spot[3];
 };
 static const int k_spotLightConstantsSlot = 5;
 

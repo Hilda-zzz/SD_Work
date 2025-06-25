@@ -51,30 +51,31 @@ cbuffer PointLightBuffer : register(b4)
 	struct PointLight
 	{
 		float3 c_position;
-		float c_range;
-		float4 c_color;
+		float c_innerRadius;
+		float4 c_color;       
+		float c_outerRadius; 
 		float c_intensity;
-		float3 c_attenuation;
+		float2 c_padding;
 	};
 	PointLight c_pointLights[10];
     uint c_activePointLightCount;
-	float3 c_padding;
+	float3 c_padding_point;
 };
 
  
 cbuffer SpotLightBuffer : register(b5)
 {
 	struct SpotLight
-	{
-		float3 c_position;
- 		float c_range;
- 		float4 c_color;
- 		float c_intensity;
- 		float3 c_attenuation;
- 		float c_cone;
- 		float3 c_direction;
- 		float c_spotCutoffAngle;
- 		float3 c_padding;
+	{    
+		float3 c_position;  
+		float c_intensity;                   
+		float3 c_direction;     
+		float c_padding;	    
+		float4 c_color;       
+		float c_innerCutoffAngle;   
+		float c_outerCutoffAngle;   
+		float c_innerRadius;
+		float c_outerRadius;	
 	};
 	SpotLight c_spotLights[10];
 	uint c_activeSpotLightCount;
@@ -250,20 +251,30 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
  		float3 lightVector = light.c_position - input.v_worldPosition.xyz;
  		float distance = length(lightVector);
      
- 		if(distance < light.c_range)
+ 		if(distance < light.c_outerRadius)
  		{
  			lightVector = normalize(lightVector);   
  			float NdotL = saturate(dot(pixelNormalWorldSpace, lightVector));
          
- 			float attenuation = 1.0 / (light.c_attenuation.x + 
- 									   light.c_attenuation.y * distance + 
- 									   light.c_attenuation.z * distance * distance);
+//  			float attenuation = 1.0 / (light.c_attenuation.x + 
+//  									   light.c_attenuation.y * distance + 
+//  									   light.c_attenuation.z * distance * distance);
+
+			float falloff=1.0;
+			if(distance<light.c_innerRadius)
+			{
+				falloff=1.0;
+			}
+			else
+			{
+				falloff=RangeMapClamped(distance,light.c_innerRadius,light.c_outerRadius,1.0,0.0);
+			}
          
- 			float3 diffuse = diffuseColor.rgb * light.c_color.xyz * light.c_intensity * NdotL * attenuation;
+ 			float3 diffuse = diffuseColor.rgb * light.c_color.xyz * light.c_intensity * NdotL * falloff;
          
  			float3 halfVector = normalize(lightVector + viewDir);
  			float specularTerm = pow(max(dot(pixelNormalWorldSpace, halfVector), 0), shininess);
- 			float3 specular = specularTerm * float3(specularColor, specularColor, specularColor) * light.c_intensity * attenuation;
+ 			float3 specular = specularTerm * float3(specularColor, specularColor, specularColor) * light.c_intensity * falloff;
          
  			pointLighting += diffuse + specular;
  		}
@@ -281,28 +292,48 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
  		float3 lightVector = light.c_position - input.v_worldPosition.xyz;
  		float distance = length(lightVector);
      
- 		if(distance < light.c_range)
+ 		if(distance < light.c_outerRadius)
  		{
 			if(distance > 0.001) 
 			{
 				lightVector /= distance; 
 			}
 			float spotEffect = dot(lightVector, normalize(-light.c_direction));
-            float spotFactor = 0.0;
-			if (spotEffect > cos(light.c_spotCutoffAngle))
-				spotFactor = pow(spotEffect, light.c_cone);
+            float spotFactor = 1.0;
+			if (spotEffect > cos(light.c_innerCutoffAngle))
+			{
+				spotFactor = 1.0;
+			}
+			else
+			{
+				spotFactor = RangeMapClamped(spotEffect, 
+                            cos(light.c_outerCutoffAngle),  
+                            cos(light.c_innerCutoffAngle),  
+                            0.0,                            
+                            1.0);       
+			}
 
-           float diffuseFactor = max(dot(input.v_worldNormal.xyz, lightVector), 0.0);
+           float diffuseFactor = max(dot(pixelNormalWorldSpace.xyz, lightVector), 0.0);
 
-            float attenuation = 1.0 / (light.c_attenuation.x + 
-                                     light.c_attenuation.y * distance + 
-                                      light.c_attenuation.z * distance * distance);
+//             float attenuation = 1.0 / (light.c_attenuation.x + 
+//                                      light.c_attenuation.y * distance + 
+//                                       light.c_attenuation.z * distance * distance);
 
- 			float3 diffuse = diffuseColor.rgb * light.c_color.xyz * light.c_intensity * attenuation * diffuseFactor*spotFactor;
+			float falloff=1.0;
+			if(distance<light.c_innerRadius)
+			{
+				falloff=1.0;
+			}
+			else
+			{
+				falloff=RangeMapClamped(distance,light.c_innerRadius,light.c_outerRadius,1.0,0.0);
+			}
+
+ 			float3 diffuse = diffuseColor.rgb * light.c_color.xyz * light.c_intensity * falloff * diffuseFactor*spotFactor;
          
  			float3 halfVector = normalize(lightVector + viewDir);
- 			float specularTerm = pow(max(dot(input.v_worldNormal.xyz, halfVector), 0.0), shininess);
- 			float3 specular = specularTerm * float3(specularColor, specularColor, specularColor) * light.c_intensity * attenuation* spotFactor;
+ 			float specularTerm = pow(max(dot(pixelNormalWorldSpace, halfVector), 0.0), shininess);
+ 			float3 specular = specularTerm * float3(specularColor, specularColor, specularColor) * light.c_intensity * falloff* spotFactor;
          
  			spotLighting += diffuse + specular;
  		}
@@ -315,6 +346,7 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	float diffuseIntensityPixelNormal =c_sunIntensity * saturate(dot(normalize(pixelNormalWorldSpace.xyz), -sunDir));
 	float4 totalLightingPixelNormal=  float4((ambient + diffuseIntensityPixelNormal).xxx, 1);
 
+//+pointLighting
 	float4 finalColor = float4( diffuseColor.rgb * totalLightingPixelNormal.rgb+specular+emissive+spotLighting+pointLighting, diffuseColor.a ); 
 
 	if (c_debugInt == 1)

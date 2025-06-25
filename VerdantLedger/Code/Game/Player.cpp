@@ -34,9 +34,6 @@ static const std::map<PlayerTools, std::string> s_playerToolConditionMap = {
 
 Player::Player()
 {
-	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
-	m_gameplayCam.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
-	m_gameplayCam.SetOrthographicView(m_position-Vec2(10.f,5.f), m_position + Vec2(10.f, 5.f));
 	m_physicsRadius = 0.25f;
 
 	Initialize();
@@ -158,7 +155,7 @@ void Player::Update(float deltaSeconds)
 	{
 		UpdateMovement(deltaSeconds);
 	}
-	m_gameplayCam.SetOrthographicView(m_position - Vec2(10.f, 5.f), m_position + Vec2(10.f, 5.f));
+	//m_gameplayCam.SetOrthographicView(m_position - Vec2(10.f, 5.f), m_position + Vec2(10.f, 5.f));
 }
 
 void Player::HandleInput()
