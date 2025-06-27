@@ -112,6 +112,21 @@ ChessPieceDefinition::ChessPieceDefinition(XmlElement const* chessDefElement)
 		g_theRenderer->CopyGameIndexBufferToGPU(meshIndexs.data(), (int)meshIndexs.size(), m_indexBufferByPlyaer[0]);
 		g_theRenderer->CopyGameIndexBufferToGPU(meshIndexs.data(), (int)meshIndexs.size(), m_indexBufferByPlyaer[1]);
 	}
+	XmlElement const* colliderElement = chessDefElement->FirstChildElement("Collider");
+	if (colliderElement)
+	{
+		XmlElement const* colliderComponentElement = colliderElement->FirstChildElement("Component");
+		if (colliderComponentElement)
+		{
+			Vec3 start = ParseXmlAttribute(colliderComponentElement, "start", start);
+			Vec3 end = ParseXmlAttribute(colliderComponentElement, "end", end);
+			float radius = 0.1f;
+			radius = ParseXmlAttribute(colliderComponentElement, "radius", radius);
+			float halfHeight = (end.z - start.z) * 0.5f;
+			m_collider = ZCylinder(Vec3(0.f, 0.f, halfHeight), radius, halfHeight);
+		}
+	}
+	
 }
 
 ChessPieceDefinition::~ChessPieceDefinition()

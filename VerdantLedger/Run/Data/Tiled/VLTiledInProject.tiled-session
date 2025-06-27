@@ -8,19 +8,19 @@
     ],
     "fileStates": {
         "GrassSpring.tsx": {
-            "scaleInDock": 1.5,
+            "scaleInDock": 2,
             "scaleInEditor": 1
         },
         "HouseMap.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 4,
+            "scale": 3,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 21,
-                "y": -0.3333333333333144
+                "x": -8.833333333333329,
+                "y": -46.16666666666666
             }
         },
         "TileMark.tsx": {
-            "scaleInDock": 1,
+            "scaleInDock": 1.5,
             "scaleInEditor": 1
         }
     },

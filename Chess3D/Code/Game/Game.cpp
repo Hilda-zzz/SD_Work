@@ -94,7 +94,14 @@ Game::Game()
 		Rgba8::CYAN,
 		2.0f
 	);
+	PointLight pointLight2 = PointLight(
+		Vec3(2.f, 2.f, 1.5f),
+		0.3f, 2.f,
+		Rgba8::HILDA,
+		3.0f
+	);
 	m_pointLights.push_back(pointLight);
+	m_pointLights.push_back(pointLight2);
 
 	m_spotLights.reserve(10);
 	SpotLight spotLight1 = SpotLight(
@@ -223,6 +230,8 @@ void Game::Renderer() const
 	DebugRenderScreen(m_screenCamera);
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 
+	g_theRenderer->BindTexture(nullptr);
+	DebugDrawRing(4.f, 10.f, Rgba8::WHITE, Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
@@ -759,30 +768,88 @@ bool Game::ValidatePieceMovement(int moveChessIndex, int toChessIndex, ChessMove
 
 bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result)
 {
+// 	IntVec2 moveGridPos = g_theGame->m_curMatch->m_chessBoard.GetGridPosFromIndex(moveChessIndex);
+// 	IntVec2 toGridPos = g_theGame->m_curMatch->m_chessBoard.GetGridPosFromIndex(toChessIndex);
+// 	IntVec2 moveStep = toGridPos - moveGridPos;
+// 
+// 	ChessPiece* movingKing = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(moveChessIndex);
+// 	//ChessPiece* toChess = g_theGame->m_curMatch->m_chessBoard.GetChessFromGridPos(toGridPos);
+// 
+// 	//Castle
+// 	if (abs(moveStep.x) >= 2 && moveStep.y == 0)
+//  	{
+// 		if (movingKing->GetFaction() == Faction::WHITE)
+// 		{
+// 			if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(0, 0))
+// 			{
+// 				if (ValidateCastling(moveChessIndex, toChessIndex, true, out_result))
+// 				{
+// 					out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE;
+// 					return true;
+// 				}
+// 				return false;
+// 			}
+// 			else if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(7, 0))
+// 			{
+// 				if (ValidateCastling(moveChessIndex, toChessIndex, false, out_result))
+// 				{
+// 					out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
+// 					return true;
+// 				}
+// 				return false;
+// 			}
+// 		}
+// 		else if (movingKing->GetFaction() == Faction::BLACK)
+// 		{
+// 			if (moveGridPos == IntVec2(4, 7) && toGridPos == IntVec2(0, 7))
+// 			{
+// 				if (ValidateCastling(moveChessIndex, toChessIndex, true, out_result))
+// 				{
+// 					out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE;
+// 					return true;
+// 				}
+// 				return false;
+// 			}
+// 			else if (moveGridPos == IntVec2(4, 7) && toGridPos == IntVec2(7, 7))
+// 			{
+// 				if (ValidateCastling(moveChessIndex, toChessIndex, false, out_result))
+// 				{
+// 					out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
+// 					return true;
+// 				}
+// 				return false;
+// 			}
+// 		}
+// 		out_result = ChessMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+// 		return false;
+// 	}
+	
 	IntVec2 moveGridPos = g_theGame->m_curMatch->m_chessBoard.GetGridPosFromIndex(moveChessIndex);
 	IntVec2 toGridPos = g_theGame->m_curMatch->m_chessBoard.GetGridPosFromIndex(toChessIndex);
 	IntVec2 moveStep = toGridPos - moveGridPos;
-
 	ChessPiece* movingKing = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(moveChessIndex);
-	//ChessPiece* toChess = g_theGame->m_curMatch->m_chessBoard.GetChessFromGridPos(toGridPos);
 
-	//Castle
-	if (abs(moveStep.x) >= 2 && moveStep.y == 0)
- 	{
+	// Castle
+	if (abs(moveStep.x) == 2 && moveStep.y == 0) 
+	{
 		if (movingKing->GetFaction() == Faction::WHITE)
 		{
-			if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(0, 0))
+			// e1 -> c1
+			if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(2, 0))
 			{
-				if (ValidateCastling(moveChessIndex, toChessIndex, true, out_result))
+				int rookIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(IntVec2(0, 0));
+				if (ValidateCastling(moveChessIndex, rookIndex, true, out_result))
 				{
 					out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE;
 					return true;
 				}
 				return false;
 			}
-			else if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(7, 0))
+			// e1 -> g1
+			else if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(6, 0))
 			{
-				if (ValidateCastling(moveChessIndex, toChessIndex, false, out_result))
+				int rookIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(IntVec2(7, 0));
+				if (ValidateCastling(moveChessIndex, rookIndex, false, out_result))
 				{
 					out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
 					return true;
@@ -792,18 +859,22 @@ bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 		}
 		else if (movingKing->GetFaction() == Faction::BLACK)
 		{
-			if (moveGridPos == IntVec2(4, 7) && toGridPos == IntVec2(0, 7))
+			// e8 -> c8
+			if (moveGridPos == IntVec2(4, 7) && toGridPos == IntVec2(2, 7))
 			{
-				if (ValidateCastling(moveChessIndex, toChessIndex, true, out_result))
+				int rookIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(IntVec2(0, 7));
+				if (ValidateCastling(moveChessIndex, rookIndex, true, out_result))
 				{
 					out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE;
 					return true;
 				}
 				return false;
 			}
-			else if (moveGridPos == IntVec2(4, 7) && toGridPos == IntVec2(7, 7))
+			// e8 -> g8
+			else if (moveGridPos == IntVec2(4, 7) && toGridPos == IntVec2(6, 7))
 			{
-				if (ValidateCastling(moveChessIndex, toChessIndex, false, out_result))
+				int rookIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(IntVec2(7, 7));
+				if (ValidateCastling(moveChessIndex, rookIndex, false, out_result))
 				{
 					out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
 					return true;
@@ -814,7 +885,6 @@ bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 		out_result = ChessMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 		return false;
 	}
-	
 
 	// Regular Move Shape
 	if (!(moveStep == IntVec2(1, 0) || moveStep == IntVec2(-1, 0) ||
@@ -1071,7 +1141,7 @@ bool Game::ValidatePawnMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 				out_result = ChessMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 				return false;
 			}
-			movePiece->SetIsFirstMove(false);
+			//movePiece->SetIsFirstMove(false);
 		}
 	}
 	else if (movePiece->GetFaction() == Faction::BLACK)
@@ -1187,37 +1257,72 @@ bool Game::ValidatePawnMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 
 bool Game::ValidateCastling(int kingIndex, int targetIndex, bool isQueenside, ChessMoveResult& out_result)
 {
+// 	ChessPiece* kingChess = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(kingIndex);
+// 	if (!kingChess->GetIsFirstMove())
+// 	{
+// 		out_result = ChessMoveResult::INVALID_CASTLE_KING_HAS_MOVED;
+// 		return false;
+// 	}
+// 
+// 	ChessPiece* targetChess= g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(targetIndex);
+// 	if (targetChess->GetPieceType() != PieceType::ROOK||!targetChess->GetIsFirstMove())
+// 	{
+// 		out_result = ChessMoveResult::INVALID_CASTLE_ROOK_HAS_MOVED;
+// 		return false;
+// 	}
+// 
+// 	int startX = std::min(kingChess->GetGridPos().x, targetChess->GetGridPos().x) + 1;
+// 	int endX = std::max(kingChess->GetGridPos().x, targetChess->GetGridPos().x) - 1;
+// 
+// 	for (int x = startX; x <= endX; x++)
+// 	{
+// 		IntVec2 checkPos(x, kingChess->GetGridPos().y);
+// 		int checkIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(checkPos);
+// 		if (g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(checkIndex) != nullptr)
+// 		{
+// 			out_result = ChessMoveResult::INVALID_CASTLE_PATH_BLOCKED;
+// 			return false;
+// 		}
+// 	}
+// 
+// 	isQueenside ? out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE : out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
+// 	//out_result = ChessMoveResult::INVALID_CASTLE_KING_HAS_MOVED;
+// 	return true;
 	ChessPiece* kingChess = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(kingIndex);
-	if (!kingChess->GetIsFirstMove())
-	{
-		out_result = ChessMoveResult::INVALID_CASTLE_KING_HAS_MOVED;
-		return false;
-	}
+    ChessPiece* rookChess = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(targetIndex);
+    
+    if (!kingChess->GetIsFirstMove())
+    {
+        out_result = ChessMoveResult::INVALID_CASTLE_KING_HAS_MOVED;
+        return false;
+    }
 
-	ChessPiece* targetChess= g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(targetIndex);
-	if (targetChess->GetPieceType() != PieceType::ROOK||!targetChess->GetIsFirstMove())
-	{
-		out_result = ChessMoveResult::INVALID_CASTLE_ROOK_HAS_MOVED;
-		return false;
-	}
+    if (!rookChess || rookChess->GetPieceType() != PieceType::ROOK || !rookChess->GetIsFirstMove())
+    {
+        out_result = ChessMoveResult::INVALID_CASTLE_ROOK_HAS_MOVED;
+        return false;
+    }
+    
+    IntVec2 kingPos = kingChess->GetGridPos();
+    IntVec2 rookPos = rookChess->GetGridPos();
+    
+    int startX = std::min(kingPos.x, rookPos.x) + 1;
+    int endX = std::max(kingPos.x, rookPos.x) - 1;
+    
+    for (int x = startX; x <= endX; x++)
+    {
+        IntVec2 checkPos(x, kingPos.y);
+        int checkIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(checkPos);
+        if (g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(checkIndex) != nullptr)
+        {
+            out_result = ChessMoveResult::INVALID_CASTLE_PATH_BLOCKED;
+            return false;
+        }
+    }
+    
 
-	int startX = std::min(kingChess->GetGridPos().x, targetChess->GetGridPos().x) + 1;
-	int endX = std::max(kingChess->GetGridPos().x, targetChess->GetGridPos().x) - 1;
-
-	for (int x = startX; x <= endX; x++)
-	{
-		IntVec2 checkPos(x, kingChess->GetGridPos().y);
-		int checkIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(checkPos);
-		if (g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(checkIndex) != nullptr)
-		{
-			out_result = ChessMoveResult::INVALID_CASTLE_PATH_BLOCKED;
-			return false;
-		}
-	}
-
-	isQueenside ? out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE : out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
-	//out_result = ChessMoveResult::INVALID_CASTLE_KING_HAS_MOVED;
-	return true;
+    out_result = isQueenside ? ChessMoveResult::VALID_CASTLE_QUEENSIDE : ChessMoveResult::VALID_CASTLE_KINGSIDE;
+    return true;
 }
 
 
@@ -1355,6 +1460,16 @@ void Game::SetObservationCamPosition(ChessGameState chessGameState)
 	default:
 		break;
 	}
+}
+
+Vec3 Game::GetPlayerCamPosition()
+{
+	return m_player->m_position;
+}
+
+Vec3 Game::GetPlayerCamDirection()
+{
+	return m_player->m_orientation.GetForward_IFwd();
 }
 
 

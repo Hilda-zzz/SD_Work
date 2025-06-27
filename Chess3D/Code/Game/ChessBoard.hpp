@@ -4,12 +4,20 @@
 #include <string>
 #include "Game/ChessPiece.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
+#include "Engine/Math/AABB3.hpp"
+#include "Engine/Core/Vertex_PCU.hpp"
 
 class ChessPiece;
 struct IntVec2;
 class VertexBuffer;
 class IndexBuffer;
 class Shader;
+
+struct ChessBoardBlock
+{
+	IntVec2 m_gridPos;
+	AABB3 m_collider;
+};
 
 class ChessBoard:public ChessObject
 {
@@ -37,7 +45,10 @@ public:
 
 private:
 	void PopulateDefaultChess();
+	void AddBoardBlockCollider();
 	void AddVertsForBoard();
+
+	std::string GetStrFromGridPos(IntVec2 const& gridPos);
 	
 public:
 	//ChessMatch* m_match = nullptr;
@@ -45,6 +56,7 @@ public:
 
 private:
 	std::vector<ChessPiece*> m_chessPieces;
+	std::vector<ChessBoardBlock> m_boardBlocks;
 	std::string m_boardStateVisionString;
 
 	Shader* m_shader = nullptr;
@@ -64,5 +76,14 @@ private:
 	Texture* m_diffuseTex = nullptr;
 	Texture* m_normalTex = nullptr;
 	Texture* m_sgeTex = nullptr;
+
+	// click
+	ChessPiece* m_impactedPiece = nullptr;
+	ChessPiece* m_selectedPiece = nullptr;
+	IntVec2 m_impactedGrid=IntVec2(-1,-1);
+
+	bool m_hasValidAimPos = false;
+	std::vector<Vertex_PCU> m_aimHoverQuad;
+	std::vector<Vertex_PCU> m_aimShadowPiece;
 };
 

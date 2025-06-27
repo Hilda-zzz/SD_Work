@@ -31,6 +31,7 @@ public:
 	void MoveTheChessPiece(std::string fromStr, std::string toStr, ChessMoveResult moveResult);
 	void ChangeChessType(std::string posStr, PieceType pieceType);
 	int GetTurnNumber();
+	Faction GetCurFaction();
 	void AddTurnNum();
 
 

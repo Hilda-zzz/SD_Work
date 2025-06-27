@@ -7,6 +7,9 @@
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/RaycastUtils.hpp"
+#include "Game/ChessObject.hpp"
+#include "Game/ChessMatch.hpp"
 
 extern InputSystem* g_theInput;
 
@@ -24,6 +27,7 @@ ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 	PopulateDefaultChess();
 	UpdateAndGetBoardStateString();
 
+	AddBoardBlockCollider();
 	AddVertsForBoard();
 }
 
@@ -57,6 +61,107 @@ void ChessBoard::Update()
 	{
 		piece->Update();
 	}
+	m_hasValidAimPos = false;
+	m_impactedPiece = nullptr;
+	float raycastDist = FLT_MAX;
+	m_impactedGrid.x = -1; 
+	m_impactedGrid.y = -1;
+	m_aimHoverQuad.clear();
+	m_aimShadowPiece.clear();
+	for (int i=0;i<(int)m_chessPieces.size();i++)
+	{
+		//m_chessPieces[i]->m_isImpacted = false;
+		RaycastResult3D raycastResult = RaycastVsZCylinder3D(m_match->m_game->GetPlayerCamPosition(),
+			m_match->m_game->GetPlayerCamDirection(),10.f,
+			m_chessPieces[i]->m_collider.m_center, m_chessPieces[i]->m_collider.m_radius, m_chessPieces[i]->m_collider.m_halfHeight);
+		if (raycastResult.m_didImpact)
+		{
+			if (raycastResult.m_impactDist < raycastDist)
+			{
+				raycastDist = raycastResult.m_impactDist;
+				m_impactedGrid = m_chessPieces[i]->GetGridPos();
+			}
+		}
+	}
+ 	for (int j = 0; j < (int)m_boardBlocks.size(); j++)
+ 	{
+ 		RaycastResult3D raycastResult = RaycastVsAABB3D(m_match->m_game->GetPlayerCamPosition(),
+ 			m_match->m_game->GetPlayerCamDirection(), 10.f, m_boardBlocks[j].m_collider);
+ 		if (raycastResult.m_didImpact)
+ 		{
+ 			if (raycastResult.m_impactDist < raycastDist)
+ 			{
+ 				raycastDist = raycastResult.m_impactDist;
+ 				m_impactedGrid = m_boardBlocks[j].m_gridPos;
+ 			}
+ 		}
+ 	}
+	if (m_impactedGrid != IntVec2(-1, -1)&&!m_selectedPiece)
+	{
+		m_impactedPiece=GetChessFromGridPos(m_impactedGrid);
+	}
+	
+	if (m_impactedGrid != IntVec2(-1, -1) && m_selectedPiece)
+	{
+		std::string fromStr = GetStrFromGridPos(m_selectedPiece->GetGridPos());
+		std::string toStr = GetStrFromGridPos(m_impactedGrid);
+		bool isCheat = false;
+		if (g_theInput->IsKeyDown(KEYCODE_LEFT_SHIFT))
+		{
+			isCheat = true;
+		}
+		ChessMoveResult moveResult = m_match->m_game->CheckMovement(fromStr, toStr, isCheat);
+		if (m_match->m_game->IsValidateChessMoveResult(moveResult))
+		{
+			m_hasValidAimPos = true;
+			Vec3 bottomLeft = Vec3((float)m_impactedGrid.x, (float)m_impactedGrid.y, 0.15f + 0.1f);
+			Vec3 bottomRight = Vec3((float)m_impactedGrid.x + 1.f, (float)m_impactedGrid.y, 0.15f + 0.1f);
+			Vec3 topRight = Vec3((float)m_impactedGrid.x + 1.f, (float)m_impactedGrid.y + 1.f, 0.15f + 0.1f);
+			Vec3 topLeft = Vec3((float)m_impactedGrid.x, (float)m_impactedGrid.y + 1.f, 0.15f + 0.1f);
+
+			AddVertsForQuad3D(m_aimHoverQuad,
+				bottomLeft,
+				bottomRight,
+				topRight,
+				topLeft
+			);
+
+			if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+			{
+				EventArgs args;
+				args.SetValue("from",fromStr );
+				args.SetValue("to",toStr );
+				args.SetValue("teleport",std::to_string(isCheat));
+				g_theEventSystem->FireEvent("ChessMove",args);
+				m_selectedPiece->m_isSelected = false;
+				m_selectedPiece = nullptr;
+			}
+		}
+	}
+
+	if (m_impactedPiece&& m_impactedPiece->GetFaction() == m_match->GetCurFaction())
+	{
+		m_impactedPiece->m_isImpacted = true;
+	}
+
+	if (m_impactedPiece)
+	{
+		if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE)
+			&& m_impactedPiece->GetFaction() == m_match->GetCurFaction())
+		{
+			m_impactedPiece->m_isSelected = true;
+			m_selectedPiece = m_impactedPiece;
+		}
+	}
+
+	if (m_selectedPiece)
+	{
+		if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
+		{
+			m_selectedPiece->m_isSelected = false;
+			m_selectedPiece = nullptr;
+		}
+	}
 }
 
 void ChessBoard::Renderer() const
@@ -76,8 +181,19 @@ void ChessBoard::Renderer() const
 
 	for (ChessPiece* chess : m_chessPieces)
 	{
+		g_theRenderer->BindShader(m_shader);
 		chess->Renderer();
 	}
+
+	if (m_hasValidAimPos)
+	{
+		Texture* hover = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/HoverSquare.png");
+		g_theRenderer->BindTexture(hover);
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+		g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+		g_theRenderer->DrawVertexArray(m_aimHoverQuad);
+	}
+
 }
 
 void ChessBoard::UpdateDebugKeyInput()
@@ -170,6 +286,39 @@ void ChessBoard::PopulateDefaultChess()
 	m_chessPieces.push_back(new ChessPiece(m_match, Faction::BLACK, PieceType::ROOK, IntVec2(7, 7)));
 }
 
+void ChessBoard::AddBoardBlockCollider()
+{
+	for (int col = 0; col < 8; col++)
+	{
+		for (int row = 0; row < 8; row++)
+		{
+// 			if ((col + row) % 2 == 0)
+// 			{
+// 				AddVertsForAABB3D_WithTBN(m_vertexs, m_indexs,
+// 					Vec3((float)col, (float)row, -0.15f),
+// 					Vec3((float)col + 1.f, (float)row + 1.f, 0.15f),
+// 					Rgba8(150, 150, 150),
+// 					AABB2::ZERO_TO_ONE);
+// 			}
+// 			else
+// 			{
+// 				AddVertsForAABB3D_WithTBN(m_vertexs, m_indexs,
+// 					Vec3((float)col, (float)row, -0.15f),
+// 					Vec3((float)col + 1.f, (float)row + 1.f, 0.15f),
+// 					Rgba8::WHITE,
+// 					AABB2::ZERO_TO_ONE);
+// 			}
+			IntVec2 gridPos = IntVec2(col, row);
+			AABB3 collider = AABB3(Vec3((float)col, (float)row, -0.15f),
+								Vec3((float)col + 1.f, (float)row + 1.f, 0.15f));
+			ChessBoardBlock boardBlock;
+			boardBlock.m_collider = collider;
+			boardBlock.m_gridPos = gridPos;
+			m_boardBlocks.push_back(boardBlock);
+		}
+	}
+}
+
 void ChessBoard::AddVertsForBoard()
 {
  	m_vertexBuffer = g_theRenderer->CreateVertexBuffer(24, sizeof(Vertex_PCUTBN));
@@ -230,6 +379,21 @@ void ChessBoard::AddVertsForBoard()
  	}
 
  	//AddVertsForAABB3D_WithTBN(m_vertexs, m_indexs, Vec3(0.f, 0.f, -0.15f), Vec3(16.f, 16.f, 0.15f), Rgba8::HILDA, AABB2::ZERO_TO_ONE);
+}
+
+std::string ChessBoard::GetStrFromGridPos(IntVec2 const& gridPos)
+{
+	std::string result;
+	if (gridPos.x < 0 || gridPos.x > 7 || gridPos.y < 0 || gridPos.y > 7)
+	{
+		result = "Invalid";
+		return result;
+	}
+	char file = 'a' + (char)gridPos.x;
+	char rank = '1' + (char)gridPos.y;
+
+	result = std::string(1, file) + std::string(1, rank);
+	return result;
 }
 
 int ChessBoard::GetIndexFromGridPos(IntVec2 const& gridPos)

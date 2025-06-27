@@ -11,6 +11,9 @@
 			<Component type="AABB3" bl="-0.025,-0.025,0.85" tr="0.025,0.025,1.05" color="Crown"/>
 			<Component type="AABB3" bl="-0.025,-0.075,0.925" tr="0.025,0.075,0.975" color="Crown"/>
 		</Geometry>
+		<Collider>
+			<Component type="ZCylinder" start="0,0,0" end="0,0,1.0" radius="0.25"/>
+		</Collider>
 	</PieceDefinition>
 
 	<!-- Queen -->
@@ -27,6 +30,9 @@
 			<Component type="ZSphere" position="-0.15,0,0.85" radius="0.05" color="Crown"/>
 			<Component type="ZSphere" position="0,0,0.9" radius="0.08" color="Crown"/>
 		</Geometry>
+		<Collider>
+			<Component type="ZCylinder" start="0,0,0" end="0,0,0.85" radius="0.25"/>
+		</Collider>
 	</PieceDefinition>
 
 	<PieceDefinition type="ROOK" glyph="R">
@@ -43,6 +49,9 @@
 			<Component type="OBB3" center="-0.25,0,0.85" euler="270,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
 			<Component type="OBB3" center="-0.177,-0.177,0.85" euler="315,0,-90" halfDimensions="0.05,0.05,0.075" color="Crown"/>
 		</Geometry>
+		<Collider>
+			<Component type="ZCylinder" start="0,0,0" end="0,0,0.8" radius="0.28"/>
+		</Collider>
 	</PieceDefinition>
 
 	<!-- Bishop -->
@@ -55,6 +64,9 @@
 			<Component type="ZSphere" position="0,0,0.8" radius="0.15" color="Crown"/>
 			<Component type="ZSphere" position="0,0,0.95" radius="0.04" color="Crown"/>
 		</Geometry>
+		<Collider>
+			<Component type="ZCylinder" start="0,0,0" end="0,0,0.9" radius="0.16"/>
+		</Collider>
 	</PieceDefinition>
 
 	<!-- Knight - 最明显的变化在这里 -->
@@ -74,6 +86,9 @@
 			<!-- 马鬃 -->
 			<Component type="AABB3" bl="0.05,-0.08,0.35" tr="0.15,0.08,0.45" color="Body"/>
 		</Geometry>
+		<Collider>
+			<Component type="ZCylinder" start="0,0,0" end="0,0,0.7" radius="0.22"/>
+		</Collider>
 	</PieceDefinition>
 
 	<!-- Pawn -->
@@ -84,5 +99,8 @@
 			<Component type="ZCylinder" start="0,0,0.48" end="0,0,0.58" radius="0.15" color="Body"/>
 			<Component type="ZSphere" position="0,0,0.65" radius="0.12" color="Crown"/>
 		</Geometry>
+		<Collider>
+			<Component type="ZCylinder" start="0,0,0" end="0,0,0.65" radius="0.18"/>
+		</Collider>
 	</PieceDefinition>
 </ChessPieceDefinitions>

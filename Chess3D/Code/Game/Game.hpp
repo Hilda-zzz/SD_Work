@@ -78,6 +78,12 @@ public:
 
 	void SetObservationCamPosition(ChessGameState chessGameState);
 
+	Vec3 GetPlayerCamPosition();
+	Vec3 GetPlayerCamDirection();
+
+	static ChessMoveResult CheckMovement(std::string fromStr, std::string toStr, bool isCheat);
+	static bool IsValidateChessMoveResult(ChessMoveResult result);
+
 private:
 	void UpdateAttractMode(float deltaTime);
 	void UpdateGameplayMode(float deltaTime);
@@ -97,8 +103,8 @@ private:
 
 	static bool Command_ChessMove(EventArgs& args);
 	static bool Command_ChessBegin(EventArgs& args);
-	static ChessMoveResult CheckMovement(std::string fromStr, std::string toStr,bool isCheat);
-	static bool IsValidateChessMoveResult(ChessMoveResult result);
+	
+	
 
 	static bool ValidatePieceMovement(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
 	static bool ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);

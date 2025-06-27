@@ -4,6 +4,8 @@
 #include "Game/ChessMatch.hpp"
 #include "Game/Game.hpp"
 #include "Engine/Math/Easing.hpp"
+#include "Engine/Core/DebugRenderSystem.hpp"
+#include "Engine/Core/VertexUtils.hpp"
 extern Renderer* g_theRenderer;
 
 ChessPiece::ChessPiece(ChessMatch* match,Faction facion, PieceType type, IntVec2 const& gridPos):ChessObject(match)
@@ -27,7 +29,7 @@ ChessPiece::ChessPiece(ChessMatch* match,Faction facion, PieceType type, IntVec2
 			m_def = def;
 		}
 	}
-
+	m_collider = m_def->m_collider;
 	if (m_faction == Faction::WHITE)
 	{
 		m_orientaion = EulerAngles(90.f, 0.f, 0.f);
@@ -88,6 +90,9 @@ void ChessPiece::Update()
 			SetCurPos(curPos);
 		}
 	}
+	//
+	m_isImpacted = false;
+	m_collider.m_center = m_curPos + Vec3(0.f, 0.f, m_collider.m_halfHeight);
 }
 
 void ChessPiece::Renderer() const
@@ -101,6 +106,18 @@ void ChessPiece::Renderer() const
 	if (m_faction == Faction::BLACK)
 	{
 		pieceColor = Rgba8::WHITE;
+	}
+	if (m_isImpacted&&m_faction==m_match->GetCurFaction())
+	{
+		pieceColor = Rgba8::RED;
+	}
+	if (m_isImpacted && m_faction == m_match->GetCurFaction())
+	{
+		pieceColor = Rgba8::RED;
+	}
+	if (m_isSelected)
+	{
+		pieceColor = Rgba8::GREEN;
 	}
 	g_theRenderer->SetModelConstants(transMat, pieceColor);
 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
@@ -119,6 +136,60 @@ void ChessPiece::Renderer() const
 		g_theRenderer->BindTexture(m_texBlack,m_texNormalBlack,m_texSGEBlack);
 		g_theRenderer->DrawGameIndexedVertexBuffer(m_def->m_vertexBufferByPlyaer[1], m_def->m_indexBufferByPlyaer[1]);
 	}
+
+ 	std::vector<Vertex_PCU> cylinderVerts;
+ 	cylinderVerts.reserve(100);
+ 	AddVertsForCylinder3D(cylinderVerts, m_collider.m_center - Vec3(0.f, 0.f, m_collider.m_halfHeight),
+ 		m_collider.m_center + Vec3(0.f, 0.f, m_collider.m_halfHeight), m_collider.m_radius, Rgba8::BLUE);
+ 	g_theRenderer->BindTexture(nullptr);
+ 	g_theRenderer->SetModelConstants();
+ 	g_theRenderer->BindShader(nullptr);
+ 	g_theRenderer->SetRasterizerMode(RasterizerMode::WIREFRAME_CULL_BACK);
+ 	g_theRenderer->DrawVertexArray(cylinderVerts);
+
+	if (m_isImpacted)
+	{
+		std::vector<Vertex_PCU> hoverSquareVerts;
+		Vec3 bottomLeft = Vec3(m_curPos.x - 0.5f, m_curPos.y - 0.5f, m_curPos.z + 0.1f);
+		Vec3 bottomRight = Vec3(m_curPos.x + 0.5f, m_curPos.y - 0.5f, m_curPos.z + 0.1f);
+		Vec3 topRight = Vec3(m_curPos.x + 0.5f, m_curPos.y + 0.5f, m_curPos.z + 0.1f);
+		Vec3 topLeft = Vec3(m_curPos.x - 0.5f, m_curPos.y + 0.5f, m_curPos.z + 0.1f);
+
+		AddVertsForQuad3D(hoverSquareVerts,
+			bottomLeft,
+			bottomRight,
+			topRight,
+			topLeft
+		);
+		Texture* hover = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/HoverSquare.png");
+		g_theRenderer->BindTexture(hover);
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+		g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+		g_theRenderer->DrawVertexArray(hoverSquareVerts);
+	}
+
+	if (m_isSelected)
+	{
+		std::vector<Vertex_PCU> hoverSquareVerts;
+		Vec3 bottomLeft = Vec3(m_curPos.x - 0.5f, m_curPos.y - 0.5f, m_curPos.z + 0.1f);
+		Vec3 bottomRight = Vec3(m_curPos.x + 0.5f, m_curPos.y - 0.5f, m_curPos.z + 0.1f);
+		Vec3 topRight = Vec3(m_curPos.x + 0.5f, m_curPos.y + 0.5f, m_curPos.z + 0.1f);
+		Vec3 topLeft = Vec3(m_curPos.x - 0.5f, m_curPos.y + 0.5f, m_curPos.z + 0.1f);
+
+		AddVertsForQuad3D(hoverSquareVerts,
+			bottomLeft,
+			bottomRight,
+			topRight,
+			topLeft,
+			Rgba8::CYAN
+		);
+		Texture* hover = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/HoverSquare.png");
+		g_theRenderer->BindTexture(hover);
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+		g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+		g_theRenderer->DrawVertexArray(hoverSquareVerts);
+	}
+	
 }
 
 IntVec2 ChessPiece::GetAimGridPos()

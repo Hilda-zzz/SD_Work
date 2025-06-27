@@ -3,6 +3,7 @@
 #include "Engine/Math/MathUtils.hpp"
 
 
+
 ChessMatch::ChessMatch(Game* game):m_game(game),m_chessBoard(this)
 {
 	//m_chessBoard = ChessBoard(this);
@@ -37,6 +38,8 @@ void ChessMatch::MoveTheChessPiece(std::string fromStr, std::string toStr,ChessM
 	ChessPiece* curFromPiece = m_chessBoard.GetChessFromIndex(fromIndex);
 	int toIndex = m_chessBoard.GetIndexFromCharNum(toStr);
 
+	curFromPiece->SetIsFirstMove(false);
+
 	ChessPiece* curToPiece;
 	if (moveResult == ChessMoveResult::VALID_CAPTURE_ENPASSANT)
 	{
@@ -69,13 +72,53 @@ void ChessMatch::MoveTheChessPiece(std::string fromStr, std::string toStr,ChessM
 	if (moveResult == ChessMoveResult::VALID_CASTLE_KINGSIDE
 		|| moveResult == ChessMoveResult::VALID_CASTLE_QUEENSIDE)
 	{
-		curToPiece->m_isSlide = true;
-		curToPiece->m_animationTimer = Timer(2.f, m_game->m_gameClock);
-		curToPiece->SetAimGridPos(fromPos);
-		curToPiece->SetPrevGridPos(toPos);
-		curToPiece->m_animationTimer.m_period = 0.2f + taxiDist * 0.1f;
-		curToPiece->m_animationTimer.Start();
-		curToPiece->SetGridPos(fromPos);
+		// ??????????????
+		ChessPiece* rook = nullptr;
+		IntVec2 rookFromPos, rookToPos;
+
+		if (moveResult == ChessMoveResult::VALID_CASTLE_KINGSIDE)
+		{
+			// ????
+			if (curFromPiece->GetFaction() == Faction::WHITE)
+			{
+				rookFromPos = IntVec2(7, 0);  // h1
+				rookToPos = IntVec2(5, 0);    // f1
+			}
+			else
+			{
+				rookFromPos = IntVec2(7, 7);  // h8
+				rookToPos = IntVec2(5, 7);    // f8
+			}
+		}
+		else // VALID_CASTLE_QUEENSIDE
+		{
+			// ????
+			if (curFromPiece->GetFaction() == Faction::WHITE)
+			{
+				rookFromPos = IntVec2(0, 0);  // a1
+				rookToPos = IntVec2(3, 0);    // d1
+			}
+			else
+			{
+				rookFromPos = IntVec2(0, 7);  // a8
+				rookToPos = IntVec2(3, 7);    // d8
+			}
+		}
+
+		// ?????
+		rook = m_chessBoard.GetChessFromGridPos(rookFromPos);
+		if (rook)
+		{
+			rook->SetIsFirstMove(false);
+			rook->m_isSlide = true;
+			rook->m_animationTimer = Timer(2.f, m_game->m_gameClock);
+			rook->SetAimGridPos(rookToPos);
+			rook->SetPrevGridPos(rookFromPos);
+			int rookTaxiDist = GetTaxicabDistance2D(rookToPos, rookFromPos);
+			rook->m_animationTimer.m_period = 0.2f + rookTaxiDist * 0.1f;
+			rook->m_animationTimer.Start();
+			rook->SetGridPos(rookToPos);
+		}
 	}
 	else
 	{
@@ -133,6 +176,18 @@ void ChessMatch::ChangeChessType(std::string posStr, PieceType pieceType)
 int ChessMatch::GetTurnNumber()
 {
 	return m_turnNumber;
+}
+
+Faction ChessMatch::GetCurFaction()
+{
+	if (m_turnNumber % 2 == 0)
+	{
+		return  Faction::WHITE;
+	}
+	else
+	{
+		return Faction::BLACK;
+	}
 }
 
 void ChessMatch::AddTurnNum()

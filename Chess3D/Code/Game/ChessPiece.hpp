@@ -3,6 +3,7 @@
 #include "Game/ChessObject.hpp"
 #include "Game/ChessPieceDefinition.hpp"
 #include "Engine/Core/Timer.hpp"
+#include "Engine/Math/ZCylinder.hpp"
 
 class Texture;
 class ChessMatch;
@@ -49,6 +50,9 @@ public:
 	bool m_isSlide = false;
 	bool m_isHop = false;
 	ChessPieceDefinition* m_def = nullptr;
+	ZCylinder m_collider;
+	bool m_isImpacted = false;
+	bool m_isSelected = false;
 
 private:
 	//ChessMatch* m_match = nullptr;
@@ -70,4 +74,5 @@ private:
 	//new 
 	float secondSinceMoved;
 	int m_turnLastMoved;
+	
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "Engine/Core/XmlUtils.hpp"
+#include "Engine/Math/ZCylinder.hpp"
 
 class IndexBuffer;
 class VertexBuffer;
@@ -34,4 +35,5 @@ public:
 	// 0 white, 1 black
 	IndexBuffer* m_indexBufferByPlyaer[2] = {};
 	VertexBuffer* m_vertexBufferByPlyaer[2] = {};
+	ZCylinder m_collider;
 };
