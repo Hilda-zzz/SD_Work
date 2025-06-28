@@ -39,6 +39,15 @@ void SpriteSheet::GetSpriteUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs, int sprit
 	out_uvAtMins.y= out_uvAtMaxs.y- (1.0f / m_gridLayout.y)+ nudgeY;
 }
 
+int SpriteSheet::GetSpriteIndexFromGridPos(IntVec2 const& gridPos)
+{
+	int index = gridPos.y * m_gridLayout.x + gridPos.x;
+	if (index >= 0 && index < GetNumSprites())
+		return index;
+	else
+		return -1;
+}
+
 AABB2 SpriteSheet::GetSpriteUVs(int spriteIndex) const
 {
 	AABB2 spriteBox;

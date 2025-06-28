@@ -1,0 +1,49 @@
+<!-- Data/Definitions/Obstacles.xml -->
+<ObstacleDefinitions>
+	<ObstacleTexture path="Data/Art/FarmAssets/Obstacles.png" spriteLayout="16,16"/>
+
+	<ObstacleDefinition	type="ROCK" maxDurability="4">
+		<SpriteVariants>
+			<SpriteGridPos gridPos="0,0"/>
+			<SpriteGridPos gridPos="1,0"/>
+			<SpriteGridPos gridPos="2,0"/>
+			<SpriteGridPos gridPos="3,0"/>
+			<SpriteGridPos gridPos="0,1"/>
+			<SpriteGridPos gridPos="1,1"/>
+			<SpriteGridPos gridPos="2,1"/>
+			<SpriteGridPos gridPos="3,1"/>
+			<SpriteGridPos gridPos="4,1"/>
+			<SpriteGridPos gridPos="5,1"/>
+			<SpriteGridPos gridPos="6,1"/>
+			<SpriteGridPos gridPos="0,2"/>
+			<SpriteGridPos gridPos="1,2"/>
+			<SpriteGridPos gridPos="2,2"/>
+			<SpriteGridPos gridPos="3,2"/>
+			<SpriteGridPos gridPos="4,2"/>
+			<SpriteGridPos gridPos="5,2"/>
+		</SpriteVariants>
+	</ObstacleDefinition>
+
+	<ObstacleDefinition	type="LOG" maxDurability="4">
+		<SpriteVariants>
+			<SpriteGridPos gridPos="0,0"/>
+			<SpriteGridPos gridPos="0,1"/>
+			<SpriteGridPos gridPos="1,0"/>
+		</SpriteVariants>
+	</ObstacleDefinition>
+
+	<ObstacleDefinition	type="WEED" maxDurability="4">
+		<SpriteVariants>
+			<SpriteGridPos gridPos="3,3"/>
+		</SpriteVariants>
+	</ObstacleDefinition>
+
+	<ObstacleDefinition	type="TREE" maxDurability="4">
+		<SpriteVariants>
+			<SpriteGridPos gridPos="0,0"/>
+			<SpriteGridPos gridPos="0,1"/>
+			<SpriteGridPos gridPos="1,0"/>
+		</SpriteVariants>
+	</ObstacleDefinition>
+	
+</ObstacleDefinitions>

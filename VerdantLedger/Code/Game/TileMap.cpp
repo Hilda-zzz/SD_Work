@@ -46,7 +46,7 @@ TileMap::TileMap(XmlElement* rootElement)
         layer.m_class= ParseXmlAttribute(layerElement, "class", layer.m_class);
         if (layer.m_class == "TileMark")
         {
-            m_markLayerIndex=layer.m_id;
+            m_markLayerId=layer.m_id;
         }
  		int width = ParseXmlAttribute(layerElement, "width", 0);
  		int height = ParseXmlAttribute(layerElement, "height", 0);
@@ -73,7 +73,7 @@ TileMap::TileMap(XmlElement* rootElement)
                     {
                         // can be optimized
 						int value = std::stoi(dataStrsWithoutLineEnd[i]);
-                        chunk.m_data.push_back(value);
+                        chunk.m_terrianData.push_back(value);
                     }
  				}
 //                 if (layer.m_name == "TileMarkLayer")
@@ -86,6 +86,7 @@ TileMap::TileMap(XmlElement* rootElement)
  		}
         m_layers.push_back(layer);
  	}
+    m_markLayer = FindLayerById(m_markLayerId);
 }
 
 TileMap::~TileMap()
@@ -113,13 +114,18 @@ void TileMap::Render() const
                 //g_theRenderer->BindTexture(tileMarkTex);
             }
             g_theRenderer->SetModelConstants();
-            g_theRenderer->DrawVertexArray(m_layers[i].m_chunks[j].m_verts);
+            g_theRenderer->DrawVertexArray(m_layers[i].m_chunks[j].m_terrianVerts);
         }
     }
-    for (GroundObstacle* obstacle : m_obstacles)
+    TileLayer* markLayer = m_markLayer;
+    for (int i = 0; i < markLayer->m_chunks.size(); i++)
     {
-        obstacle->Render();
+        markLayer->m_chunks[i].RenderDynamicContent();
     }
+//     for (GroundObstacle* obstacle : m_obstacles)
+//     {
+//         obstacle->Render();
+//     }
 }
 
 uint32_t TileMap::GetTileGidFromLayerID(int layerID, IntVec2 const& gridPos)
@@ -127,7 +133,7 @@ uint32_t TileMap::GetTileGidFromLayerID(int layerID, IntVec2 const& gridPos)
     return m_layers[layerID - 1].GetGidFromGridPos(gridPos);
 }
 
-uint64_t TileMap::GetTileKey(IntVec2 const& gridPos) const
+uint64_t TileMap::GetTileKey(IntVec2 const& gridPos)
 {
     // deal with the negative grid position
     // below version can not deal with negative grid pos

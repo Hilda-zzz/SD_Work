@@ -22,8 +22,9 @@ AudioSystem*	g_theAudio = nullptr;
 Game*			g_theGame = nullptr;
 bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
+RandomNumberGenerator* g_randomNumGenerator = nullptr;
 
-constexpr float TARGET_FPS = 60.0f;
+constexpr float TARGET_FPS = 120.0f;
 constexpr float TARGET_FRAME_TIME = (1.0f / TARGET_FPS)*1000.f;
 
 App::~App()
@@ -72,6 +73,8 @@ void App::Startup()
 
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
 
+	g_randomNumGenerator = new RandomNumberGenerator();
+
 	g_theGame = new Game();
 }
 
@@ -104,6 +107,9 @@ void App::Shutdown()
 
 	delete  g_theEventSystem;
 	g_theEventSystem = nullptr;
+
+	delete g_randomNumGenerator;
+	g_randomNumGenerator = nullptr;
 }
 
 void App::RunFrame()

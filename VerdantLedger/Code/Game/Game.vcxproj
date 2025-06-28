@@ -32,6 +32,7 @@
     <ClCompile Include="GroundObstacle.cpp" />
     <ClCompile Include="Main_Windows.cpp" />
     <ClCompile Include="Map.cpp" />
+    <ClCompile Include="ObstacleDefinitions.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerBodyState.cpp" />
     <ClCompile Include="TileChunk.cpp" />
@@ -51,6 +52,7 @@
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="GroundObstacle.hpp" />
     <ClInclude Include="Map.hpp" />
+    <ClInclude Include="ObstacleDefinitions.hpp" />
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="PlayerBodyState.hpp" />
     <ClInclude Include="StateMachine.hpp" />
@@ -66,6 +68,9 @@
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx" />
     <None Include="..\..\Run\Data\Tiled\HouseMap.tmx" />
     <None Include="..\..\Run\Data\Tiled\TileMark.tsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\..\Run\Data\Definitions\ObstacleDefinitions.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

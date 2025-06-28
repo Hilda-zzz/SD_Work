@@ -73,7 +73,7 @@ IntVec2 Map::GetTileCoordsFromPoint(Vec2 const& point)
 
 void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhyRadius)
 {
-    uint32_t gid= m_tileMap->GetTileGidFromLayerID(m_tileMap->m_markLayerIndex, tileCoords);
+    uint32_t gid= m_tileMap->GetTileGidFromLayerID(m_tileMap->m_markLayerId, tileCoords);
 	uint32_t flag =m_game->g_tileManager->m_gidToTilePropertyFlag[gid];
 	if (flag & static_cast<uint32_t>(TerrainType::SOLID))
 	{

@@ -29,6 +29,9 @@
     <Filter Include="TilemapObjects">
       <UniqueIdentifier>{4f8f9327-1902-4bee-8cab-23f22ff99dcc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Definitions">
+      <UniqueIdentifier>{af5bac6f-eb57-4355-85a3-92f7730ecf97}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -77,6 +80,9 @@
       <Filter>TiledMapLoader</Filter>
     </ClCompile>
     <ClCompile Include="GroundObstacle.cpp">
+      <Filter>TilemapObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="ObstacleDefinitions.cpp">
       <Filter>TilemapObjects</Filter>
     </ClCompile>
   </ItemGroup>
@@ -138,6 +144,9 @@
     <ClInclude Include="GroundObstacle.hpp">
       <Filter>TilemapObjects</Filter>
     </ClInclude>
+    <ClInclude Include="ObstacleDefinitions.hpp">
+      <Filter>TilemapObjects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx">
@@ -149,5 +158,10 @@
     <None Include="..\..\Run\Data\Tiled\TileMark.tsx">
       <Filter>TiledDef</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\..\Run\Data\Definitions\ObstacleDefinitions.xml">
+      <Filter>Definitions</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

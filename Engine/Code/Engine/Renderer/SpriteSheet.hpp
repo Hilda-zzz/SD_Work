@@ -15,6 +15,7 @@ public:
 	int GetNumSprites() const;
 	SpriteDefinition const& GetSpriteDef(int spriteIndex) const;
 	void GetSpriteUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs, int spriteIndex) const;
+	int GetSpriteIndexFromGridPos(IntVec2 const& gridPos);
 	AABB2 GetSpriteUVs(int spriteIndex) const;
 	float GetEachSpriteAspect() const;
 	Vec2 GetEachSpriteWidthHeight() const;

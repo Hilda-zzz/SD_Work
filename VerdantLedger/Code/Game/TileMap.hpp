@@ -30,7 +30,7 @@ public:
 	Tileset* FindTileset(int firstGid);
 
 	uint32_t GetTileGidFromLayerID(int layerID,IntVec2 const& gridPos);
-	uint64_t GetTileKey(IntVec2 const& gridPos) const;
+	static uint64_t GetTileKey(IntVec2 const& gridPos);
 
 	template<typename Func>
 	void ForEachTileInLayer(int layerId, Func callback);
@@ -40,7 +40,8 @@ public:
 private:
 
 public:
-	uint32_t m_markLayerIndex = 0;
+	uint32_t m_markLayerId = 0;
+	TileLayer* m_markLayer = nullptr;
 	std::unordered_map<uint64_t, DynamicTileData> m_dynamicTiles;
 	RandomNumberGenerator m_rng;
 	std::vector<GroundObstacle*> m_obstacles;
@@ -77,9 +78,9 @@ inline void TileMap::ForEachTileInLayer(int layerId, Func callback)
 			for (int localX = 0; localX < chunkSize.x; ++localX) 
 			{
 				int dataIndex = localY * chunkSize.x + localX;
-				if (dataIndex < chunk.m_data.size()) 
+				if (dataIndex < chunk.m_terrianData.size()) 
 				{
-					uint32_t gid = chunk.m_data.at(dataIndex);
+					uint32_t gid = chunk.m_terrianData.at(dataIndex);
 					IntVec2 gridPos = chunkStart + IntVec2(localX, -localY);
 
 					callback(gridPos, gid);

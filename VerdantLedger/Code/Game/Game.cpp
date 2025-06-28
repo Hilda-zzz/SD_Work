@@ -13,6 +13,7 @@
 #include "Player.hpp"
 #include <iostream>
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "ObstacleDefinitions.hpp"
 
 
 extern bool g_isDebugDraw;
@@ -21,6 +22,8 @@ extern Window* g_theWindow;
 Game::Game()
 {
 	m_gameClock = new Clock();
+	ObstacleDefinition::InitializeObstacleDefinitionFromFile();
+
 	g_tileManager = &TileMapManager::GetInstance();
 	g_tileManager->InitAllTilemapResources();
 
@@ -30,6 +33,8 @@ Game::Game()
 	g_theDevConsole->AddLine(DevConsole::HELPLIST, "WASD: Move around\n\
 Tools: 0-None, 1-Axe, 2-Hoe, 3-Pickaxe, 4-Shovel, 5-Sickle, 6-Water\n\
 Left Mouse Button: Use selected tool");
+
+	
 }
 
 Game::~Game()
@@ -42,6 +47,8 @@ Game::~Game()
 
 	delete m_curMap;
 	m_curMap = nullptr;
+
+	ObstacleDefinition::ShutdownObstacleDefinition();
 }
 
 void Game::Update()
