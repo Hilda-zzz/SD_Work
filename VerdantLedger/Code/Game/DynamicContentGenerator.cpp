@@ -95,10 +95,18 @@ void DynamicContentGenerator::GenerateObstacleAtPosition(TileChunk* curChunk, In
 	}
 	else if (possibility <= 0.9f)
 	{
+		if (gridPos.y == 0)
+		{
+			int i = 0;
+		}
 		GenerateSpecificObstacle(curChunk, gridPos, tilePosKey, ObstacleType::ROCK);
 	}
  	else if (possibility <= 0.95f)
  	{
+		if (gridPos.y == 0)
+		{
+			int i = 0;
+		}
 		GenerateSpecificObstacle(curChunk, gridPos, tilePosKey, ObstacleType::WEED);
  	}
 }
@@ -123,6 +131,8 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 		}
 
 		curChunk->m_dynamicTiles[tilePosKey] = curDynamicTileData;
+
+		//tilePosKey	18446743996400140288	unsigned __int64
 
 		AddVertsForAABB2D(curChunk->m_dynamicVerts,
 			AABB2(Vec2((float)gridPos.x, (float)gridPos.y), Vec2((float)gridPos.x, (float)gridPos.y) + Vec2(1.f, 1.f)),

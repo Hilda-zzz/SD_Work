@@ -17,11 +17,14 @@ public:
 	TileLayer();
 	~TileLayer();
 
+	void AddChunk(const TileChunk& chunk);
 	TileLayerType GetType() const { return m_type; }
 	const std::string& GetName() const { return m_name; }
 	IntVec2 GetSize() const { return m_size; }
 	bool IsVisible() const { return m_visible; }
 	float GetOpacity() const { return m_opacity; }
+	TileChunk* GetChunkContaining(IntVec2 tileCoords);
+
 
 	uint32_t GetTile(int x, int y) const;
 	void SetTile(int x, int y, uint32_t tileId);
@@ -46,10 +49,11 @@ public:
 	bool m_visible = true;
 
 	std::vector<TileChunk> m_chunks;         // infinite
+	std::unordered_map<uint64_t, size_t> m_chunkIndexMap; // chunk start pos to chunk index in m_chunks
 	std::vector<uint32_t> m_data;           // finite
 
 private:
-
+	uint64_t GetChunkKey(IntVec2 chunkPos);
 
 	//std::vector<TileObject> m_objects; 
 

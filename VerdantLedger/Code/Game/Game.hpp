@@ -8,7 +8,11 @@ class Map;
 class TileMapManager;
 class Player;
 
+extern const Vec2 g_cameraDimensions;
+
+
 constexpr int RESOLUTION = 16;
+constexpr int CHUNK_SIZE = 16;
 
 enum class GameState
 {

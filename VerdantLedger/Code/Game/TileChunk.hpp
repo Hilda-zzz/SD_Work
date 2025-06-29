@@ -36,7 +36,7 @@ public:
 	bool m_isEmpty = false;           // may be deleted later
 	std::vector<uint32_t> m_terrianData;
 	std::vector<Vertex_PCU> m_terrianVerts;
-	std::unordered_map<uint64_t, DynamicTileData> m_dynamicTiles;
+	std::unordered_map<uint64_t, DynamicTileData> m_dynamicTiles; //grid pos key to data
 	std::vector<Vertex_PCU> m_dynamicVerts;
 	
 private:

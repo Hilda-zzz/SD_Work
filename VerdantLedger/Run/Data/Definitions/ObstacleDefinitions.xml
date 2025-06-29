@@ -35,6 +35,8 @@
 	<ObstacleDefinition	type="WEED" maxDurability="4">
 		<SpriteVariants>
 			<SpriteGridPos gridPos="3,3"/>
+			<SpriteGridPos gridPos="4,3"/>
+			<SpriteGridPos gridPos="5,3"/>
 		</SpriteVariants>
 	</ObstacleDefinition>
 

@@ -8,6 +8,8 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Window/Window.hpp"
 #include "Game/TileTypesInGame.hpp"
+#include "Engine/Math/Vec2.hpp"
+#include "Game/TileChunk.hpp"
 
 extern Renderer* g_theRenderer;
 extern Window* g_theWindow;
@@ -17,7 +19,7 @@ Map::Map(Game* game, TileMap* tileMap, Player* player):
 {
 	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
 	m_gameplayCam.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
-	m_gameplayCam.SetOrthographicView(m_player->m_position - Vec2(30.f, 15.f), m_player->m_position + Vec2(30.f, 15.f));
+	m_gameplayCam.SetOrthographicView(m_player->m_position - g_cameraDimensions, m_player->m_position + g_cameraDimensions);
 }
 
 Map::~Map()
@@ -28,7 +30,7 @@ void Map::Update(float deltaSeconds)
 {
 	m_player->Update(deltaSeconds);
 	CheckPlayerCollWithSolidTiles();
-	m_gameplayCam.SetOrthographicView(m_player->m_position - Vec2(30.f, 15.f), m_player->m_position + Vec2(30.f, 15.f));
+	m_gameplayCam.SetOrthographicView(m_player->m_position - g_cameraDimensions, m_player->m_position + g_cameraDimensions);
 }
 
 void Map::Render() const
@@ -75,7 +77,25 @@ void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhy
 {
     uint32_t gid= m_tileMap->GetTileGidFromLayerID(m_tileMap->m_markLayerId, tileCoords);
 	uint32_t flag =m_game->g_tileManager->m_gidToTilePropertyFlag[gid];
-	if (flag & static_cast<uint32_t>(TerrainType::SOLID))
+
+	bool hasTerrainCollision = false; 
+	bool hasObstacleCollision = false;
+
+	hasTerrainCollision = flag & static_cast<uint32_t>(TerrainType::SOLID);
+
+	TileChunk* curChunk= m_tileMap->m_markLayer->GetChunkContaining(tileCoords);
+	if (curChunk == nullptr)
+	{
+		int i = 0;
+	}
+	uint64_t tileKey=m_tileMap->GetTileKey(tileCoords);
+	if (curChunk && curChunk->m_dynamicTiles.count(tileKey) > 0)
+	{
+		const DynamicTileData& tileData = curChunk->m_dynamicTiles.at(tileKey);
+		hasObstacleCollision = (tileData.m_obstacleType != ObstacleType::NONE);
+	}
+
+	if (hasObstacleCollision||hasTerrainCollision)
 	{
 		AABB2 thisTileBox = AABB2(static_cast<float>(tileCoords.x), static_cast<float>(tileCoords.y),
 			static_cast<float>(tileCoords.x + 1.f), static_cast<float>(tileCoords.y + 1));

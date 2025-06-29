@@ -19,6 +19,8 @@
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
+const Vec2 g_cameraDimensions{ 30.f, 15.f };
+
 Game::Game()
 {
 	m_gameClock = new Clock();

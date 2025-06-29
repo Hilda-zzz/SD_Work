@@ -81,7 +81,8 @@ TileMap::TileMap(XmlElement* rootElement)
 //                     //int k = 1;
 //                 }
                 chunk.InitializeChunkVerts();
- 				layer.m_chunks.push_back(chunk);
+                layer.AddChunk(chunk);
+ 				
  			}
  		}
         m_layers.push_back(layer);
