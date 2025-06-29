@@ -2,7 +2,7 @@
 <ObstacleDefinitions>
 	<ObstacleTexture path="Data/Art/FarmAssets/Obstacles.png"/>
 
-	<ObstacleDefinition	type="ROCK" maxDurability="4">
+	<ObstacleDefinition	type="ROCK" maxDurability="4" isObject="false">
 		<SpriteVariants spriteLayout="20,21">
 			<SpriteGridPos gridPos="0,0"/>
 			<SpriteGridPos gridPos="1,0"/>
@@ -24,7 +24,7 @@
 		</SpriteVariants>
 	</ObstacleDefinition>
 
-	<ObstacleDefinition	type="LOG" maxDurability="4">
+	<ObstacleDefinition	type="LOG" maxDurability="4" isObject="false">
 		<SpriteVariants spriteLayout="20,21">
 			<SpriteGridPos gridPos="0,0"/>
 			<SpriteGridPos gridPos="0,1"/>
@@ -32,7 +32,7 @@
 		</SpriteVariants>
 	</ObstacleDefinition>
 
-	<ObstacleDefinition	type="WEED" maxDurability="4">
+	<ObstacleDefinition	type="WEED" maxDurability="4" isObject="false">
 		<SpriteVariants spriteLayout="20,21">
 			<SpriteGridPos gridPos="3,3"/>
 			<SpriteGridPos gridPos="4,3"/>
@@ -40,7 +40,7 @@
 		</SpriteVariants>
 	</ObstacleDefinition>
 
-	<ObstacleDefinition	type="TREE" maxDurability="4">
+	<ObstacleDefinition	type="TREE" maxDurability="4" isObject="true">
 		<SpriteVariants spriteLayout="10,7">
 			<SpriteGridPos gridPos="4,0"/>
 			<SpriteGridPos gridPos="5,0"/>

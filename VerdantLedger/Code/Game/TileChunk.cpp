@@ -5,6 +5,9 @@
 #include "TileMapManager.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "ObstacleDefinitions.hpp"
+#include "Game.hpp"
+#include "TileMap.hpp"
+#include "GroundObstacle.hpp"
 
 extern Renderer* g_theRenderer;
 
@@ -14,6 +17,14 @@ TileChunk::TileChunk()
 
 TileChunk::~TileChunk()
 {
+}
+
+void TileChunk::Update()
+{
+	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
+	{
+		curObstacle->Update();
+	}
 }
 
 void TileChunk::InitializeChunkVerts()
@@ -59,11 +70,83 @@ void TileChunk::InitializeChunkVerts()
 
 }
 
+void TileChunk::UpdateObstacleVerts()
+{
+	m_dynamicVerts.clear();
+	m_dynamicVertsTransparent.clear();
+
+	for (const auto& [tilePosKey, tileData] : m_dynamicTiles)
+	{
+		if (tileData.m_obstacleType == ObstacleType::NONE) continue;
+
+		IntVec2 gridPos = TileMap::GetGridPosByTileKey(tilePosKey);
+		ObstacleDefinition* curDef = ObstacleDefinition::s_obstacleDefinitions.at(tileData.m_obstacleType);
+		if (curDef)
+		{
+			AABB2 spriteUV;
+			if (tileData.m_spriteIndex > -1)
+			{
+				spriteUV = curDef->m_spriteSheet->GetSpriteUVs(tileData.m_spriteIndex);
+			}
+
+			Vec2 spriteSize = curDef->m_spriteSheet->GetEachSpriteWidthHeight();
+			Vec2 spriteSizeInWorld = spriteSize / (float)RESOLUTION;
+
+			Vec2 gridBottomCenter = Vec2((float)gridPos.x + 0.5f, (float)gridPos.y);
+			Vec2 spriteBottomLeft = gridBottomCenter - Vec2(spriteSizeInWorld.x * 0.5f, 0.f);
+			Vec2 spriteTopRight = gridBottomCenter + Vec2(spriteSizeInWorld.x * 0.5f, spriteSizeInWorld.y);
+
+			Rgba8 renderColor = Rgba8::WHITE;
+			if (tileData.m_isTransparent)
+			{
+				AddVertsForAABB2D(m_dynamicVertsTransparent,
+					AABB2(spriteBottomLeft, spriteTopRight),
+					Rgba8(255,255,255,tileData.m_alpha),
+					spriteUV.m_mins, spriteUV.m_maxs,
+					(float)gridPos.y + Z_OFFSET);
+					continue;
+			}
+
+			AddVertsForAABB2D(m_dynamicVerts,
+				AABB2(spriteBottomLeft, spriteTopRight),
+				renderColor,
+				spriteUV.m_mins, spriteUV.m_maxs,
+				(float)gridPos.y + Z_OFFSET);
+		}
+		else
+		{
+			Vec2 gridBottomLeft = Vec2((float)gridPos.x, (float)gridPos.y);
+			Vec2 gridTopRight = gridBottomLeft + Vec2(1.f, 1.f);
+
+			Rgba8 renderColor = Rgba8::WHITE;
+			if (tileData.m_isTransparent)
+			{
+				renderColor.a = static_cast<unsigned char>(tileData.m_alpha * 255.0f);
+			}
+
+			AddVertsForAABB2D(m_dynamicVerts,
+				AABB2(gridBottomLeft, gridTopRight),
+				renderColor);
+		}
+	}
+
+	m_isDirty = false;
+}
+
 void TileChunk::RenderDynamicContent() const
 {
 	g_theRenderer->BindTexture(ObstacleDefinition::s_obstacleTexture);;
 	g_theRenderer->SetModelConstants();
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	g_theRenderer->DrawVertexArray(m_dynamicVerts);
+
+	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
+	{
+		curObstacle->Render();
+	}
+//  g_theRenderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+// 	g_theRenderer->DrawVertexArray(m_dynamicVertsTransparent);
+// 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 }
 
 uint32_t TileChunk::GetTile(IntVec2 const& gridPos) const

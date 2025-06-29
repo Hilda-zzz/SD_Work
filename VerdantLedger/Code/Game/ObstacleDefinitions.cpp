@@ -37,6 +37,7 @@ ObstacleDefinition::ObstacleDefinition(XmlElement const* obstacleDefElement)
 	}
 
 	m_maxDurability = ParseXmlAttribute(obstacleDefElement, "maxDurability", 0);
+	m_isObject = ParseXmlAttribute(obstacleDefElement, "isObject",false);
 
 	XmlElement const* spriteVariantElement = obstacleDefElement->FirstChildElement("SpriteVariants");
 	if (spriteVariantElement)

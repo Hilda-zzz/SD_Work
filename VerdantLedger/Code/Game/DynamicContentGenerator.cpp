@@ -6,6 +6,7 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "ObstacleDefinitions.hpp"
 #include "Game.hpp"
+#include "GroundObstacle.hpp"
 
 extern RandomNumberGenerator* g_randomNumGenerator;
 
@@ -41,6 +42,7 @@ void DynamicContentGenerator::GenerateAllDynamicContentForTheMap(TileMap* curMap
 
 void DynamicContentGenerator::GenerateDynamicContentForEachChunk(TileChunk* curChunk)
 {
+	curChunk->m_obstacleWithAnimation.reserve(200);
 	curChunk->m_dynamicTiles.clear();
 	curChunk->ForEachTileInChunk(
 		[this, curChunk](IntVec2 gridPos, uint32_t gid)
@@ -132,7 +134,7 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 		int spriteVariantIndex = g_randomNumGenerator->RollRandomIntInRange(0, curDef->m_spriteGridPos.size() - 1);
 		IntVec2 spriteGridPos = curDef->m_spriteGridPos[spriteVariantIndex];
 		int spriteIndex = curDef->m_spriteSheet->GetSpriteIndexFromGridPos(spriteGridPos);
-
+		curDynamicTileData.m_spriteIndex = spriteIndex;
 		AABB2 spriteUV;
 		if (spriteIndex > -1)
 		{
@@ -141,20 +143,25 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 
 		curChunk->m_dynamicTiles[tilePosKey] = curDynamicTileData;
 
-		//tilePosKey	18446743996400140288	unsigned __int64
+		if (curDef->m_isObject)
+		{
+			GroundObstacle* groundObstacle = new GroundObstacle(obstacleType,curDef, gridPos,spriteIndex);
+			curChunk->m_obstacleWithAnimation.push_back(groundObstacle);
+			curChunk->m_gridPosToGroundObstacle[tilePosKey] = groundObstacle;
+		}
+		else
+		{
+			Vec2 spriteSize = curDef->m_spriteSheet->GetEachSpriteWidthHeight();
+			Vec2 spriteSizeInWorld = spriteSize / (float)RESOLUTION;
 
-		Vec2 spriteSize = curDef->m_spriteSheet->GetEachSpriteWidthHeight();
-		Vec2 spriteSizeInWorld = spriteSize / (float)RESOLUTION;
-// 		AddVertsForAABB2D(curChunk->m_dynamicVerts,
-// 			AABB2(Vec2((float)gridPos.x, (float)gridPos.y), Vec2((float)gridPos.x, (float)gridPos.y) + Vec2(1.f, 1.f)),
-// 			Rgba8::WHITE, spriteUV.m_mins, spriteUV.m_maxs);
-		Vec2 gridBottomCenter= Vec2((float)gridPos.x+0.5f, (float)gridPos.y);
-		Vec2 spriteBottomLeft = gridBottomCenter - Vec2(spriteSizeInWorld.x * 0.5f, 0.f);
-		Vec2 spriteTopRight = gridBottomCenter + Vec2(spriteSizeInWorld.x * 0.5f, spriteSizeInWorld.y);
+			Vec2 gridBottomCenter = Vec2((float)gridPos.x + 0.5f, (float)gridPos.y);
+			Vec2 spriteBottomLeft = gridBottomCenter - Vec2(spriteSizeInWorld.x * 0.5f, 0.f);
+			Vec2 spriteTopRight = gridBottomCenter + Vec2(spriteSizeInWorld.x * 0.5f, spriteSizeInWorld.y);
 
-		AddVertsForAABB2D(curChunk->m_dynamicVerts,
-			AABB2(spriteBottomLeft, spriteTopRight),
-			Rgba8::WHITE, spriteUV.m_mins, spriteUV.m_maxs, (float)gridPos.y+ Z_OFFSET);
+			AddVertsForAABB2D(curChunk->m_dynamicVerts,
+				AABB2(spriteBottomLeft, spriteTopRight),
+				Rgba8(255, 255, 255, 255), spriteUV.m_mins, spriteUV.m_maxs, (float)gridPos.y + Z_OFFSET);
+		}
 	}
 	else
 	{

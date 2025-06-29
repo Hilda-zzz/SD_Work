@@ -40,12 +40,12 @@ private:
 	void UpdateAnimations(float deltaTime);
 
 public:
-	Vec2	m_position = Vec2(0.f, 0.f);
+	Vec2	m_position = Vec2(0.f, 3.f);
 	Vec2 m_inputDirection = Vec2::ZERO; 
 	Direction m_curDirection = Direction::DOWN;
 	float	m_orientation = 0.f;
 	Vec2	m_velocity = Vec2(0.f, 0.f);
-	float   m_speed = 5.f;
+	float   m_speed = 4.f;
 	float	m_physicsRadius = 0.f;
 	// Tools
 	PlayerTools m_curTool = PlayerTools::NONE;

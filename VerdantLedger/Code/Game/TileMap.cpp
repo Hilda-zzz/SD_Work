@@ -100,6 +100,14 @@ TileMap::~TileMap()
     m_obstacles.clear();
 }
 
+void TileMap::Update(float deltaSeconds)
+{
+     for (int i = 0; i < m_markLayer->m_chunks.size(); i++)
+     {
+         m_markLayer->m_chunks[i].Update();
+     }
+}
+
 void TileMap::Render() const
 {
     for (int i = 0; i < (int)m_layers.size(); i++)
@@ -114,6 +122,7 @@ void TileMap::Render() const
                 continue;
                 //g_theRenderer->BindTexture(tileMarkTex);
             }
+            g_theRenderer->SetBlendMode(BlendMode::ALPHA);
             g_theRenderer->SetModelConstants();
             g_theRenderer->DrawVertexArray(m_layers[i].m_chunks[j].m_terrianVerts);
         }
@@ -145,6 +154,17 @@ uint64_t TileMap::GetTileKey(IntVec2 const& gridPos)
 	return (static_cast<uint64_t>(x_bits) << 32) | y_bits;
 }
 
+IntVec2 TileMap::GetGridPosByTileKey(uint64_t tileKey)
+{
+	uint32_t x_bits = static_cast<uint32_t>(tileKey >> 32);  
+	uint32_t y_bits = static_cast<uint32_t>(tileKey & 0xFFFFFFFF);  
+
+	int x = *reinterpret_cast<const int*>(&x_bits);
+	int y = *reinterpret_cast<const int*>(&y_bits);
+
+	return IntVec2(x, y);
+}
+
 TileLayer* TileMap::FindLayerById(int layerId)
 {
 	for (TileLayer& layer : m_layers) 
@@ -155,4 +175,47 @@ TileLayer* TileMap::FindLayerById(int layerId)
 		}
 	}
 	return nullptr;
+}
+
+void TileMap::UpdateTransparentObject(IntVec2 const& aimGridPos)
+{
+    // clear previous 
+    if (m_lastTransparentTreePos != IntVec2(-999, -999))
+    {
+		uint64_t lastGridPosKey = GetTileKey(m_lastTransparentTreePos);
+		TileChunk* lastChunk = m_markLayer->GetChunkContaining(m_lastTransparentTreePos);
+ 		if (m_lastTransparentTreePos != aimGridPos)
+ 		{
+			auto lastTransparentObstacle = lastChunk->m_gridPosToGroundObstacle.find(lastGridPosKey);
+			if (lastTransparentObstacle != lastChunk->m_gridPosToGroundObstacle.end())
+			{
+				lastTransparentObstacle->second->SetTransparent(false);
+			}
+		}
+ 		else
+ 		{
+ 			return;
+ 		}
+    }
+
+    // set current
+    TileChunk* curChunk = m_markLayer->GetChunkContaining(aimGridPos);
+    uint64_t gridPosKey = GetTileKey(aimGridPos);
+    auto obstacle=curChunk->m_gridPosToGroundObstacle.find(gridPosKey);
+    if (obstacle != curChunk->m_gridPosToGroundObstacle.end())
+    {
+        if (obstacle->second->GetType() == ObstacleType::TREE)
+        {
+            obstacle-> second ->SetTransparent(true);
+            m_lastTransparentTreePos = aimGridPos;
+        }
+        else
+        {
+            m_lastTransparentTreePos = IntVec2(-999, -999);
+        }
+    }
+    else
+    {
+        m_lastTransparentTreePos = IntVec2(-999, -999);
+    }
 }

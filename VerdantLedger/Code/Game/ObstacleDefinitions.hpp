@@ -19,6 +19,7 @@ public:
 	//static ObstacleDefinition* GetObstacleDefFromType(ObstacleType type);
 
 	ObstacleType m_obstacleType = ObstacleType::NONE;
+	bool m_isObject = false;
 	std::vector<IntVec2> m_spriteGridPos;
 	int m_maxDurability = 0;
 	SpriteSheet* m_spriteSheet;

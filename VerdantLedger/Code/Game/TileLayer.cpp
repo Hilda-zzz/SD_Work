@@ -33,9 +33,21 @@ TileChunk* TileLayer::GetChunkContaining(IntVec2 tileCoords)
 		(tileCoords.x / CHUNK_SIZE) * CHUNK_SIZE :
 		((tileCoords.x - CHUNK_SIZE + 1) / CHUNK_SIZE) * CHUNK_SIZE;
 
-	expectedChunkPos.y = (tileCoords.y > 0) ?
-		((tileCoords.y / CHUNK_SIZE) + 1) * CHUNK_SIZE :
-		((tileCoords.y + 1) / CHUNK_SIZE) * CHUNK_SIZE;
+	if (tileCoords.y == 0)
+	{
+		expectedChunkPos.y = 0;
+	}
+	else if (tileCoords.y > 0)
+	{
+		expectedChunkPos.y = ((tileCoords.y / CHUNK_SIZE) + 1) * CHUNK_SIZE;
+	}
+	else if (tileCoords.y <  0)
+	{
+		expectedChunkPos.y = (tileCoords.y / CHUNK_SIZE)* CHUNK_SIZE;
+	}
+// 	expectedChunkPos.y = (tileCoords.y > 0) ?
+// 		((tileCoords.y / CHUNK_SIZE) + 1) * CHUNK_SIZE :
+// 		((tileCoords.y + 1) / CHUNK_SIZE) * CHUNK_SIZE;
 
 	uint64_t chunkKey = GetChunkKey(expectedChunkPos);
 	auto it = m_chunkIndexMap.find(chunkKey);

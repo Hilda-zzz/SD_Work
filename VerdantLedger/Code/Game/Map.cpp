@@ -30,6 +30,10 @@ void Map::Update(float deltaSeconds)
 {
 	m_player->Update(deltaSeconds);
 	CheckPlayerCollWithSolidTiles();
+
+	IntVec2 m_playerFrontGridPos = GetTileCoordsFromPoint(m_player->m_position)+IntVec2(0,-1);
+ 	m_tileMap->UpdateTransparentObject(m_playerFrontGridPos);
+ 	m_tileMap->Update(deltaSeconds);
 	m_gameplayCam.SetOrthographicView(m_player->m_position - g_cameraDimensions, m_player->m_position + g_cameraDimensions, 0.f, 1000.f);
 }
 
@@ -37,9 +41,10 @@ void Map::Render() const
 {
 	g_theRenderer->BeginCamera(m_gameplayCam);
 
-	m_tileMap->Render();
-
 	m_player->Render();
+
+	// transparent things must be rendered at the end
+	m_tileMap->Render();
 
 	g_theRenderer->EndCamera(m_gameplayCam);
 }
@@ -92,7 +97,7 @@ void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhy
 	if (curChunk && curChunk->m_dynamicTiles.count(tileKey) > 0)
 	{
 		const DynamicTileData& tileData = curChunk->m_dynamicTiles.at(tileKey);
-		hasObstacleCollision = (tileData.m_obstacleType != ObstacleType::NONE);
+		hasObstacleCollision = ((tileData.m_obstacleType != ObstacleType::NONE) && (tileData.m_obstacleType != ObstacleType::WEED));
 	}
 
 	if (hasObstacleCollision||hasTerrainCollision)

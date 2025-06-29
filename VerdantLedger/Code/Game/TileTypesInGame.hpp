@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "Engine/Core/Timer.hpp"
 
 enum class TerrainType : uint32_t   //may change to uint8
 {
@@ -46,5 +47,10 @@ struct CropInfo
  	int m_curObstacleDurability = 0; // if m_obstacleType!=none, meaningful
  	FarmState m_farmState = FarmState::UNPLOWED;
  	CropInfo m_curCrop; // if m_farmState==PLANTED/ GROWN, meaningful
+
+	int m_spriteIndex = 0;
+	bool m_isTransparent = false;  
+	unsigned char m_alpha = 100;
+	Timer m_fadingTimer;
  };
 

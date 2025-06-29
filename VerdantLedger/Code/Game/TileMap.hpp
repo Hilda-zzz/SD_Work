@@ -17,6 +17,7 @@ public:
 	TileMap(XmlElement* rootElement);
 	~TileMap();
 
+	void Update(float deltaSeconds);
 	void Render() const;
 
 	const std::vector<TileLayer>& GetLayers() const { return m_layers; }
@@ -31,13 +32,17 @@ public:
 
 	uint32_t GetTileGidFromLayerID(int layerID,IntVec2 const& gridPos);
 	static uint64_t GetTileKey(IntVec2 const& gridPos);
+	static IntVec2 GetGridPosByTileKey(uint64_t tileKey);
 
 	template<typename Func>
 	void ForEachTileInLayer(int layerId, Func callback);
 
 	TileLayer* FindLayerById(int layerId);
 
+	void UpdateTransparentObject(IntVec2 const& aimGridPos);
+
 private:
+	IntVec2 m_lastTransparentTreePos = IntVec2(-999, -999);
 
 public:
 	uint32_t m_markLayerId = 0;

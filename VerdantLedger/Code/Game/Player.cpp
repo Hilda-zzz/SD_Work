@@ -260,12 +260,15 @@ void Player::UpdateMovement(float deltaTime)
 
 void Player::Render() const
 {
-	g_theRenderer->BindTexture(nullptr);
-	g_theRenderer->SetModelConstants();
-	DebugDrawCircle(m_physicsRadius, m_position, Rgba8::WHITE);
+	float zValue = m_position.y + Z_OFFSET-0.2f;
 
+//  //collide
+// 	g_theRenderer->BindTexture(nullptr);
+// 	g_theRenderer->SetModelConstants();
+// 	DebugDrawCircle(m_physicsRadius, m_position, Rgba8::WHITE);
+
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	g_theRenderer->BindTexture(m_curBodyTex);
-	float zValue = m_position.y+ Z_OFFSET;
 	Mat44 modelMatrix = Mat44::MakeTranslation3D(Vec3(m_position.x,m_position.y,zValue)); 
 	g_theRenderer->SetModelConstants(modelMatrix);
 	g_theRenderer->DrawVertexArray(m_verts);
