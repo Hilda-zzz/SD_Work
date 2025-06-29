@@ -44,14 +44,15 @@ void TileChunk::InitializeChunkVerts()
 
 			// get uv from sprite sheet
 
-			if (i % 2 == 0)
-			{
-				AddVertsForAABB2D(m_terrianVerts, tileBox, Rgba8::WHITE,curTileUV.m_mins,curTileUV.m_maxs);
-			}
-			else
-			{
-				AddVertsForAABB2D(m_terrianVerts, tileBox, Rgba8::WHITE, curTileUV.m_mins, curTileUV.m_maxs);
-			}
+// 			if (i % 2 == 0)
+// 			{
+// 				AddVertsForAABB2D(m_terrianVerts, tileBox, Rgba8::WHITE,curTileUV.m_mins,curTileUV.m_maxs);
+// 			}
+// 			else
+// 			{
+// 				
+// 			}
+			AddVertsForAABB2D(m_terrianVerts, tileBox, Rgba8::WHITE, curTileUV.m_mins, curTileUV.m_maxs,900.f);
 			
 		}
 	}

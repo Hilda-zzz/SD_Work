@@ -8,7 +8,7 @@ extern Renderer* g_theRenderer;
 
 std::map<ObstacleType,ObstacleDefinition*> ObstacleDefinition::s_obstacleDefinitions;
 Texture* ObstacleDefinition::s_obstacleTexture = nullptr;
-SpriteSheet* ObstacleDefinition::s_obstacleSpriteSheet = nullptr;
+//SpriteSheet* ObstacleDefinition::s_obstacleSpriteSheet = nullptr;
 
 ObstacleDefinition::ObstacleDefinition(XmlElement const* obstacleDefElement)
 {
@@ -41,6 +41,8 @@ ObstacleDefinition::ObstacleDefinition(XmlElement const* obstacleDefElement)
 	XmlElement const* spriteVariantElement = obstacleDefElement->FirstChildElement("SpriteVariants");
 	if (spriteVariantElement)
 	{
+		IntVec2 curSpriteSheetLayout= ParseXmlAttribute(spriteVariantElement, "spriteLayout",IntVec2(20,20));
+		m_spriteSheet = new SpriteSheet(*s_obstacleTexture, curSpriteSheetLayout);
 		for (XmlElement const* spriteElement = spriteVariantElement->FirstChildElement("SpriteGridPos");
 			spriteElement != nullptr;
 			spriteElement = spriteElement->NextSiblingElement("SpriteGridPos"))
@@ -53,11 +55,11 @@ ObstacleDefinition::ObstacleDefinition(XmlElement const* obstacleDefElement)
 
 ObstacleDefinition::~ObstacleDefinition()
 {
-// 	if (m_spriteSheet)
-// 	{
-// 		delete m_spriteSheet;
-// 		m_spriteSheet = nullptr;
-// 	}
+ 	if (m_spriteSheet)
+ 	{
+ 		delete m_spriteSheet;
+ 		m_spriteSheet = nullptr;
+ 	}
 }
 
 void ObstacleDefinition::InitializeObstacleDefinitionFromFile()
@@ -73,7 +75,7 @@ void ObstacleDefinition::InitializeObstacleDefinitionFromFile()
 	XmlElement* obstacleTextureElement = rootElement->FirstChildElement();
 	std::string texturePath = ParseXmlAttribute(obstacleTextureElement, "path", "none");
 	s_obstacleTexture = g_theRenderer->CreateOrGetTextureFromFile(texturePath.c_str());
-	s_obstacleSpriteSheet = new SpriteSheet(*s_obstacleTexture, IntVec2(20, 20));
+	//s_obstacleSpriteSheet = new SpriteSheet(*s_obstacleTexture, IntVec2(20, 20));
 
 	XmlElement* obstacleDefElement = obstacleTextureElement->NextSiblingElement("ObstacleDefinition");
 	while (obstacleDefElement)
@@ -94,8 +96,8 @@ void ObstacleDefinition::ShutdownObstacleDefinition()
 	}
 	ObstacleDefinition::s_obstacleDefinitions.clear();
 
-	delete s_obstacleSpriteSheet;
-	s_obstacleSpriteSheet = nullptr;
+// 	delete s_obstacleSpriteSheet;
+// 	s_obstacleSpriteSheet = nullptr;
 }
 
 // ObstacleDefinition* ObstacleDefinition::GetObstacleDefFromType(ObstacleType type)

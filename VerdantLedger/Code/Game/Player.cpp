@@ -265,6 +265,8 @@ void Player::Render() const
 	DebugDrawCircle(m_physicsRadius, m_position, Rgba8::WHITE);
 
 	g_theRenderer->BindTexture(m_curBodyTex);
-	g_theRenderer->SetModelConstants(Mat44::MakeTranslation2D(m_position));
+	float zValue = m_position.y+ Z_OFFSET;
+	Mat44 modelMatrix = Mat44::MakeTranslation3D(Vec3(m_position.x,m_position.y,zValue)); 
+	g_theRenderer->SetModelConstants(modelMatrix);
 	g_theRenderer->DrawVertexArray(m_verts);
 }

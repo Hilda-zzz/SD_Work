@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "GrassSpring.tsx",
+    "activeFile": "HouseMap.tmx",
     "expandedProjectPaths": [
     ],
     "fileStates": {
@@ -12,11 +12,11 @@
             "scaleInEditor": 2
         },
         "HouseMap.tmx": {
-            "scale": 3,
-            "selectedLayer": 2,
+            "scale": 0.75,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 61.16666666666666,
-                "y": -6.833333333333343
+                "x": -87.33333333333326,
+                "y": 344.66666666666663
             }
         },
         "TileMark.tsx": {
@@ -37,9 +37,9 @@
     "project": "VLTiledInProject.tiled-project",
     "property.type": "bool",
     "recentFiles": [
+        "GrassSpring.tsx",
         "TileMark.tsx",
-        "HouseMap.tmx",
-        "GrassSpring.tsx"
+        "HouseMap.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

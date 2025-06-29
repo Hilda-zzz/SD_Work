@@ -19,7 +19,7 @@
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
-const Vec2 g_cameraDimensions{ 30.f, 15.f };
+const Vec2 g_cameraDimensions{ 16.f, 8.f };
 
 Game::Game()
 {

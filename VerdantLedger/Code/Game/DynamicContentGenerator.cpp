@@ -5,6 +5,7 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "ObstacleDefinitions.hpp"
+#include "Game.hpp"
 
 extern RandomNumberGenerator* g_randomNumGenerator;
 
@@ -89,10 +90,18 @@ void DynamicContentGenerator::GenerateObstacleAtPosition(TileChunk* curChunk, In
 	DynamicTileData curDynamicTileData;
 	float possibility =g_randomNumGenerator->RollRandomFloatZeroToOne();
 
-	if (possibility <= 0.8f)
+	if (possibility <= 0.7f)
 	{
 		curDynamicTileData.m_obstacleType = ObstacleType::NONE;
 	}
+ 	else if (possibility <= 0.8f)
+ 	{
+ 		if (gridPos.y == 0)
+ 		{
+ 			int i = 0;
+ 		}
+ 		GenerateSpecificObstacle(curChunk, gridPos, tilePosKey, ObstacleType::TREE);
+ 	}
 	else if (possibility <= 0.9f)
 	{
 		if (gridPos.y == 0)
@@ -122,21 +131,30 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 
 		int spriteVariantIndex = g_randomNumGenerator->RollRandomIntInRange(0, curDef->m_spriteGridPos.size() - 1);
 		IntVec2 spriteGridPos = curDef->m_spriteGridPos[spriteVariantIndex];
-		int spriteIndex = ObstacleDefinition::s_obstacleSpriteSheet->GetSpriteIndexFromGridPos(spriteGridPos);
+		int spriteIndex = curDef->m_spriteSheet->GetSpriteIndexFromGridPos(spriteGridPos);
 
 		AABB2 spriteUV;
 		if (spriteIndex > -1)
 		{
-			spriteUV = ObstacleDefinition::s_obstacleSpriteSheet->GetSpriteUVs(spriteIndex);
+			spriteUV = curDef->m_spriteSheet->GetSpriteUVs(spriteIndex);
 		}
 
 		curChunk->m_dynamicTiles[tilePosKey] = curDynamicTileData;
 
 		//tilePosKey	18446743996400140288	unsigned __int64
 
+		Vec2 spriteSize = curDef->m_spriteSheet->GetEachSpriteWidthHeight();
+		Vec2 spriteSizeInWorld = spriteSize / (float)RESOLUTION;
+// 		AddVertsForAABB2D(curChunk->m_dynamicVerts,
+// 			AABB2(Vec2((float)gridPos.x, (float)gridPos.y), Vec2((float)gridPos.x, (float)gridPos.y) + Vec2(1.f, 1.f)),
+// 			Rgba8::WHITE, spriteUV.m_mins, spriteUV.m_maxs);
+		Vec2 gridBottomCenter= Vec2((float)gridPos.x+0.5f, (float)gridPos.y);
+		Vec2 spriteBottomLeft = gridBottomCenter - Vec2(spriteSizeInWorld.x * 0.5f, 0.f);
+		Vec2 spriteTopRight = gridBottomCenter + Vec2(spriteSizeInWorld.x * 0.5f, spriteSizeInWorld.y);
+
 		AddVertsForAABB2D(curChunk->m_dynamicVerts,
-			AABB2(Vec2((float)gridPos.x, (float)gridPos.y), Vec2((float)gridPos.x, (float)gridPos.y) + Vec2(1.f, 1.f)),
-			Rgba8::WHITE, spriteUV.m_mins, spriteUV.m_maxs);
+			AABB2(spriteBottomLeft, spriteTopRight),
+			Rgba8::WHITE, spriteUV.m_mins, spriteUV.m_maxs, (float)gridPos.y+ Z_OFFSET);
 	}
 	else
 	{

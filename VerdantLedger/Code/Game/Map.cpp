@@ -19,7 +19,7 @@ Map::Map(Game* game, TileMap* tileMap, Player* player):
 {
 	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
 	m_gameplayCam.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
-	m_gameplayCam.SetOrthographicView(m_player->m_position - g_cameraDimensions, m_player->m_position + g_cameraDimensions);
+	m_gameplayCam.SetOrthographicView(m_player->m_position - g_cameraDimensions, m_player->m_position + g_cameraDimensions,0.f,1000.f);
 }
 
 Map::~Map()
@@ -30,7 +30,7 @@ void Map::Update(float deltaSeconds)
 {
 	m_player->Update(deltaSeconds);
 	CheckPlayerCollWithSolidTiles();
-	m_gameplayCam.SetOrthographicView(m_player->m_position - g_cameraDimensions, m_player->m_position + g_cameraDimensions);
+	m_gameplayCam.SetOrthographicView(m_player->m_position - g_cameraDimensions, m_player->m_position + g_cameraDimensions, 0.f, 1000.f);
 }
 
 void Map::Render() const
