@@ -158,6 +158,9 @@
     <None Include="..\..\Run\Data\Tiled\TileMark.tsx">
       <Filter>TiledDef</Filter>
     </None>
+    <None Include="..\..\Run\Data\Tiled\Road.tsx">
+      <Filter>TiledDef</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\Definitions\ObstacleDefinitions.xml">

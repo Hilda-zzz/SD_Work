@@ -24,7 +24,7 @@ bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
 RandomNumberGenerator* g_randomNumGenerator = nullptr;
 
-constexpr float TARGET_FPS = 120.0f;
+constexpr float TARGET_FPS = 240.0f;
 constexpr float TARGET_FRAME_TIME = (1.0f / TARGET_FPS)*1000.f;
 
 App::~App()
@@ -80,6 +80,8 @@ void App::Startup()
 
 void App::Shutdown()
 {
+	DebuggerPrintf("DropTimes: %d\n", g_theGame->m_dropTimes);
+
 	delete g_theGame;
 	g_theGame = nullptr;
 

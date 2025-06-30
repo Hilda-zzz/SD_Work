@@ -1,9 +1,12 @@
 ﻿#pragma once
 #include <vector>
+#include <unordered_set>
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "AnimStateEnum.hpp"
 #include "StateMachine.hpp"
+
+class Game;
 
 enum class PlayerTools
 {
@@ -20,7 +23,7 @@ enum class PlayerTools
 class Player
 {
 public:
-	Player();
+	Player(Game* game);
 	~Player();
 
 	void Update(float deltaSeconds);
@@ -38,20 +41,25 @@ private:
 	void HandleInput();
 	void UpdateMovement(float deltaTime);
 	void UpdateAnimations(float deltaTime);
+	void UpdateToolAimGridPos();
+	void UpdateToolUsingResult();
+	IntVec2 GetCurrentCursorGridPos();
+	IntVec2 GetCurDirectionIntVec2();
+	Direction GetDirectionFromIntVec2(IntVec2 const& directionVec);
 
 public:
-	Vec2	m_position = Vec2(0.f, 3.f);
+	Vec2	m_position = Vec2(0.f,3.f);
 	Vec2 m_inputDirection = Vec2::ZERO; 
 	Direction m_curDirection = Direction::DOWN;
 	float	m_orientation = 0.f;
 	Vec2	m_velocity = Vec2(0.f, 0.f);
-	float   m_speed = 4.f;
+	float   m_speed = 3.f;
 	float	m_physicsRadius = 0.f;
 	// Tools
 	PlayerTools m_curTool = PlayerTools::NONE;
 
 private:
-	
+	Game* m_game = nullptr;
 	float	m_cosmeticRadius = 0.f;
 	std::vector<Vertex_PCU> m_verts;
 	
@@ -84,5 +92,20 @@ private:
 	std::map<Direction, SpriteAnimDefinition*> m_waterDirectionalAnimDefs;
 	//std::unordered_map<std::string, SpriteAnimDefinition*> m_bodySpriteAnimDefs;
 
+	std::vector<Vertex_PCU> m_hoverGridCursorSquareVerts;
+	IntVec2 m_curCursorHoverGridPos;
+	IntVec2 m_curToolAimGridPos;
+	IntVec2 m_curToolToPlayerDirection;
 
+	std::unordered_set<std::string> m_toolStates = {
+	"playerAxe",
+	"playerHoe",
+	"playerPickaxe",
+	"playerShovel",
+	"playerSickle",
+	"playerWater"
+	};
+
+	std::string m_previousAnimStateName = "";
+	
 };

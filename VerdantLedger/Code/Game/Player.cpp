@@ -7,6 +7,7 @@
 #include "PlayerBodyState.hpp"
 #include "Game.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include "Game/Map.hpp"
 
 extern Window* g_theWindow;
 extern InputSystem* g_theInput;
@@ -32,9 +33,11 @@ static const std::map<PlayerTools, std::string> s_playerToolConditionMap = {
 };
 
 
-Player::Player()
+Player::Player(Game* game):m_game(game)
 {
 	m_physicsRadius = 0.25f;
+
+	AddVertsForAABB2D(m_hoverGridCursorSquareVerts, AABB2(Vec2(-1.5f, -1.5f), Vec2(1.5f, 1.5f)), Rgba8::WHITE,Vec2(0.f,0.f),Vec2(0.5f,1.f));
 
 	Initialize();
 }
@@ -182,7 +185,8 @@ void Player::HandleInput()
 		m_inputDirection += Vec2(1.f, 0.f);
 		//m_curDirection = Direction::RIGHT;
 	}
-
+	//-------------------CursorPos--------------
+	UpdateToolAimGridPos();
 	//---------------Tool-----------------------
 	for (const auto& pair : s_playerKeyCodeToolMap)
 	{
@@ -213,11 +217,15 @@ void Player::UpdateAnimations(float deltaTime)
 		if (curToolCondition != s_playerToolConditionMap.end())
 		{
 			m_animConditions[curToolCondition->second] = true;
+			m_curDirection = GetDirectionFromIntVec2(m_curToolToPlayerDirection);
 		}
+		// change direction by using tool
 	}
 	//--------------------------------------------------------------------------------------------
 	m_bodyStateMachine.Update(deltaTime, m_animConditions, m_curDirection);
+	UpdateToolUsingResult();
 	//--------------------------------------------------------------------------------------------
+	// Render body
 	SpriteDefinition const* curBodySpriteDef = nullptr;
 	curBodySpriteDef = &m_bodyStateMachine.GetCurrentSprite();
 	m_curBodyTex = &curBodySpriteDef->GetTexture();
@@ -229,6 +237,84 @@ void Player::UpdateAnimations(float deltaTime)
 	m_curDirection == Direction::LEFT ? curUV = curBodySpriteDef->GetUVsReverse() : curUV = curBodySpriteDef->GetUVs();
 	AddVertsForAABB2D(m_verts, m_bodyBox, Rgba8::WHITE,
 		curUV.m_mins, curUV.m_maxs,0.f);
+}
+
+void Player::UpdateToolAimGridPos()
+{
+	m_curCursorHoverGridPos = GetCurrentCursorGridPos();
+	bool cursorInRange = false;
+	IntVec2 playerGridPos = m_game->m_curMap->GetTileCoordsFromPoint(m_position);
+
+	for (int dy = -1; dy <= 1; dy++)
+	{
+		for (int dx = -1; dx <= 1; dx++) 
+		{
+			if (dx == 0 && dy == 0) continue; 
+
+			IntVec2 adjacentPos = playerGridPos + IntVec2(dx, dy);
+			if (adjacentPos == m_curCursorHoverGridPos) 
+			{
+				cursorInRange = true;
+				break;
+			}
+		}
+	}
+
+	if (cursorInRange) 
+	{
+		m_curToolAimGridPos = m_curCursorHoverGridPos;
+	}
+	else
+	{
+		m_curToolAimGridPos = playerGridPos + GetCurDirectionIntVec2();
+	}
+	m_curToolToPlayerDirection = m_curToolAimGridPos - playerGridPos;
+}
+
+void Player::UpdateToolUsingResult()
+{
+	AnimState* curState=m_bodyStateMachine.GetCurrentState();
+	std::string curStateName = curState->GetName();
+	if (curStateName!=m_previousAnimStateName && m_toolStates.find(curStateName) != m_toolStates.end())
+	{
+		m_game->m_curMap->UsingToolTowardsGridPos(m_curToolAimGridPos, m_curTool);
+	}
+	m_previousAnimStateName = curStateName;
+}
+
+IntVec2 Player::GetCurrentCursorGridPos()
+{
+	Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+	Vec2 mousePositionInGameCam= AABB2(Vec2(0.f, 0.f), 2.f*Vec2(g_halfGameCamDimensions.x, g_halfGameCamDimensions.y)).GetPointAtUV(mouseUV);
+	Vec2 mousePosInWorldPlace = mousePositionInGameCam - Vec2(g_halfGameCamDimensions.x, g_halfGameCamDimensions.y) + m_position;
+
+	return m_game->m_curMap->GetTileCoordsFromPoint(mousePosInWorldPlace);
+}
+
+IntVec2 Player::GetCurDirectionIntVec2()
+{
+	switch (m_curDirection) 
+	{
+	case Direction::DOWN:  return IntVec2(0, -1);
+	case Direction::UP:    return IntVec2(0, 1);
+	case Direction::LEFT:  return IntVec2(-1, 0);
+	case Direction::RIGHT: return IntVec2(1, 0);
+	default:               return IntVec2(0, -1); 
+	}
+}
+
+Direction Player::GetDirectionFromIntVec2(IntVec2 const& directionVec)
+{
+	if (directionVec.x == 0 && directionVec.y == 0) {
+		return Direction::DOWN;
+	}
+
+	if (abs(directionVec.x) > abs(directionVec.y)) {
+		return (directionVec.x > 0) ? Direction::RIGHT : Direction::LEFT;
+	}
+	else {
+		return (directionVec.y > 0) ? Direction::UP : Direction::DOWN;
+	}
 }
 
 void Player::UpdateMovement(float deltaTime)
@@ -272,4 +358,17 @@ void Player::Render() const
 	Mat44 modelMatrix = Mat44::MakeTranslation3D(Vec3(m_position.x,m_position.y,zValue)); 
 	g_theRenderer->SetModelConstants(modelMatrix);
 	g_theRenderer->DrawVertexArray(m_verts);
+
+	if (m_bodyStateMachine.GetCurrentState()->GetName() != "playerWalk" &&
+		m_bodyStateMachine.GetCurrentState()->GetName() != "playerRun") {
+		Mat44 hoverModelMatrix = Mat44::MakeTranslation3D(
+			Vec3(
+				(float)m_curToolAimGridPos.x + 0.5f, (float)m_curToolAimGridPos.y + 0.5f, zValue + 5.f)
+		);
+		g_theRenderer->SetModelConstants(hoverModelMatrix);
+		Texture* hoverTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/CursorHoverSqaure.png");
+		g_theRenderer->BindTexture(hoverTex);
+		g_theRenderer->DrawVertexArray(m_hoverGridCursorSquareVerts);
+	}
+	
 }

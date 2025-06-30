@@ -65,7 +65,7 @@ void DebugDrawCircle(float radius, Vec2 ori,Rgba8 color)
 		i += 3;
 		j += 1;
 	}
-	g_theRenderer->DrawVertexArray(48, vertices);
+ 	g_theRenderer->DrawVertexArray(48, vertices);
 }
 
 void DebugDrawHighCircle(float radius, Vec2 ori, Rgba8 color)

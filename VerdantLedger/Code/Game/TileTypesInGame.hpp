@@ -49,8 +49,5 @@ struct CropInfo
  	CropInfo m_curCrop; // if m_farmState==PLANTED/ GROWN, meaningful
 
 	int m_spriteIndex = 0;
-	bool m_isTransparent = false;  
-	unsigned char m_alpha = 100;
-	Timer m_fadingTimer;
  };
 

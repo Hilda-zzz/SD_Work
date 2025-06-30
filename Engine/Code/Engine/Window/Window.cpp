@@ -168,6 +168,10 @@ Vec2 Window::GetNormalizedMouseUV() const
 	::GetClientRect(windowHandle, &clientRect);
 	float cursorX = static_cast<float>(cursorCoords.x) / static_cast<float>(clientRect.right);
 	float cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
+
+	//DebuggerPrintf("Client rect size: %d x %d\n", clientRect.right, clientRect.bottom);
+	//DebuggerPrintf("Window dimensions: %.0f x %.0f\n",m_clientDimension.x, m_clientDimension.y);
+
 	return Vec2(cursorX, 1.f - cursorY);
 	//then 0,0 at bl, 1,1 at tr
 }

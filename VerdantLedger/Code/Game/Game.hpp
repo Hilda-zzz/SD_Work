@@ -8,7 +8,7 @@ class Map;
 class TileMapManager;
 class Player;
 
-extern const Vec2 g_cameraDimensions;
+extern const Vec2 g_halfGameCamDimensions;
 constexpr int RESOLUTION = 16;
 constexpr int CHUNK_SIZE = 16;
 constexpr int Z_OFFSET = 200;
@@ -62,6 +62,8 @@ public:
 	Map* m_curMap = nullptr;
 	Player* m_player = nullptr;
 	TileMapManager* g_tileManager;
+	int m_dropTimes = 0;
+
 private:
 	
 	Camera m_screenCamera;
@@ -71,4 +73,5 @@ private:
 	bool m_isDevConsole = false;
 
 	float m_curDeltaTime = 0.f;
+	
 };

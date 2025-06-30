@@ -917,6 +917,13 @@ float Interpolate(float start, float end, float fractionTowardEnd)
 	return start + (end - start) * fractionTowardEnd;
 }
 
+Vec2 Interpolate(Vec2 const& start, Vec2 const& end, float fractionTowardEnd)
+{
+	float x = start.x + (end.x - start.x) * fractionTowardEnd;
+	float y = start.y + (end.y - start.y) * fractionTowardEnd;
+	return Vec2(x, y);
+}
+
 Vec3 Interpolate(Vec3 const& start, Vec3 const& end, float fractionTowardEnd)
 {
 	float x= start.x + (end.x - start.x) * fractionTowardEnd;

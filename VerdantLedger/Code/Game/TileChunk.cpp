@@ -17,6 +17,11 @@ TileChunk::TileChunk()
 
 TileChunk::~TileChunk()
 {
+	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
+	{
+		delete curObstacle;
+		curObstacle = nullptr;
+	}
 }
 
 void TileChunk::Update()
@@ -24,6 +29,11 @@ void TileChunk::Update()
 	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
 	{
 		curObstacle->Update();
+	}
+	if (m_isDirty)
+	{
+		UpdateObstacleVerts();
+		m_isDirty = false;
 	}
 }
 
@@ -78,6 +88,7 @@ void TileChunk::UpdateObstacleVerts()
 	for (const auto& [tilePosKey, tileData] : m_dynamicTiles)
 	{
 		if (tileData.m_obstacleType == ObstacleType::NONE) continue;
+		if (ObstacleDefinition::s_obstacleDefinitions[tileData.m_obstacleType]->m_isObject) continue;
 
 		IntVec2 gridPos = TileMap::GetGridPosByTileKey(tilePosKey);
 		ObstacleDefinition* curDef = ObstacleDefinition::s_obstacleDefinitions.at(tileData.m_obstacleType);
@@ -97,15 +108,15 @@ void TileChunk::UpdateObstacleVerts()
 			Vec2 spriteTopRight = gridBottomCenter + Vec2(spriteSizeInWorld.x * 0.5f, spriteSizeInWorld.y);
 
 			Rgba8 renderColor = Rgba8::WHITE;
-			if (tileData.m_isTransparent)
-			{
-				AddVertsForAABB2D(m_dynamicVertsTransparent,
-					AABB2(spriteBottomLeft, spriteTopRight),
-					Rgba8(255,255,255,tileData.m_alpha),
-					spriteUV.m_mins, spriteUV.m_maxs,
-					(float)gridPos.y + Z_OFFSET);
-					continue;
-			}
+// 			if (tileData.m_isTransparent)
+// 			{
+// 				AddVertsForAABB2D(m_dynamicVertsTransparent,
+// 					AABB2(spriteBottomLeft, spriteTopRight),
+// 					Rgba8(255,255,255,tileData.m_alpha),
+// 					spriteUV.m_mins, spriteUV.m_maxs,
+// 					(float)gridPos.y + Z_OFFSET);
+// 					continue;
+// 			}
 
 			AddVertsForAABB2D(m_dynamicVerts,
 				AABB2(spriteBottomLeft, spriteTopRight),
@@ -119,10 +130,10 @@ void TileChunk::UpdateObstacleVerts()
 			Vec2 gridTopRight = gridBottomLeft + Vec2(1.f, 1.f);
 
 			Rgba8 renderColor = Rgba8::WHITE;
-			if (tileData.m_isTransparent)
-			{
-				renderColor.a = static_cast<unsigned char>(tileData.m_alpha * 255.0f);
-			}
+// 			if (tileData.m_isTransparent)
+// 			{
+// 				renderColor.a = static_cast<unsigned char>(tileData.m_alpha * 255.0f);
+// 			}
 
 			AddVertsForAABB2D(m_dynamicVerts,
 				AABB2(gridBottomLeft, gridTopRight),

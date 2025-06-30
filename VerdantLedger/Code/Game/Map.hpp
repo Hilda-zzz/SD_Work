@@ -2,6 +2,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Game/Player.hpp"
 
 class Game;
 class TileMap;
@@ -17,18 +18,25 @@ public:
 
 	void Render() const;
 
-private:
-	void CheckPlayerCollWithSolidTiles();
-
 	IntVec2 GetTileCoordsFromPoint(Vec2 const& point);
+
+	void UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolType);
+
+private:
+	void UpdateCamFollow(float deltaSecondes);
+
+	void CheckPlayerCollWithSolidTiles();
 
 	void PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhyRadius);
 
 	void TileMapRender() const;
 
+public:
+	Camera  m_gameplayCam;
 private:
 	Game* m_game = nullptr;
 	TileMap* m_tileMap = nullptr;
 	Player* m_player = nullptr;
-	Camera  m_gameplayCam;
+	Vec2 m_playerPrevPos = Vec2::ZERO;
+	
 };

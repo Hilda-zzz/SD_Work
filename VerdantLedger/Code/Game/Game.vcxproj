@@ -67,6 +67,7 @@
   <ItemGroup>
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx" />
     <None Include="..\..\Run\Data\Tiled\HouseMap.tmx" />
+    <None Include="..\..\Run\Data\Tiled\Road.tsx" />
     <None Include="..\..\Run\Data\Tiled\TileMark.tsx" />
   </ItemGroup>
   <ItemGroup>

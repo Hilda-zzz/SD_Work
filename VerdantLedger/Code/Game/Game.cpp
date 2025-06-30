@@ -19,7 +19,7 @@
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
-const Vec2 g_cameraDimensions{ 16.f, 8.f };
+const Vec2 g_halfGameCamDimensions{ 12.f, 6.f };
 
 Game::Game()
 {
@@ -29,7 +29,7 @@ Game::Game()
 	g_tileManager = &TileMapManager::GetInstance();
 	g_tileManager->InitAllTilemapResources();
 
-	m_player = new Player();
+	m_player = new Player(this);
 	m_curMap = new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/HouseMap.tmx"], m_player);
 
 	g_theDevConsole->AddLine(DevConsole::HELPLIST, "WASD: Move around\n\
@@ -56,9 +56,12 @@ Game::~Game()
 void Game::Update()
 {
 	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
-	
 
 	m_curDeltaTime = deltaSeconds;
+
+	float framerate = 1.f / m_curDeltaTime;
+	if (framerate < 200)
+		m_dropTimes += 1;
 
 	UpdateCamera(deltaSeconds);
 
@@ -256,12 +259,14 @@ void Game::RenderGameplayMode() const
 	font->AddVertsForTextInBox2D(title, curTool,
 		AABB2(Vec2(10.f, 745.f), Vec2(1000.f, 765.f)), 15.f, Rgba8::BLACK, 0.7f, Vec2(0.f, 0.f));
 
+	float framerate = 1.f / m_curDeltaTime;
+	DebuggerPrintf("Framerate: %.2f\n", framerate);
 	char buffer[256];
 	sprintf_s(buffer, 
 		"DT = %.2f\n"
 		"Framerate = %.2f\n",
 		m_curDeltaTime * 1000.f,
-		1.f / m_curDeltaTime);
+		framerate);
 	std::string statsMessage(buffer);
 
 	font->AddVertsForTextInBox2D(title, statsMessage,
@@ -280,6 +285,11 @@ void Game::RenderGameplayUI() const
 // 	g_theRenderer->BindTexture(nullptr);
 // 	DebugDrawLine(Vec2(100.f, 100.f), Vec2(1500.f, 700.f), 4.f, Rgba8(180, 0, 100));
 // 	DebugDrawLine(Vec2(100.f, 700.f), Vec2(1500.f, 100.f), 4.f, Rgba8(180, 0, 100));
+
+// 	Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+// 	Vec2 mousePositionInGameCam = AABB2(Vec2(0.f, 0.f), Vec2(1600.f, 800.f)).GetPointAtUV(mouseUV);
+// 	DebugDrawCircle(20.f, mousePositionInGameCam,Rgba8::CYAN);
+	//Vec2 mousePosInWorldPlace = mousePositionInGameCam - Vec2(0.5 * g_cameraDimensions.x, 0.5 * g_cameraDimensions.y);
 }
 
 void Game::RenderDebugMode()const

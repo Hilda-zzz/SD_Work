@@ -112,16 +112,24 @@ void TileMap::Render() const
 {
     for (int i = 0; i < (int)m_layers.size(); i++)
     {
+        Texture* curTexture = nullptr;
+		if (m_layers[i].GetName()=="TileMark")
+		{
+			continue;
+            curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
+			//g_theRenderer->BindTexture(tileMarkTex);
+		}
+        else if (m_layers[i].GetName() == "Road")
+        {
+            curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/Village - Tiny Asset Pack/Exterior/Road.png");
+        }
+        else
+        {
+            curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/TilesetGrassSpring.png");
+        }
         for (int j = 0; j < (int)m_layers[i].m_chunks.size(); j++)
         {
-            Texture* grassTex=g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/TilesetGrassSpring.png");
-            Texture* tileMarkTex= g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
-            g_theRenderer->BindTexture(grassTex);
-            if (i == 3)
-            {
-                continue;
-                //g_theRenderer->BindTexture(tileMarkTex);
-            }
+            g_theRenderer->BindTexture(curTexture);
             g_theRenderer->SetBlendMode(BlendMode::ALPHA);
             g_theRenderer->SetModelConstants();
             g_theRenderer->DrawVertexArray(m_layers[i].m_chunks[j].m_terrianVerts);
@@ -140,7 +148,8 @@ void TileMap::Render() const
 
 uint32_t TileMap::GetTileGidFromLayerID(int layerID, IntVec2 const& gridPos)
 {
-    return m_layers[layerID - 1].GetGidFromGridPos(gridPos);
+    TileLayer* layer = FindLayerById(layerID);
+    return layer->GetGidFromGridPos(gridPos);
 }
 
 uint64_t TileMap::GetTileKey(IntVec2 const& gridPos)

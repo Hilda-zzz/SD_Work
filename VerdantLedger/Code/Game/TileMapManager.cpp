@@ -78,6 +78,7 @@ void TileMapManager::LoadAllTilesets()
 {
 	LoadTileset("Data/Tiled/GrassSpring.tsx");
 	LoadTileset("Data/Tiled/TileMark.tsx");
+	LoadTileset("Data/Tiled/Road.tsx");
 }
 
 Tileset* TileMapManager::LoadTileset(const std::string& tilesetPath)
