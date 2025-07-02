@@ -53,6 +53,15 @@ bool Rgba8::operator==(Rgba8 const& compare) const
 	return false;
 }
 
+bool Rgba8::operator!=(Rgba8 const& compare) const
+{
+	if (r != compare.r || g != compare.g || b != compare.b || a != compare.a)
+	{
+		return true;
+	}
+	return false;
+}
+
 Rgba8 Interpolate(Rgba8 start, Rgba8 end, float fractionOfEnd)
 {
 	float r = Interpolate(NormalizeByte(start.r), NormalizeByte(end.r), fractionOfEnd);

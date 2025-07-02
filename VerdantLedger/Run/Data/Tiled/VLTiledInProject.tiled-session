@@ -12,12 +12,16 @@
             "scaleInEditor": 2
         },
         "HouseMap.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 3,
+            "scale": 1,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": -87.33333333333326,
-                "y": 344.66666666666663
+                "x": -10.5,
+                "y": -3.5
             }
+        },
+        "Road.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1
         },
         "TileMark.tsx": {
             "scaleInDock": 1.5,
@@ -32,12 +36,14 @@
     "openFiles": [
         "GrassSpring.tsx",
         "HouseMap.tmx",
-        "TileMark.tsx"
+        "TileMark.tsx",
+        "Road.tsx"
     ],
     "project": "VLTiledInProject.tiled-project",
     "property.type": "bool",
     "recentFiles": [
         "GrassSpring.tsx",
+        "Road.tsx",
         "TileMark.tsx",
         "HouseMap.tmx"
     ],

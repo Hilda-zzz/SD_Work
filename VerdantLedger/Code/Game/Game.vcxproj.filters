@@ -32,6 +32,9 @@
     <Filter Include="Definitions">
       <UniqueIdentifier>{af5bac6f-eb57-4355-85a3-92f7730ecf97}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UIFramework">
+      <UniqueIdentifier>{f3310731-0340-4f68-8636-3103d656aabb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -84,6 +87,9 @@
     </ClCompile>
     <ClCompile Include="ObstacleDefinitions.cpp">
       <Filter>TilemapObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="Button.cpp">
+      <Filter>UIFramework</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,6 +152,9 @@
     </ClInclude>
     <ClInclude Include="ObstacleDefinitions.hpp">
       <Filter>TilemapObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Button.hpp">
+      <Filter>UIFramework</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

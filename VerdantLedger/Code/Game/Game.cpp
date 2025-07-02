@@ -14,12 +14,17 @@
 #include <iostream>
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "ObstacleDefinitions.hpp"
+#include "Engine/Core/VertexUtils.hpp"
+
 
 
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
-const Vec2 g_halfGameCamDimensions{ 12.f, 6.f };
+GameState Game::m_curGameState = GameState::GAME_STATE_ATTRACT;
+GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
+
+Vec2 const g_halfGameCamDimensions{ 10.f, 5.f };
 
 Game::Game()
 {
@@ -36,7 +41,7 @@ Game::Game()
 Tools: 0-None, 1-Axe, 2-Hoe, 3-Pickaxe, 4-Shovel, 5-Sickle, 6-Water\n\
 Left Mouse Button: Use selected tool");
 
-	
+	InitializeMenuButtons();
 }
 
 Game::~Game()
@@ -135,6 +140,46 @@ void Game::Renderer() const
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
+void Game::InitializeMenuButtons()
+{
+	Texture* menuBtnTexture1 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBtn1.png");
+	Texture* menuBtnTexture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBtn2.png");
+	Texture* menuBtnTexture3 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBtn3.png");
+
+	float btnWidth = 240.0f;
+	float btnHeight = 80.0f;
+
+	float leftMargin = 200.0f;
+	float startY = 350.0f;
+	float buttonSpacing = 100.0f;
+
+	AABB2 bkgExtent = AABB2(-btnWidth / 2.0f, -btnHeight / 2.0f, btnWidth / 2.0f, btnHeight / 2.0f);
+
+	AABB2 textExtent = AABB2(-btnWidth / 2.0f + 10.0f, -btnHeight / 2.0f + 10.0f,
+		btnWidth / 2.0f - 10.0f, btnHeight / 2.0f - 10.0f);
+
+	BitmapFont* gameFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+
+	float textHeight = 30.0f;
+
+	Vec2 btnNormalPos = Vec2(leftMargin + btnWidth / 2.0f, startY);
+	m_btnMenuStartNew = Button(btnNormalPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+		bkgExtent, textExtent, "New", textHeight, gameFont, "StartNew");
+
+	Vec2 btnGoldPos = Vec2(leftMargin + btnWidth / 2.0f, startY - buttonSpacing);
+	m_btnMenuLoad = Button(btnGoldPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+		bkgExtent, textExtent, "Load", textHeight, gameFont, "Load");
+
+	Vec2 btnTutorialPos = Vec2(leftMargin + btnWidth / 2.0f, startY - 2 * buttonSpacing);
+	m_btnMenuExit = Button(btnTutorialPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+		bkgExtent, textExtent, "Exit", textHeight, gameFont, "Exit");
+
+	//call back
+	g_theEventSystem->SubscribeEventCallbackFuction("StartNew", BtnEvent_StartNew, true);
+	g_theEventSystem->SubscribeEventCallbackFuction("Load", BtnEvent_Load, true);
+	g_theEventSystem->SubscribeEventCallbackFuction("Exit", BtnEvent_Exit, true);
+}
+
 void Game::UpdateAttractMode(float deltaTime)
 {
 	UNUSED(deltaTime);
@@ -142,10 +187,14 @@ void Game::UpdateAttractMode(float deltaTime)
 	{
 		g_theApp->m_isQuitting = true;
 	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE)|| g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
-	{
-		m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
-	}
+// 	if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE)|| g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+// 	{
+// 		m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
+// 	}
+
+	m_btnMenuStartNew.Update();
+	m_btnMenuLoad.Update();
+	m_btnMenuExit.Update();
 }
 
 void Game::UpdateGameplayMode(float deltaTime)
@@ -213,8 +262,21 @@ void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
 void Game::RenderAttractMode() const
 {
 	g_theRenderer->BeginCamera(m_screenCamera);
-	g_theRenderer->BindTexture(nullptr);
-	DebugDrawRing(4.f, 20.f, Rgba8::WHITE, Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
+
+	std::vector<Vertex_PCU> verts;
+	verts.reserve(20);
+	AddVertsForAABB2D(verts, AABB2(Vec2(0.f, 0.f), Vec2(1600.f, 800.f)), Rgba8::WHITE);
+	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
+	g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBkg.png"));
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+	g_theRenderer->DrawVertexArray(verts);
+
+	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+	m_btnMenuStartNew.Render();
+	m_btnMenuLoad.Render();
+	m_btnMenuExit.Render();
+
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 }
@@ -255,7 +317,7 @@ void Game::RenderGameplayMode() const
 		curTool += "Unknown";
 		break;
 	}
-	curTool += " || Use 0-6 to switch tools || Use mouse left btn to use the tool (just animation)";
+	curTool += " || Use 0-6 to switch tools || Use mouse left btn to use the tool (Pickaxe--Rock || Sickle--Weed)";
 	font->AddVertsForTextInBox2D(title, curTool,
 		AABB2(Vec2(10.f, 745.f), Vec2(1000.f, 765.f)), 15.f, Rgba8::BLACK, 0.7f, Vec2(0.f, 0.f));
 
@@ -307,6 +369,26 @@ void Game::ExitState(GameState state)
 	UNUSED(state);
 }
 
+bool Game::BtnEvent_StartNew(EventArgs& args)
+{
+	UNUSED(args);
+	m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
+	return true;
+}
+
+bool Game::BtnEvent_Load(EventArgs& args)
+{
+	UNUSED(args);
+	m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
+	return true;
+}
+
+bool Game::BtnEvent_Exit(EventArgs& args)
+{
+	UNUSED(args);
+	g_theApp->m_isQuitting = true;
+	return true;
+}
 
 
 

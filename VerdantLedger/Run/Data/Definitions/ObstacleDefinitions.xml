@@ -32,7 +32,7 @@
 		</SpriteVariants>
 	</ObstacleDefinition>
 
-	<ObstacleDefinition	type="WEED" maxDurability="4" isObject="false">
+	<ObstacleDefinition	type="WEED" maxDurability="1" isObject="false">
 		<SpriteVariants spriteLayout="20,21">
 			<SpriteGridPos gridPos="3,3"/>
 			<SpriteGridPos gridPos="4,3"/>

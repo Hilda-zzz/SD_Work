@@ -13,7 +13,7 @@ public:
 	TileChunk();
 	~TileChunk();
 
-	void Update();
+	void Update(float deltaSeconds);
 
 	void InitializeChunkVerts();
 	void UpdateObstacleVerts();
@@ -62,7 +62,7 @@ inline void TileChunk::ForEachTileInChunk(Func callback)
 		for (int localX = 0; localX < m_size.x; ++localX)
 		{
 			int dataIndex = localY * m_size.x + localX;
-			if (dataIndex < m_terrianData.size())
+			if (dataIndex < (int)m_terrianData.size())
 			{
 				uint32_t gid = m_terrianData.at(dataIndex);
 				IntVec2 gridPos = m_startPosition + IntVec2(localX, -localY);

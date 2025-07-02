@@ -13,14 +13,14 @@ public:
 	GroundObstacle(ObstacleType type, ObstacleDefinition* curDef,IntVec2 gridPos, int spriteIndex);
 	~GroundObstacle();
 
-	void Update();
+	void Update(float deltaSeconds);
 	void Render() const;
 
 	ObstacleType GetType() const { return m_type; }
 	IntVec2 GetGridPos() const { return m_gridPos; }
 	int GetHealth() const { return m_durability; }
 
-	void SetTransparent(bool turnToTransparent);
+	void SetTransparent(Rgba8 const& aimColor);
 
 	bool TakeDamage(int damage) {
 		m_durability -= damage;
@@ -39,12 +39,7 @@ private:
 	SpriteSheet* m_spriteSheet=nullptr;
 	int m_spriteIndex = 0;
 
-	Timer m_transparentTimer;
-	bool m_playerIsAbove = false;
-	bool m_isTransparent = false;
-	bool m_isMask = true;
-	bool m_startTurnToTransparent = false;
-	bool m_startTurnToMask = false;
-	bool m_isTurningToTransparent = false;
-	bool m_isTurningToOpaque = false;
+	// Transparent trees
+	Rgba8 m_curColor=Rgba8::WHITE;
+	Rgba8 m_aimColor = Rgba8(255,255,255,255);
 };

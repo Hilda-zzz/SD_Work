@@ -34,7 +34,7 @@ void DynamicContentGenerator::GenerateAllDynamicContentForTheMap(TileMap* curMap
 // 		}
 // 	);
 	TileLayer* markLayer = curMap->FindLayerById(curMap->m_markLayerId);
-	for (int i=0;i<markLayer->m_chunks.size();i++)
+	for (int i=0; i< (int)markLayer->m_chunks.size();i++)
 	{
 		GenerateDynamicContentForEachChunk(&markLayer->m_chunks[i]);
 	}
@@ -98,26 +98,14 @@ void DynamicContentGenerator::GenerateObstacleAtPosition(TileChunk* curChunk, In
 	}
  	else if (possibility <= 0.8f)
  	{
- 		if (gridPos.y == 0)
- 		{
- 			int i = 0;
- 		}
  		GenerateSpecificObstacle(curChunk, gridPos, tilePosKey, ObstacleType::TREE);
  	}
 	else if (possibility <= 0.9f)
 	{
-		if (gridPos.y == 0)
-		{
-			int i = 0;
-		}
 		GenerateSpecificObstacle(curChunk, gridPos, tilePosKey, ObstacleType::ROCK);
 	}
  	else if (possibility <= 0.95f)
  	{
-		if (gridPos.y == 0)
-		{
-			int i = 0;
-		}
 		GenerateSpecificObstacle(curChunk, gridPos, tilePosKey, ObstacleType::WEED);
  	}
 }
@@ -131,7 +119,7 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 	{
 		curDynamicTileData.m_curObstacleDurability = curDef->m_maxDurability;
 
-		int spriteVariantIndex = g_randomNumGenerator->RollRandomIntInRange(0, curDef->m_spriteGridPos.size() - 1);
+		int spriteVariantIndex = g_randomNumGenerator->RollRandomIntInRange(0, (int)curDef->m_spriteGridPos.size() - 1);
 		IntVec2 spriteGridPos = curDef->m_spriteGridPos[spriteVariantIndex];
 		int spriteIndex = curDef->m_spriteSheet->GetSpriteIndexFromGridPos(spriteGridPos);
 		curDynamicTileData.m_spriteIndex = spriteIndex;

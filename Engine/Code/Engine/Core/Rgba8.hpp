@@ -23,8 +23,9 @@ public:
 	explicit Rgba8(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);
 	void SetFromText(char const* text);
 	void GetAsFloats(float* colorAsFloats) const;
-
+	float GetColorDistance(const Rgba8& color1, const Rgba8& color2);
 	bool		operator==(Rgba8 const& compare) const;
+	bool		operator!=(Rgba8 const& compare) const;
 };
 
 Rgba8 Interpolate(Rgba8 start, Rgba8 end, float fractionOfEnd);

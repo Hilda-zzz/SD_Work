@@ -2,6 +2,8 @@
 #include "GameCommon.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Engine/Core/EventSystem.hpp"
+#include "Button.hpp"
 
 class Clock;
 class Map;
@@ -33,6 +35,7 @@ public:
 	void Renderer() const;
 
 private:
+	void InitializeMenuButtons();
 	//------Update--------------
 	void UpdateAttractMode(float deltaTime);
 	void UpdateGameplayMode(float deltaTime);
@@ -52,12 +55,17 @@ private:
 	void EnterState(GameState state);
 	void ExitState(GameState state);
 
+	//-------event--------------------
+	static bool BtnEvent_StartNew(EventArgs& args);
+	static bool BtnEvent_Load(EventArgs& args);
+	static bool BtnEvent_Exit(EventArgs& args);
+
 public:
 	Clock* m_gameClock = nullptr;
 	RandomNumberGenerator m_rng;
 
-	GameState m_curGameState = GameState::GAME_STATE_ATTRACT;
-	GameState m_nextGameState = GameState::GAME_STATE_ATTRACT;
+	static GameState m_curGameState;
+	static GameState m_nextGameState;
 	
 	Map* m_curMap = nullptr;
 	Player* m_player = nullptr;
@@ -73,5 +81,10 @@ private:
 	bool m_isDevConsole = false;
 
 	float m_curDeltaTime = 0.f;
+
+	//Menu UI
+	Button m_btnMenuStartNew;
+	Button m_btnMenuLoad;
+	Button m_btnMenuExit;
 	
 };

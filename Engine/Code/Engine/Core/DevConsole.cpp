@@ -435,4 +435,6 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 	pointVertices[4] = Vertex_PCU(Vec3(pointEndX, cellHeight, 0.f), curPointerColor, Vec2(0.f, 0.f));
 	pointVertices[5] = Vertex_PCU(Vec3(pointStartX, cellHeight, 0.f), curPointerColor, Vec2(0.f, 0.f));
 	renderer.DrawVertexArray(6, pointVertices);
+
+	renderer.SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 }

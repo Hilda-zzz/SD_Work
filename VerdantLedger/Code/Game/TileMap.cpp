@@ -3,6 +3,7 @@
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "GroundObstacle.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 extern Renderer* g_theRenderer;
 
@@ -102,10 +103,10 @@ TileMap::~TileMap()
 
 void TileMap::Update(float deltaSeconds)
 {
-     for (int i = 0; i < m_markLayer->m_chunks.size(); i++)
-     {
-         m_markLayer->m_chunks[i].Update();
-     }
+	for (int i = 0; i < (int)m_markLayer->m_chunks.size(); i++)
+	{
+		m_markLayer->m_chunks[i].Update(deltaSeconds);
+	}
 }
 
 void TileMap::Render() const
@@ -116,7 +117,7 @@ void TileMap::Render() const
 		if (m_layers[i].GetName()=="TileMark")
 		{
 			continue;
-            curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
+            //curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
 			//g_theRenderer->BindTexture(tileMarkTex);
 		}
         else if (m_layers[i].GetName() == "Road")
@@ -136,7 +137,7 @@ void TileMap::Render() const
         }
     }
     TileLayer* markLayer = m_markLayer;
-    for (int i = 0; i < markLayer->m_chunks.size(); i++)
+    for (int i = 0; i < (int)markLayer->m_chunks.size(); i++)
     {
         markLayer->m_chunks[i].RenderDynamicContent();
     }
@@ -198,7 +199,7 @@ void TileMap::UpdateTransparentObject(IntVec2 const& aimGridPos)
 			auto lastTransparentObstacle = lastChunk->m_gridPosToGroundObstacle.find(lastGridPosKey);
 			if (lastTransparentObstacle != lastChunk->m_gridPosToGroundObstacle.end())
 			{
-				lastTransparentObstacle->second->SetTransparent(false);
+				lastTransparentObstacle->second->SetTransparent(Rgba8::WHITE);
 			}
 		}
  		else
@@ -215,7 +216,7 @@ void TileMap::UpdateTransparentObject(IntVec2 const& aimGridPos)
     {
         if (obstacle->second->GetType() == ObstacleType::TREE)
         {
-            obstacle-> second ->SetTransparent(true);
+            obstacle-> second ->SetTransparent(Rgba8(255,255,255,100));
             m_lastTransparentTreePos = aimGridPos;
         }
         else

@@ -24,11 +24,11 @@ TileChunk::~TileChunk()
 	}
 }
 
-void TileChunk::Update()
+void TileChunk::Update(float deltaSeconds)
 {
 	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
 	{
-		curObstacle->Update();
+		curObstacle->Update(deltaSeconds);
 	}
 	if (m_isDirty)
 	{

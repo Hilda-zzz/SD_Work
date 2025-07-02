@@ -20,6 +20,8 @@ Map::Map(Game* game, TileMap* tileMap, Player* player):
 	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
 	m_gameplayCam.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
 	m_gameplayCam.SetOrthographicView(m_player->m_position - g_halfGameCamDimensions, m_player->m_position + g_halfGameCamDimensions,0.f,1000.f);
+
+	m_dirtyChunkDelayTimer = Timer(0.5f);
 }
 
 Map::~Map()
@@ -37,6 +39,8 @@ void Map::Update(float deltaSeconds)
 	IntVec2 m_playerFrontGridPos = GetTileCoordsFromPoint(m_player->m_position)+IntVec2(0,-1);
  	m_tileMap->UpdateTransparentObject(m_playerFrontGridPos);
  	m_tileMap->Update(deltaSeconds);
+
+	UpdateDelayDirtyChunk();
 }
 
 void Map::Render() const
@@ -57,6 +61,16 @@ void Map::UpdateCamFollow(float deltaSeconds)
 	Vec2 cameraSmoothPos = Interpolate(m_playerPrevPos, aimCamCenter, 2.f * deltaSeconds);
 
 	m_gameplayCam.SetOrthographicView(cameraSmoothPos - g_halfGameCamDimensions, cameraSmoothPos + g_halfGameCamDimensions, 0.f, 1000.f);
+}
+
+void Map::UpdateDelayDirtyChunk()
+{
+	if (m_curDirtyChunk&&!m_dirtyChunkDelayTimer.IsStopped() && m_dirtyChunkDelayTimer.GetElapsedFraction() > 1.f)
+	{
+		m_dirtyChunkDelayTimer.Stop();
+		m_curDirtyChunk->m_isDirty = true;
+		m_curDirtyChunk = nullptr;
+	}
 }
 
 void Map::CheckPlayerCollWithSolidTiles()
@@ -95,13 +109,16 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 	auto it =curChunk->m_dynamicTiles.find(tileKey);
 	if (it != curChunk->m_dynamicTiles.end())
 	{
-		if (it->second.m_obstacleType == ObstacleType::ROCK&& toolType==PlayerTools::PICKAXE)
+		if ((it->second.m_obstacleType == ObstacleType::ROCK&& toolType==PlayerTools::PICKAXE)||
+			(it->second.m_obstacleType == ObstacleType::WEED&& toolType == PlayerTools::SICKLE))
 		{
 			it->second.m_curObstacleDurability--;
 			if (it->second.m_curObstacleDurability <= 0)
 			{
 				it->second.m_obstacleType = ObstacleType::NONE;
-				curChunk->m_isDirty = true;
+				m_curDirtyChunk = curChunk;
+				m_dirtyChunkDelayTimer.Start();
+				//curChunk->m_isDirty = true;
 			}
 		}
 	}
@@ -118,10 +135,6 @@ void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhy
 	hasTerrainCollision = flag & static_cast<uint32_t>(TerrainType::SOLID);
 
 	TileChunk* curChunk= m_tileMap->m_markLayer->GetChunkContaining(tileCoords);
-	if (curChunk == nullptr)
-	{
-		int i = 0;
-	}
 	uint64_t tileKey=m_tileMap->GetTileKey(tileCoords);
 	if (curChunk && curChunk->m_dynamicTiles.count(tileKey) > 0)
 	{

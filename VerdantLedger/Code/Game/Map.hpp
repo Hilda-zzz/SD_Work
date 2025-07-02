@@ -3,10 +3,13 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Game/Player.hpp"
+#include "Engine/Core/Timer.hpp"
 
 class Game;
 class TileMap;
 class Player;
+class TileChunk;
+
 
 class Map
 {
@@ -25,6 +28,8 @@ public:
 private:
 	void UpdateCamFollow(float deltaSecondes);
 
+	void UpdateDelayDirtyChunk();
+
 	void CheckPlayerCollWithSolidTiles();
 
 	void PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhyRadius);
@@ -38,5 +43,6 @@ private:
 	TileMap* m_tileMap = nullptr;
 	Player* m_player = nullptr;
 	Vec2 m_playerPrevPos = Vec2::ZERO;
-	
+	TileChunk* m_curDirtyChunk = nullptr;
+	Timer m_dirtyChunkDelayTimer;
 };
