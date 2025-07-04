@@ -85,5 +85,7 @@ private:
 	bool m_hasValidAimPos = false;
 	std::vector<Vertex_PCU> m_aimHoverQuad;
 	std::vector<Vertex_PCU> m_aimShadowPiece;
+
+	std::vector<Vertex_PCUTBN> m_women;
 };
 

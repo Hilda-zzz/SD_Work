@@ -7,6 +7,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Renderer/PointLight.hpp"
 #include "Engine/Renderer/SpotLight.hpp"
+#include "Engine/Core/Vertex_PCUTBN.hpp"
 
 class Clock;
 class Prop;
@@ -103,8 +104,6 @@ private:
 
 	static bool Command_ChessMove(EventArgs& args);
 	static bool Command_ChessBegin(EventArgs& args);
-	
-	
 
 	static bool ValidatePieceMovement(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
 	static bool ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
@@ -126,8 +125,6 @@ public:
 	CamMode m_camMode = CamMode::AUTO;
 
 	ChessGameState m_chessGameState = ChessGameState::WAIT_TO_START_GAME;
-
-	
 
 private:
 	Camera m_screenCamera;
@@ -169,7 +166,6 @@ private:
 	// ChessRaycast
 	// ChessPiece* selectedPiece;
 	// IntVec2 highlightCoords
-
 	// UpdateHighlight()
 // 	{
 // 		m_highlightCoords = Vec2(-1, -1);
@@ -179,7 +175,6 @@ private:
 // 			//highlight coords change to this one
 // 		}
 // 	}
-
 	// UpdateSelect()
 // 	{
 // 	   // if already a selected piece ,if LMB , execute move command
@@ -187,7 +182,15 @@ private:
 // 	   // if no selected piece
 // 		//LMB Click the highlight one become the selected one 
 // 	}
-
-
 	// more addvertsfunction for highlight debug
+
+	// Model Loading
+	std::vector<Vertex_PCUTBN> m_cube;
+	std::vector<unsigned int> m_womemiIndexes;
+	std::vector<Vertex_PCUTBN> m_cube_withTBN;
+	std::vector<Vertex_PCU> m_cube_withIndex;
+	std::vector<Vertex_PCUTBN> m_cube_withTBN_withIndex;
+
+	std::vector<unsigned int>  m_cubeIndex;
+	std::vector<unsigned int>  m_cubeIndex_withTBN;
 };

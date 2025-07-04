@@ -165,6 +165,8 @@
     <ClCompile Include="Core\EventSystem.cpp" />
     <ClCompile Include="Core\FileUtils.cpp" />
     <ClCompile Include="Core\Image.cpp" />
+    <ClCompile Include="Core\MeshUtils.cpp" />
+    <ClCompile Include="Core\ObjLoader.cpp" />
     <ClCompile Include="Core\TileHeatMap.cpp" />
     <ClCompile Include="Core\NamedStrings.cpp" />
     <ClCompile Include="Core\Rgba8.cpp" />
@@ -242,6 +244,8 @@
     <ClInclude Include="Core\EventSystem.hpp" />
     <ClInclude Include="Core\FileUtils.hpp" />
     <ClInclude Include="Core\Image.hpp" />
+    <ClInclude Include="Core\MeshUtils.hpp" />
+    <ClInclude Include="Core\ObjLoader.hpp" />
     <ClInclude Include="Core\TileHeatMap.hpp" />
     <ClInclude Include="Core\NamedStrings.hpp" />
     <ClInclude Include="Core\Rgba8.hpp" />

@@ -10,6 +10,7 @@
 #include "Engine/Math/RaycastUtils.hpp"
 #include "Game/ChessObject.hpp"
 #include "Game/ChessMatch.hpp"
+#include "Engine/Core/ObjLoader.hpp"
 
 extern InputSystem* g_theInput;
 
@@ -29,6 +30,8 @@ ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 
 	AddBoardBlockCollider();
 	AddVertsForBoard();
+
+	ObjLoader::LoadObjFromFile_WithTBN("Data/Models/Woman/Woman.obj", m_women);
 }
 
 ChessBoard::~ChessBoard()
@@ -184,6 +187,12 @@ void ChessBoard::Renderer() const
 		g_theRenderer->BindShader(m_shader);
 		chess->Renderer();
 	}
+	Texture* womenDiffuse = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png");
+	Texture* womenNormal = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png");
+	g_theRenderer->BindTexture(womenDiffuse, womenNormal,nullptr);
+	g_theRenderer->BindShader(m_shader);
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+	g_theRenderer->DrawVertexArray_WithTBN(m_women);
 
 	if (m_hasValidAimPos)
 	{

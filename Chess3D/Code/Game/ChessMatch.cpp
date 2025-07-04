@@ -1,7 +1,9 @@
 #include "ChessMatch.hpp"
 #include "Game/Game.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Renderer/Renderer.hpp"
 
+extern Renderer* g_theRenderer;
 
 
 ChessMatch::ChessMatch(Game* game):m_game(game),m_chessBoard(this)

@@ -19,6 +19,7 @@
 #include "Engine/Renderer/CubeSkyBox.hpp"
 
 #include "Game/ChessMatch.hpp"
+#include "Engine/Core/ObjLoader.hpp"
 
 extern bool g_isDebugDraw;
 extern Renderer* g_theRenderer;
@@ -116,6 +117,10 @@ Game::Game()
 	);
 	m_spotLights.push_back(spotLight1);
 
+	
+// 	ObjLoader::LoadObjFromFile_WithTBN("Data/Models/SimpleCube/Cube_vi.obj",m_cube_withTBN);
+// 	ObjLoader::LoadObjFromFile_WithIndex("Data/Models/SimpleCube/Cube_vn.obj", m_cube_withIndex,m_cubeIndex);
+// 	ObjLoader::LoadObjFromFile_WithTBN_WithIndex("Data/Models/SimpleCube/Cube_vni.obj",m_cube_withTBN_withIndex,m_cubeIndex_withTBN);
 }
 
 Game::~Game()
@@ -189,6 +194,18 @@ void Game::Renderer() const
 	m_cubeSkybox->Render();
 
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+
+	// draw models
+// 	g_theRenderer->SetModelConstants();
+// 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+// 	g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
+// 	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
+// 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+// 	Shader* diffuseShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/DX11BlinnPhong");
+// 	g_theRenderer->BindShader(diffuseShader);
+// 	Texture* tex = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png");
+// 	g_theRenderer->BindTexture(tex);
+// 	g_theRenderer->DrawVertexArray_WithTBN(m_cube);
 
 	//chess game
 	g_theRenderer->SetPointLightsConstants(m_pointLights);
