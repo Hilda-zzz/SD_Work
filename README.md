@@ -3,6 +3,11 @@
 This repository contains a collection of projects developed during my studies at Southern Methodist University's Guildhall program. These projects demonstrate various aspects of game development, from engine programming to gameplay mechanics.
 
 ## Projects Overview
+### Pyra Engine
+![Screenshot 2025-07-03 204230-effectapp](https://github.com/user-attachments/assets/7e9562c1-a53c-483b-b92a-9a1658836bf3)
+Personal C++ game engine supporting DirectX 11 rendering.
+  - Built game engine architecture with 10 core systems including renderer, window manager, event system, console, input,
+ audio, and networking systems
 
 ### 🎮 Game Projects
 
