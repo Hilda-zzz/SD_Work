@@ -11,8 +11,10 @@
 #include "Game/ChessObject.hpp"
 #include "Game/ChessMatch.hpp"
 #include "Engine/Core/ObjLoader.hpp"
+#include "Engine/ResourceManager/ResourceManager.hpp"
 
 extern InputSystem* g_theInput;
+extern ResourceManager* g_theResourceManager;
 
 ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 {
@@ -31,7 +33,10 @@ ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 	AddBoardBlockCollider();
 	AddVertsForBoard();
 
-	ObjLoader::LoadObjFromFile_WithTBN("Data/Models/Woman/Woman.obj", m_women);
+	//ObjLoader::LoadObjFromFile_WithTBN("Data/Models/Woman/Woman.obj", m_women);
+	//g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta");
+
+	m_simpleObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta"));
 }
 
 ChessBoard::~ChessBoard()
@@ -187,12 +192,17 @@ void ChessBoard::Renderer() const
 		g_theRenderer->BindShader(m_shader);
 		chess->Renderer();
 	}
-	Texture* womenDiffuse = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png");
-	Texture* womenNormal = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png");
-	g_theRenderer->BindTexture(womenDiffuse, womenNormal,nullptr);
-	g_theRenderer->BindShader(m_shader);
-	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
-	g_theRenderer->DrawVertexArray_WithTBN(m_women);
+
+	//---------------------------- Test for model-----------------------------
+// 	Texture* womenDiffuse = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png");
+// 	Texture* womenNormal = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png");
+// 	g_theRenderer->BindTexture(womenDiffuse, womenNormal,nullptr);
+// 	g_theRenderer->BindShader(m_shader);
+// 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+// 	g_theRenderer->DrawVertexArray_WithTBN(m_women);
+	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
+	m_simpleObject.Render();
+	//------------------------------------------------------------------------
 
 	if (m_hasValidAimPos)
 	{

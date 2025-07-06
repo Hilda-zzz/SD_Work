@@ -222,6 +222,9 @@
     <ClCompile Include="Renderer\TextureAtlas.cpp" />
     <ClCompile Include="Renderer\TextureCube.cpp" />
     <ClCompile Include="Renderer\VertexBuffer.cpp" />
+    <ClCompile Include="ResourceManager\MeshResource.cpp" />
+    <ClCompile Include="ResourceManager\ResourceManager.cpp" />
+    <ClCompile Include="ResourceManager\StaticMeshComponent.cpp" />
     <ClCompile Include="Window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -302,6 +305,10 @@
     <ClInclude Include="Renderer\TextureAtlas.hpp" />
     <ClInclude Include="Renderer\TextureCube.hpp" />
     <ClInclude Include="Renderer\VertexBuffer.hpp" />
+    <ClInclude Include="ResourceManager\MeshResource.hpp" />
+    <ClInclude Include="ResourceManager\ResourceManager.hpp" />
+    <ClInclude Include="ResourceManager\StaticMeshComponent.hpp" />
+    <ClInclude Include="ResourceManager\StaticMeshInfo.hpp" />
     <ClInclude Include="Window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>

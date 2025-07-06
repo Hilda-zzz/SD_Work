@@ -6,6 +6,7 @@
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
+#include "SimpleObject.hpp"
 
 class ChessPiece;
 struct IntVec2;
@@ -67,8 +68,8 @@ private:
 
 	//Light
 	Vec3 m_sunDirection = Vec3(10.f, 2.f, -3.f);
-	float m_sunIntensity =0.1f;
-	float m_ambientIntensity = 0.1f;
+	float m_sunIntensity =0.0f;
+	float m_ambientIntensity = 0.0f;
 
 	// debug int
 	int m_debugInt = 0;
@@ -86,6 +87,8 @@ private:
 	std::vector<Vertex_PCU> m_aimHoverQuad;
 	std::vector<Vertex_PCU> m_aimShadowPiece;
 
+	// OBJ
 	std::vector<Vertex_PCUTBN> m_women;
+	SimpleObject m_simpleObject;
 };
 

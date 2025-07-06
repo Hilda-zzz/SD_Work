@@ -19,7 +19,7 @@ void ObjLoader::LoadObjFromFile(const std::string& filePath, std::vector<Vertex_
 	}
 }
 
-void ObjLoader::LoadObjFromFile_WithTBN(const std::string& filePath, std::vector<Vertex_PCUTBN>& verts)
+void ObjLoader::LoadObjFromFile_WithTBN(const std::string& filePath, std::vector<Vertex_PCUTBN>& verts, float scale, Mat44 const& modelToEngineMat)
 {
 	ObjData data = LoadAndPreprocessObjFile(filePath);
 	if (data.m_faces.size() != 0)
@@ -27,6 +27,12 @@ void ObjLoader::LoadObjFromFile_WithTBN(const std::string& filePath, std::vector
 		for (std::string const& faceLine : data.m_faces)
 		{
 			AddVertsForEachFaceLine_WithTBN(faceLine, verts, data);
+		}
+
+		for (Vertex_PCUTBN& vertex : verts)
+		{
+			vertex.m_position *= scale;
+			vertex.m_position = modelToEngineMat.TransformPosition3D(vertex.m_position);
 		}
 	}
 }

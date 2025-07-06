@@ -346,8 +346,8 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	float diffuseIntensityPixelNormal =c_sunIntensity * saturate(dot(normalize(pixelNormalWorldSpace.xyz), -sunDir));
 	float4 totalLightingPixelNormal=  float4((ambient + diffuseIntensityPixelNormal).xxx, 1);
 
-//+pointLighting
-	float4 finalColor = float4( diffuseColor.rgb * totalLightingPixelNormal.rgb+specular+emissive+spotLighting+pointLighting, diffuseColor.a ); 
+//+pointLighting         +spotLighting+pointLighting
+	float4 finalColor = float4( diffuseColor.rgb * totalLightingPixelNormal.rgb+specular+emissive, diffuseColor.a ); 
 
 	if (c_debugInt == 1)
 	{

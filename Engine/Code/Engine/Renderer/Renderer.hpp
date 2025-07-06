@@ -149,6 +149,7 @@ public:
 	void CopyGameVertexBufferToGPU(const void* data, unsigned int verticeCount, VertexBuffer* vbo);
 	void CopyGameIndexBufferToGPU(const void* data, unsigned int count, IndexBuffer* ibo);
 	void DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo);
+	void DrawGameVertexBuffer(VertexBuffer* vbo);
 
 	//-----------------------Shadow-------------------------------------------------------------------
 	void InitializeShadowMapping();

@@ -4,6 +4,7 @@
 #include "Game/ChessPieceDefinition.hpp"
 #include "Engine/Core/Timer.hpp"
 #include "Engine/Math/ZCylinder.hpp"
+#include "Engine/ResourceManager/StaticMeshComponent.hpp"
 
 class Texture;
 class ChessMatch;
@@ -74,5 +75,8 @@ private:
 	//new 
 	float secondSinceMoved;
 	int m_turnLastMoved;
+
+	// model
+	StaticMeshComponent m_staticMeshComponent;
 	
 };

@@ -1291,6 +1291,11 @@ void Renderer::DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo)
 	DrawIndexedVertexBuffer(vbo, ibo, count);
 }
 
+void Renderer::DrawGameVertexBuffer(VertexBuffer* vbo)
+{
+	DrawVertexBuffer(vbo, vbo->GetVerticeCount());
+}
+
 void Renderer::InitializeShadowMapping()
 {
 	D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT isD3D9ShadowSupported;

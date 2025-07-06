@@ -35,6 +35,12 @@
     <Filter Include="Renderer\Lighting">
       <UniqueIdentifier>{3601c871-e657-4e6f-b079-63d301206a81}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ResourceManager">
+      <UniqueIdentifier>{8770b04f-c3ea-427a-8cbc-c9112ffd1ae6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ResourceManager\Mesh">
+      <UniqueIdentifier>{b5873055-8a4d-4f29-b935-718f3a34e0bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -240,6 +246,15 @@
     </ClCompile>
     <ClCompile Include="Core\ObjLoader.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager\StaticMeshComponent.cpp">
+      <Filter>ResourceManager\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager\ResourceManager.cpp">
+      <Filter>ResourceManager</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager\MeshResource.cpp">
+      <Filter>ResourceManager\Mesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -476,6 +491,18 @@
     </ClInclude>
     <ClInclude Include="Core\ObjLoader.hpp">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager\StaticMeshComponent.hpp">
+      <Filter>ResourceManager\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager\StaticMeshInfo.hpp">
+      <Filter>ResourceManager\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager\ResourceManager.hpp">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager\MeshResource.hpp">
+      <Filter>ResourceManager\Mesh</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

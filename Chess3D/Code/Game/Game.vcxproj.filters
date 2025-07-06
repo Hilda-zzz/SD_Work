@@ -14,6 +14,9 @@
     <Filter Include="Definitions">
       <UniqueIdentifier>{6e3c5b99-8a8e-4d8e-a4f8-a7456c6d3c00}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Definitions\ModelMeta">
+      <UniqueIdentifier>{d74b789c-610d-4ac2-bd5f-7b86e82f0199}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -53,6 +56,9 @@
       <Filter>Gameplay</Filter>
     </ClCompile>
     <ClCompile Include="ChessObject.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleObject.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
   </ItemGroup>
@@ -96,6 +102,9 @@
     <ClInclude Include="ChessObject.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
+    <ClInclude Include="SimpleObject.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\Definitions\ChessPieceDefinitions.xml">
@@ -115,5 +124,10 @@
     <Text Include="..\..\Run\Data\Shaders\ShadowMap.hlsl">
       <Filter>Shaders</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Run\Data\Models\Meta\Woman.meta">
+      <Filter>Definitions\ModelMeta</Filter>
+    </None>
   </ItemGroup>
 </Project>

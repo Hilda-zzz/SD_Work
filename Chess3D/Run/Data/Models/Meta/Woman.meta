@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MeshMeta>
+	<MeshInfo ObjFilePath="Data/Models/Woman/Woman.obj" ShaderName="Data/Shaders/DX11BlinnPhong" UnitsPerMeter="100.0"/>
+
+	<Textures
+        DiffuseTexture="Data/Models/Woman/Woman_Diffuse.png"
+        NormalTexture="Data/Models/Woman/Woman_Normal.png"
+        SpecularTexture=""/>
+
+	<CoordinateSystem>
+		<Forward xyz="0.0,0.0,1.0"/>
+		<Left xyz="1.0,0.0,0.0"/>
+		<Up xyz="0.0,1.0,0.0"/>
+	</CoordinateSystem>
+	
+</MeshMeta>

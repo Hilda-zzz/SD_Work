@@ -11,6 +11,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Clock.hpp"
 #include <Engine/Core/DebugRenderSystem.hpp>
+#include "Engine/ResourceManager/ResourceManager.hpp"
 //#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
@@ -20,7 +21,7 @@ AudioSystem*	g_theAudio = nullptr;
 Game*			g_theGame = nullptr;
 bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
-
+ResourceManager* g_theResourceManager = nullptr;
 
 
 App::~App()
@@ -65,12 +66,15 @@ void App::Startup()
 	debugRenderConfig.m_fontName = "Data/Fonts/SquirrelFixedFont";
 	debugRenderConfig.m_renderer=g_theRenderer;
 
+	g_theResourceManager = new ResourceManager();
+
 	g_theEventSystem->Startup();
 	g_theWindow->Startup();
 	g_theRenderer->Startup();
 	g_theDevConsole->Startup();
 	g_theInput->Startup();
 	g_theAudio->Startup();
+	g_theResourceManager->Startup(g_theRenderer);
 	DebugRenderSystemStartup(debugRenderConfig);
 
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
@@ -84,12 +88,16 @@ void App::Shutdown()
 	g_theGame = nullptr;
 
 	DebugRenderSystemShutdown();
+	g_theResourceManager->Shutdown();
 	g_theAudio->Shutdown();
 	g_theDevConsole->Shutdown();
 	g_theRenderer->Shutdown();
 	g_theWindow->Shutdown();
 	g_theInput->Shutdown();
 	g_theEventSystem->Shutdown();
+
+	delete g_theResourceManager;
+	g_theResourceManager = nullptr;
 
 	delete g_theAudio;
 	g_theAudio = nullptr;

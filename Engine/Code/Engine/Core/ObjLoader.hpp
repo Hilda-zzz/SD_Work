@@ -3,6 +3,7 @@
 #include <vector>
 #include "Vertex_PCU.hpp"
 #include "Vertex_PCUTBN.hpp"
+#include "../Math/Mat44.hpp"
 
 struct ObjData 
 {
@@ -19,7 +20,7 @@ public:
 	~ObjLoader() {};
 
 	static void LoadObjFromFile(const std::string& filePath, std::vector<Vertex_PCU>& verts);
-	static void LoadObjFromFile_WithTBN(const std::string& filePath, std::vector<Vertex_PCUTBN>& verts);
+	static void LoadObjFromFile_WithTBN(const std::string& filePath, std::vector<Vertex_PCUTBN>& verts,float scale,Mat44 const& modelToEngineMat);
 	static void LoadObjFromFile_WithIndex(const std::string& filePath, std::vector<Vertex_PCU>& verts,
 		std::vector<unsigned int>& indexes);
 	static void LoadObjFromFile_WithTBN_WithIndex(const std::string& filePath, std::vector<Vertex_PCUTBN>& verts,
