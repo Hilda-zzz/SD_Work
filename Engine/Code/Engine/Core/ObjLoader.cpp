@@ -37,19 +37,23 @@ void ObjLoader::LoadObjFromFile_WithTBN(const std::string& filePath, std::vector
 	}
 }
 
-void ObjLoader::LoadObjFromFile_WithIndex(const std::string& filePath, std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indexes)
-{
-	ObjData data = LoadAndPreprocessObjFile(filePath);
-}
+// void ObjLoader::LoadObjFromFile_WithIndex(const std::string& filePath, std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indexes)
+// {
+// 	ObjData data = LoadAndPreprocessObjFile(filePath);
+// }
 
-void ObjLoader::LoadObjFromFile_WithTBN_WithIndex(const std::string& filePath, std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexes)
+void ObjLoader::LoadObjFromFile_WithTBN_WithIndex(const std::string& filePath, std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices,
+	float scale, Mat44 const& modelToEngineMat)
 {
 	ObjData data = LoadAndPreprocessObjFile(filePath);
+	std::unordered_map<VertexKey, Vertex_PCUTBN, VertexKeyHash> vertexIndexMap;
+	std::unordered_map<VertexKey, unsigned int, VertexKeyHash> keyToIndex;
+
 	if (data.m_faces.size() != 0)
 	{
 		for (std::string const& faceLine : data.m_faces)
 		{
-			AddVertsForEachFaceLine_WithTBN(faceLine, verts, data);
+			CollectUniqueIndexedVertexEachFaceLine(faceLine, verts, indices, keyToIndex, data, scale, modelToEngineMat);
 		}
 	}
 }
@@ -180,6 +184,7 @@ Vertex_PCU ObjLoader::GetEachPointFromString(std::string const& vertexStr, ObjDa
 	return Vertex_PCU(objData.m_positions[vertexIndex], Rgba8::WHITE, uv);
 }
 
+
 void ObjLoader::AddVertsForEachFaceLine_WithTBN(std::string const& faceLine, std::vector<Vertex_PCUTBN>& verts, ObjData const& objData)
 {
 	std::istringstream iss(faceLine);
@@ -262,4 +267,159 @@ Vertex_PCUTBN ObjLoader::GetEachPointFromString_WithTBN(std::string const& verte
 	return Vertex_PCUTBN(objData.m_positions[vertexIndex], Rgba8::WHITE, uv, 
 		Vec3(1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), normal);
 }
+
+void ObjLoader::CollectUniqueIndexedVertexEachFaceLine(std::string const& faceLine,
+	std::vector<Vertex_PCUTBN>& vertices, std::vector<unsigned int>& indices,
+	std::unordered_map<VertexKey, unsigned int, VertexKeyHash>& keyToIndex,
+	ObjData const& objData, float scale, Mat44 const& transform)
+{
+	std::basic_istringstream iss(faceLine);
+	std::string prefix;
+	iss >> prefix;
+
+	std::vector<unsigned int> faceIndices;
+	std::string vertexString;
+
+	while (iss >> vertexString)
+	{
+		VertexKey key=PareseEachVertexKey(vertexString);
+		auto it = keyToIndex.find(key);
+		unsigned int vertexIndex;
+		if (keyToIndex.find(key) == keyToIndex.end()) 
+		{
+			Vertex_PCUTBN newVertex = CreateVertexFromKey(key, objData, scale, transform);
+			vertexIndex = static_cast<unsigned int>(vertices.size());
+			vertices.push_back(newVertex);
+			keyToIndex[key] = vertexIndex;
+		}
+		else
+		{
+			vertexIndex = it->second;
+		}
+		faceIndices.push_back(vertexIndex);
+	}
+
+	if (faceIndices.size() >= 3) 
+	{
+		for (size_t i = 1; i < faceIndices.size() - 1; i++) 
+		{
+			unsigned int a = faceIndices[0];
+			unsigned int b = faceIndices[i];
+			unsigned int c = faceIndices[i + 1];
+
+			indices.push_back(a);
+			indices.push_back(b);
+			indices.push_back(c);
+
+			Vec3 tangent, bitangent;
+			CalculateTangentBitangent(
+				vertices[a].m_position, vertices[b].m_position, vertices[c].m_position,
+				vertices[a].m_uvTexCoords, vertices[b].m_uvTexCoords, vertices[c].m_uvTexCoords,
+				tangent, bitangent);
+			vertices[a].m_tangent = tangent;
+			vertices[a].m_bitangent = bitangent;
+			vertices[b].m_tangent = tangent;
+			vertices[b].m_bitangent = bitangent;
+			vertices[c].m_tangent = tangent;
+			vertices[c].m_bitangent = bitangent;
+		}
+	}
+}
+
+
+VertexKey ObjLoader::PareseEachVertexKey(std::string const& vertexStr)
+{
+	Strings splitStrs = SplitStringOnDelimiter(vertexStr, '/');
+	int nonEmptyCount = 0;
+
+	int vertexIndex = -1, uvIndex = -1, normalIndex = -1;
+	for (std::string const& element : splitStrs)
+	{
+		// vertex index/ texture coordinate/ normal
+		if (!element.empty())
+		{
+			int curIndex = std::stoi(element) - 1;
+			switch (nonEmptyCount)
+			{
+			case 0:  // vertex index
+				vertexIndex = curIndex;
+				nonEmptyCount++;
+				break;
+			case 1:  // texture coordinate index
+				uvIndex = curIndex;
+				nonEmptyCount++;
+				break;
+			case 2:  // normal index
+				normalIndex = curIndex;
+				nonEmptyCount++;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	if (vertexIndex == -1)
+	{
+		ERROR_AND_DIE(Stringf("The obj lack a vertex in a face line!"));
+	}
+
+	return VertexKey(vertexIndex, uvIndex, normalIndex);
+}
+
+Vertex_PCUTBN ObjLoader::CreateVertexFromKey(VertexKey const& key, ObjData const& objData, float scale, Mat44 const& transform)
+{
+	Vertex_PCUTBN vertex;
+
+	if (key.m_posIndex >= 0 && key.m_posIndex < (int)objData.m_positions.size())
+	{
+		vertex.m_position = objData.m_positions[key.m_posIndex] * scale;
+		vertex.m_position = transform.TransformPosition3D(vertex.m_position);
+	}
+
+	if (key.m_uvIndex >= 0 && key.m_uvIndex < (int)objData.m_uv.size())
+	{
+		vertex.m_uvTexCoords = objData.m_uv[key.m_uvIndex];
+	}
+
+	if (key.m_normalIndex >= 0 && key.m_normalIndex < (int)objData.m_normals.size())
+	{
+		vertex.m_normal = objData.m_normals[key.m_normalIndex];
+		vertex.m_normal = transform.TransformPosition3D(vertex.m_normal).GetNormalized();
+	}
+
+	vertex.m_color = Rgba8::WHITE;
+
+	vertex.m_tangent = Vec3(1, 0, 0);
+	vertex.m_bitangent = Vec3(0, 1, 0);
+
+	return vertex;
+}
+
+// void ObjLoader::BuildVertexAndIndexArrays(ObjData const& objData, 
+// 	std::unordered_map<VertexKey, Vertex_PCUTBN, VertexKeyHash> const& vertexMap, 
+// 	std::vector<Vertex_PCUTBN>& vertices, std::vector<unsigned int>& indices)
+// {
+// 	std::unordered_map<VertexKey, unsigned int, VertexKeyHash> keyToIndex;
+// 
+// 	// vertices
+// 	unsigned int currentIndex = 0;
+// 	for (const auto& pair : vertexMap) 
+// 	{
+// 		vertices.push_back(pair.second);
+// 		keyToIndex[pair.first] = currentIndex;
+// 		currentIndex++;
+// 	}
+// 	// indices
+// 	for (const std::string& faceLine : objData.m_faces) 
+// 	{
+// 		AddIndicesForFace(faceLine, keyToIndex, indices);
+// 	}
+// }
+
+// void ObjLoader::AddVertsForEachFaceLine_WithTBN_WithIndex(std::string const& faceLine,
+// 	std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indexs, 
+// 	std::unordered_map<VertexKey, Vertex_PCUTBN, VertexKeyHash>& vertexMap, ObjData const& objData)
+// {
+// 
+// }
 

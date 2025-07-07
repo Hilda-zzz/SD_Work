@@ -1,0 +1,82 @@
+<RuledTilesetDefinitions>
+
+	<RuledTilesetDefinition name="FARM_SOIL" spriteLayout="12,4" texturePath="Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/PlowedFarmland.png">
+		<TileRules>
+			<!-- 孤立瓦片 -->
+			<TileRule neighborMask="0b0000">
+				<SpriteGridPos gridPos="9,2"/>
+			</TileRule>
+
+			<!-- 单向连接 -->
+			<TileRule neighborMask="0b0001">
+				<!-- 上 -->
+				<SpriteGridPos gridPos="4,1"/>
+			</TileRule>
+			<TileRule neighborMask="0b0010">
+				<!-- 右 -->
+				<SpriteGridPos gridPos="2,2"/>
+			</TileRule>
+			<TileRule neighborMask="0b0100">
+				<!-- 下 -->
+				<SpriteGridPos gridPos="4,0"/>
+			</TileRule>
+			<TileRule neighborMask="0b1000">
+				<!-- 左 -->
+				<SpriteGridPos gridPos="3,2"/>
+			</TileRule>
+
+			<!-- 双向连接 -->
+			<TileRule neighborMask="0b0101">
+				<!-- 上+下，垂直线 -->
+				<SpriteGridPos gridPos="11,0"/>
+			</TileRule>
+			<TileRule neighborMask="0b1010">
+				<!-- 左+右，水平线 -->
+				<SpriteGridPos gridPos="10,0"/>
+			</TileRule>
+
+			<!-- L形转角 -->
+			<TileRule neighborMask="0b0011">
+				<!-- 上+右 -->
+				<SpriteGridPos gridPos="5,2"/>
+			</TileRule>
+			<TileRule neighborMask="0b0110">
+				<!-- 右+下 -->
+				<SpriteGridPos gridPos="5,0"/>
+			</TileRule>
+			<TileRule neighborMask="0b1100">
+				<!-- 下+左 -->
+				<SpriteGridPos gridPos="7,0"/>
+			</TileRule>
+			<TileRule neighborMask="0b1001">
+				<!-- 左+上 -->
+				<SpriteGridPos gridPos="7,2"/>
+			</TileRule>
+
+			<!-- T形连接 -->
+			<TileRule neighborMask="0b0111">
+				<!-- 上+右+下 -->
+				<SpriteGridPos gridPos="5,1"/>
+			</TileRule>
+			<TileRule neighborMask="0b1110">
+				<!-- 右+下+左 -->
+				<SpriteGridPos gridPos="6,0"/>
+			</TileRule>
+			<TileRule neighborMask="0b1101">
+				<!-- 下+左+上 -->
+				<SpriteGridPos gridPos="7,1"/>
+			</TileRule>
+			<TileRule neighborMask="0b1011">
+				<!-- 左+上+右 -->
+				<SpriteGridPos gridPos="6,2"/>
+			</TileRule>
+
+			<!-- 十字连接 -->
+			<TileRule neighborMask="0b1111">
+				<!-- 全连接 -->
+				<SpriteGridPos gridPos="6,1"/>
+			</TileRule>
+		</TileRules>
+	</RuledTilesetDefinition>
+
+</RuledTilesetDefinitions>

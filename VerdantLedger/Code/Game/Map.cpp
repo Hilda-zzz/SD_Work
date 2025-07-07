@@ -21,7 +21,8 @@ Map::Map(Game* game, TileMap* tileMap, Player* player):
 	m_gameplayCam.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
 	m_gameplayCam.SetOrthographicView(m_player->m_position - g_halfGameCamDimensions, m_player->m_position + g_halfGameCamDimensions,0.f,1000.f);
 
-	m_dirtyChunkDelayTimer = Timer(0.5f);
+	m_dirtyObstacleDelayTimer = Timer(0.5f);
+	m_dirtyFarmlandDelayTimer = Timer(0.5f);
 }
 
 Map::~Map()
@@ -40,7 +41,8 @@ void Map::Update(float deltaSeconds)
  	m_tileMap->UpdateTransparentObject(m_playerFrontGridPos);
  	m_tileMap->Update(deltaSeconds);
 
-	UpdateDelayDirtyChunk();
+	UpdateDelayDirtyFarmlandChunk();
+	UpdateDelayDirtyObstacleChunk();
 }
 
 void Map::Render() const
@@ -63,12 +65,22 @@ void Map::UpdateCamFollow(float deltaSeconds)
 	m_gameplayCam.SetOrthographicView(cameraSmoothPos - g_halfGameCamDimensions, cameraSmoothPos + g_halfGameCamDimensions, 0.f, 1000.f);
 }
 
-void Map::UpdateDelayDirtyChunk()
+void Map::UpdateDelayDirtyObstacleChunk()
 {
-	if (m_curDirtyChunk&&!m_dirtyChunkDelayTimer.IsStopped() && m_dirtyChunkDelayTimer.GetElapsedFraction() > 1.f)
+	if (m_curDirtyChunk&&!m_dirtyObstacleDelayTimer.IsStopped() && m_dirtyObstacleDelayTimer.GetElapsedFraction() > 1.f)
 	{
-		m_dirtyChunkDelayTimer.Stop();
-		m_curDirtyChunk->m_isDirty = true;
+		m_dirtyObstacleDelayTimer.Stop();
+		m_curDirtyChunk->m_isDirtyObstacle = true;
+		m_curDirtyChunk = nullptr;
+	}
+}
+
+void Map::UpdateDelayDirtyFarmlandChunk()
+{
+	if (m_curDirtyChunk && !m_dirtyFarmlandDelayTimer.IsStopped() && m_dirtyFarmlandDelayTimer.GetElapsedFraction() > 1.f)
+	{
+		m_dirtyFarmlandDelayTimer.Stop();
+		m_curDirtyChunk->m_isDirtyFarmland = true;
 		m_curDirtyChunk = nullptr;
 	}
 }
@@ -106,8 +118,8 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 {
 	TileChunk* curChunk=m_tileMap->m_markLayer->GetChunkContaining(aimGridPos);
 	uint64_t tileKey = m_tileMap->GetTileKey(aimGridPos);
-	auto it =curChunk->m_dynamicTiles.find(tileKey);
-	if (it != curChunk->m_dynamicTiles.end())
+	auto it =curChunk->m_keyToDynamicTileData.find(tileKey);
+	if (it != curChunk->m_keyToDynamicTileData.end())
 	{
 		if ((it->second.m_obstacleType == ObstacleType::ROCK&& toolType==PlayerTools::PICKAXE)||
 			(it->second.m_obstacleType == ObstacleType::WEED&& toolType == PlayerTools::SICKLE))
@@ -117,9 +129,26 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 			{
 				it->second.m_obstacleType = ObstacleType::NONE;
 				m_curDirtyChunk = curChunk;
-				m_dirtyChunkDelayTimer.Start();
-				//curChunk->m_isDirty = true;
+				m_dirtyObstacleDelayTimer.Start();
 			}
+		}
+
+		if (it->second.m_farmState == FarmState::UNPLOWED
+			&& it->second.m_obstacleType == ObstacleType::NONE
+			&& toolType == PlayerTools::SHOVEL)
+		{
+			it->second.m_farmState = FarmState::PLOWED;
+			m_curDirtyChunk = curChunk;
+			m_dirtyFarmlandDelayTimer.Start();
+		}
+
+		if (it->second.m_farmState == FarmState::PLOWED
+			&& it->second.m_obstacleType == ObstacleType::NONE
+			&& toolType == PlayerTools::WATER)
+		{
+			it->second.m_farmState = FarmState::WATER;
+			m_curDirtyChunk = curChunk;
+			m_dirtyFarmlandDelayTimer.Start();
 		}
 	}
 }
@@ -136,9 +165,9 @@ void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhy
 
 	TileChunk* curChunk= m_tileMap->m_markLayer->GetChunkContaining(tileCoords);
 	uint64_t tileKey=m_tileMap->GetTileKey(tileCoords);
-	if (curChunk && curChunk->m_dynamicTiles.count(tileKey) > 0)
+	if (curChunk && curChunk->m_keyToDynamicTileData.count(tileKey) > 0)
 	{
-		const DynamicTileData& tileData = curChunk->m_dynamicTiles.at(tileKey);
+		const DynamicTileData& tileData = curChunk->m_keyToDynamicTileData.at(tileKey);
 		hasObstacleCollision = ((tileData.m_obstacleType != ObstacleType::NONE) && (tileData.m_obstacleType != ObstacleType::WEED));
 	}
 

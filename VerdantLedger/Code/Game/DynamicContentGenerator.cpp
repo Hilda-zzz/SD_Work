@@ -43,7 +43,7 @@ void DynamicContentGenerator::GenerateAllDynamicContentForTheMap(TileMap* curMap
 void DynamicContentGenerator::GenerateDynamicContentForEachChunk(TileChunk* curChunk)
 {
 	curChunk->m_obstacleWithAnimation.reserve(200);
-	curChunk->m_dynamicTiles.clear();
+	curChunk->m_keyToDynamicTileData.clear();
 	curChunk->ForEachTileInChunk(
 		[this, curChunk](IntVec2 gridPos, uint32_t gid)
 		{
@@ -95,6 +95,7 @@ void DynamicContentGenerator::GenerateObstacleAtPosition(TileChunk* curChunk, In
 	if (possibility <= 0.7f)
 	{
 		curDynamicTileData.m_obstacleType = ObstacleType::NONE;
+		curChunk->m_keyToDynamicTileData[tilePosKey] = curDynamicTileData;
 	}
  	else if (possibility <= 0.8f)
  	{
@@ -104,7 +105,7 @@ void DynamicContentGenerator::GenerateObstacleAtPosition(TileChunk* curChunk, In
 	{
 		GenerateSpecificObstacle(curChunk, gridPos, tilePosKey, ObstacleType::ROCK);
 	}
- 	else if (possibility <= 0.95f)
+ 	else if (possibility <= 1.f)
  	{
 		GenerateSpecificObstacle(curChunk, gridPos, tilePosKey, ObstacleType::WEED);
  	}
@@ -129,7 +130,7 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 			spriteUV = curDef->m_spriteSheet->GetSpriteUVs(spriteIndex);
 		}
 
-		curChunk->m_dynamicTiles[tilePosKey] = curDynamicTileData;
+		curChunk->m_keyToDynamicTileData[tilePosKey] = curDynamicTileData;
 
 		if (curDef->m_isObject)
 		{
@@ -146,7 +147,7 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 			Vec2 spriteBottomLeft = gridBottomCenter - Vec2(spriteSizeInWorld.x * 0.5f, 0.f);
 			Vec2 spriteTopRight = gridBottomCenter + Vec2(spriteSizeInWorld.x * 0.5f, spriteSizeInWorld.y);
 
-			AddVertsForAABB2D(curChunk->m_dynamicVerts,
+			AddVertsForAABB2D(curChunk->m_staticObstacleVerts,
 				AABB2(spriteBottomLeft, spriteTopRight),
 				Rgba8(255, 255, 255, 255), spriteUV.m_mins, spriteUV.m_maxs, (float)gridPos.y + Z_OFFSET);
 		}
@@ -154,9 +155,9 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 	else
 	{
 		curDynamicTileData.m_curObstacleDurability = 1;
-		curChunk->m_dynamicTiles[tilePosKey] = curDynamicTileData;
+		curChunk->m_keyToDynamicTileData[tilePosKey] = curDynamicTileData;
 
-		AddVertsForAABB2D(curChunk->m_dynamicVerts,
+		AddVertsForAABB2D(curChunk->m_staticObstacleVerts,
 			AABB2(Vec2((float)gridPos.x, (float)gridPos.y), Vec2((float)gridPos.x, (float)gridPos.y) + Vec2(1.f, 1.f)),
 			Rgba8::WHITE);
 	}

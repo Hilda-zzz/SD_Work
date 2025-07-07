@@ -28,7 +28,8 @@ public:
 private:
 	void UpdateCamFollow(float deltaSecondes);
 
-	void UpdateDelayDirtyChunk();
+	void UpdateDelayDirtyObstacleChunk();
+	void UpdateDelayDirtyFarmlandChunk();
 
 	void CheckPlayerCollWithSolidTiles();
 
@@ -44,5 +45,6 @@ private:
 	Player* m_player = nullptr;
 	Vec2 m_playerPrevPos = Vec2::ZERO;
 	TileChunk* m_curDirtyChunk = nullptr;
-	Timer m_dirtyChunkDelayTimer;
+	Timer m_dirtyObstacleDelayTimer;
+	Timer m_dirtyFarmlandDelayTimer;
 };

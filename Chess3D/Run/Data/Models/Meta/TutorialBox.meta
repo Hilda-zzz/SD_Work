@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MeshMeta>
+	<MeshInfo ObjFilePath="Data/Models/TutorialBox_Phong/Tutorial_Box.obj" ShaderName="Data/Shaders/DX11BlinnPhong" UnitsPerMeter="100.0"
+			  UseIndex="true"/>
+
+	<Textures
+        DiffuseTexture="Data/Models/TutorialBox_Phong/Tutorial_Box_Diffuse.tga"
+        NormalTexture="Data/Models/TutorialBox_Phong/Tutorial_Box_Normal.tga"
+        SpecularTexture="Data/Models/TutorialBox_Phong/Tutorial_Box_SpecGlossEmit.tga"/>
+
+	<CoordinateSystem>
+		<Forward xyz="0.0,0.0,1.0"/>
+		<Left xyz="1.0,0.0,0.0"/>
+		<Up xyz="0.0,1.0,0.0"/>
+	</CoordinateSystem>
+	
+</MeshMeta>

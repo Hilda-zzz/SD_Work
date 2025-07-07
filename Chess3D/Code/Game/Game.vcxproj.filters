@@ -129,5 +129,8 @@
     <None Include="..\..\Run\Data\Models\Meta\Woman.meta">
       <Filter>Definitions\ModelMeta</Filter>
     </None>
+    <None Include="..\..\Run\Data\Models\Meta\TutorialBox.meta">
+      <Filter>Definitions\ModelMeta</Filter>
+    </None>
   </ItemGroup>
 </Project>

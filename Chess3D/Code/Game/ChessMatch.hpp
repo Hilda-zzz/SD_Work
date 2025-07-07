@@ -24,7 +24,7 @@ class ChessMatch
 public:
 	ChessMatch(Game* game);
 	~ChessMatch() {};
-	void Update();
+	void Update(float deltaTime);
 	void Renderer() const;
 
 	std::string const& GetBoardStateString();

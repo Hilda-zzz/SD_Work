@@ -91,6 +91,9 @@
     <ClCompile Include="Button.cpp">
       <Filter>UIFramework</Filter>
     </ClCompile>
+    <ClCompile Include="RuledTileset.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -156,6 +159,9 @@
     <ClInclude Include="Button.hpp">
       <Filter>UIFramework</Filter>
     </ClInclude>
+    <ClInclude Include="RuledTileset.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx">
@@ -173,6 +179,9 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\Definitions\ObstacleDefinitions.xml">
+      <Filter>Definitions</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Definitions\RuledTilesets.xml">
       <Filter>Definitions</Filter>
     </Xml>
   </ItemGroup>

@@ -37,6 +37,7 @@ public:
 	std::string m_normalTexPath = "";
 	std::string m_sgeTexPath = "";
 	float m_unitsPerMeter = 1.f;
+	bool m_useIndex = false;
 
 	Vec3 m_fwd = Vec3(1.f, 0.f, 0.f);
 	Vec3 m_left = Vec3(0.f, 1.f, 0.f);;

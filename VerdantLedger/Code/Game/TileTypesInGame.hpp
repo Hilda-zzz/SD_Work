@@ -19,9 +19,10 @@ enum class TerrainType : uint32_t   //may change to uint8
 
 enum class FarmState : uint8_t {
 	UNPLOWED = 0,   
-	PLOWED = 1,     
-	PLANTED = 2,    
-	GROWN = 3       
+	PLOWED = 1,
+	WATER=2,
+	PLANTED = 3,    
+	GROWN = 4       
 };
 
 enum class ObstacleType : uint8_t {

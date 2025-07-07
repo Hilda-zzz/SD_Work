@@ -27,7 +27,7 @@ public:
 	ChessBoard(ChessMatch* match);
 	~ChessBoard();
 
-	void Update();
+	void Update(float deltaTime);
 	void Renderer() const;
 
 	void UpdateDebugKeyInput();
@@ -68,8 +68,8 @@ private:
 
 	//Light
 	Vec3 m_sunDirection = Vec3(10.f, 2.f, -3.f);
-	float m_sunIntensity =0.0f;
-	float m_ambientIntensity = 0.0f;
+	float m_sunIntensity =0.2f;
+	float m_ambientIntensity = 0.2f;
 
 	// debug int
 	int m_debugInt = 0;
@@ -90,5 +90,6 @@ private:
 	// OBJ
 	std::vector<Vertex_PCUTBN> m_women;
 	SimpleObject m_simpleObject;
+	SimpleObject m_womanObject;
 };
 

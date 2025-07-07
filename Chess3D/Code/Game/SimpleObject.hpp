@@ -15,6 +15,6 @@ public:
 	
 public:
 	StaticMeshComponent m_staticMesh;
-	Vec3 m_position=Vec3(0.f,5.f,0.2f);
+	Vec3 m_position=Vec3(3.f,4.f,0.2f);
 	EulerAngles m_orientation;
 };

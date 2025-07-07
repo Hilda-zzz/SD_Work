@@ -13,6 +13,7 @@ SimpleObject::~SimpleObject()
 
 void SimpleObject::Update(float deltaSeconds)
 {
+	m_orientation.m_yawDegrees += deltaSeconds * 20.f;
 }
 
 void SimpleObject::Render() const

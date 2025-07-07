@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <MeshMeta>
-	<MeshInfo ObjFilePath="Data/Models/Woman/Woman.obj" ShaderName="Data/Shaders/DX11BlinnPhong" UnitsPerMeter="100.0"/>
+	<MeshInfo ObjFilePath="Data/Models/Woman/Woman.obj" ShaderName="Data/Shaders/DX11BlinnPhong" UnitsPerMeter="100.0"
+			   UseIndex="false"/>
 
 	<Textures
         DiffuseTexture="Data/Models/Woman/Woman_Diffuse.png"

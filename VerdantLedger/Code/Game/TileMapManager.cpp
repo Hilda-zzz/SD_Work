@@ -2,6 +2,8 @@
 #include "Game/Tileset.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "TileTypesInGame.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "RuledTileset.hpp"
 
 
 TileMapManager* TileMapManager::s_tileManagerInstance = nullptr;
@@ -17,8 +19,29 @@ TileMapManager& TileMapManager::GetInstance()
 
 void TileMapManager::DestroyInstance()
 {
-	delete s_tileManagerInstance;
-	s_tileManagerInstance = nullptr;
+	if (s_tileManagerInstance)
+	{
+		for (auto& pair : s_tileManagerInstance->m_loadedMaps)
+		{
+			delete pair.second;
+		}
+		s_tileManagerInstance->m_loadedMaps.clear();
+
+		for (auto& pair : s_tileManagerInstance->m_loadedTilesetsByName)
+		{
+			delete pair.second;
+		}
+		s_tileManagerInstance->m_loadedTilesetsByName.clear();
+
+		for (auto& pair : s_tileManagerInstance->m_loadedRuledTilesetsByName)
+		{
+			delete pair.second;
+		}
+		s_tileManagerInstance->m_loadedRuledTilesetsByName.clear();
+
+		delete s_tileManagerInstance;
+		s_tileManagerInstance = nullptr;
+	}
 }
 
 std::string TileMapManager::ConvertTiledPathToGamePath(const std::string& tiledPath)
@@ -71,6 +94,7 @@ bool TileMapManager::GetIsPropertyTrue(TileProperty const& property, std::string
 void TileMapManager::InitAllTilemapResources()
 {
 	LoadAllTilesets();
+	LoadAllRuedTilesets();
 	LoadAllMaps();
 }
 
@@ -79,6 +103,35 @@ void TileMapManager::LoadAllTilesets()
 	LoadTileset("Data/Tiled/GrassSpring.tsx");
 	LoadTileset("Data/Tiled/TileMark.tsx");
 	LoadTileset("Data/Tiled/Road.tsx");
+}
+
+void TileMapManager::LoadAllRuedTilesets()
+{
+	XmlDocument ruledTileset;
+	XmlResult result = ruledTileset.LoadFile("Data/Definitions/RuledTilesets.xml");
+	std::string errorMsg = Stringf("Failed to open required ruled tileset defs file \"%s\"", "Data/Definitions/RuledTilesets.xml");
+	GUARANTEE_OR_DIE(result == tinyxml2::XML_SUCCESS, errorMsg.c_str());
+
+	XmlElement* rootElement = ruledTileset.RootElement();
+	GUARANTEE_OR_DIE(rootElement, "Faile to find root element");
+
+	for (XmlElement* tilesetDefElement = rootElement->FirstChildElement("RuledTilesetDefinition");
+		tilesetDefElement != nullptr;
+		tilesetDefElement = tilesetDefElement->NextSiblingElement("RuledTilesetDefinition"))
+	{
+		RuledTileset* newRuledTileset = new RuledTileset(tilesetDefElement);
+
+		std::string tilesetName = newRuledTileset->GetName();
+
+		if (m_loadedRuledTilesetsByName.find(tilesetName) != m_loadedRuledTilesetsByName.end())
+		{
+			std::string warningMsg = Stringf("Duplicate ruled tileset name \"%s\" found, overwriting previous definition", tilesetName.c_str());
+			DebuggerPrintf(warningMsg.c_str());
+			delete m_loadedRuledTilesetsByName[tilesetName]; 
+		}
+
+		m_loadedRuledTilesetsByName[tilesetName] = newRuledTileset;
+	}
 }
 
 Tileset* TileMapManager::LoadTileset(const std::string& tilesetPath)

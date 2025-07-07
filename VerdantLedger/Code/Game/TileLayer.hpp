@@ -55,8 +55,7 @@ public:
 private:
 	uint64_t GetChunkKey(IntVec2 chunkPos);
 
-	//std::vector<TileObject> m_objects; 
-
+	//std::vector<TileObject> m_objects;
 	// ?
 	//std::unordered_map<std::string, std::string> m_properties;
 };

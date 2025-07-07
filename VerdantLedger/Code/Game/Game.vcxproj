@@ -36,6 +36,7 @@
     <ClCompile Include="ObstacleDefinitions.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerBodyState.cpp" />
+    <ClCompile Include="RuledTileset.cpp" />
     <ClCompile Include="TileChunk.cpp" />
     <ClCompile Include="TileLayer.cpp" />
     <ClCompile Include="TileMapManager.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="ObstacleDefinitions.hpp" />
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="PlayerBodyState.hpp" />
+    <ClInclude Include="RuledTileset.hpp" />
     <ClInclude Include="StateMachine.hpp" />
     <ClInclude Include="TileChunk.hpp" />
     <ClInclude Include="TileLayer.hpp" />
@@ -74,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\Definitions\ObstacleDefinitions.xml" />
+    <Xml Include="..\..\Run\Data\Definitions\RuledTilesets.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

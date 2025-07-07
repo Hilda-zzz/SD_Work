@@ -299,7 +299,7 @@ void Game::UpdateGameplayMode(float deltaTime)
 		g_systemClock->GetTotalSeconds(), 1.f/g_systemClock->GetDeltaSeconds(), 1.f);
 	DebugAddScreenText(std::string(timeBuffer), AABB2(Vec2(1100.f, 720.f), Vec2(1590.f, 790.f)), 20.f, Vec2(1.f, 1.f), 0.f, Rgba8::WHITE, Rgba8::WHITE);
 
-	m_curMatch->Update();
+	m_curMatch->Update(deltaTime);
 	//-----------------------------------------------------------------------------------------
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
 	{

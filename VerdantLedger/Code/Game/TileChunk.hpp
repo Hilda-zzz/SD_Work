@@ -5,6 +5,7 @@
 #include "Game/TileTypesInGame.hpp"
 #include <unordered_map>
 
+class RuledTileset;
 class GroundObstacle;
 
 class TileChunk
@@ -17,6 +18,7 @@ public:
 
 	void InitializeChunkVerts();
 	void UpdateObstacleVerts();
+	void UpdateFarmlandVerts();
 
 	void RenderDynamicContent() const;
 
@@ -35,6 +37,9 @@ public:
 	template<typename Func>
 	void ForEachTileInChunk(Func callback);
 
+private:
+	uint8_t GetPlowedNeighborMask(IntVec2 const& tileGridPos);
+
 public:
 	IntVec2 m_startPosition;     
 	IntVec2 m_size; 
@@ -42,16 +47,19 @@ public:
 	std::vector<uint32_t> m_terrianData;
 	std::vector<Vertex_PCU> m_terrianVerts;
 
-	std::unordered_map<uint64_t, DynamicTileData> m_dynamicTiles; //grid pos key to data
-	std::vector<Vertex_PCU> m_dynamicVerts;
-	std::vector<Vertex_PCU> m_dynamicVertsTransparent;
-
+	std::unordered_map<uint64_t, DynamicTileData> m_keyToDynamicTileData; //grid pos key to data
+	std::vector<Vertex_PCU> m_plowedFarmlandVerts;
+	std::vector<Vertex_PCU> m_wateredFarmlandVerts;
+	std::vector<Vertex_PCU> m_staticObstacleVerts;
+	
 	std::vector<GroundObstacle*> m_obstacleWithAnimation;
 	std::unordered_map<uint64_t, GroundObstacle*> m_gridPosToGroundObstacle;
 
-	bool m_isDirty = false;
+	bool m_isDirtyObstacle = false;
+	bool m_isDirtyFarmland = false;
 private:
-	
+	RuledTileset* m_plowedSoilRuleSet = nullptr;
+	RuledTileset* m_waterSoilRuleSet = nullptr;
 };
 
 template<typename Func>

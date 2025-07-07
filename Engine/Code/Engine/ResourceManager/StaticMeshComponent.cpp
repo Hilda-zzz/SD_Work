@@ -26,7 +26,15 @@ void StaticMeshComponent::Render(Renderer* curRenderer, Mat44 const& modelToWorl
 	curRenderer->BindShader(m_meshResource->m_shader);
 	curRenderer->BindTexture(m_meshResource->m_diffuseTex, m_meshResource->m_normalTex, m_meshResource->m_sgeTex);
 
-	curRenderer->DrawGameVertexBuffer(m_meshResource->m_vertexBuffer);
+	if (m_meshResource->m_meshInfo.m_useIndex)
+	{
+		curRenderer->DrawGameIndexedVertexBuffer(m_meshResource->m_vertexBuffer, m_meshResource->m_indexBuffer);
+	}
+	else
+	{
+		curRenderer->DrawGameVertexBuffer(m_meshResource->m_vertexBuffer);
+	}
+	
 }
 
 void StaticMeshComponent::SetRelativePosition(Vec3 const& relativePos, EulerAngles const& relativeOrientation)

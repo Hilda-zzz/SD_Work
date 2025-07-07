@@ -69,6 +69,8 @@ StaticMeshInfo ResourceManager::ParseObjMetaFile(std::string const& metaFilePath
 		float unitsPerMeter = 1.0f;
 		unitsPerMeter = ParseXmlAttribute(meshInfoElement, "UnitsPerMeter", unitsPerMeter);
 		meshInfo.m_unitsPerMeter = unitsPerMeter;
+
+		meshInfo.m_useIndex = ParseXmlAttribute(meshInfoElement, "UseIndex", false);
 	}
 
 	// Parse Textures section

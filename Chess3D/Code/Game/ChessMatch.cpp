@@ -11,9 +11,9 @@ ChessMatch::ChessMatch(Game* game):m_game(game),m_chessBoard(this)
 	//m_chessBoard = ChessBoard(this);
 }
 
-void ChessMatch::Update()
+void ChessMatch::Update(float deltaTime)
 {
-	m_chessBoard.Update();
+	m_chessBoard.Update(deltaTime);
 }
 
 void ChessMatch::Renderer() const

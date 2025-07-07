@@ -89,6 +89,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\Run\Data\Models\Meta\TutorialBox.meta" />
     <None Include="..\..\Run\Data\Models\Meta\Woman.meta" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

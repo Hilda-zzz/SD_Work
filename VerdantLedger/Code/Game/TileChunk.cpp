@@ -8,11 +8,23 @@
 #include "Game.hpp"
 #include "TileMap.hpp"
 #include "GroundObstacle.hpp"
+#include "RuledTileset.hpp"
 
 extern Renderer* g_theRenderer;
 
 TileChunk::TileChunk()
 {
+	auto plowed = TileMapManager::GetInstance().m_loadedRuledTilesetsByName.find("FARM_SOIL");
+	if (plowed != TileMapManager::GetInstance().m_loadedRuledTilesetsByName.end())
+	{
+		m_plowedSoilRuleSet = plowed->second;
+	}
+
+	auto watered = TileMapManager::GetInstance().m_loadedRuledTilesetsByName.find("FARM_WATER");
+	if (watered != TileMapManager::GetInstance().m_loadedRuledTilesetsByName.end())
+	{
+		m_waterSoilRuleSet= watered->second;
+	}
 }
 
 TileChunk::~TileChunk()
@@ -30,10 +42,15 @@ void TileChunk::Update(float deltaSeconds)
 	{
 		curObstacle->Update(deltaSeconds);
 	}
-	if (m_isDirty)
+	if (m_isDirtyObstacle)
 	{
 		UpdateObstacleVerts();
-		m_isDirty = false;
+		m_isDirtyObstacle = false;
+	}
+	if (m_isDirtyFarmland)
+	{
+		UpdateFarmlandVerts();
+		m_isDirtyFarmland = false;
 	}
 }
 
@@ -57,35 +74,44 @@ void TileChunk::InitializeChunkVerts()
 			{
 				continue;
 			}
-			// get uv according to index
-	
-			// the index in whitch tsx?
-
-			// get int vec pos for the index
-
-			// get uv from sprite sheet
-
-// 			if (i % 2 == 0)
-// 			{
-// 				AddVertsForAABB2D(m_terrianVerts, tileBox, Rgba8::WHITE,curTileUV.m_mins,curTileUV.m_maxs);
-// 			}
-// 			else
-// 			{
-// 				
-// 			}
 			AddVertsForAABB2D(m_terrianVerts, tileBox, Rgba8::WHITE, curTileUV.m_mins, curTileUV.m_maxs,900.f);
-			
+		}
+		for (const auto& [tilePosKey, tileData] : m_keyToDynamicTileData)
+		{
+			if (tileData.m_farmState == FarmState::UNPLOWED) continue;
+
+			IntVec2 tileGridPos = TileMap::GetGridPosByTileKey(tilePosKey);
+			AABB2 tileBox = AABB2(Vec2((float)tileGridPos.x, (float)tileGridPos.y), 
+				Vec2((float)tileGridPos.x, (float)tileGridPos.y) + Vec2::ONE);
+			if (tileData.m_farmState == FarmState::PLOWED)
+			{
+				AABB2 curUv;
+				if (m_plowedSoilRuleSet)
+				{
+					uint8_t neighborMask=GetPlowedNeighborMask(tileGridPos);
+					curUv= m_plowedSoilRuleSet->GetUvFromMask(neighborMask);
+				}
+				AddVertsForAABB2D(m_plowedFarmlandVerts, tileBox, Rgba8::WHITE, curUv.m_mins, curUv.m_maxs, 900.f);
+			}
+			if (tileData.m_farmState == FarmState::WATER)
+			{
+				//get uv
+
+				AddVertsForAABB2D(m_plowedFarmlandVerts, tileBox, Rgba8::WHITE, Vec2::ZERO, Vec2::ONE, 900.f);
+
+				//get uv
+
+				AddVertsForAABB2D(m_wateredFarmlandVerts, tileBox, Rgba8::WHITE, Vec2::ZERO, Vec2::ONE, 900.f);
+			}
 		}
 	}
-
 }
 
 void TileChunk::UpdateObstacleVerts()
 {
-	m_dynamicVerts.clear();
-	m_dynamicVertsTransparent.clear();
+	m_staticObstacleVerts.clear();
 
-	for (const auto& [tilePosKey, tileData] : m_dynamicTiles)
+	for (const auto& [tilePosKey, tileData] : m_keyToDynamicTileData)
 	{
 		if (tileData.m_obstacleType == ObstacleType::NONE) continue;
 		if (ObstacleDefinition::s_obstacleDefinitions[tileData.m_obstacleType]->m_isObject) continue;
@@ -108,17 +134,8 @@ void TileChunk::UpdateObstacleVerts()
 			Vec2 spriteTopRight = gridBottomCenter + Vec2(spriteSizeInWorld.x * 0.5f, spriteSizeInWorld.y);
 
 			Rgba8 renderColor = Rgba8::WHITE;
-// 			if (tileData.m_isTransparent)
-// 			{
-// 				AddVertsForAABB2D(m_dynamicVertsTransparent,
-// 					AABB2(spriteBottomLeft, spriteTopRight),
-// 					Rgba8(255,255,255,tileData.m_alpha),
-// 					spriteUV.m_mins, spriteUV.m_maxs,
-// 					(float)gridPos.y + Z_OFFSET);
-// 					continue;
-// 			}
 
-			AddVertsForAABB2D(m_dynamicVerts,
+			AddVertsForAABB2D(m_staticObstacleVerts,
 				AABB2(spriteBottomLeft, spriteTopRight),
 				renderColor,
 				spriteUV.m_mins, spriteUV.m_maxs,
@@ -130,34 +147,66 @@ void TileChunk::UpdateObstacleVerts()
 			Vec2 gridTopRight = gridBottomLeft + Vec2(1.f, 1.f);
 
 			Rgba8 renderColor = Rgba8::WHITE;
-// 			if (tileData.m_isTransparent)
-// 			{
-// 				renderColor.a = static_cast<unsigned char>(tileData.m_alpha * 255.0f);
-// 			}
 
-			AddVertsForAABB2D(m_dynamicVerts,
+			AddVertsForAABB2D(m_staticObstacleVerts,
 				AABB2(gridBottomLeft, gridTopRight),
 				renderColor);
 		}
 	}
 
-	m_isDirty = false;
+	m_isDirtyObstacle = false;
+}
+
+void TileChunk::UpdateFarmlandVerts()
+{
+	m_plowedFarmlandVerts.clear();
+	m_wateredFarmlandVerts.clear();
+
+	for (const auto& [tilePosKey, tileData] : m_keyToDynamicTileData)
+	{
+		if (tileData.m_farmState == FarmState::UNPLOWED) continue;
+
+		IntVec2 gridPos = TileMap::GetGridPosByTileKey(tilePosKey);
+		AABB2 tileBox = AABB2(Vec2((float)gridPos.x, (float)gridPos.y),
+			Vec2((float)gridPos.x, (float)gridPos.y) + Vec2::ONE);
+		if (tileData.m_farmState == FarmState::PLOWED)
+		{
+			//get uv
+			AABB2 curUv;
+			if (m_plowedSoilRuleSet)
+			{
+				uint8_t neighborMask = GetPlowedNeighborMask(gridPos);
+				curUv = m_plowedSoilRuleSet->GetUvFromMask(neighborMask);
+			}
+			AddVertsForAABB2D(m_plowedFarmlandVerts, tileBox, Rgba8::WHITE, curUv.m_mins, curUv.m_maxs, 900.f);
+		}
+		if (tileData.m_farmState == FarmState::WATER)
+		{
+			AddVertsForAABB2D(m_plowedFarmlandVerts, tileBox, Rgba8::WHITE, Vec2::ZERO, Vec2::ONE, 900.f);
+			AddVertsForAABB2D(m_wateredFarmlandVerts, tileBox, Rgba8::WHITE, Vec2::ZERO, Vec2::ONE, 900.f);
+		}
+	}
+
+	m_isDirtyFarmland = false;
 }
 
 void TileChunk::RenderDynamicContent() const
 {
+	g_theRenderer->BindTexture(m_plowedSoilRuleSet->GetTexture());
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+	g_theRenderer->DrawVertexArray(m_plowedFarmlandVerts);
+	g_theRenderer->DrawVertexArray(m_wateredFarmlandVerts);
+
 	g_theRenderer->BindTexture(ObstacleDefinition::s_obstacleTexture);;
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
-	g_theRenderer->DrawVertexArray(m_dynamicVerts);
+	g_theRenderer->DrawVertexArray(m_staticObstacleVerts);
 
 	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
 	{
 		curObstacle->Render();
 	}
-//  g_theRenderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
-// 	g_theRenderer->DrawVertexArray(m_dynamicVertsTransparent);
-// 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 }
 
 uint32_t TileChunk::GetTile(IntVec2 const& gridPos) const
@@ -184,4 +233,34 @@ IntVec2 TileChunk::GetGridPos(int tileIndex) const
 	int relativeX = tileIndex % m_size.x;
 	int relativeY = tileIndex / m_size.y;
 	return IntVec2(relativeX, relativeY);
+}
+
+uint8_t TileChunk::GetPlowedNeighborMask(IntVec2 const& tileGridPos)
+{
+	uint8_t mask = 0;
+
+	IntVec2 directions[4] = {
+		IntVec2(0, 1),
+		IntVec2(1, 0),
+		IntVec2(0, -1),
+		IntVec2(-1, 0)
+	};
+
+	for (int i = 0; i < 4; ++i) 
+	{
+		IntVec2 neighborPos = tileGridPos + directions[i];
+
+		uint64_t tileKey = TileMap::GetTileKey(neighborPos);
+		auto neighborData = m_keyToDynamicTileData.find(tileKey);
+		if (neighborData!=m_keyToDynamicTileData.end())
+		{
+			DynamicTileData data = neighborData->second;
+			if (data.m_obstacleType == ObstacleType::NONE
+				&&data.m_farmState!=FarmState::UNPLOWED)
+			{
+				mask |= (1 << i);
+			}
+		}
+	}
+	return mask;
 }

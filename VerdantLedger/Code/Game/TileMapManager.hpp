@@ -8,6 +8,7 @@
 class TileMap;
 class Tileset;
 struct TileProperty;
+class RuledTileset;
 
 class TileMapManager 
 {
@@ -29,6 +30,7 @@ public:
 
 	void InitAllTilemapResources();
 	void LoadAllTilesets();
+	void LoadAllRuedTilesets();
 	Tileset* LoadTileset(const std::string& tilesetPath);
 	void LoadAllMaps();
 	TileMap* LoadMap(const std::string& mapPath);
@@ -48,6 +50,7 @@ private:
 public:
 	std::unordered_map<std::string, TileMap*> m_loadedMaps;
 	std::unordered_map<std::string, Tileset*> m_loadedTilesetsByName;
+	std::unordered_map<std::string, RuledTileset*> m_loadedRuledTilesetsByName;
 	std::map<uint32_t, Tileset*> m_loadedTilesetsByGID;
 	std::unordered_map<uint32_t, uint32_t> m_gidToTilePropertyFlag;
 

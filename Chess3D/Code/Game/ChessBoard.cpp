@@ -36,7 +36,9 @@ ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 	//ObjLoader::LoadObjFromFile_WithTBN("Data/Models/Woman/Woman.obj", m_women);
 	//g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta");
 
-	m_simpleObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta"));
+	m_simpleObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/TutorialBox.meta"));
+	m_womanObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta"));
+	m_womanObject.m_position = Vec3(8.f, 4.f, 0.2f);
 }
 
 ChessBoard::~ChessBoard()
@@ -62,8 +64,11 @@ ChessBoard::~ChessBoard()
 
 }
 
-void ChessBoard::Update()
+void ChessBoard::Update(float deltaTime)
 {
+	m_simpleObject.Update(deltaTime);
+	m_womanObject.Update(deltaTime);
+
 	UpdateDebugKeyInput();
 	for (ChessPiece* piece : m_chessPieces)
 	{
@@ -202,6 +207,7 @@ void ChessBoard::Renderer() const
 // 	g_theRenderer->DrawVertexArray_WithTBN(m_women);
 	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
 	m_simpleObject.Render();
+	m_womanObject.Render();
 	//------------------------------------------------------------------------
 
 	if (m_hasValidAimPos)
