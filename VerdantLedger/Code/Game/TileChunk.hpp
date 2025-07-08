@@ -7,6 +7,14 @@
 
 class RuledTileset;
 class GroundObstacle;
+class TileLayer;
+
+enum DirtyType
+{
+	NONE,
+	DIRTY_STATIC_OBS,
+	DIRTY_FARMLAND
+};
 
 class TileChunk
 {
@@ -39,8 +47,9 @@ public:
 
 private:
 	uint8_t GetPlowedNeighborMask(IntVec2 const& tileGridPos);
-
+	uint8_t GetWateredNeighborMask(IntVec2 const& tileGridPos);
 public:
+	TileLayer* m_parentLayer = nullptr;
 	IntVec2 m_startPosition;     
 	IntVec2 m_size; 
 	bool m_isEmpty = false;           // may be deleted later
@@ -55,11 +64,9 @@ public:
 	std::vector<GroundObstacle*> m_obstacleWithAnimation;
 	std::unordered_map<uint64_t, GroundObstacle*> m_gridPosToGroundObstacle;
 
-	bool m_isDirtyObstacle = false;
-	bool m_isDirtyFarmland = false;
 private:
 	RuledTileset* m_plowedSoilRuleSet = nullptr;
-	RuledTileset* m_waterSoilRuleSet = nullptr;
+	RuledTileset* m_wateredSoilRuleSet = nullptr;
 };
 
 template<typename Func>

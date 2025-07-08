@@ -94,6 +94,9 @@
     <ClCompile Include="RuledTileset.cpp">
       <Filter>TiledMapLoader</Filter>
     </ClCompile>
+    <ClCompile Include="ChunkUpdateManager.cpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -160,6 +163,9 @@
       <Filter>UIFramework</Filter>
     </ClInclude>
     <ClInclude Include="RuledTileset.hpp">
+      <Filter>TiledMapLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkUpdateManager.hpp">
       <Filter>TiledMapLoader</Filter>
     </ClInclude>
   </ItemGroup>

@@ -20,7 +20,7 @@ public:
 	void Update(float deltaSeconds);
 	void Render() const;
 
-	const std::vector<TileLayer>& GetLayers() const { return m_layers; }
+	const std::vector<TileLayer*>& GetLayers() const { return m_layers; }
 	const std::vector<Tileset*>& GetTilesets() const { return m_tilesets; }
 	IntVec2 GetSize() const { return m_size; }
 	IntVec2 GetTileSize() const { return m_tileSize; }
@@ -53,7 +53,7 @@ public:
 
 private:
 	std::string m_name;
-	std::vector<TileLayer> m_layers;
+	std::vector<TileLayer*> m_layers;
 	std::vector<Tileset*> m_tilesets;
 	// use grid,z and grid.y to get a mask id for each tile 
 	IntVec2 m_size;                        // Tile Map size (count of tile)

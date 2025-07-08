@@ -21,8 +21,10 @@ Map::Map(Game* game, TileMap* tileMap, Player* player):
 	m_gameplayCam.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
 	m_gameplayCam.SetOrthographicView(m_player->m_position - g_halfGameCamDimensions, m_player->m_position + g_halfGameCamDimensions,0.f,1000.f);
 
-	m_dirtyObstacleDelayTimer = Timer(0.5f);
-	m_dirtyFarmlandDelayTimer = Timer(0.5f);
+// 	m_dirtyObstacleDelayTimer = Timer(0.5f);
+// 	m_dirtyFarmlandDelayTimer = Timer(0.5f);
+
+	m_chunkUpdateManager = ChunkUpddateManger(m_tileMap->m_markLayer);
 }
 
 Map::~Map()
@@ -34,15 +36,13 @@ void Map::Update(float deltaSeconds)
 	m_playerPrevPos = m_player->m_position;
 	m_player->Update(deltaSeconds);
 	CheckPlayerCollWithSolidTiles();
-	//UpdateCamFollow(deltaSeconds);
 	m_gameplayCam.SetOrthographicView(m_player->m_position - g_halfGameCamDimensions, m_player->m_position + g_halfGameCamDimensions, 0.f, 1000.f);
 
 	IntVec2 m_playerFrontGridPos = GetTileCoordsFromPoint(m_player->m_position)+IntVec2(0,-1);
  	m_tileMap->UpdateTransparentObject(m_playerFrontGridPos);
  	m_tileMap->Update(deltaSeconds);
 
-	UpdateDelayDirtyFarmlandChunk();
-	UpdateDelayDirtyObstacleChunk();
+	m_chunkUpdateManager.UpdateDirtyChunks();
 }
 
 void Map::Render() const
@@ -65,25 +65,6 @@ void Map::UpdateCamFollow(float deltaSeconds)
 	m_gameplayCam.SetOrthographicView(cameraSmoothPos - g_halfGameCamDimensions, cameraSmoothPos + g_halfGameCamDimensions, 0.f, 1000.f);
 }
 
-void Map::UpdateDelayDirtyObstacleChunk()
-{
-	if (m_curDirtyChunk&&!m_dirtyObstacleDelayTimer.IsStopped() && m_dirtyObstacleDelayTimer.GetElapsedFraction() > 1.f)
-	{
-		m_dirtyObstacleDelayTimer.Stop();
-		m_curDirtyChunk->m_isDirtyObstacle = true;
-		m_curDirtyChunk = nullptr;
-	}
-}
-
-void Map::UpdateDelayDirtyFarmlandChunk()
-{
-	if (m_curDirtyChunk && !m_dirtyFarmlandDelayTimer.IsStopped() && m_dirtyFarmlandDelayTimer.GetElapsedFraction() > 1.f)
-	{
-		m_dirtyFarmlandDelayTimer.Stop();
-		m_curDirtyChunk->m_isDirtyFarmland = true;
-		m_curDirtyChunk = nullptr;
-	}
-}
 
 void Map::CheckPlayerCollWithSolidTiles()
 {
@@ -128,8 +109,7 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 			if (it->second.m_curObstacleDurability <= 0)
 			{
 				it->second.m_obstacleType = ObstacleType::NONE;
-				m_curDirtyChunk = curChunk;
-				m_dirtyObstacleDelayTimer.Start();
+				m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_STATIC_OBS, aimGridPos);
 			}
 		}
 
@@ -138,8 +118,7 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 			&& toolType == PlayerTools::SHOVEL)
 		{
 			it->second.m_farmState = FarmState::PLOWED;
-			m_curDirtyChunk = curChunk;
-			m_dirtyFarmlandDelayTimer.Start();
+			m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_FARMLAND, aimGridPos);
 		}
 
 		if (it->second.m_farmState == FarmState::PLOWED
@@ -147,8 +126,7 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 			&& toolType == PlayerTools::WATER)
 		{
 			it->second.m_farmState = FarmState::WATER;
-			m_curDirtyChunk = curChunk;
-			m_dirtyFarmlandDelayTimer.Start();
+			m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_FARMLAND, aimGridPos);
 		}
 	}
 }

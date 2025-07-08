@@ -39,6 +39,8 @@ public:
 	uint32_t GetGidFromGridPos(IntVec2 const& gridPos);
 	bool IsPositionInChunk(IntVec2 const& gridPos, const TileChunk& chunk) const;
 
+	static uint64_t GetChunkKey(IntVec2 chunkPos);
+
 public:
 	TileLayerType m_type = TileLayerType::TILE_LAYER;
 	int m_id;
@@ -52,8 +54,7 @@ public:
 	std::unordered_map<uint64_t, size_t> m_chunkIndexMap; // chunk start pos to chunk index in m_chunks
 	std::vector<uint32_t> m_data;           // finite
 
-private:
-	uint64_t GetChunkKey(IntVec2 chunkPos);
+
 
 	//std::vector<TileObject> m_objects;
 	// ?

@@ -41,13 +41,13 @@ TileMap::TileMap(XmlElement* rootElement)
  	for (XmlElement* layerElement = rootElement->FirstChildElement("layer");
  		layerElement; layerElement = layerElement->NextSiblingElement("layer")) 
  	{
- 		TileLayer layer;
-        layer.m_name = ParseXmlAttribute(layerElement, "name", "");
-        layer.m_id = ParseXmlAttribute(layerElement, "id", 0);
-        layer.m_class= ParseXmlAttribute(layerElement, "class", layer.m_class);
-        if (layer.m_class == "TileMark")
+ 		TileLayer* layer=new TileLayer();
+        layer->m_name = ParseXmlAttribute(layerElement, "name", "");
+        layer->m_id = ParseXmlAttribute(layerElement, "id", 0);
+        layer->m_class= ParseXmlAttribute(layerElement, "class", layer->m_class);
+        if (layer->m_class == "TileMark")
         {
-            m_markLayerId=layer.m_id;
+            m_markLayerId=layer->m_id;
         }
  		int width = ParseXmlAttribute(layerElement, "width", 0);
  		int height = ParseXmlAttribute(layerElement, "height", 0);
@@ -60,6 +60,7 @@ TileMap::TileMap(XmlElement* rootElement)
  				chunkElement; chunkElement = chunkElement->NextSiblingElement("chunk")) 
             {
  				TileChunk chunk;
+                chunk.m_parentLayer = layer;
  				int startX = ParseXmlAttribute(chunkElement, "x", 0);
  				int startY = -ParseXmlAttribute(chunkElement, "y", 0);
                 chunk.m_startPosition = IntVec2(startX, startY);
@@ -82,7 +83,7 @@ TileMap::TileMap(XmlElement* rootElement)
 //                     //int k = 1;
 //                 }
                 chunk.InitializeChunkVerts();
-                layer.AddChunk(chunk);
+                layer->AddChunk(chunk);
  				
  			}
  		}
@@ -99,6 +100,13 @@ TileMap::~TileMap()
         obstacle = nullptr;
 	}
     m_obstacles.clear();
+
+	for (TileLayer* layer : m_layers)
+	{
+		delete layer;
+		layer = nullptr;
+	}
+    m_layers.clear();
 }
 
 void TileMap::Update(float deltaSeconds)
@@ -114,13 +122,13 @@ void TileMap::Render() const
     for (int i = 0; i < (int)m_layers.size(); i++)
     {
         Texture* curTexture = nullptr;
-		if (m_layers[i].GetName()=="TileMark")
+		if (m_layers[i]->GetName()=="TileMark")
 		{
 			continue;
             //curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
 			//g_theRenderer->BindTexture(tileMarkTex);
 		}
-        else if (m_layers[i].GetName() == "Road")
+        else if (m_layers[i]->GetName() == "Road")
         {
             curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/Village - Tiny Asset Pack/Exterior/Road.png");
         }
@@ -128,12 +136,12 @@ void TileMap::Render() const
         {
             curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/TilesetGrassSpring.png");
         }
-        for (int j = 0; j < (int)m_layers[i].m_chunks.size(); j++)
+        for (int j = 0; j < (int)m_layers[i]->m_chunks.size(); j++)
         {
             g_theRenderer->BindTexture(curTexture);
             g_theRenderer->SetBlendMode(BlendMode::ALPHA);
             g_theRenderer->SetModelConstants();
-            g_theRenderer->DrawVertexArray(m_layers[i].m_chunks[j].m_terrianVerts);
+            g_theRenderer->DrawVertexArray(m_layers[i]->m_chunks[j].m_terrianVerts);
         }
     }
     TileLayer* markLayer = m_markLayer;
@@ -177,11 +185,11 @@ IntVec2 TileMap::GetGridPosByTileKey(uint64_t tileKey)
 
 TileLayer* TileMap::FindLayerById(int layerId)
 {
-	for (TileLayer& layer : m_layers) 
+	for (TileLayer* layer : m_layers) 
     {
-		if (layer.m_id == layerId) 
+		if (layer->m_id == layerId)
         {
-			return &layer;
+			return layer;
 		}
 	}
 	return nullptr;

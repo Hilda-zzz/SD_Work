@@ -4,12 +4,12 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "Game/Player.hpp"
 #include "Engine/Core/Timer.hpp"
+#include "ChunkUpdateManager.hpp"
 
 class Game;
 class TileMap;
 class Player;
 class TileChunk;
-
 
 class Map
 {
@@ -28,9 +28,6 @@ public:
 private:
 	void UpdateCamFollow(float deltaSecondes);
 
-	void UpdateDelayDirtyObstacleChunk();
-	void UpdateDelayDirtyFarmlandChunk();
-
 	void CheckPlayerCollWithSolidTiles();
 
 	void PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhyRadius);
@@ -43,8 +40,6 @@ private:
 	Game* m_game = nullptr;
 	TileMap* m_tileMap = nullptr;
 	Player* m_player = nullptr;
+	ChunkUpddateManger m_chunkUpdateManager;
 	Vec2 m_playerPrevPos = Vec2::ZERO;
-	TileChunk* m_curDirtyChunk = nullptr;
-	Timer m_dirtyObstacleDelayTimer;
-	Timer m_dirtyFarmlandDelayTimer;
 };
