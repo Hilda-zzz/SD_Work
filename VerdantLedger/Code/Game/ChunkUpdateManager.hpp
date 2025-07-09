@@ -22,7 +22,6 @@ public:
 	ChunkUpddateManger(TileLayer* layer);
 	~ChunkUpddateManger() {}
 
-	void UpdateVisibleChunks(float deltaSeconds, Vec2 const& cameraCenter, Vec2 const& cameraSize);
 	void MarkChunkDirty(TileChunk* dirtyChunk,DirtyType dirtyType,IntVec2 const& dirtyGridPos);
 	void UpdateDirtyChunks();
 	void CheckAndQueueNeighbors(TileChunk* centerChunk, DirtyType dirtyType, IntVec2 const& dirtyGridPos);
