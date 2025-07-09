@@ -42,6 +42,9 @@ void Map::Update(float deltaSeconds)
  	m_tileMap->UpdateTransparentObject(m_playerFrontGridPos);
  	m_tileMap->Update(deltaSeconds);
 
+	Vec2 camSize = m_gameplayCam.GetOrthoTopRight() - m_gameplayCam.GetOrthoBottomLeft();
+	Vec2 camCenter = (m_gameplayCam.GetOrthoTopRight() + m_gameplayCam.GetOrthoBottomLeft()) * 0.5f;
+	m_chunkUpdateManager.UpdateVisibleChunks(deltaSeconds,camCenter,camSize);
 	m_chunkUpdateManager.UpdateDirtyChunks();
 }
 

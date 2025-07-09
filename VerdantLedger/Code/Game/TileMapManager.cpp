@@ -103,6 +103,7 @@ void TileMapManager::LoadAllTilesets()
 	LoadTileset("Data/Tiled/GrassSpring.tsx");
 	LoadTileset("Data/Tiled/TileMark.tsx");
 	LoadTileset("Data/Tiled/Road.tsx");
+	LoadTileset("Data/Tiled/OutsideTileset.tsx");
 }
 
 void TileMapManager::LoadAllRuedTilesets()
@@ -147,8 +148,11 @@ Tileset* TileMapManager::LoadTileset(const std::string& tilesetPath)
 void TileMapManager::LoadAllMaps()
 {
 	// change to load and generateAllMaps
-	LoadMap("Data/Tiled/HouseMap.tmx");
-	m_dynamicGenerator.GenerateAllDynamicContentForTheMap(m_loadedMaps["Data/Tiled/HouseMap.tmx"]);
+// 	LoadMap("Data/Tiled/HouseMap.tmx");
+// 	m_dynamicGenerator.GenerateAllDynamicContentForTheMap(m_loadedMaps["Data/Tiled/HouseMap.tmx"]);
+
+	LoadMap("Data/Tiled/MyFarmMap.tmx");
+	m_dynamicGenerator.GenerateAllDynamicContentForTheMap(m_loadedMaps["Data/Tiled/MyFarmMap.tmx"]);
 // save dynamic data for each tile grid
 // 	IntVec2 curGridPos = chunk.GetGridPos(i);
 // 	uint64_t tilePosKey = GetTileKey(curGridPos);

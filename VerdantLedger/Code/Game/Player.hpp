@@ -48,7 +48,7 @@ private:
 	Direction GetDirectionFromIntVec2(IntVec2 const& directionVec);
 
 public:
-	Vec2	m_position = Vec2(0.f,3.f);
+	Vec2	m_position = Vec2(10.f,-10.f);
 	Vec2 m_inputDirection = Vec2::ZERO; 
 	Direction m_curDirection = Direction::DOWN;
 	float	m_orientation = 0.f;

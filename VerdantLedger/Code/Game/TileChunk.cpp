@@ -38,10 +38,10 @@ TileChunk::~TileChunk()
 
 void TileChunk::Update(float deltaSeconds)
 {
-	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
-	{
-		curObstacle->Update(deltaSeconds);
-	}
+ 	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
+ 	{
+ 		curObstacle->Update(deltaSeconds);
+ 	}
 }
 
 void TileChunk::InitializeChunkVerts()

@@ -22,79 +22,79 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 	switch (wmMessageCode)
 	{
 
-	case WM_CLOSE:
-	{
-		g_theEventSystem->FireEvent("CloseWindow");
-		return 0; 
-	}
+		case WM_CLOSE:
+		{
+			g_theEventSystem->FireEvent("CloseWindow");
+			return 0; 
+		}
 
-	// Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
-	case WM_KEYDOWN:
-	{
-		EventArgs args;
-		args.SetValue("KeyCode", Stringf("%d", (unsigned char)wParam));
-		g_theEventSystem->FireEvent("KeyPressed", args);
-		return 0;
-	}
+		// Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
+		case WM_KEYDOWN:
+		{
+			EventArgs args;
+			args.SetValue("KeyCode", Stringf("%d", (unsigned char)wParam));
+			g_theEventSystem->FireEvent("KeyPressed", args);
+			return 0;
+		}
 
-	case WM_KEYUP:
-	{
-		EventArgs args;
-		args.SetValue("KeyCode", Stringf("%d", (unsigned char)wParam));
-		g_theEventSystem->FireEvent("KeyReleased", args);
-		return 0;
-	}
-	case WM_LBUTTONDOWN:
-	{
-	/*	if (input)
+		case WM_KEYUP:
 		{
-			input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
-		}*/
-		EventArgs args;
-		args.SetValue("KeyCode", Stringf("%d", KEYCODE_LEFT_MOUSE));
-		g_theEventSystem->FireEvent("KeyPressed", args);
-		return 0;
-	}
-	case WM_LBUTTONUP:
-	{
-	/*	if (input)
+			EventArgs args;
+			args.SetValue("KeyCode", Stringf("%d", (unsigned char)wParam));
+			g_theEventSystem->FireEvent("KeyReleased", args);
+			return 0;
+		}
+		case WM_LBUTTONDOWN:
 		{
-			input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
-		}*/
-		EventArgs args;
-		args.SetValue("KeyCode", Stringf("%d", KEYCODE_LEFT_MOUSE));
-		g_theEventSystem->FireEvent("KeyReleased", args);
-		return 0;
-	}
-	case WM_RBUTTONDOWN:
-	{
-		/*if (input)
+		/*	if (input)
+			{
+				input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
+			}*/
+			EventArgs args;
+			args.SetValue("KeyCode", Stringf("%d", KEYCODE_LEFT_MOUSE));
+			g_theEventSystem->FireEvent("KeyPressed", args);
+			return 0;
+		}
+		case WM_LBUTTONUP:
 		{
-			input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
-		}*/
-		EventArgs args;
-		args.SetValue("KeyCode", Stringf("%d", KEYCODE_RIGHT_MOUSE));
-		g_theEventSystem->FireEvent("KeyPressed", args);
-		return 0;
-	}
-	case WM_RBUTTONUP:
-	{
-		/*if (input)
+		/*	if (input)
+			{
+				input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
+			}*/
+			EventArgs args;
+			args.SetValue("KeyCode", Stringf("%d", KEYCODE_LEFT_MOUSE));
+			g_theEventSystem->FireEvent("KeyReleased", args);
+			return 0;
+		}
+		case WM_RBUTTONDOWN:
 		{
-			input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
-		}*/
-		EventArgs args;
-		args.SetValue("KeyCode", Stringf("%d", KEYCODE_RIGHT_MOUSE));
-		g_theEventSystem->FireEvent("KeyReleased", args);
-		return 0;
-	}
-	case WM_CHAR:
-	{
-		EventArgs args;
-		args.SetValue("CharInput", Stringf("%d", (char)wParam));
-		g_theEventSystem->FireEvent("CharInput", args);
-		return 0;
-	}
+			/*if (input)
+			{
+				input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
+			}*/
+			EventArgs args;
+			args.SetValue("KeyCode", Stringf("%d", KEYCODE_RIGHT_MOUSE));
+			g_theEventSystem->FireEvent("KeyPressed", args);
+			return 0;
+		}
+		case WM_RBUTTONUP:
+		{
+			/*if (input)
+			{
+				input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
+			}*/
+			EventArgs args;
+			args.SetValue("KeyCode", Stringf("%d", KEYCODE_RIGHT_MOUSE));
+			g_theEventSystem->FireEvent("KeyReleased", args);
+			return 0;
+		}
+		case WM_CHAR:
+		{
+	 		EventArgs args;
+	 		args.SetValue("CharInput", Stringf("%d", (char)wParam));
+	 		g_theEventSystem->FireEvent("CharInput", args);
+			return 0;
+		}
 	}
 	// Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
 	return DefWindowProc(windowHandle, wmMessageCode, wParam, lParam);

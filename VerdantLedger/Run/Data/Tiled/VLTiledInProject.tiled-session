@@ -3,21 +3,33 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "GrassSpring.tsx",
+    "activeFile": "MyFarmMap.tmx",
     "expandedProjectPaths": [
     ],
     "fileStates": {
         "GrassSpring.tsx": {
             "scaleInDock": 1,
-            "scaleInEditor": 3
+            "scaleInEditor": 1.5
         },
         "HouseMap.tmx": {
             "scale": 1,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 25.5,
-                "y": -2.5
+                "x": -8,
+                "y": 279
             }
+        },
+        "MyFarmMap.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 940.9999999999999,
+                "y": 423.66666666666663
+            }
+        },
+        "OutsideTileset.tsx": {
+            "scaleInDock": 0.5,
+            "scaleInEditor": 1
         },
         "Road.tsx": {
             "scaleInDock": 2,
@@ -28,7 +40,7 @@
             "scaleInEditor": 1
         }
     },
-    "last.imagePath": "C:/p4/Personal/SD/VerdantLedger/Run/Data/Art/FarmAssets/Village - Tiny Asset Pack/Exterior",
+    "last.imagePath": "C:/p4/Personal/SD/VerdantLedger/Run/Data/Art/FarmAssets/FarmTinyAssetPack/Tileset",
     "map.fixedSize": false,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
@@ -36,16 +48,19 @@
     "openFiles": [
         "HouseMap.tmx",
         "TileMark.tsx",
-        "Road.tsx",
-        "GrassSpring.tsx"
+        "GrassSpring.tsx",
+        "MyFarmMap.tmx",
+        "OutsideTileset.tsx"
     ],
     "project": "VLTiledInProject.tiled-project",
     "property.type": "bool",
     "recentFiles": [
         "HouseMap.tmx",
         "TileMark.tsx",
-        "Road.tsx",
-        "GrassSpring.tsx"
+        "GrassSpring.tsx",
+        "OutsideTileset.tsx",
+        "MyFarmMap.tmx",
+        "Road.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

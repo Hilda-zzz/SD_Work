@@ -21,7 +21,7 @@ const Rgba8 DevConsole::EVENT_FEEDBACK = Rgba8(142,217,115);
 const Rgba8 DevConsole::BKG = Rgba8(0, 0, 0,100);
 const Rgba8 DevConsole::PLAYER_TIP = Rgba8(192, 79, 21, 255);
 
-DevConsole::DevConsole(DevConsoleConfig const& config):m_config(config)
+DevConsole::DevConsole(DevConsoleConfig const& config, int inputPriority):IInputConsumer(inputPriority),m_config(config)
 {
 	m_insertionPointBlinkTimer = new Timer(0.5f);
 }
@@ -39,8 +39,8 @@ void DevConsole::Startup()
 	m_lines.reserve(1000);
 	m_inputText.reserve(50);
 
-	g_theEventSystem->SubscribeEventCallbackFuction("KeyPressed", DevConsole::Event_KeyPressed);
-	g_theEventSystem->SubscribeEventCallbackFuction("CharInput", DevConsole::Event_CharInput);
+ 	g_theEventSystem->SubscribeEventCallbackFuction("KeyPressed", DevConsole::Event_KeyPressed);
+ 	g_theEventSystem->SubscribeEventCallbackFuction("CharInput", DevConsole::Event_CharInput);
 	g_theEventSystem->SubscribeEventCallbackFuction("Test", Command_Test,true);
 	g_theEventSystem->SubscribeEventCallbackFuction("help", Command_Help,true);
 	g_theEventSystem->SubscribeEventCallbackFuction("clear", Command_Clear,true);
@@ -188,143 +188,139 @@ bool DevConsole::Command_Test(EventArgs& args)
 	return true; 
 }
 
-bool DevConsole::Event_KeyPressed(EventArgs& args)
-{
-	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
-	if (g_theDevConsole->IsOpen()&&keyCode != KEYCODE_TILDE)
-	{
-		if (keyCode == KEYCODE_ESC)
-		{
-// 			if (g_theDevConsole->m_inputText.size() == 0)
-// 			{
-// 				g_theDevConsole->SetMode(HIDDEN);
-// 			}
-// 			else
-// 			{
-				g_theDevConsole->m_inputText.clear();
-				g_theDevConsole->m_insertionPointPosition = 0;
-			//}
-		}
-		else if (keyCode == KEYCODE_ENTER)
-		{
-			if (g_theDevConsole->m_inputText.size() == 0)
-			{
-				g_theDevConsole->SetMode(HIDDEN);
-			}
-			else
-			{
-				g_theDevConsole->m_commandHistory.push_back(g_theDevConsole->m_inputText);
-				g_theDevConsole->Execute(g_theDevConsole->m_inputText,true);
-				g_theDevConsole->m_inputText.clear();
-				g_theDevConsole->m_insertionPointPosition = 0;
-				g_theDevConsole->m_historyIndex = -1;
-			}
-			
-		}
-		else if (keyCode == KEYCODE_LEFTARROW)
-		{
-			if (g_theDevConsole->m_insertionPointPosition > 0)
-			{
-				g_theDevConsole->m_insertionPointPosition--;
-			}
-		}
-		else if (keyCode == KEYCODE_RIGHTARROW)
-		{
-			if (g_theDevConsole->m_insertionPointPosition < (int)g_theDevConsole->m_inputText.size())
-			{
-				g_theDevConsole->m_insertionPointPosition++;
-			}
-		}
-		else if (keyCode == KEYCODE_HOME)
-		{
-			g_theDevConsole->m_insertionPointPosition = 0;
-		}
-		else if (keyCode == KEYCODE_END)
-		{
-			g_theDevConsole->m_insertionPointPosition =(int) g_theDevConsole->m_inputText.size();
-		}
-		else if (keyCode == KEYCODE_DELETE)
-		{
-			if (g_theDevConsole->m_insertionPointPosition < (int)g_theDevConsole->m_inputText.size())
-			{
-				g_theDevConsole->m_inputText.erase(g_theDevConsole->m_inputText.begin()+g_theDevConsole->m_insertionPointPosition);
-			}
-		}
-		else if (keyCode == KEYCODE_BACKSPACE)
-		{
-			if (g_theDevConsole->m_insertionPointPosition > 0)
-			{
-				g_theDevConsole->m_inputText.erase(g_theDevConsole->m_inputText.begin() + g_theDevConsole->m_insertionPointPosition -1);
-				g_theDevConsole->m_insertionPointPosition--;
-			}
-		}
-		else if (keyCode == KEYCODE_UPARROW)
-		{
-			if (g_theDevConsole->m_commandHistory.size() > 0)
-			{
-				if (g_theDevConsole->m_historyIndex > 0 && g_theDevConsole->m_historyIndex < (int)g_theDevConsole->m_commandHistory.size())
-				{
-					g_theDevConsole->m_historyIndex--;
-				}
-				else if (g_theDevConsole->m_historyIndex == -1)
-				{
-					g_theDevConsole->m_oriInputSave = g_theDevConsole->m_inputText;
-					g_theDevConsole->m_historyIndex = (int)g_theDevConsole->m_commandHistory.size() - 1;
-				}
+ bool DevConsole::Event_KeyPressed(EventArgs& args)
+ {
+ 	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
+ 	if (g_theDevConsole->IsOpen()&&keyCode != KEYCODE_TILDE)
+ 	{
+ 		if (keyCode == KEYCODE_ESC)
+ 		{
 
-				if (g_theDevConsole->m_historyIndex >= 0)
-				{
-					g_theDevConsole->m_inputText.clear();
-					g_theDevConsole->m_inputText = g_theDevConsole->m_commandHistory[g_theDevConsole->m_historyIndex];
-					g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
-				}
-			}
-		}
-		else if (keyCode == KEYCODE_DOWNARROW)
-		{
-			if (g_theDevConsole->m_commandHistory.size() > 0)
-			{
-				if (g_theDevConsole->m_historyIndex >= 0 && g_theDevConsole->m_historyIndex < (int)g_theDevConsole->m_commandHistory.size())
-				{
-					g_theDevConsole->m_historyIndex++;
-				}
+ 			g_theDevConsole->m_inputText.clear();
+ 			g_theDevConsole->m_insertionPointPosition = 0;
 
-				if (g_theDevConsole->m_historyIndex >= 0)
-				{
-					g_theDevConsole->m_inputText.clear();
-					if (g_theDevConsole->m_historyIndex < (int)g_theDevConsole->m_commandHistory.size())
-					{
-						g_theDevConsole->m_inputText = g_theDevConsole->m_commandHistory[g_theDevConsole->m_historyIndex];
-					}
-					else
-					{
-						g_theDevConsole->m_inputText = g_theDevConsole->m_oriInputSave;
-						g_theDevConsole->m_historyIndex = -1;
-					}
-					g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
-
-				}
-			}
-		}
-		return true;
-	}
-	else
-		return false;
-}
-
-bool DevConsole::Event_CharInput(EventArgs& args)
-{
-	char charInput = (char)args.GetValue("CharInput", '`');
-	if (g_theDevConsole->IsOpen()&&charInput >= 32 && charInput <= 126 && charInput != '`' && charInput != '~')
-	{
-		g_theDevConsole->m_insesrtionPointVisible = true;
-		g_theDevConsole->m_insertionPointBlinkTimer->Start();
-		g_theDevConsole->m_inputText.insert(g_theDevConsole->m_inputText.begin() + g_theDevConsole->m_insertionPointPosition, charInput);
-		g_theDevConsole->m_insertionPointPosition++;
-	}
-
-	return true;
-}
+ 		}
+ 		else if (keyCode == KEYCODE_ENTER)
+ 		{
+ 			if (g_theDevConsole->m_inputText.size() == 0)
+ 			{
+ 				g_theDevConsole->SetMode(HIDDEN);
+ 			}
+ 			else
+ 			{
+ 				g_theDevConsole->m_commandHistory.push_back(g_theDevConsole->m_inputText);
+ 				g_theDevConsole->Execute(g_theDevConsole->m_inputText,true);
+ 				g_theDevConsole->m_inputText.clear();
+ 				g_theDevConsole->m_insertionPointPosition = 0;
+ 				g_theDevConsole->m_historyIndex = -1;
+ 			}
+ 			
+ 		}
+ 		else if (keyCode == KEYCODE_LEFTARROW)
+ 		{
+ 			if (g_theDevConsole->m_insertionPointPosition > 0)
+ 			{
+ 				g_theDevConsole->m_insertionPointPosition--;
+ 			}
+ 		}
+ 		else if (keyCode == KEYCODE_RIGHTARROW)
+ 		{
+ 			if (g_theDevConsole->m_insertionPointPosition < (int)g_theDevConsole->m_inputText.size())
+ 			{
+ 				g_theDevConsole->m_insertionPointPosition++;
+ 			}
+ 		}
+ 		else if (keyCode == KEYCODE_HOME)
+ 		{
+ 			g_theDevConsole->m_insertionPointPosition = 0;
+ 		}
+ 		else if (keyCode == KEYCODE_END)
+ 		{
+ 			g_theDevConsole->m_insertionPointPosition =(int) g_theDevConsole->m_inputText.size();
+ 		}
+ 		else if (keyCode == KEYCODE_DELETE)
+ 		{
+ 			if (g_theDevConsole->m_insertionPointPosition < (int)g_theDevConsole->m_inputText.size())
+ 			{
+ 				g_theDevConsole->m_inputText.erase(g_theDevConsole->m_inputText.begin()+g_theDevConsole->m_insertionPointPosition);
+ 			}
+ 		}
+ 		else if (keyCode == KEYCODE_BACKSPACE)
+ 		{
+ 			if (g_theDevConsole->m_insertionPointPosition > 0)
+ 			{
+ 				g_theDevConsole->m_inputText.erase(g_theDevConsole->m_inputText.begin() + g_theDevConsole->m_insertionPointPosition -1);
+ 				g_theDevConsole->m_insertionPointPosition--;
+ 			}
+ 		}
+ 		else if (keyCode == KEYCODE_UPARROW)
+ 		{
+ 			if (g_theDevConsole->m_commandHistory.size() > 0)
+ 			{
+ 				if (g_theDevConsole->m_historyIndex > 0 && g_theDevConsole->m_historyIndex < (int)g_theDevConsole->m_commandHistory.size())
+ 				{
+ 					g_theDevConsole->m_historyIndex--;
+ 				}
+ 				else if (g_theDevConsole->m_historyIndex == -1)
+ 				{
+ 					g_theDevConsole->m_oriInputSave = g_theDevConsole->m_inputText;
+ 					g_theDevConsole->m_historyIndex = (int)g_theDevConsole->m_commandHistory.size() - 1;
+ 				}
+ 
+ 				if (g_theDevConsole->m_historyIndex >= 0)
+ 				{
+ 					g_theDevConsole->m_inputText.clear();
+ 					g_theDevConsole->m_inputText = g_theDevConsole->m_commandHistory[g_theDevConsole->m_historyIndex];
+ 					g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
+ 				}
+ 			}
+ 		}
+ 		else if (keyCode == KEYCODE_DOWNARROW)
+ 		{
+ 			if (g_theDevConsole->m_commandHistory.size() > 0)
+ 			{
+ 				if (g_theDevConsole->m_historyIndex >= 0 && g_theDevConsole->m_historyIndex < (int)g_theDevConsole->m_commandHistory.size())
+ 				{
+ 					g_theDevConsole->m_historyIndex++;
+ 				}
+ 
+ 				if (g_theDevConsole->m_historyIndex >= 0)
+ 				{
+ 					g_theDevConsole->m_inputText.clear();
+ 					if (g_theDevConsole->m_historyIndex < (int)g_theDevConsole->m_commandHistory.size())
+ 					{
+ 						g_theDevConsole->m_inputText = g_theDevConsole->m_commandHistory[g_theDevConsole->m_historyIndex];
+ 					}
+ 					else
+ 					{
+ 						g_theDevConsole->m_inputText = g_theDevConsole->m_oriInputSave;
+ 						g_theDevConsole->m_historyIndex = -1;
+ 					}
+ 					g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
+ 
+ 				}
+ 			}
+ 		}
+ 		return true;
+ 	}
+ 	else
+ 		return false;
+ }
+ 
+ bool DevConsole::Event_CharInput(EventArgs& args)
+ {
+ 	char charInput = (char)args.GetValue("CharInput", '`');
+ 	if (g_theDevConsole->IsOpen()&&charInput >= 32 && charInput <= 126 && charInput != '`' && charInput != '~')
+ 	{
+ 		g_theDevConsole->m_insesrtionPointVisible = true;
+ 		g_theDevConsole->m_insertionPointBlinkTimer->Start();
+ 		g_theDevConsole->m_inputText.insert(g_theDevConsole->m_inputText.begin() + g_theDevConsole->m_insertionPointPosition, charInput);
+ 		g_theDevConsole->m_insertionPointPosition++;
+ 		return true;
+ 	}
+ 
+ 	return false;
+ }
 
 bool DevConsole::Command_Clear(EventArgs& args)
 {
@@ -349,6 +345,15 @@ bool DevConsole::Command_Quit(EventArgs& args)
 	UNUSED(args);
 	g_theEventSystem->FireEvent("CloseWindow");
 	return true;
+}
+
+bool DevConsole::ConsumeInput(unsigned char keyCode)
+{
+	if (g_theDevConsole->IsOpen() && keyCode != KEYCODE_TILDE)
+	{
+		return true;
+	}
+	return false;
 }
 
 void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont& font, float fontAspect) const

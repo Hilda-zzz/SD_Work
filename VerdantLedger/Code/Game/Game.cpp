@@ -35,7 +35,7 @@ Game::Game()
 	g_tileManager->InitAllTilemapResources();
 
 	m_player = new Player(this);
-	m_curMap = new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/HouseMap.tmx"], m_player);
+	m_curMap = new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/MyFarmMap.tmx"], m_player);
 
 	g_theDevConsole->AddLine(DevConsole::HELPLIST, "WASD: Move around\n\
 Tools: 0-None, 1-Axe, 2-Hoe, 3-Pickaxe, 4-Shovel, 5-Sickle, 6-Water\n\
@@ -79,7 +79,7 @@ void Game::Update()
 	}
 
 	// Update DevConsole
-	if (g_theInput->WasKeyJustPressed(KEYCODE_TILDE))
+	if (g_theInput->WasKeyJustPressedRaw(KEYCODE_TILDE))
 	{
 		if (g_theDevConsole->GetMode() == HIDDEN)
 		{

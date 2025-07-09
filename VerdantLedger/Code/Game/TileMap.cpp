@@ -111,10 +111,10 @@ TileMap::~TileMap()
 
 void TileMap::Update(float deltaSeconds)
 {
-	for (int i = 0; i < (int)m_markLayer->m_chunks.size(); i++)
-	{
-		m_markLayer->m_chunks[i].Update(deltaSeconds);
-	}
+// 	for (int i = 0; i < (int)m_markLayer->m_chunks.size(); i++)
+// 	{
+// 		m_markLayer->m_chunks[i].Update(deltaSeconds);
+// 	}
 }
 
 void TileMap::Render() const
@@ -128,13 +128,9 @@ void TileMap::Render() const
             //curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/TileMarksSet.png");
 			//g_theRenderer->BindTexture(tileMarkTex);
 		}
-        else if (m_layers[i]->GetName() == "Road")
-        {
-            curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/Village - Tiny Asset Pack/Exterior/Road.png");
-        }
         else
         {
-            curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/TilesetGrassSpring.png");
+            curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/OutsideAtlas.png");
         }
         for (int j = 0; j < (int)m_layers[i]->m_chunks.size(); j++)
         {
@@ -149,10 +145,6 @@ void TileMap::Render() const
     {
         markLayer->m_chunks[i].RenderDynamicContent();
     }
-//     for (GroundObstacle* obstacle : m_obstacles)
-//     {
-//         obstacle->Render();
-//     }
 }
 
 uint32_t TileMap::GetTileGidFromLayerID(int layerID, IntVec2 const& gridPos)

@@ -3,8 +3,13 @@
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Input/KeyButtonState.hpp"
 #include "Engine/Math/IntVec2.hpp"
+#include <vector>
+#include <set>
+#include "IInputConsumer.hpp"
+
 class NamedStrings;
 typedef NamedStrings EventArgs;
+class IInputConsumer;
 
 extern unsigned char const KEYCODE_F1;
 extern unsigned char const KEYCODE_F2;
@@ -58,6 +63,17 @@ struct InputSystemConfig
 
 };
 
+struct InputConsumerComparator
+{
+	bool operator()(IInputConsumer* a, IInputConsumer* b) const {
+		if (a->GetPriority() != b->GetPriority())
+		{
+			return a->GetPriority() < b->GetPriority();
+		}
+		return a < b;
+	}
+};
+
 class InputSystem
 {
 public:
@@ -68,6 +84,10 @@ public:
 	void BeginFrame();
 	void EndFrame();
 
+	void RegisterInputConsumer(IInputConsumer* consumer);
+	void UnregisterInputConsumer(IInputConsumer* consumer);
+
+	bool WasKeyJustPressedRaw(unsigned char keyCode);
 	bool WasKeyJustPressed(unsigned char keyCode);
 	bool WasKeyJustReleased(unsigned char keyCode);
 	bool IsKeyDown(unsigned char keyCode);
@@ -92,11 +112,17 @@ public:
 	static bool Event_KeyReleased(EventArgs& args);
 
 protected:
-	KeyButtonState m_keyStates[NUM_KEYCODES];
+	
+	KeyButtonState m_rawKeyStates[NUM_KEYCODES];
+	KeyButtonState m_gameplayKeyStates[NUM_KEYCODES];
 	XboxController m_controllers[NUM_XBOX_CONTROLLERS];
 	CursorMode m_cursorMode = CursorMode::POINTER;
 	//CursorState m_cursorState;
 	Vec2 m_lastCursorPos = Vec2::ZERO;
 	Vec2 m_curCursorPos = Vec2::ZERO;
 	Vec2 m_cursorClientDelta = Vec2::ZERO;
+
+private:
+	std::multiset<IInputConsumer*, InputConsumerComparator> m_inputConsumersList;
+
 };

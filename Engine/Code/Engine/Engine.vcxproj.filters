@@ -41,6 +41,9 @@
     <Filter Include="ResourceManager\Mesh">
       <UniqueIdentifier>{b5873055-8a4d-4f29-b935-718f3a34e0bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameUISystem">
+      <UniqueIdentifier>{64a3428a-b465-438d-82fa-b68be98c594f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -255,6 +258,12 @@
     </ClCompile>
     <ClCompile Include="ResourceManager\MeshResource.cpp">
       <Filter>ResourceManager\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="GameUISystem\GameUISystem.cpp">
+      <Filter>GameUISystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\IInputConsumer.cpp">
+      <Filter>Input</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -503,6 +512,12 @@
     </ClInclude>
     <ClInclude Include="ResourceManager\MeshResource.hpp">
       <Filter>ResourceManager\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="GameUISystem\GameUISystem.hpp">
+      <Filter>GameUISystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\IInputConsumer.hpp">
+      <Filter>Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

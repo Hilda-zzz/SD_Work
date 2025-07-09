@@ -3,6 +3,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Window/Window.hpp"
+
 unsigned char const KEYCODE_F1		= VK_F1;
 unsigned char const KEYCODE_F2		= VK_F2;
 unsigned char const KEYCODE_F3		= VK_F3;
@@ -44,7 +45,7 @@ InputSystem::InputSystem(InputSystemConfig inputConfig)
 	UNUSED(inputConfig);
 	for (int i = 0; i < NUM_KEYCODES; i++)
 	{
-		m_keyStates[i] = KeyButtonState();
+		m_rawKeyStates[i] = KeyButtonState();
 	}
 	
 	for (int i = 0; i < NUM_XBOX_CONTROLLERS; i++)
@@ -108,53 +109,111 @@ void InputSystem::EndFrame()
 {
 	for (int i = 0; i < NUM_KEYCODES; i++)
 	{
-		m_keyStates[i].m_wasPressedLastFrame = m_keyStates[i].m_isPressed;
+		m_rawKeyStates[i].m_wasPressedLastFrame = m_rawKeyStates[i].m_isPressed;
 	}
+}
+
+void InputSystem::RegisterInputConsumer(IInputConsumer* consumer)
+{
+	if(consumer)
+		m_inputConsumersList.insert(consumer);
+}
+
+void InputSystem::UnregisterInputConsumer(IInputConsumer* consumer)
+{
+	if (consumer)
+		m_inputConsumersList.erase(consumer);
+}
+
+bool InputSystem::WasKeyJustPressedRaw(unsigned char keyCode)
+{
+	if (m_rawKeyStates[keyCode].m_isPressed == true && m_rawKeyStates[keyCode].m_wasPressedLastFrame == false)
+ 	{
+ 		return true;
+ 	}
+ 	return false;
 }
 
 bool InputSystem::WasKeyJustPressed(unsigned char keyCode)
 {
-	if (m_keyStates[keyCode].m_isPressed == true && m_keyStates[keyCode].m_wasPressedLastFrame == false)
-	{
-		return true;
-	}
-	return false;
+ 	if (m_rawKeyStates[keyCode].m_isPressed == true && m_rawKeyStates[keyCode].m_wasPressedLastFrame == false)
+ 	{
+ 		return true;
+ 	}
+ 	return false;
+// 	if (m_gameplayKeyStates[keyCode].m_isPressed == true && m_gameplayKeyStates[keyCode].m_wasPressedLastFrame == false)
+// 	{
+// 		return true;
+// 	}
+// 	return false;
 }
 
 bool InputSystem::WasKeyJustReleased(unsigned char keyCode)
 {
-	if (m_keyStates[keyCode].m_isPressed == false && m_keyStates[keyCode].m_wasPressedLastFrame == true)
-	{
-		return true;
-	}
-	return false;
+// 	if (m_rawKeyStates[keyCode].m_isPressed == false && m_rawKeyStates[keyCode].m_wasPressedLastFrame == true)
+// 	{
+// 		return true;
+// 	}
+// 	return false;
+	 if (m_gameplayKeyStates[keyCode].m_isPressed == false && m_gameplayKeyStates[keyCode].m_wasPressedLastFrame == true)
+ 	{
+ 		return true;
+ 	}
+ 	return false;
+
 }
 
 bool InputSystem::IsKeyDown(unsigned char keyCode)
 {
-	return m_keyStates[keyCode].m_isPressed;
+	//return m_rawKeyStates[keyCode].m_isPressed;
+	return m_gameplayKeyStates[keyCode].m_isPressed;
 }
 
 bool InputSystem::AnythingDown()
 {
+// 	for (int i = 0; i < NUM_KEYCODES; i++)
+// 	{
+// 		if (m_rawKeyStates[i].m_isPressed)
+// 		{
+// 			return true;
+// 		}
+// 	}
+// 	return false;
+
 	for (int i = 0; i < NUM_KEYCODES; i++)
-	{
-		if (m_keyStates[i].m_isPressed)
-		{
-			return true;
-		}
-	}
-	return false;
+ 	{
+ 		if (m_gameplayKeyStates[i].m_isPressed)
+ 		{
+ 			return true;
+ 		}
+ 	}
+ 	return false;
+
 }
 
 void InputSystem::HandleKeyPressed(unsigned char keyCode)
 {
-	m_keyStates[keyCode].m_isPressed = true;
+	m_rawKeyStates[keyCode].m_isPressed = true;
+
+	// for loop consumer lists
+	for (IInputConsumer* consumer : m_inputConsumersList)
+	{
+		if (consumer->ConsumeInput(keyCode))
+		{
+			return;
+		}
+	}
+	m_gameplayKeyStates[keyCode].m_isPressed = true;
 }
 
 void InputSystem::HandleKeyReleased(unsigned char keyCode)
 {
-	m_keyStates[keyCode].m_isPressed = false;
+	m_rawKeyStates[keyCode].m_isPressed = false;
+
+	if (m_gameplayKeyStates[keyCode].m_isPressed) 
+	{
+		m_gameplayKeyStates[keyCode].m_isPressed = false;
+	}
 }
 
 XboxController const& InputSystem::GetController(int controllerID)
@@ -192,11 +251,6 @@ Vec2 InputSystem::GetCursorClientPosition() const
 bool InputSystem::Event_KeyPressed(EventArgs& args)
 {
 	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
-
-// 	if (g_theUISystem && g_theUISystem->HandleKeyPressed(keyCode)) {
-// 		// UI消费了这个事件，不传递给游戏输入
-// 		return true;
-// 	}
 
 	g_theInput->HandleKeyPressed(keyCode);
 	return true;

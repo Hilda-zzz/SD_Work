@@ -4,6 +4,7 @@
 #include "Engine/Core/Rgba8.hpp"
 #include <string>
 #include "Engine/Core/EventSystem.hpp"
+#include "../Input/IInputConsumer.hpp"
 class BitmapFont;
 class Timer;
 //class EventArgs;
@@ -45,10 +46,10 @@ struct DevConsoleLine
 	double m_timePrinted;
 };
 
-class DevConsole
+class DevConsole : public IInputConsumer
 {
 public:
-	DevConsole(DevConsoleConfig const& config);
+	DevConsole(DevConsoleConfig const& config,int inputPriority);
 	~DevConsole();
 	void Startup();
 	void Shutdown();
@@ -67,8 +68,8 @@ public:
 	//------------------------------------------------------------------------------------------------
 	static bool Command_Test(EventArgs& args);
 
-	static bool Event_KeyPressed(EventArgs& args);
-	static bool Event_CharInput(EventArgs& args);
+ 	static bool Event_KeyPressed(EventArgs& args);
+ 	static bool Event_CharInput(EventArgs& args);
 	static bool Command_Clear(EventArgs& args);
 	static bool Command_Help(EventArgs& args);
 	static bool Command_Quit(EventArgs& args);
@@ -85,6 +86,9 @@ public:
 	static const	Rgba8 EVENT_FEEDBACK;
 	static const	Rgba8 BKG;
 	static const	Rgba8 PLAYER_TIP;
+
+	// New Input System
+	bool ConsumeInput(unsigned char keyCode) override;
 
 protected:
 	void Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont& font, float fontAspect = 1.f) const;
