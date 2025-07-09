@@ -11,24 +11,21 @@ void ChunkUpddateManger::UpdateVisibleChunks(float deltaSeconds, Vec2 const& cam
 {
 	if (!m_focusLayer) return;
 
-	// 计算相机视野的边界（世界坐标）
 	float halfWidth = cameraSize.x * 0.5f;
 	float halfHeight = cameraSize.y * 0.5f;
 
 	Vec2 cameraMin = Vec2(cameraCenter.x - halfWidth, cameraCenter.y - halfHeight);
 	Vec2 cameraMax = Vec2(cameraCenter.x + halfWidth, cameraCenter.y + halfHeight);
 
-	// 转换为chunk网格坐标范围
 	IntVec2 minChunkPos = IntVec2(
 		(int)floor(cameraMin.x / 16.0f) * 16,
-		(int)ceil(cameraMax.y / 16.0f) * 16    // Y轴：上边界用ceil
+		(int)ceil(cameraMax.y / 16.0f) * 16    
 	);
 	IntVec2 maxChunkPos = IntVec2(
 		(int)ceil(cameraMax.x / 16.0f) * 16,
-		(int)floor(cameraMin.y / 16.0f) * 16   // Y轴：下边界用floor
+		(int)floor(cameraMin.y / 16.0f) * 16   
 	);
 
-	// 注意：现在Y坐标是从大到小遍历
 	for (int chunkY = minChunkPos.y; chunkY >= maxChunkPos.y; chunkY -= 16)
 	{
 		for (int chunkX = minChunkPos.x; chunkX <= maxChunkPos.x; chunkX += 16)
@@ -45,23 +42,6 @@ void ChunkUpddateManger::UpdateVisibleChunks(float deltaSeconds, Vec2 const& cam
 			}
 		}
 	}
-
-// 	for (int chunkY = minChunkPos.y; chunkY <= maxChunkPos.y; chunkY += 16)
-// 	{
-// 		for (int chunkX = minChunkPos.x; chunkX <= maxChunkPos.x; chunkX += 16)
-// 		{
-// 			IntVec2 chunkStartPos(chunkX, chunkY);
-// 			uint64_t chunkKey = TileLayer::GetChunkKey(chunkStartPos);
-// 
-// 			auto it = m_focusLayer->m_chunkIndexMap.find(chunkKey);
-// 			if (it != m_focusLayer->m_chunkIndexMap.end())
-// 			{
-// 				size_t chunkIndex = it->second;
-// 				TileChunk& chunk = m_focusLayer->m_chunks[chunkIndex];
-// 				chunk.Update(deltaSeconds);
-// 			}
-// 		}
-// 	}
 }
 
 void ChunkUpddateManger::MarkChunkDirty(TileChunk* dirtyChunk, DirtyType dirtyType, IntVec2 const& dirtyGridPos)

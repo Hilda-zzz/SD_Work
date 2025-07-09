@@ -28,6 +28,8 @@ public:
 private:
 	void UpdateCamFollow(float deltaSecondes);
 
+	void UpdateVisibleChunk(float deltaSeconds);
+
 	void CheckPlayerCollWithSolidTiles();
 
 	void PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhyRadius);
@@ -42,4 +44,5 @@ private:
 	Player* m_player = nullptr;
 	ChunkUpddateManger m_chunkUpdateManager;
 	Vec2 m_playerPrevPos = Vec2::ZERO;
+	std::vector<IntVec2> m_visibleChunk;
 };

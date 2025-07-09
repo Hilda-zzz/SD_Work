@@ -42,9 +42,9 @@ void Map::Update(float deltaSeconds)
  	m_tileMap->UpdateTransparentObject(m_playerFrontGridPos);
  	m_tileMap->Update(deltaSeconds);
 
-	Vec2 camSize = m_gameplayCam.GetOrthoTopRight() - m_gameplayCam.GetOrthoBottomLeft();
-	Vec2 camCenter = (m_gameplayCam.GetOrthoTopRight() + m_gameplayCam.GetOrthoBottomLeft()) * 0.5f;
-	m_chunkUpdateManager.UpdateVisibleChunks(deltaSeconds,camCenter,camSize);
+
+	//m_chunkUpdateManager.UpdateVisibleChunks(deltaSeconds,camCenter,camSize);
+	UpdateVisibleChunk(deltaSeconds);
 	m_chunkUpdateManager.UpdateDirtyChunks();
 }
 
@@ -55,7 +55,7 @@ void Map::Render() const
 	m_player->Render();
 
 	// transparent things must be rendered at the end
-	m_tileMap->Render();
+	m_tileMap->Render(m_visibleChunk);
 
 	g_theRenderer->EndCamera(m_gameplayCam);
 }
@@ -66,6 +66,50 @@ void Map::UpdateCamFollow(float deltaSeconds)
 	Vec2 cameraSmoothPos = Interpolate(m_playerPrevPos, aimCamCenter, 2.f * deltaSeconds);
 
 	m_gameplayCam.SetOrthographicView(cameraSmoothPos - g_halfGameCamDimensions, cameraSmoothPos + g_halfGameCamDimensions, 0.f, 1000.f);
+}
+
+void Map::UpdateVisibleChunk(float deltaSeconds)
+{
+	m_visibleChunk.clear();
+
+	if (!m_tileMap->m_markLayer) return;
+
+	//Vec2 camSize = m_gameplayCam.GetOrthoTopRight() - m_gameplayCam.GetOrthoBottomLeft();
+	Vec2 camSize = Vec2(20.f, 10.f);
+	Vec2 camCenter = (m_gameplayCam.GetOrthoTopRight() + m_gameplayCam.GetOrthoBottomLeft()) * 0.5f;
+
+	float halfWidth = camSize.x * 0.5f;
+	float halfHeight = camSize.y * 0.5f;
+
+	Vec2 cameraMin = Vec2(camCenter.x - halfWidth, camCenter.y - halfHeight);
+	Vec2 cameraMax = Vec2(camCenter.x + halfWidth, camCenter.y + halfHeight);
+
+	IntVec2 minChunkPos = IntVec2(
+		(int)floor(cameraMin.x / 16.0f) * 16,
+		(int)ceil(cameraMax.y / 16.0f) * 16
+	);
+	IntVec2 maxChunkPos = IntVec2(
+		(int)ceil(cameraMax.x / 16.0f) * 16,
+		(int)floor(cameraMin.y / 16.0f) * 16
+	);
+
+	for (int chunkY = minChunkPos.y; chunkY >= maxChunkPos.y; chunkY -= 16)
+	{
+		for (int chunkX = minChunkPos.x; chunkX <= maxChunkPos.x; chunkX += 16)
+		{
+			IntVec2 chunkStartPos(chunkX, chunkY);
+			m_visibleChunk.push_back(chunkStartPos);
+			uint64_t chunkKey = TileLayer::GetChunkKey(chunkStartPos);
+
+			auto it = m_tileMap->m_markLayer->m_chunkIndexMap.find(chunkKey);
+			if (it != m_tileMap->m_markLayer->m_chunkIndexMap.end())
+			{
+				size_t chunkIndex = it->second;
+				TileChunk& chunk = m_tileMap->m_markLayer->m_chunks[chunkIndex];
+				chunk.Update(deltaSeconds);
+			}
+		}
+	}
 }
 
 

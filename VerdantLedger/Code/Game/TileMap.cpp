@@ -117,7 +117,7 @@ void TileMap::Update(float deltaSeconds)
 // 	}
 }
 
-void TileMap::Render() const
+void TileMap::Render(std::vector<IntVec2> const& visibleChunkList) const
 {
     for (int i = 0; i < (int)m_layers.size(); i++)
     {
@@ -132,19 +132,30 @@ void TileMap::Render() const
         {
             curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/OutsideAtlas.png");
         }
-        for (int j = 0; j < (int)m_layers[i]->m_chunks.size(); j++)
+        //for (int j = 0; j < (int)m_layers[i]->m_chunks.size(); j++)
+        for (int j = 0; j < (int)visibleChunkList.size(); j++)
         {
-            g_theRenderer->BindTexture(curTexture);
-            g_theRenderer->SetBlendMode(BlendMode::ALPHA);
-            g_theRenderer->SetModelConstants();
-            g_theRenderer->DrawVertexArray(m_layers[i]->m_chunks[j].m_terrianVerts);
+            IntVec2 startPos = visibleChunkList[j];
+            TileChunk* curChunk = m_layers[i]->GetChunk(startPos.x, startPos.y);
+            if (curChunk)
+            {
+				g_theRenderer->BindTexture(curTexture);
+				g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+				g_theRenderer->SetModelConstants();
+				g_theRenderer->DrawVertexArray(curChunk->m_terrianVerts);
+            }
         }
     }
     TileLayer* markLayer = m_markLayer;
-    for (int i = 0; i < (int)markLayer->m_chunks.size(); i++)
-    {
-        markLayer->m_chunks[i].RenderDynamicContent();
-    }
+	for (int j = 0; j < (int)visibleChunkList.size(); j++)
+	{
+		IntVec2 startPos = visibleChunkList[j];
+		TileChunk* curChunk = markLayer->GetChunk(startPos.x, startPos.y);
+		if (curChunk)
+		{
+            curChunk->RenderDynamicContent();
+		}
+	}
 }
 
 uint32_t TileMap::GetTileGidFromLayerID(int layerID, IntVec2 const& gridPos)

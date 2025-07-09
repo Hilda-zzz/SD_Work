@@ -18,7 +18,7 @@ public:
 	~TileMap();
 
 	void Update(float deltaSeconds);
-	void Render() const;
+	void Render(std::vector<IntVec2> const& visibleChunkList) const;
 
 	const std::vector<TileLayer*>& GetLayers() const { return m_layers; }
 	const std::vector<Tileset*>& GetTilesets() const { return m_tilesets; }

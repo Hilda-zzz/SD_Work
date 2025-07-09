@@ -54,6 +54,18 @@ TileChunk* TileLayer::GetChunkContaining(IntVec2 tileCoords)
 	return (it != m_chunkIndexMap.end()) ? &m_chunks[it->second] : nullptr;
 }
 
+TileChunk* TileLayer::GetChunk(int chunkX, int chunkY)
+{
+	uint64_t key = GetChunkKey(IntVec2(chunkX, chunkY));
+	auto it = m_chunkIndexMap.find(key);
+	if (it != m_chunkIndexMap.end())
+	{
+		int index = it->second;
+		return &m_chunks[index];
+	}
+	return nullptr;
+}
+
 uint32_t TileLayer::GetGidFromGridPos(IntVec2 const& gridPos)
 {
 	for (TileChunk const& chunk : m_chunks) 

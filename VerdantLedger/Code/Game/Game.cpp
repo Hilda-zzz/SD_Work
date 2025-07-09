@@ -24,7 +24,7 @@ extern Window* g_theWindow;
 GameState Game::m_curGameState = GameState::GAME_STATE_ATTRACT;
 GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
 
-Vec2 const g_halfGameCamDimensions{ 10.f, 5.f };
+Vec2 const g_halfGameCamDimensions{ 30.f, 15.f };
 
 Game::Game()
 {
@@ -284,6 +284,10 @@ void Game::RenderAttractMode() const
 void Game::RenderGameplayMode() const
 {
 	m_curMap->Render();
+
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetModelConstants();
+	DebugDrawBoxLine(m_player->m_position - Vec2(10.f, 5.f), m_player->m_position + Vec2(10.f, 5.f), 0.5f, Rgba8::GREEN);
 
 	g_theRenderer->BeginCamera(m_screenCamera);
 	RenderGameplayUI();
