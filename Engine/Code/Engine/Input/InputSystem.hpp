@@ -74,6 +74,41 @@ struct InputConsumerComparator
 	}
 };
 
+enum class InputEventType 
+{
+	NONE,
+	KEY_PRESS,
+	KEY_RELEASE,
+	MOUSE_MOVE,
+	MOUSE_PRESS,
+	MOUSE_RELEASE,
+	MOUSE_WHEEL
+};
+
+struct InputEvent 
+{
+	InputEventType type = InputEventType::NONE;
+	unsigned char keyCode = 0;
+	Vec2 mousePos = Vec2::ZERO;
+	bool consumed = false;
+
+	static InputEvent KeyPress(unsigned char key) 
+	{
+		InputEvent e;
+		e.type = InputEventType::KEY_PRESS;
+		e.keyCode = key;
+		return e;
+	}
+
+	static InputEvent KeyRelease(unsigned char key)
+	{
+		InputEvent e;
+		e.type = InputEventType::KEY_RELEASE;
+		e.keyCode = key;
+		return e;
+	}
+};
+
 class InputSystem
 {
 public:
@@ -90,6 +125,7 @@ public:
 	bool WasKeyJustPressedRaw(unsigned char keyCode);
 	bool WasKeyJustPressed(unsigned char keyCode);
 	bool WasKeyJustReleased(unsigned char keyCode);
+	bool IsKeyDownRaw(unsigned char keyCode);
 	bool IsKeyDown(unsigned char keyCode);
 
 	bool AnythingDown();

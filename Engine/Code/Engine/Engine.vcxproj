@@ -177,7 +177,10 @@
     <ClCompile Include="Core\Vertex_PCU.cpp" />
     <ClCompile Include="Core\Vertex_PCUTBN.cpp" />
     <ClCompile Include="Core\XmlUtils.cpp" />
+    <ClCompile Include="GameUISystem\Button.cpp" />
     <ClCompile Include="GameUISystem\GameUISystem.cpp" />
+    <ClCompile Include="GameUISystem\Panel.cpp" />
+    <ClCompile Include="GameUISystem\Widget.cpp" />
     <ClCompile Include="Input\AnalogJoystick.cpp" />
     <ClCompile Include="Input\IInputConsumer.cpp" />
     <ClCompile Include="Input\InputSystem.cpp" />
@@ -261,7 +264,10 @@
     <ClInclude Include="Core\Vertex_PCU.hpp" />
     <ClInclude Include="Core\Vertex_PCUTBN.hpp" />
     <ClInclude Include="Core\XmlUtils.hpp" />
+    <ClInclude Include="GameUISystem\Button.hpp" />
     <ClInclude Include="GameUISystem\GameUISystem.hpp" />
+    <ClInclude Include="GameUISystem\Panel.hpp" />
+    <ClInclude Include="GameUISystem\Widget.hpp" />
     <ClInclude Include="Input\AnalogJoystick.hpp" />
     <ClInclude Include="Input\IInputConsumer.hpp" />
     <ClInclude Include="Input\InputSystem.hpp" />

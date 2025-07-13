@@ -65,7 +65,7 @@ void App::Startup()
 	g_theDevConsole = new DevConsole(devConsoleConfig,0);
 	g_theInput->RegisterInputConsumer(g_theDevConsole);
 
-	g_gameUISystem = new GameUISystem(1);
+	g_gameUISystem = new GameUISystem(1,g_theRenderer,g_theWindow,g_theInput);
 	g_theInput->RegisterInputConsumer(g_gameUISystem);
 
 	AudioSystemConfig audioConfig;
@@ -98,6 +98,9 @@ void App::Shutdown()
 	g_theWindow->Shutdown();
 	g_theInput->Shutdown();
 	g_theEventSystem->Shutdown();
+
+	delete g_gameUISystem;
+	g_gameUISystem = nullptr;
 
 	delete g_theAudio;
 	g_theAudio = nullptr;

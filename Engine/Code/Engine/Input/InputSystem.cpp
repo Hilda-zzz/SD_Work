@@ -111,6 +111,10 @@ void InputSystem::EndFrame()
 	{
 		m_rawKeyStates[i].m_wasPressedLastFrame = m_rawKeyStates[i].m_isPressed;
 	}
+	for (int i = 0; i < NUM_KEYCODES; i++)
+	{
+		m_gameplayKeyStates[i].m_wasPressedLastFrame = m_gameplayKeyStates[i].m_isPressed;
+	}
 }
 
 void InputSystem::RegisterInputConsumer(IInputConsumer* consumer)
@@ -136,16 +140,16 @@ bool InputSystem::WasKeyJustPressedRaw(unsigned char keyCode)
 
 bool InputSystem::WasKeyJustPressed(unsigned char keyCode)
 {
- 	if (m_rawKeyStates[keyCode].m_isPressed == true && m_rawKeyStates[keyCode].m_wasPressedLastFrame == false)
+//  	if (m_rawKeyStates[keyCode].m_isPressed == true && m_rawKeyStates[keyCode].m_wasPressedLastFrame == false)
+//  	{
+//  		return true;
+//  	}
+//  	return false;
+ 	if (m_gameplayKeyStates[keyCode].m_isPressed == true && m_gameplayKeyStates[keyCode].m_wasPressedLastFrame == false)
  	{
  		return true;
  	}
  	return false;
-// 	if (m_gameplayKeyStates[keyCode].m_isPressed == true && m_gameplayKeyStates[keyCode].m_wasPressedLastFrame == false)
-// 	{
-// 		return true;
-// 	}
-// 	return false;
 }
 
 bool InputSystem::WasKeyJustReleased(unsigned char keyCode)
@@ -161,6 +165,11 @@ bool InputSystem::WasKeyJustReleased(unsigned char keyCode)
  	}
  	return false;
 
+}
+
+bool InputSystem::IsKeyDownRaw(unsigned char keyCode)
+{
+	return m_rawKeyStates[keyCode].m_isPressed;
 }
 
 bool InputSystem::IsKeyDown(unsigned char keyCode)

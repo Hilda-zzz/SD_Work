@@ -8,11 +8,13 @@
 
 class BitmapFont;
 class Renderer;
+class GameUISystem;
 
 enum class ButtonState
 {
 	BTN_NORMAL,
 	BTN_HOVER,
+	BTN_PRESS,
 	BTN_CLICK
 };
 
@@ -23,12 +25,15 @@ public:
 	~Button() {};
 
 	//Button(const Vec2& position, const std::string& text = "");
-	Button(const Vec2& position, Texture* normalTex, Texture* hoverTex, Texture* clickTex,
+	Button(GameUISystem* uiSystem, const Vec2& position, Texture* normalTex, Texture* hoverTex, Texture* clickTex,
 		AABB2 bkgExtent, AABB2 textExtent, std::string text,float textHeight,BitmapFont* font,std::string clickEventName);
 
 	void Update(float deltaTime) override; 
 	void Render(Renderer* renderer) const override;
-	bool HandleInput(unsigned char keyCode) override;
+	bool HandleInput(InputEvent const& event) override;
+
+	void UpdateHoverState();
+	void UpdatePressState();
 
 	void SetOnClickCallback(std::string const& eventName);
 	bool IsPointInside() const;
@@ -43,6 +48,11 @@ public:
 	ButtonState GetState() const;
 	void SetState(ButtonState state);
 
+	void OnStateChange();
+	void OnMouseEnter();
+	void OnMouseLeave();
+	void OnMouseClick();
+
 public:
 
 private:
@@ -51,7 +61,9 @@ private:
 	void UpdateVertices();
 
 private:
+	ButtonState m_prevState = ButtonState::BTN_NORMAL;
 	ButtonState m_curState = ButtonState::BTN_NORMAL;
+	bool m_wasHover = false;
 
 	std::vector<Vertex_PCU> m_bkgVerts;
 	Texture* m_texNormal=nullptr;

@@ -26,7 +26,6 @@
   <ItemGroup>
     <ClCompile Include="AnimState.cpp" />
     <ClCompile Include="App.cpp" />
-    <ClCompile Include="Button.cpp" />
     <ClCompile Include="ChunkUpdateManager.cpp" />
     <ClCompile Include="DynamicContentGenerator.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -49,7 +48,6 @@
     <ClInclude Include="AnimState.hpp" />
     <ClInclude Include="AnimStateEnum.hpp" />
     <ClInclude Include="App.hpp" />
-    <ClInclude Include="Button.hpp" />
     <ClInclude Include="ChunkUpdateManager.hpp" />
     <ClInclude Include="DynamicContentGenerator.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />

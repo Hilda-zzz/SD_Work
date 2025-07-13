@@ -3,7 +3,8 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Core/EventSystem.hpp"
-#include "Button.hpp"
+#include "Engine/GameUISystem/Button.hpp"
+#include "Engine/GameUISystem/Panel.hpp"
 
 class Clock;
 class Map;
@@ -53,7 +54,13 @@ private:
 
 	//------Process Control------
 	void EnterState(GameState state);
+	void EnterAttractMode();
+	void EnterGameplayMode();
+
 	void ExitState(GameState state);
+	void ExitAttractMode();
+	void ExitGameplayMode();
+
 
 	//-------event--------------------
 	static bool BtnEvent_StartNew(EventArgs& args);
@@ -83,6 +90,7 @@ private:
 	float m_curDeltaTime = 0.f;
 
 	//Menu UI
+	Panel m_menuPanel;
 	Button m_btnMenuStartNew;
 	Button m_btnMenuLoad;
 	Button m_btnMenuExit;

@@ -14,8 +14,7 @@ extern InputSystem* g_theInput;
 extern AudioSystem* g_theAudio;
 
 Button::Button(const Vec2& position, Texture* normalTex, Texture* hoverTex, Texture* clickTex, AABB2 bkgExtent, AABB2 textExtent, std::string text, float textHeight, BitmapFont* font, std::string clickEventName)
-	: m_position(position)
-	, m_texNormal(normalTex)
+	: m_texNormal(normalTex)
 	, m_texHover(hoverTex ? hoverTex : normalTex)  
 	, m_texClick(clickTex ? clickTex : normalTex)  
 	, m_curTex(normalTex)                          
@@ -26,13 +25,16 @@ Button::Button(const Vec2& position, Texture* normalTex, Texture* hoverTex, Text
 	, m_font(font)
 	, m_clickEventName(clickEventName)
 {
+	m_position = position;
+	m_bounds = m_bkgBox;
+
 	UpdateVertices();
 
 	m_clickSound = g_theAudio->CreateOrGetSound("Data/Audio/DefaultBtnClick.mp3");
 	m_hoverSound = g_theAudio->CreateOrGetSound("Data/Audio/DefaultBtnHover.mp3");
 }
 
-void Button::Update()
+void Button::Update(float deltaTime)
 {
 	Vec2 mousePos = g_theWindow->GetMousePixelPos();
 
@@ -40,13 +42,14 @@ void Button::Update()
 
 	bool isPressed = IsPressed();
 
-	ButtonState prevState = curState;
+	bool handled = false;
+	ButtonState prevState = m_curState;
 
 	if (isInside)
 	{
 		if (isPressed)
 		{
-			curState = ButtonState::BTN_CLICK;
+			m_curState = ButtonState::BTN_CLICK;
 			if (prevState != ButtonState::BTN_CLICK)
 			{
 				// Mouse button just pressed
@@ -61,7 +64,7 @@ void Button::Update()
 				FireClickEvent();
 			}
 
-			curState = ButtonState::BTN_HOVER;
+			m_curState = ButtonState::BTN_HOVER;
 			if (prevState != ButtonState::BTN_HOVER)
 			{
 				m_curTex = m_texHover;
@@ -71,7 +74,7 @@ void Button::Update()
 	}
 	else
 	{
-		curState = ButtonState::BTN_NORMAL;
+		m_curState = ButtonState::BTN_NORMAL;
 		if (prevState != ButtonState::BTN_NORMAL)
 		{
 			m_curTex = m_texNormal;
@@ -79,23 +82,77 @@ void Button::Update()
 	}
 }
 
-void Button::Render() const
+void Button::Render(Renderer* renderer) const
 {
-	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
-	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
-	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
-	g_theRenderer->BindShader(nullptr);
-	g_theRenderer->SetModelConstants();
-	g_theRenderer->BindTexture(m_curTex);
-	g_theRenderer->DrawVertexArray(m_bkgVerts);
-	g_theRenderer->BindTexture(&m_font->GetTexture());
-	g_theRenderer->DrawVertexArray(m_textVerts);
+	renderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+	renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+	renderer->SetBlendMode(BlendMode::ALPHA);
+	renderer->BindShader(nullptr);
+	renderer->SetModelConstants();
+	renderer->BindTexture(m_curTex);
+	renderer->DrawVertexArray(m_bkgVerts);
+	renderer->BindTexture(&m_font->GetTexture());
+	renderer->DrawVertexArray(m_textVerts);
+}
+
+bool Button::HandleInput(unsigned char keyCode)
+{
+	if (!m_canReceiveInput || !m_isVisible)
+	{
+		return false;
+	}
+
+	Vec2 mousePos = g_theWindow->GetMousePixelPos();
+
+	bool isInside = IsPointInside();
+
+	bool isPressed = IsPressed();
+
+	ButtonState prevState = m_curState;
+
+	if (isInside)
+	{
+		if (isPressed)
+		{
+			m_curState = ButtonState::BTN_CLICK;
+			if (prevState != ButtonState::BTN_CLICK)
+			{
+				// Mouse button just pressed
+				m_curTex = m_texClick;
+			}
+		}
+		else
+		{
+			if (prevState == ButtonState::BTN_CLICK)
+			{
+				// Mouse button released while over button - trigger click event
+				FireClickEvent();
+			}
+
+			m_curState = ButtonState::BTN_HOVER;
+			if (prevState != ButtonState::BTN_HOVER)
+			{
+				m_curTex = m_texHover;
+				g_theAudio->StartSound(m_hoverSound);
+			}
+		}
+
+		return true;
+	}
+	else
+	{
+		m_curState = ButtonState::BTN_NORMAL;
+		if (prevState != ButtonState::BTN_NORMAL)
+		{
+			m_curTex = m_texNormal;
+		}
+	}
+	return false;
 }
 
 void Button::SetOnClickCallback(std::string const& eventName)
 {
 	m_clickEventName = eventName;
-	
 }
 
 bool Button::IsPointInside() const
@@ -142,16 +199,16 @@ std::string Button::GetText() const
 
 ButtonState Button::GetState() const
 {
-	return curState;
+	return m_curState;
 }
 
 void Button::SetState(ButtonState state)
 {
-	if (curState != state)
+	if (m_curState != state)
 	{
-		curState = state;
+		m_curState = state;
 
-		switch (curState)
+		switch (m_curState)
 		{
 		case ButtonState::BTN_NORMAL:
 			m_curTex = m_texNormal;

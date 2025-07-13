@@ -15,9 +15,10 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "ObstacleDefinitions.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include "Engine/GameUISystem/GameUISystem.hpp"
+#include "Engine/GameUISystem/Panel.hpp"
 
-
-
+extern GameUISystem* g_gameUISystem;
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
@@ -55,6 +56,7 @@ Game::~Game()
 	delete m_curMap;
 	m_curMap = nullptr;
 
+
 	ObstacleDefinition::ShutdownObstacleDefinition();
 }
 
@@ -69,6 +71,8 @@ void Game::Update()
 		m_dropTimes += 1;
 
 	UpdateCamera(deltaSeconds);
+
+	g_gameUISystem->Update(deltaSeconds);
 
 	// Update Game State
 	if (m_curGameState != m_nextGameState)
@@ -136,12 +140,17 @@ void Game::Renderer() const
 	}
 	
 	g_theRenderer->BeginCamera(m_screenCamera);
+	g_gameUISystem->Render();
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
 void Game::InitializeMenuButtons()
 {
+	Texture* menuBkg = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/dialogue box.png");
+	m_menuPanel =Panel(Vec2(800.f, 400.f), menuBkg, AABB2(Vec2(-30.f, -30.f), Vec2(30.f, 30.f)));
+	g_gameUISystem->PushPanel(&m_menuPanel);
+
 	Texture* menuBtnTexture1 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBtn1.png");
 	Texture* menuBtnTexture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBtn2.png");
 	Texture* menuBtnTexture3 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBtn3.png");
@@ -163,21 +172,25 @@ void Game::InitializeMenuButtons()
 	float textHeight = 30.0f;
 
 	Vec2 btnNormalPos = Vec2(leftMargin + btnWidth / 2.0f, startY);
-	m_btnMenuStartNew = Button(btnNormalPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+	m_btnMenuStartNew = Button(g_gameUISystem,btnNormalPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
 		bkgExtent, textExtent, "New", textHeight, gameFont, "StartNew");
 
 	Vec2 btnGoldPos = Vec2(leftMargin + btnWidth / 2.0f, startY - buttonSpacing);
-	m_btnMenuLoad = Button(btnGoldPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+	m_btnMenuLoad = Button(g_gameUISystem, btnGoldPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
 		bkgExtent, textExtent, "Load", textHeight, gameFont, "Load");
 
 	Vec2 btnTutorialPos = Vec2(leftMargin + btnWidth / 2.0f, startY - 2 * buttonSpacing);
-	m_btnMenuExit = Button(btnTutorialPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+	m_btnMenuExit = Button(g_gameUISystem, btnTutorialPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
 		bkgExtent, textExtent, "Exit", textHeight, gameFont, "Exit");
 
 	//call back
 	g_theEventSystem->SubscribeEventCallbackFuction("StartNew", BtnEvent_StartNew, true);
 	g_theEventSystem->SubscribeEventCallbackFuction("Load", BtnEvent_Load, true);
 	g_theEventSystem->SubscribeEventCallbackFuction("Exit", BtnEvent_Exit, true);
+
+	m_menuPanel.AddChild(&m_btnMenuStartNew);
+	m_menuPanel.AddChild(&m_btnMenuLoad);
+	m_menuPanel.AddChild(&m_btnMenuExit);
 }
 
 void Game::UpdateAttractMode(float deltaTime)
@@ -192,9 +205,9 @@ void Game::UpdateAttractMode(float deltaTime)
 // 		m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
 // 	}
 
-	m_btnMenuStartNew.Update();
-	m_btnMenuLoad.Update();
-	m_btnMenuExit.Update();
+// 	m_btnMenuStartNew.Update(deltaTime);
+// 	m_btnMenuLoad.Update(deltaTime);
+// 	m_btnMenuExit.Update(deltaTime);
 }
 
 void Game::UpdateGameplayMode(float deltaTime)
@@ -272,10 +285,10 @@ void Game::RenderAttractMode() const
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	g_theRenderer->DrawVertexArray(verts);
 
-	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
-	m_btnMenuStartNew.Render();
-	m_btnMenuLoad.Render();
-	m_btnMenuExit.Render();
+// 	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+// 	m_btnMenuStartNew.Render(g_theRenderer);
+// 	m_btnMenuLoad.Render(g_theRenderer);
+// 	m_btnMenuExit.Render(g_theRenderer);
 
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
@@ -365,12 +378,64 @@ void Game::RenderDebugMode()const
 
 void Game::EnterState(GameState state)
 {
-	UNUSED(state);
+	switch (state)
+	{
+	case GameState::GAME_STATE_ATTRACT:
+		EnterAttractMode();
+		break;
+	case GameState::GAME_STATE_MENU:
+		break;
+	case GameState::GAME_STATE_SAVELOAD:
+		break;
+	case GameState::GAME_STATE_SETTINGS:
+		break;
+	case GameState::GAME_STATE_GAMEPLAY:
+		EnterGameplayMode();
+		break;
+	default:
+		break;
+	}
 }
 
 void Game::ExitState(GameState state)
 {
-	UNUSED(state);
+	switch (state)
+	{
+	case GameState::GAME_STATE_ATTRACT:
+		ExitAttractMode();
+		break;
+	case GameState::GAME_STATE_MENU:
+		break;
+	case GameState::GAME_STATE_SAVELOAD:
+		break;
+	case GameState::GAME_STATE_SETTINGS:
+		break;
+	case GameState::GAME_STATE_GAMEPLAY:
+		ExitGameplayMode();
+		break;
+	default:
+		break;
+	}
+}
+
+void Game::ExitAttractMode()
+{
+	g_gameUISystem->PopAllPanel();
+}
+
+void Game::ExitGameplayMode()
+{
+	g_gameUISystem->PopAllPanel();
+}
+
+void Game::EnterAttractMode()
+{
+	g_gameUISystem->PushPanel(&m_menuPanel);
+}
+
+void Game::EnterGameplayMode()
+{
+
 }
 
 bool Game::BtnEvent_StartNew(EventArgs& args)
