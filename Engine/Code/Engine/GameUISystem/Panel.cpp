@@ -23,13 +23,16 @@ void Panel::Render(Renderer* renderer) const
 
 void Panel::RenderSelf(Renderer* renderer) const
 {
-	renderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
-	renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
-	renderer->SetBlendMode(BlendMode::ALPHA);
-	renderer->BindShader(nullptr);
-	renderer->SetModelConstants();
-	renderer->BindTexture(m_curTex);
-	renderer->DrawVertexArray(m_bkgVerts);
+	if (m_isRenderSelf)
+	{
+		renderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+		renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+		renderer->SetBlendMode(BlendMode::ALPHA);
+		renderer->BindShader(nullptr);
+		renderer->SetModelConstants();
+		renderer->BindTexture(m_curTex);
+		renderer->DrawVertexArray(m_bkgVerts);
+	}
 }
 
 bool Panel::HandleInput(InputEvent const& event)

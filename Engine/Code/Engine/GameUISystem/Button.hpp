@@ -15,7 +15,8 @@ enum class ButtonState
 	BTN_NORMAL,
 	BTN_HOVER,
 	BTN_PRESS,
-	BTN_CLICK
+	BTN_CLICK,
+	BTN_SELECTED
 };
 
 class Button: public Widget
@@ -53,14 +54,15 @@ public:
 	void OnMouseLeave();
 	void OnMouseClick();
 
+	void SetHoverSound(SoundID sound) { m_hoverSound = sound; };
+
 public:
 
-private:
-	void FireClickEvent();
+protected:
+	virtual void FireClickEvent();
+	virtual void UpdateVertices();
 
-	void UpdateVertices();
-
-private:
+protected:
 	ButtonState m_prevState = ButtonState::BTN_NORMAL;
 	ButtonState m_curState = ButtonState::BTN_NORMAL;
 	bool m_wasHover = false;

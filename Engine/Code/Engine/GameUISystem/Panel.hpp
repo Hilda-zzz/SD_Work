@@ -15,7 +15,7 @@ public:
 	void Render(Renderer* renderer) const override;
 	void RenderSelf(Renderer* renderer) const override;
 	bool HandleInput(InputEvent const& event) override;
-
+	void SetIsrenderSelf(bool isRenderSelf) { m_isRenderSelf = isRenderSelf; }
 private:
 	void UpdateVertices();
 
@@ -30,4 +30,5 @@ protected:
 	Texture* m_curTex = nullptr;
 
 	AABB2 m_bkgBox = AABB2();
+	bool m_isRenderSelf = false;
 };

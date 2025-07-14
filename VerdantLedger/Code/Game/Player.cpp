@@ -8,6 +8,9 @@
 #include "Game.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Game/Map.hpp"
+#include "Inventory.hpp"
+#include "InventoryItemDef.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 
 extern Window* g_theWindow;
 extern InputSystem* g_theInput;
@@ -61,6 +64,9 @@ Player::~Player()
 		delete pair.second;
 	}
 	m_spriteSheets.clear();
+
+	delete m_inventory;
+	m_inventory = nullptr;
 }
 
 void Player::Initialize()
@@ -91,6 +97,10 @@ void Player::Initialize()
 	m_animConditions["usingShovel"] = false;
 	m_animConditions["usingSickle"] = false;
 	m_animConditions["usingWater"] = false;
+
+	//-----------------------------------------------------
+	m_inventory = new Inventory(this);
+	AddStartingToolsToInventory();
 }
 
 void Player::InitializeAnims()
@@ -148,6 +158,58 @@ void Player::InitializeStateAnimations(const std::string& stateName, Texture* te
 		state);
 }
 
+void Player::AddStartingToolsToInventory()
+{
+	InventoryItemDef* axeDef = InventoryItemDef::GetItemDefFromName("Axe");
+	InventoryItemDef* hoeDef = InventoryItemDef::GetItemDefFromName("Hoe");
+	InventoryItemDef* pickaxeDef = InventoryItemDef::GetItemDefFromName("Pickaxe");
+	InventoryItemDef* shovelDef = InventoryItemDef::GetItemDefFromName("Shovel");
+	InventoryItemDef* sickleDef = InventoryItemDef::GetItemDefFromName("Sickle");
+	InventoryItemDef* wateringCanDef = InventoryItemDef::GetItemDefFromName("Watering Can");
+
+	if (axeDef) {
+		bool success = m_inventory->AddItem(axeDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add Axe to inventory");
+		}
+	}
+
+	if (hoeDef) {
+		bool success = m_inventory->AddItem(hoeDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add Hoe to inventory");
+		}
+	}
+
+	if (pickaxeDef) {
+		bool success = m_inventory->AddItem(pickaxeDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add Pickaxe to inventory");
+		}
+	}
+
+	if (shovelDef) {
+		bool success = m_inventory->AddItem(shovelDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add Shovel to inventory");
+		}
+	}
+
+	if (sickleDef) {
+		bool success = m_inventory->AddItem(sickleDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add Sickle to inventory");
+		}
+	}
+
+	if (wateringCanDef) {
+		bool success = m_inventory->AddItem(wateringCanDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add Watering Can to inventory");
+		}
+	}
+}
+
 void Player::Update(float deltaSeconds)
 {
 	HandleInput();
@@ -187,15 +249,16 @@ void Player::HandleInput()
 	}
 	//-------------------CursorPos--------------
 	UpdateToolAimGridPos();
+
 	//---------------Tool-----------------------
-	for (const auto& pair : s_playerKeyCodeToolMap)
-	{
-		if (g_theInput->WasKeyJustPressed(pair.first))
-		{
-			m_curTool = pair.second;
-			break;
-		}
-	}
+// 	for (const auto& pair : s_playerKeyCodeToolMap)
+// 	{
+// 		if (g_theInput->WasKeyJustPressed(pair.first))
+// 		{
+// 			m_curTool = pair.second;
+// 			break;
+// 		}
+// 	}
 }
 
 void Player::UpdateAnimations(float deltaTime)

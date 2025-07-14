@@ -7,6 +7,7 @@
 #include "StateMachine.hpp"
 
 class Game;
+class Inventory;
 
 enum class PlayerTools
 {
@@ -29,6 +30,8 @@ public:
 	void Update(float deltaSeconds);
 	void Render() const;
 
+	Inventory* GetInventory() { return m_inventory; };
+
 private:
 	void Initialize();
 	void InitializeAnims();
@@ -38,6 +41,8 @@ private:
 		PlayerBodyStates stateEnum,
 		std::map<Direction, SpriteAnimDefinition*>& directionAnimsMap,
 		AnimState* state, SpriteAnimPlaybackType playbackType, int framePerSecond);
+	void AddStartingToolsToInventory();
+
 	void HandleInput();
 	void UpdateMovement(float deltaTime);
 	void UpdateAnimations(float deltaTime);
@@ -107,5 +112,6 @@ private:
 	};
 
 	std::string m_previousAnimStateName = "";
-	
+
+	Inventory* m_inventory;
 };

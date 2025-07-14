@@ -5,7 +5,7 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/GameUISystem/Button.hpp"
 #include "Engine/GameUISystem/Panel.hpp"
-
+#include "InventorySlotButton.hpp"
 class Clock;
 class Map;
 class TileMapManager;
@@ -36,7 +36,12 @@ public:
 	void Renderer() const;
 
 private:
-	void InitializeMenuButtons();
+	void InitializeMenuPanel();
+
+	void InitializeToolBarPanel();
+	void UpdateToolBarFromInventory();
+	void SelectToolBarSlot(int slotIndex);
+
 	//------Update--------------
 	void UpdateAttractMode(float deltaTime);
 	void UpdateGameplayMode(float deltaTime);
@@ -66,6 +71,7 @@ private:
 	static bool BtnEvent_StartNew(EventArgs& args);
 	static bool BtnEvent_Load(EventArgs& args);
 	static bool BtnEvent_Exit(EventArgs& args);
+	static bool BtnEvent_ToolBarSlotClicked(EventArgs& args);
 
 public:
 	Clock* m_gameClock = nullptr;
@@ -94,5 +100,8 @@ private:
 	Button m_btnMenuStartNew;
 	Button m_btnMenuLoad;
 	Button m_btnMenuExit;
+
+	Panel m_toolBarPanel;
+	InventorySlotButton m_toolBarSlots[9];
 	
 };

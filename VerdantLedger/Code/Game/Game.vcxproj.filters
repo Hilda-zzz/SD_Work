@@ -32,6 +32,12 @@
     <Filter Include="Definitions">
       <UniqueIdentifier>{af5bac6f-eb57-4355-85a3-92f7730ecf97}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{ea5181e4-e024-4bc1-8b20-688b815a77e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inventory">
+      <UniqueIdentifier>{05bc30a3-757a-422b-8654-fe0aceb894e6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -90,6 +96,18 @@
     </ClCompile>
     <ClCompile Include="ChunkUpdateManager.cpp">
       <Filter>TiledMapLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="Inventory.cpp">
+      <Filter>Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="InventoryItem.cpp">
+      <Filter>Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="InventoryItemDef.cpp">
+      <Filter>Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="InventorySlotButton.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -159,6 +177,18 @@
     <ClInclude Include="ChunkUpdateManager.hpp">
       <Filter>TiledMapLoader</Filter>
     </ClInclude>
+    <ClInclude Include="InventorySlotButton.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="InventoryItemDef.hpp">
+      <Filter>Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="InventoryItem.hpp">
+      <Filter>Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="Inventory.hpp">
+      <Filter>Inventory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx">
@@ -179,6 +209,9 @@
       <Filter>Definitions</Filter>
     </Xml>
     <Xml Include="..\..\Run\Data\Definitions\RuledTilesets.xml">
+      <Filter>Definitions</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Definitions\InventoryItemDefinitions.xml">
       <Filter>Definitions</Filter>
     </Xml>
   </ItemGroup>

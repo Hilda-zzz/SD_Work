@@ -1,0 +1,122 @@
+<InventoryItemDefinitions>
+	<!-- 工具类物品 -->
+	<ItemDefinition name="Axe" type="ITEM_TYPE_TOOL" coinValue="50" description="A sturdy axe for chopping wood and clearing trees">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/ToolsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="0,0"/>
+		<ToolType type="AXE"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Hoe" type="ITEM_TYPE_TOOL" coinValue="30" description="Essential tool for tilling soil and preparing farmland">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/ToolsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="1,0"/>
+		<ToolType type="HOE"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Pickaxe" type="ITEM_TYPE_TOOL" coinValue="75" description="Heavy-duty tool for mining rocks and breaking stones">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/ToolsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="2,0"/>
+		<ToolType type="PICKAXE"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Shovel" type="ITEM_TYPE_TOOL" coinValue="25" description="Useful for digging and moving soil">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/ToolsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="3,0"/>
+		<ToolType type="SHOVEL"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Sickle" type="ITEM_TYPE_TOOL" coinValue="40" description="Sharp tool for harvesting crops and cutting grass">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/ToolsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="4,0"/>
+		<ToolType type="SICKLE"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Watering Can" type="ITEM_TYPE_TOOL" coinValue="20" description="Container for watering plants and crops">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/ToolsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="0,1"/>
+		<ToolType type="WATER"/>
+	</ItemDefinition>
+
+	<!-- 作物类物品 --><!--
+	<ItemDefinition name="Wheat Seeds" type="ITEM_TYPE_CROP" coinValue="2" description="Seeds for growing wheat crops">
+		<ItemTexture path="Data/Art/FarmAssets/Seeds.png"/>
+		<Icon spriteLayout="16,16" gridPos="0,1"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Wheat" type="ITEM_TYPE_CROP" coinValue="5" description="Harvested wheat ready for processing">
+		<ItemTexture path="Data/Art/FarmAssets/Crops.png"/>
+		<Icon spriteLayout="16,16" gridPos="1,1"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Corn Seeds" type="ITEM_TYPE_CROP" coinValue="3" description="Seeds for growing corn crops">
+		<ItemTexture path="Data/Art/FarmAssets/Seeds.png"/>
+		<Icon spriteLayout="16,16" gridPos="2,1"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Corn" type="ITEM_TYPE_CROP" coinValue="8" description="Fresh corn ready to eat or sell">
+		<ItemTexture path="Data/Art/FarmAssets/Crops.png"/>
+		<Icon spriteLayout="16,16" gridPos="3,1"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Tomato Seeds" type="ITEM_TYPE_CROP" coinValue="4" description="Seeds for growing tomato plants">
+		<ItemTexture path="Data/Art/FarmAssets/Seeds.png"/>
+		<Icon spriteLayout="16,16" gridPos="4,1"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Tomato" type="ITEM_TYPE_CROP" coinValue="10" description="Ripe tomatoes perfect for cooking">
+		<ItemTexture path="Data/Art/FarmAssets/Crops.png"/>
+		<Icon spriteLayout="16,16" gridPos="5,1"/>
+	</ItemDefinition>
+
+	--><!-- 材料类物品 --><!--
+	<ItemDefinition name="Wood" type="ITEM_TYPE_MAT" coinValue="1" description="Basic building material from trees">
+		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
+		<Icon spriteLayout="16,16" gridPos="0,2"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Stone" type="ITEM_TYPE_MAT" coinValue="2" description="Durable material for construction">
+		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
+		<Icon spriteLayout="16,16" gridPos="1,2"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Iron Ore" type="ITEM_TYPE_MAT" coinValue="15" description="Raw iron ore for crafting tools">
+		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
+		<Icon spriteLayout="16,16" gridPos="2,2"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Coal" type="ITEM_TYPE_MAT" coinValue="8" description="Fuel source for smelting and heating">
+		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
+		<Icon spriteLayout="16,16" gridPos="3,2"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Clay" type="ITEM_TYPE_MAT" coinValue="3" description="Moldable material for pottery and building">
+		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
+		<Icon spriteLayout="16,16" gridPos="4,2"/>
+	</ItemDefinition>
+
+	--><!-- 家具类物品 --><!--
+	<ItemDefinition name="Wooden Chair" type="ITEM_TYPE_FURNITURE" coinValue="25" description="Comfortable wooden chair for your home">
+		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
+		<Icon spriteLayout="16,16" gridPos="0,3"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Wooden Table" type="ITEM_TYPE_FURNITURE" coinValue="40" description="Sturdy table for dining and working">
+		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
+		<Icon spriteLayout="16,16" gridPos="1,3"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Chest" type="ITEM_TYPE_FURNITURE" coinValue="30" description="Storage container for keeping items safe">
+		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
+		<Icon spriteLayout="16,16" gridPos="2,3"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Bed" type="ITEM_TYPE_FURNITURE" coinValue="60" description="Comfortable place to rest and sleep">
+		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
+		<Icon spriteLayout="16,16" gridPos="3,3"/>
+	</ItemDefinition>
+
+	<ItemDefinition name="Lamp" type="ITEM_TYPE_FURNITURE" coinValue="20" description="Light source for illuminating dark areas">
+		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
+		<Icon spriteLayout="16,16" gridPos="4,3"/>
+	</ItemDefinition>-->
+
+</InventoryItemDefinitions>

@@ -1,4 +1,4 @@
-#include "Game/Game.hpp"
+﻿#include "Game/Game.hpp"
 #include "App.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -17,20 +17,25 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/GameUISystem/GameUISystem.hpp"
 #include "Engine/GameUISystem/Panel.hpp"
+#include "InventoryItemDef.hpp"
+#include "Game/Inventory.hpp"
+
 
 extern GameUISystem* g_gameUISystem;
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
+extern Game* g_theGame;
 
 GameState Game::m_curGameState = GameState::GAME_STATE_ATTRACT;
 GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
 
-Vec2 const g_halfGameCamDimensions{ 30.f, 15.f };
+Vec2 const g_halfGameCamDimensions{ 10.f, 5.f };
 
 Game::Game()
 {
 	m_gameClock = new Clock();
 	ObstacleDefinition::InitializeObstacleDefinitionFromFile();
+	InventoryItemDef::InitializeInventoryItemDefinitionFromFile();
 
 	g_tileManager = &TileMapManager::GetInstance();
 	g_tileManager->InitAllTilemapResources();
@@ -42,7 +47,11 @@ Game::Game()
 Tools: 0-None, 1-Axe, 2-Hoe, 3-Pickaxe, 4-Shovel, 5-Sickle, 6-Water\n\
 Left Mouse Button: Use selected tool");
 
-	InitializeMenuButtons();
+	InitializeMenuPanel();
+	g_gameUISystem->PushPanel(&m_menuPanel);
+
+	InitializeToolBarPanel();
+	UpdateToolBarFromInventory();
 }
 
 Game::~Game()
@@ -58,6 +67,7 @@ Game::~Game()
 
 
 	ObstacleDefinition::ShutdownObstacleDefinition();
+	InventoryItemDef::ShutdownInventoryItemDefinition();
 }
 
 void Game::Update()
@@ -145,11 +155,11 @@ void Game::Renderer() const
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
-void Game::InitializeMenuButtons()
+void Game::InitializeMenuPanel()
 {
-	Texture* menuBkg = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/dialogue box.png");
+	//Texture* menuBkg = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/dialogue box.png");
+	Texture * menuBkg = nullptr;
 	m_menuPanel =Panel(Vec2(800.f, 400.f), menuBkg, AABB2(Vec2(-30.f, -30.f), Vec2(30.f, 30.f)));
-	g_gameUISystem->PushPanel(&m_menuPanel);
 
 	Texture* menuBtnTexture1 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBtn1.png");
 	Texture* menuBtnTexture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/MenuBtn2.png");
@@ -193,6 +203,124 @@ void Game::InitializeMenuButtons()
 	m_menuPanel.AddChild(&m_btnMenuExit);
 }
 
+void Game::InitializeToolBarPanel()
+{
+	Texture* toolBarBkg = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/ToolBarBkg.png");
+
+	float windowWidth = 1600.0f;
+	float windowHeight = 800.0f;
+
+	float toolBarWidth = 550.0f;  
+	float toolBarHeight = 150.0f;
+
+	float toolBarX = windowWidth / 2.0f;        
+	float toolBarY = 60.0f;                     
+	Vec2 toolBarPos = Vec2(toolBarX, toolBarY);
+
+	AABB2 toolBarExtent = AABB2(-toolBarWidth / 2.0f, -toolBarHeight / 2.0f,
+		toolBarWidth / 2.0f, toolBarHeight / 2.0f);
+
+	m_toolBarPanel = Panel(toolBarPos, toolBarBkg, toolBarExtent);
+	m_toolBarPanel.SetIsrenderSelf(true);
+
+	Texture* slotNormalTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Inventory/InventorySlotBtn1.png");
+	Texture* slotSelectedTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Inventory/InventorySlotBtn2.png");
+	Texture* slotBorderTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Inventory/InventorySlotBtn3.png");
+
+	float slotSize = 47.0f;     
+	float slotSpacing = 52.0f;    
+	float totalSlotsWidth = 9 * slotSpacing; 
+	float startX = -totalSlotsWidth / 2.0f + slotSpacing / 2.0f; 
+	float slotY = 0.0f;
+
+	AABB2 slotExtent = AABB2(-slotSize / 2.0f, -slotSize / 2.0f,
+		slotSize / 2.0f, slotSize / 2.0f);
+	AABB2 textExtent = AABB2::ZERO_TO_ONE;  
+
+	BitmapFont* gameFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+
+	for (int i = 0; i < 9; i++) 
+	{
+		Vec2 slotPos = Vec2(startX + i * slotSpacing, slotY)+ toolBarPos;
+
+		std::string eventName = "ToolBarSlotClicked";
+
+		m_toolBarSlots[i] = InventorySlotButton(
+			g_gameUISystem,           // GameUISystem* uiSystem
+			slotPos,                  // const Vec2& position
+			slotNormalTexture,        // Texture* normalTex
+			slotSelectedTexture,         // Texture* hoverTex
+			slotSelectedTexture,      // Texture* clickTex
+			nullptr,                  // Texture* iconTexture (初始为空)
+			slotBorderTexture,                  // Texture* borderTexture (可选边框)
+			slotExtent,              // AABB2 bkgExtent
+			textExtent,              // AABB2 textExtent
+			"",                      // std::string text (初始为空)
+			0.0f,                    // float textHeight
+			gameFont,                // BitmapFont* font
+			eventName                // std::string clickEventName
+		);
+		m_toolBarSlots[i].SetHoverSound(-1);
+		m_toolBarSlots[i].SetSlotIndex(i);
+		m_toolBarPanel.AddChild(&m_toolBarSlots[i]);
+	}
+	g_theEventSystem->SubscribeEventCallbackFuction("ToolBarSlotClicked", BtnEvent_ToolBarSlotClicked, true);
+
+}
+
+void Game::UpdateToolBarFromInventory()
+{
+	if (m_player && m_player->GetInventory()) {
+		for (int i = 0; i < 9; i++)
+		{
+			if (i < m_player->GetInventory()->m_items.size())
+			{
+				m_toolBarSlots[i].UpdateFromInventoryItem(&m_player->GetInventory()->m_items[i]);
+			}
+			else
+			{
+				m_toolBarSlots[i].UpdateFromInventoryItem(nullptr);
+			}
+		}
+	}
+}
+
+void Game::SelectToolBarSlot(int slotIndex)
+{
+	if (slotIndex < 0 || slotIndex >= 9)
+	{
+		return;  
+	}
+
+	for (InventorySlotButton& btn : m_toolBarSlots)
+	{
+		btn.SetSelectedState(false);
+	}
+	m_toolBarSlots[slotIndex].SetSelectedState(true);
+
+	if (m_player && m_player->GetInventory()) 
+	{
+		InventoryItem* curItem=m_toolBarSlots[slotIndex].GetItem();
+		if (curItem)
+		{
+			InventoryItemDef const* curDef = curItem->m_itemDef;
+			if (curDef->m_itemType == ItemType::ITEM_TYPE_TOOL)
+			{
+				m_player->m_curTool = curDef->m_toolType;
+			}
+			else
+			{
+				m_player->m_curTool = PlayerTools::NONE;
+			}
+		}
+		else 
+		{
+
+			m_player->m_curTool = PlayerTools::NONE;
+		}
+	}
+}
+
 void Game::UpdateAttractMode(float deltaTime)
 {
 	UNUSED(deltaTime);
@@ -200,14 +328,6 @@ void Game::UpdateAttractMode(float deltaTime)
 	{
 		g_theApp->m_isQuitting = true;
 	}
-// 	if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE)|| g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
-// 	{
-// 		m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
-// 	}
-
-// 	m_btnMenuStartNew.Update(deltaTime);
-// 	m_btnMenuLoad.Update(deltaTime);
-// 	m_btnMenuExit.Update(deltaTime);
 }
 
 void Game::UpdateGameplayMode(float deltaTime)
@@ -285,11 +405,6 @@ void Game::RenderAttractMode() const
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	g_theRenderer->DrawVertexArray(verts);
 
-// 	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
-// 	m_btnMenuStartNew.Render(g_theRenderer);
-// 	m_btnMenuLoad.Render(g_theRenderer);
-// 	m_btnMenuExit.Render(g_theRenderer);
-
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 }
@@ -351,9 +466,6 @@ void Game::RenderGameplayMode() const
 	font->AddVertsForTextInBox2D(title, statsMessage,
 		AABB2(Vec2(10.f, 500.f), Vec2(600.f, 700.f)), 15.f, Rgba8::WHITE, 0.7f, Vec2(0.f, 1.f));
 
-// 	g_theRenderer->BindTexture(&font->GetTexture());
-// 	g_theRenderer->DrawVertexArray(panelVerts);
-
 	g_theRenderer->BindTexture(&font->GetTexture());
 	g_theRenderer->DrawVertexArray(title);
 	g_theRenderer->EndCamera(m_screenCamera);
@@ -361,14 +473,7 @@ void Game::RenderGameplayMode() const
 
 void Game::RenderGameplayUI() const
 {
-// 	g_theRenderer->BindTexture(nullptr);
-// 	DebugDrawLine(Vec2(100.f, 100.f), Vec2(1500.f, 700.f), 4.f, Rgba8(180, 0, 100));
-// 	DebugDrawLine(Vec2(100.f, 700.f), Vec2(1500.f, 100.f), 4.f, Rgba8(180, 0, 100));
 
-// 	Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
-// 	Vec2 mousePositionInGameCam = AABB2(Vec2(0.f, 0.f), Vec2(1600.f, 800.f)).GetPointAtUV(mouseUV);
-// 	DebugDrawCircle(20.f, mousePositionInGameCam,Rgba8::CYAN);
-	//Vec2 mousePosInWorldPlace = mousePositionInGameCam - Vec2(0.5 * g_cameraDimensions.x, 0.5 * g_cameraDimensions.y);
 }
 
 void Game::RenderDebugMode()const
@@ -435,7 +540,7 @@ void Game::EnterAttractMode()
 
 void Game::EnterGameplayMode()
 {
-
+	g_gameUISystem->PushPanel(&m_toolBarPanel);
 }
 
 bool Game::BtnEvent_StartNew(EventArgs& args)
@@ -456,6 +561,19 @@ bool Game::BtnEvent_Exit(EventArgs& args)
 {
 	UNUSED(args);
 	g_theApp->m_isQuitting = true;
+	return true;
+}
+
+bool Game::BtnEvent_ToolBarSlotClicked(EventArgs& args)
+{
+	std::string slotIndexStr = args.GetValue("slotIndex", "-1");
+	int slotIndex = std::stoi(slotIndexStr);
+
+	if (slotIndex >= 0 && slotIndex < 9) 
+	{
+		g_theGame->SelectToolBarSlot(slotIndex);
+	}
+
 	return true;
 }
 
