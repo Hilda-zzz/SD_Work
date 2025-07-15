@@ -274,6 +274,12 @@
     <ClCompile Include="GameUISystem\Button.cpp">
       <Filter>GameUISystem</Filter>
     </ClCompile>
+    <ClCompile Include="GameUISystem\UIText.cpp">
+      <Filter>GameUISystem</Filter>
+    </ClCompile>
+    <ClCompile Include="GameUISystem\UIImage.cpp">
+      <Filter>GameUISystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -535,6 +541,12 @@
       <Filter>GameUISystem</Filter>
     </ClInclude>
     <ClInclude Include="GameUISystem\Button.hpp">
+      <Filter>GameUISystem</Filter>
+    </ClInclude>
+    <ClInclude Include="GameUISystem\UIImage.hpp">
+      <Filter>GameUISystem</Filter>
+    </ClInclude>
+    <ClInclude Include="GameUISystem\UIText.hpp">
       <Filter>GameUISystem</Filter>
     </ClInclude>
   </ItemGroup>

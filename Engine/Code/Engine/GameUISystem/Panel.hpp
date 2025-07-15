@@ -29,6 +29,6 @@ protected:
 	Texture* m_texClick = nullptr;
 	Texture* m_curTex = nullptr;
 
-	AABB2 m_bkgBox = AABB2();
+	/*AABB2 m_bkgBox = AABB2();*/
 	bool m_isRenderSelf = false;
 };

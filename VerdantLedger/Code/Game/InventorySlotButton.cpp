@@ -16,6 +16,7 @@ void InventorySlotButton::UpdateFromInventoryItem(InventoryItem* item)
 	{
 		m_item = item;
 		m_iconTexture = item->m_itemDef->m_iconTexture;
+		m_text = std::to_string(20);//m_item->m_quantity
 	}
 	UpdateVertices();
 }
@@ -71,24 +72,24 @@ void InventorySlotButton::FireClickEvent()
 
 void InventorySlotButton::Render(Renderer* renderer) const
 {
-	renderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
-	renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
-	renderer->SetBlendMode(BlendMode::ALPHA);
-	renderer->BindShader(nullptr);
-	renderer->SetModelConstants();
-
-	renderer->BindTexture(m_curTex);
-	renderer->DrawVertexArray(m_bkgVerts);
-
-	// icon
-	renderer->BindTexture(m_iconTexture);
-	renderer->DrawVertexArray(m_iconVerts);
-
- 	if (m_isSelected)
- 	{
- 		renderer->BindTexture(m_borderTexture);
- 		renderer->DrawVertexArray(m_boarderVerts);
- 	}
+ 	renderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+ 	renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+ 	renderer->SetBlendMode(BlendMode::ALPHA);
+ 	renderer->BindShader(nullptr);
+ 	renderer->SetModelConstants();
+ 
+ 	renderer->BindTexture(m_curTex);
+ 	renderer->DrawVertexArray(m_bkgVerts);
+ 
+ 	// icon
+ 	renderer->BindTexture(m_iconTexture);
+ 	renderer->DrawVertexArray(m_iconVerts);
+ 
+  	if (m_isSelected)
+  	{
+  		renderer->BindTexture(m_borderTexture);
+  		renderer->DrawVertexArray(m_boarderVerts);
+  	}
 
 	renderer->BindTexture(&m_font->GetTexture());
 	renderer->DrawVertexArray(m_textVerts);

@@ -3,11 +3,16 @@
 #include "../Renderer/Renderer.hpp"
 
 Panel::Panel(const Vec2& position, Texture* normalTex, AABB2 const& bkgExtent)
-	:m_texNormal(normalTex),m_bkgBox(bkgExtent)
+	:m_texNormal(normalTex)
 {
 	m_position = position;
+
 	m_bounds = bkgExtent;
+	m_bounds.m_mins += position;
+	m_bounds.m_maxs += position;
+
 	m_curTex = m_texNormal;
+
 	UpdateVertices();
 }
 
@@ -43,7 +48,7 @@ bool Panel::HandleInput(InputEvent const& event)
 void Panel::UpdateVertices()
 {
 	m_bkgVerts.clear();
-	Vec2 bkgMins = m_position + m_bkgBox.m_mins;
-	Vec2 bkgMaxs = m_position + m_bkgBox.m_maxs;
-	AddVertsForAABB2D(m_bkgVerts, AABB2(bkgMins, bkgMaxs), Rgba8::WHITE);
+// 	Vec2 bkgMins = m_position + m_bkgBox.m_mins;
+// 	Vec2 bkgMaxs = m_position + m_bkgBox.m_maxs;
+	AddVertsForAABB2D(m_bkgVerts, m_bounds, Rgba8::WHITE);
 }

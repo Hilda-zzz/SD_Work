@@ -180,6 +180,8 @@
     <ClCompile Include="GameUISystem\Button.cpp" />
     <ClCompile Include="GameUISystem\GameUISystem.cpp" />
     <ClCompile Include="GameUISystem\Panel.cpp" />
+    <ClCompile Include="GameUISystem\UIImage.cpp" />
+    <ClCompile Include="GameUISystem\UIText.cpp" />
     <ClCompile Include="GameUISystem\Widget.cpp" />
     <ClCompile Include="Input\AnalogJoystick.cpp" />
     <ClCompile Include="Input\IInputConsumer.cpp" />
@@ -267,6 +269,8 @@
     <ClInclude Include="GameUISystem\Button.hpp" />
     <ClInclude Include="GameUISystem\GameUISystem.hpp" />
     <ClInclude Include="GameUISystem\Panel.hpp" />
+    <ClInclude Include="GameUISystem\UIImage.hpp" />
+    <ClInclude Include="GameUISystem\UIText.hpp" />
     <ClInclude Include="GameUISystem\Widget.hpp" />
     <ClInclude Include="Input\AnalogJoystick.hpp" />
     <ClInclude Include="Input\IInputConsumer.hpp" />

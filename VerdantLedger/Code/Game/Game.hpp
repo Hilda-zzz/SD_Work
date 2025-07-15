@@ -6,6 +6,8 @@
 #include "Engine/GameUISystem/Button.hpp"
 #include "Engine/GameUISystem/Panel.hpp"
 #include "InventorySlotButton.hpp"
+#include "Engine/GameUISystem/UIImage.hpp"
+#include "Engine/GameUISystem/UIText.hpp"
 class Clock;
 class Map;
 class TileMapManager;
@@ -41,6 +43,8 @@ private:
 	void InitializeToolBarPanel();
 	void UpdateToolBarFromInventory();
 	void SelectToolBarSlot(int slotIndex);
+
+	void InitializeStatusPanel();
 
 	//------Update--------------
 	void UpdateAttractMode(float deltaTime);
@@ -103,5 +107,10 @@ private:
 
 	Panel m_toolBarPanel;
 	InventorySlotButton m_toolBarSlots[9];
-	
+
+	Panel m_statusPanel;
+	UIImage m_statusImage; 
+	UIText m_daysText;
+	UIText m_timeText;
+	UIText m_coinText;
 };

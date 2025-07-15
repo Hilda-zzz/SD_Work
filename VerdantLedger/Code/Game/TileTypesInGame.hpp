@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include "Engine/Core/Timer.hpp"
 
+class CropDefinitions;
+
 enum class TerrainType : uint32_t   //may change to uint8
 {
 	NONE = 0,
@@ -47,7 +49,7 @@ struct CropInfo
  	ObstacleType m_obstacleType=ObstacleType::NONE;
  	int m_curObstacleDurability = 0; // if m_obstacleType!=none, meaningful
  	FarmState m_farmState = FarmState::UNPLOWED;
- 	CropInfo m_curCrop; // if m_farmState==PLANTED/ GROWN, meaningful
+	CropDefinitions* m_curCrop = nullptr; // if m_farmState==PLANTED/ GROWN, meaningful
 
 	int m_spriteIndex = 0;
  };

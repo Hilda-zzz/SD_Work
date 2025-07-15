@@ -109,6 +109,9 @@
     <ClCompile Include="InventorySlotButton.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="CropDefinitions.cpp">
+      <Filter>TilemapObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -189,6 +192,9 @@
     <ClInclude Include="Inventory.hpp">
       <Filter>Inventory</Filter>
     </ClInclude>
+    <ClInclude Include="CropDefinitions.hpp">
+      <Filter>TilemapObjects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx">
@@ -212,6 +218,9 @@
       <Filter>Definitions</Filter>
     </Xml>
     <Xml Include="..\..\Run\Data\Definitions\InventoryItemDefinitions.xml">
+      <Filter>Definitions</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Definitions\CropDefinitions.xml">
       <Filter>Definitions</Filter>
     </Xml>
   </ItemGroup>

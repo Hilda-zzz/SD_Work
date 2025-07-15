@@ -27,6 +27,7 @@
     <ClCompile Include="AnimState.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ChunkUpdateManager.cpp" />
+    <ClCompile Include="CropDefinitions.cpp" />
     <ClCompile Include="DynamicContentGenerator.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
@@ -53,6 +54,7 @@
     <ClInclude Include="AnimStateEnum.hpp" />
     <ClInclude Include="App.hpp" />
     <ClInclude Include="ChunkUpdateManager.hpp" />
+    <ClInclude Include="CropDefinitions.hpp" />
     <ClInclude Include="DynamicContentGenerator.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Game.hpp" />
@@ -83,6 +85,7 @@
     <None Include="..\..\Run\Data\Tiled\TileMark.tsx" />
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="..\..\Run\Data\Definitions\CropDefinitions.xml" />
     <Xml Include="..\..\Run\Data\Definitions\InventoryItemDefinitions.xml" />
     <Xml Include="..\..\Run\Data\Definitions\ObstacleDefinitions.xml" />
     <Xml Include="..\..\Run\Data\Definitions\RuledTilesets.xml" />

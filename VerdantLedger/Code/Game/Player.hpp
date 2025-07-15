@@ -42,6 +42,7 @@ private:
 		std::map<Direction, SpriteAnimDefinition*>& directionAnimsMap,
 		AnimState* state, SpriteAnimPlaybackType playbackType, int framePerSecond);
 	void AddStartingToolsToInventory();
+	void AddStartingSeedsToInventory();
 
 	void HandleInput();
 	void UpdateMovement(float deltaTime);

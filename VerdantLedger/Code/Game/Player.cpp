@@ -101,6 +101,7 @@ void Player::Initialize()
 	//-----------------------------------------------------
 	m_inventory = new Inventory(this);
 	AddStartingToolsToInventory();
+	AddStartingSeedsToInventory();
 }
 
 void Player::InitializeAnims()
@@ -206,6 +207,34 @@ void Player::AddStartingToolsToInventory()
 		bool success = m_inventory->AddItem(wateringCanDef, 1);
 		if (!success) {
 			ERROR_AND_DIE("Failed to add Watering Can to inventory");
+		}
+	}
+}
+
+void Player::AddStartingSeedsToInventory()
+{
+	InventoryItemDef* strawberrySeedDef = InventoryItemDef::GetItemDefFromName("Strawberry_Seed");
+	InventoryItemDef* greenOnionSeedDef = InventoryItemDef::GetItemDefFromName("GreenOnion_Seed");
+	InventoryItemDef* potatoSeedDef = InventoryItemDef::GetItemDefFromName("Potato_Seed");
+
+	if (strawberrySeedDef) {
+		bool success = m_inventory->AddItem(strawberrySeedDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add strawberrySeedDef to inventory");
+		}
+	}
+
+	if (greenOnionSeedDef) {
+		bool success = m_inventory->AddItem(greenOnionSeedDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add  greenOnionSeedDef to inventory");
+		}
+	}
+
+	if (potatoSeedDef) {
+		bool success = m_inventory->AddItem(potatoSeedDef, 1);
+		if (!success) {
+			ERROR_AND_DIE("Failed to add potatoSeedDef to inventory");
 		}
 	}
 }

@@ -1,0 +1,90 @@
+<CropDefinitions>
+	<!-- 0 -->
+	<CropDefinition name="Strawberry" description="Sweet red berries, perfect for desserts" matureDay="6" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,1"/>
+		<SeedItem name="Strawberry_Seed"/>
+		<HarvestItem name="Strawberry_Harvest"/>
+	</CropDefinition>
+
+	<!-- 1 -->
+	<CropDefinition name="GreenOnion" description="Fresh green onion" matureDay="6" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,3"/>
+		<SeedItem name="Lettuce_Seed"/>
+		<HarvestItem name="Lettuce_Harvest"/>
+	</CropDefinition>
+
+	<!-- 2 -->
+	<CropDefinition name="Potato" description="Potato potato i love potato" matureDay="6" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="16,16" spriteStartGridPos="0,5"/>
+		<SeedItem name="Potato_Seed"/>
+		<HarvestItem name="Potato_Harvest"/>
+	</CropDefinition>
+
+	<!-- 3 -->
+	<CropDefinition name="Onion" description="Fresh onion" matureDay="6" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,7"/>
+		<SeedItem name="Onion_Seed"/>
+		<HarvestItem name="Onion_Harvest"/>
+	</CropDefinition>
+	
+	<!-- 4 -->
+	<CropDefinition name="Carrot" description="Orange root vegetables rich in vitamins" matureDay="6" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,9"/>
+		<SeedItem name="Carrot_Seed"/>
+		<HarvestItem name="Carrot_Harvest"/>
+	</CropDefinition>
+
+	<!-- 5 -->
+	<CropDefinition name="Blueberry" description="Small blue berries packed with antioxidants" matureDay="6" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,11"/>
+		<SeedItem name="Blueberry_Seed"/>
+		<HarvestItem name="Blueberry_Harvest"/>
+	</CropDefinition>
+
+	<!-- 6 -->
+	<CropDefinition name="WhiteCarrot" description="White Carrot rich in vitamins" matureDay="5" spriteStateCount="5">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,13"/>
+		<SeedItem name="WhiteCarrot_Seed"/>
+		<HarvestItem name="WhiteCarrot_Harvest"/>
+	</CropDefinition>
+
+	<!-- 7 -->
+	<CropDefinition name="Lettuce" description="Fresh green lettuce leaves for salads" matureDay="7" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,15"/>
+		<SeedItem name="Lettuce_Seed"/>
+		<HarvestItem name="Lettuce_Harvest"/>
+	</CropDefinition>
+
+	<!-- 8 -->
+	<CropDefinition name="WhiteBroccoli" description="Nutritious white vegetable" matureDay="6" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,17"/>
+		<SeedItem name="WhiteBroccoli_Seed"/>
+		<HarvestItem name="WhiteBroccoli_Harvest"/>
+	</CropDefinition>
+
+	<!-- 9 -->
+	<CropDefinition name="Grain" description="NutritiousGrain" matureDay="6" spriteStateCount="6">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,19"/>
+		<SeedItem name="WhiteBroccoli_Seed"/>
+		<HarvestItem name="WhiteBroccoli_Harvest"/>
+	</CropDefinition>
+
+	<!-- 10 -->
+	<CropDefinition name="Broccoli" description="Nutritious white vegetable" matureDay="5" spriteStateCount="5">
+		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,21"/>
+		<SeedItem name="Broccoli_Seed"/>
+		<HarvestItem name="Broccoli_Harvest"/>
+	</CropDefinition>
+	
+</CropDefinitions>

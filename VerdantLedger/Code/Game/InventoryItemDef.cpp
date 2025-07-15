@@ -22,6 +22,10 @@ InventoryItemDef::InventoryItemDef(XmlElement const* itemDefElement)
 	{
 		m_itemType = ItemType::ITEM_TYPE_CROP;
 	}
+	else if (typeStr == "ITEM_TYPE_SEED")
+	{
+		m_itemType = ItemType::ITEM_TYPE_SEED;
+	}
 	else if (typeStr == "ITEM_TYPE_MAT")
 	{
 		m_itemType = ItemType::ITEM_TYPE_MAT;

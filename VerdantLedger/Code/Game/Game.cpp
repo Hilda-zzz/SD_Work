@@ -19,6 +19,7 @@
 #include "Engine/GameUISystem/Panel.hpp"
 #include "InventoryItemDef.hpp"
 #include "Game/Inventory.hpp"
+#include "CropDefinitions.hpp"
 
 
 extern GameUISystem* g_gameUISystem;
@@ -36,6 +37,7 @@ Game::Game()
 	m_gameClock = new Clock();
 	ObstacleDefinition::InitializeObstacleDefinitionFromFile();
 	InventoryItemDef::InitializeInventoryItemDefinitionFromFile();
+	CropDefinitions::InitializeCropDefinitionsFromFile();
 
 	g_tileManager = &TileMapManager::GetInstance();
 	g_tileManager->InitAllTilemapResources();
@@ -47,11 +49,13 @@ Game::Game()
 Tools: 0-None, 1-Axe, 2-Hoe, 3-Pickaxe, 4-Shovel, 5-Sickle, 6-Water\n\
 Left Mouse Button: Use selected tool");
 
-	InitializeMenuPanel();
-	g_gameUISystem->PushPanel(&m_menuPanel);
+ 	InitializeMenuPanel();
+ 	g_gameUISystem->PushPanel(&m_menuPanel);
 
 	InitializeToolBarPanel();
 	UpdateToolBarFromInventory();
+
+	InitializeStatusPanel();
 }
 
 Game::~Game()
@@ -65,7 +69,7 @@ Game::~Game()
 	delete m_curMap;
 	m_curMap = nullptr;
 
-
+	CropDefinitions::ShutdownCropDefinitions();
 	ObstacleDefinition::ShutdownObstacleDefinition();
 	InventoryItemDef::ShutdownInventoryItemDefinition();
 }
@@ -235,7 +239,7 @@ void Game::InitializeToolBarPanel()
 
 	AABB2 slotExtent = AABB2(-slotSize / 2.0f, -slotSize / 2.0f,
 		slotSize / 2.0f, slotSize / 2.0f);
-	AABB2 textExtent = AABB2::ZERO_TO_ONE;  
+	AABB2 textExtent = AABB2(Vec2(-10.f,-10.f)+Vec2(10.f,-15.f), Vec2(10.f, 10.f) + Vec2(10.f, -15.f));
 
 	BitmapFont* gameFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 
@@ -256,7 +260,7 @@ void Game::InitializeToolBarPanel()
 			slotExtent,              // AABB2 bkgExtent
 			textExtent,              // AABB2 textExtent
 			"",                      // std::string text (初始为空)
-			0.0f,                    // float textHeight
+			10.0f,                    // float textHeight
 			gameFont,                // BitmapFont* font
 			eventName                // std::string clickEventName
 		);
@@ -319,6 +323,63 @@ void Game::SelectToolBarSlot(int slotIndex)
 			m_player->m_curTool = PlayerTools::NONE;
 		}
 	}
+}
+
+void Game::InitializeStatusPanel()
+{
+	Texture* statusPanelBkg = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/GameStateHUD.png");
+
+	float windowWidth = 1600.0f;
+	float windowHeight = 800.0f;
+
+	float panelWidth = 250.0f;
+	float panelHeight = 160.0f;
+	float panelX = windowWidth - 130.0f;    
+	float panelY = windowHeight - 90.0f;    
+
+	Vec2 statusPanelPos = Vec2(panelX, panelY);
+	AABB2 statusPanelExtent = AABB2(-panelWidth / 2.0f, -panelHeight / 2.0f,
+		panelWidth / 2.0f, panelHeight / 2.0f);
+
+	m_statusPanel = Panel(statusPanelPos, statusPanelBkg, statusPanelExtent);
+	m_statusPanel.SetIsrenderSelf(true);
+
+	BitmapFont* gameFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+
+	Texture* avatarTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Clock/Clock.png");
+	float imageSize = 85.0f;
+	Vec2 imagePos = Vec2(-panelWidth / 2.0f + imageSize / 2.0f + 20.0f, 20.0f);
+
+	m_statusImage = UIImage(imagePos+statusPanelPos, avatarTexture,
+		AABB2(-imageSize / 2, -imageSize / 2, imageSize / 2, imageSize / 2),AABB2::ZERO_TO_ONE);
+	m_statusPanel.AddChild(&m_statusImage);
+
+
+	float textStartX = imagePos.x + imageSize / 2.0f + 45.0f;  
+	float textWidth = panelWidth / 2.0f; 
+	float textHeight = 10.0f;
+	float textSpacing = 25.0f;  
+	float startY = 30.0f;
+
+	Vec2 daysTextPos = Vec2(textStartX, startY)+statusPanelPos;
+	AABB2 daysTextBounds = AABB2(daysTextPos.x - textWidth / 2, daysTextPos.y - textHeight / 2,
+		daysTextPos.x + textWidth / 2,  daysTextPos.y + textHeight / 2);
+
+	m_daysText = UIText("DaysText", "Day 1", gameFont, daysTextBounds, textHeight,Rgba8::BLACK);
+	m_statusPanel.AddChild(&m_daysText);
+
+	Vec2 timeTextPos = Vec2(textStartX, startY - textSpacing) + statusPanelPos;
+	AABB2 timeTextBounds = AABB2(timeTextPos.x - textWidth / 2, timeTextPos.y - textHeight / 2,
+		timeTextPos.x + textWidth / 2, timeTextPos.y + textHeight / 2);
+
+	m_timeText = UIText("TimeText", "Morning", gameFont, timeTextBounds, textHeight, Rgba8::BLACK);
+	m_statusPanel.AddChild(&m_timeText);
+
+	Vec2 coinTextPos = Vec2(textStartX, startY - 3.f * textSpacing+5.f) + statusPanelPos;
+	AABB2 coinTextBounds = AABB2(coinTextPos.x - textWidth / 2, coinTextPos.y - textHeight / 2,
+		coinTextPos.x + textWidth / 2, coinTextPos.y + textHeight / 2);
+	m_coinText = UIText("CoinText", "Coins: 1000", gameFont, coinTextBounds, textHeight,Rgba8::BLACK);
+	m_statusPanel.AddChild(&m_coinText);
 }
 
 void Game::UpdateAttractMode(float deltaTime)
@@ -413,9 +474,9 @@ void Game::RenderGameplayMode() const
 {
 	m_curMap->Render();
 
-	g_theRenderer->BindTexture(nullptr);
-	g_theRenderer->SetModelConstants();
-	DebugDrawBoxLine(m_player->m_position - Vec2(10.f, 5.f), m_player->m_position + Vec2(10.f, 5.f), 0.5f, Rgba8::GREEN);
+// 	g_theRenderer->BindTexture(nullptr);
+// 	g_theRenderer->SetModelConstants();
+// 	DebugDrawBoxLine(m_player->m_position - Vec2(10.f, 5.f), m_player->m_position + Vec2(10.f, 5.f), 0.5f, Rgba8::GREEN);
 
 	g_theRenderer->BeginCamera(m_screenCamera);
 	RenderGameplayUI();
@@ -541,6 +602,7 @@ void Game::EnterAttractMode()
 void Game::EnterGameplayMode()
 {
 	g_gameUISystem->PushPanel(&m_toolBarPanel);
+	g_gameUISystem->PushPanel(&m_statusPanel);
 }
 
 bool Game::BtnEvent_StartNew(EventArgs& args)

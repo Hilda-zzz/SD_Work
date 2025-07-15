@@ -36,87 +36,140 @@
 		<ToolType type="WATER"/>
 	</ItemDefinition>
 
-	<!-- 作物类物品 --><!--
-	<ItemDefinition name="Wheat Seeds" type="ITEM_TYPE_CROP" coinValue="2" description="Seeds for growing wheat crops">
-		<ItemTexture path="Data/Art/FarmAssets/Seeds.png"/>
-		<Icon spriteLayout="16,16" gridPos="0,1"/>
+	<!-- ============= CROP SEEDS - 种子类物品 ============= -->
+
+	<!-- 0. Strawberry Seeds (gridPos y=1) -->
+	<ItemDefinition name="Strawberry_Seed" type="ITEM_TYPE_SEED" coinValue="5" description="Seeds for growing sweet strawberries">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,1"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Wheat" type="ITEM_TYPE_CROP" coinValue="5" description="Harvested wheat ready for processing">
-		<ItemTexture path="Data/Art/FarmAssets/Crops.png"/>
-		<Icon spriteLayout="16,16" gridPos="1,1"/>
+	<!-- 1. Green Onion Seeds (gridPos y=3) -->
+	<ItemDefinition name="GreenOnion_Seed" type="ITEM_TYPE_SEED" coinValue="3" description="Seeds for growing fresh green onions">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,3"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Corn Seeds" type="ITEM_TYPE_CROP" coinValue="3" description="Seeds for growing corn crops">
-		<ItemTexture path="Data/Art/FarmAssets/Seeds.png"/>
-		<Icon spriteLayout="16,16" gridPos="2,1"/>
+	<!-- 2. Potato Seeds (gridPos y=5) -->
+	<ItemDefinition name="Potato_Seed" type="ITEM_TYPE_SEED" coinValue="4" description="Seeds for growing nutritious potatoes">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,5"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Corn" type="ITEM_TYPE_CROP" coinValue="8" description="Fresh corn ready to eat or sell">
-		<ItemTexture path="Data/Art/FarmAssets/Crops.png"/>
-		<Icon spriteLayout="16,16" gridPos="3,1"/>
+	<!-- 3. Onion Seeds (gridPos y=7) -->
+	<ItemDefinition name="Onion_Seed" type="ITEM_TYPE_SEED" coinValue="3" description="Seeds for growing fresh onions">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,7"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Tomato Seeds" type="ITEM_TYPE_CROP" coinValue="4" description="Seeds for growing tomato plants">
-		<ItemTexture path="Data/Art/FarmAssets/Seeds.png"/>
-		<Icon spriteLayout="16,16" gridPos="4,1"/>
+	<!-- 4. Carrot Seeds (gridPos y=9) -->
+	<ItemDefinition name="Carrot_Seed" type="ITEM_TYPE_SEED" coinValue="4" description="Seeds for growing orange carrots rich in vitamins">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,9"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Tomato" type="ITEM_TYPE_CROP" coinValue="10" description="Ripe tomatoes perfect for cooking">
-		<ItemTexture path="Data/Art/FarmAssets/Crops.png"/>
-		<Icon spriteLayout="16,16" gridPos="5,1"/>
+	<!-- 5. Blueberry Seeds (gridPos y=11) -->
+	<ItemDefinition name="Blueberry_Seed" type="ITEM_TYPE_SEED" coinValue="6" description="Seeds for growing antioxidant-rich blueberries">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,11"/>
 	</ItemDefinition>
 
-	--><!-- 材料类物品 --><!--
-	<ItemDefinition name="Wood" type="ITEM_TYPE_MAT" coinValue="1" description="Basic building material from trees">
-		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
-		<Icon spriteLayout="16,16" gridPos="0,2"/>
+	<!-- 6. White Carrot Seeds (gridPos y=13) -->
+	<ItemDefinition name="WhiteCarrot_Seed" type="ITEM_TYPE_SEED" coinValue="4" description="Seeds for growing white carrots">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,13"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Stone" type="ITEM_TYPE_MAT" coinValue="2" description="Durable material for construction">
-		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
-		<Icon spriteLayout="16,16" gridPos="1,2"/>
+	<!-- 7. Lettuce Seeds (gridPos y=15) -->
+	<ItemDefinition name="Lettuce_Seed" type="ITEM_TYPE_SEED" coinValue="3" description="Seeds for growing fresh lettuce leaves">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,15"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Iron Ore" type="ITEM_TYPE_MAT" coinValue="15" description="Raw iron ore for crafting tools">
-		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
-		<Icon spriteLayout="16,16" gridPos="2,2"/>
+	<!-- 8. White Broccoli Seeds (gridPos y=17) -->
+	<ItemDefinition name="WhiteBroccoli_Seed" type="ITEM_TYPE_SEED" coinValue="5" description="Seeds for growing nutritious white broccoli">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,17"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Coal" type="ITEM_TYPE_MAT" coinValue="8" description="Fuel source for smelting and heating">
-		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
-		<Icon spriteLayout="16,16" gridPos="3,2"/>
+	<!-- 9. Grain Seeds (gridPos y=19) -->
+	<ItemDefinition name="WhiteBroccoli_Seed" type="ITEM_TYPE_SEED" coinValue="2" description="Seeds for growing nutritious grain">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,19"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Clay" type="ITEM_TYPE_MAT" coinValue="3" description="Moldable material for pottery and building">
-		<ItemTexture path="Data/Art/FarmAssets/Materials.png"/>
-		<Icon spriteLayout="16,16" gridPos="4,2"/>
+	<!-- 10. Broccoli Seeds (gridPos y=21) -->
+	<ItemDefinition name="Broccoli_Seed" type="ITEM_TYPE_SEED" coinValue="5" description="Seeds for growing green broccoli">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="8,21"/>
 	</ItemDefinition>
 
-	--><!-- 家具类物品 --><!--
-	<ItemDefinition name="Wooden Chair" type="ITEM_TYPE_FURNITURE" coinValue="25" description="Comfortable wooden chair for your home">
-		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
-		<Icon spriteLayout="16,16" gridPos="0,3"/>
+	<!-- ============= CROP HARVEST - 收获物品 ============= -->
+
+	<!-- 0. Strawberry Harvest (gridPos y=1, x+1) -->
+	<ItemDefinition name="Strawberry_Harvest" type="ITEM_TYPE_CROP" coinValue="15" description="Sweet and juicy strawberries">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,1"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Wooden Table" type="ITEM_TYPE_FURNITURE" coinValue="40" description="Sturdy table for dining and working">
-		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
-		<Icon spriteLayout="16,16" gridPos="1,3"/>
+	<!-- 1. Green Onion Harvest (gridPos y=3, x+1) -->
+	<ItemDefinition name="Lettuce_Harvest" type="ITEM_TYPE_CROP" coinValue="8" description="Fresh green onions for cooking">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,3"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Chest" type="ITEM_TYPE_FURNITURE" coinValue="30" description="Storage container for keeping items safe">
-		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
-		<Icon spriteLayout="16,16" gridPos="2,3"/>
+	<!-- 2. Potato Harvest (gridPos y=5, x+1) -->
+	<ItemDefinition name="Potato_Harvest" type="ITEM_TYPE_CROP" coinValue="12" description="Nutritious potatoes perfect for many dishes">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,5"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Bed" type="ITEM_TYPE_FURNITURE" coinValue="60" description="Comfortable place to rest and sleep">
-		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
-		<Icon spriteLayout="16,16" gridPos="3,3"/>
+	<!-- 3. Onion Harvest (gridPos y=7, x+1) -->
+	<ItemDefinition name="Onion_Harvest" type="ITEM_TYPE_CROP" coinValue="10" description="Fresh onions with strong flavor">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,7"/>
 	</ItemDefinition>
 
-	<ItemDefinition name="Lamp" type="ITEM_TYPE_FURNITURE" coinValue="20" description="Light source for illuminating dark areas">
-		<ItemTexture path="Data/Art/FarmAssets/Furniture.png"/>
-		<Icon spriteLayout="16,16" gridPos="4,3"/>
-	</ItemDefinition>-->
+	<!-- 4. Carrot Harvest (gridPos y=9, x+1) -->
+	<ItemDefinition name="Carrot_Harvest" type="ITEM_TYPE_CROP" coinValue="12" description="Orange carrots packed with vitamins">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,9"/>
+	</ItemDefinition>
+
+	<!-- 5. Blueberry Harvest (gridPos y=11, x+1) -->
+	<ItemDefinition name="Blueberry_Harvest" type="ITEM_TYPE_CROP" coinValue="20" description="Small blue berries full of antioxidants">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,11"/>
+	</ItemDefinition>
+
+	<!-- 6. White Carrot Harvest (gridPos y=13, x+1) -->
+	<ItemDefinition name="WhiteCarrot_Harvest" type="ITEM_TYPE_CROP" coinValue="12" description="White carrots with mild flavor">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,13"/>
+	</ItemDefinition>
+
+	<!-- 7. Lettuce Harvest (gridPos y=15, x+1) -->
+	<ItemDefinition name="Lettuce_Harvest" type="ITEM_TYPE_CROP" coinValue="8" description="Fresh lettuce leaves for salads">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,15"/>
+	</ItemDefinition>
+
+	<!-- 8. White Broccoli Harvest (gridPos y=17, x+1) -->
+	<ItemDefinition name="WhiteBroccoli_Harvest" type="ITEM_TYPE_CROP" coinValue="18" description="Nutritious white broccoli heads">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,17"/>
+	</ItemDefinition>
+
+	<!-- 9. Grain Harvest (gridPos y=19, x+1) -->
+	<ItemDefinition name="WhiteBroccoli_Harvest" type="ITEM_TYPE_CROP" coinValue="6" description="Nutritious grain for cooking">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,19"/>
+	</ItemDefinition>
+
+	<!-- 10. Broccoli Harvest (gridPos y=21, x+1) -->
+	<ItemDefinition name="Broccoli_Harvest" type="ITEM_TYPE_CROP" coinValue="18" description="Fresh green broccoli heads">
+		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
+		<Icon spriteLayout="14,26" gridPos="7,21"/>
+	</ItemDefinition>
 
 </InventoryItemDefinitions>
