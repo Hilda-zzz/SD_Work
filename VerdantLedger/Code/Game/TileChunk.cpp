@@ -83,7 +83,8 @@ void TileChunk::InitializeChunkVerts()
 				}
 				AddVertsForAABB2D(m_plowedFarmlandVerts, tileBox, Rgba8::WHITE, curUv.m_mins, curUv.m_maxs, 900.f);
 			}
-			if (tileData.m_farmState == FarmState::WATER)
+			//if (tileData.m_farmState == FarmState::WATER)
+			if (tileData.m_isWater)
 			{
 				AABB2 curUv;
 				if (m_plowedSoilRuleSet)
@@ -172,7 +173,8 @@ void TileChunk::UpdateFarmlandVerts()
 			}
 			AddVertsForAABB2D(m_plowedFarmlandVerts, tileBox, Rgba8::WHITE, curUv.m_mins, curUv.m_maxs, 900.f);
 		}
-		if (tileData.m_farmState == FarmState::WATER)
+		//if (tileData.m_farmState == FarmState::WATER)
+		if (tileData.m_isWater)
 		{
 			AABB2 plowedUv;
 			if (m_plowedSoilRuleSet)
@@ -270,10 +272,10 @@ uint8_t TileChunk::GetPlowedNeighborMask(IntVec2 const& tileGridPos)
  			TileChunk* neighborChunk= m_parentLayer->GetChunkContaining(neighborPos);
  			if (neighborChunk )//&& neighborChunk!=this
  			{
- 				auto neighborData = neighborChunk->m_keyToDynamicTileData.find(tileKey);
- 				if (neighborData != neighborChunk->m_keyToDynamicTileData.end())
+ 				auto neighborTileData = neighborChunk->m_keyToDynamicTileData.find(tileKey);
+ 				if (neighborTileData != neighborChunk->m_keyToDynamicTileData.end())
  				{
- 					DynamicTileData data = neighborData->second;
+ 					DynamicTileData data = neighborTileData->second;
  					if (data.m_obstacleType == ObstacleType::NONE
  						&& data.m_farmState != FarmState::UNPLOWED)
  					{
@@ -307,7 +309,7 @@ uint8_t TileChunk::GetWateredNeighborMask(IntVec2 const& tileGridPos)
 		{
 			DynamicTileData data = neighborData->second;
 			if (data.m_obstacleType == ObstacleType::NONE
-				&& data.m_farmState == FarmState::WATER)
+				&& data.m_isWater)
 			{
 				mask |= (1 << i);
 			}
@@ -317,12 +319,12 @@ uint8_t TileChunk::GetWateredNeighborMask(IntVec2 const& tileGridPos)
 			TileChunk* neighborChunk = m_parentLayer->GetChunkContaining(neighborPos);
 			if (neighborChunk)
 			{
-				auto neighborData = neighborChunk->m_keyToDynamicTileData.find(tileKey);
-				if (neighborData != neighborChunk->m_keyToDynamicTileData.end())
+				auto neighborTileData = neighborChunk->m_keyToDynamicTileData.find(tileKey);
+				if (neighborTileData != neighborChunk->m_keyToDynamicTileData.end())
 				{
-					DynamicTileData data = neighborData->second;
+					DynamicTileData data = neighborTileData->second;
 					if (data.m_obstacleType == ObstacleType::NONE
-						&& data.m_farmState == FarmState::WATER)
+						&& data.m_isWater)
 					{
 						mask |= (1 << i);
 					}

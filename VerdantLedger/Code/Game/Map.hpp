@@ -10,6 +10,7 @@ class Game;
 class TileMap;
 class Player;
 class TileChunk;
+class InventorySlotButton;
 
 class Map
 {
@@ -23,7 +24,7 @@ public:
 
 	IntVec2 GetTileCoordsFromPoint(Vec2 const& point);
 
-	void UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolType);
+	void UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolType,InventorySlotButton& curInventoryBtn);
 
 private:
 	void UpdateCamFollow(float deltaSecondes);

@@ -142,7 +142,7 @@ IntVec2 Map::GetTileCoordsFromPoint(Vec2 const& point)
     return IntVec2(static_cast<int>(floorf(point.x)), static_cast<int>(floorf(point.y)));
 }
 
-void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolType)
+void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolType, InventorySlotButton& curInventoryBtn)
 {
 	TileChunk* curChunk=m_tileMap->m_markLayer->GetChunkContaining(aimGridPos);
 	uint64_t tileKey = m_tileMap->GetTileKey(aimGridPos);
@@ -172,8 +172,22 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 			&& it->second.m_obstacleType == ObstacleType::NONE
 			&& toolType == PlayerTools::WATER)
 		{
-			it->second.m_farmState = FarmState::WATER;
+			//it->second.m_farmState = FarmState::WATER;
+			it->second.m_isWater = true;
 			m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_FARMLAND, aimGridPos);
+		}
+
+		// Planting
+		if ((it->second.m_farmState == FarmState::PLOWED)
+			&& it->second.m_obstacleType == ObstacleType::NONE
+			&& toolType == PlayerTools::SEEDS&&!it->second.m_isPlanted)
+		{
+			curInventoryBtn.UseInventoryItem(1);
+			curInventoryBtn.UpdateFromInventoryItem(curInventoryBtn.GetItem());
+			it->second.m_isPlanted = true;
+			// add a crop object
+			// 
+			// m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_FARMLAND, aimGridPos);
 		}
 	}
 }

@@ -20,11 +20,11 @@
             }
         },
         "MyFarmMap.tmx": {
-            "scale": 0.75,
+            "scale": 4,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 674,
-                "y": 648.6666666666667
+                "x": 269.375,
+                "y": 233.125
             }
         },
         "OutsideTileset.tsx": {

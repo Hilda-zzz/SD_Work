@@ -60,7 +60,7 @@ TileChunk* TileLayer::GetChunk(int chunkX, int chunkY)
 	auto it = m_chunkIndexMap.find(key);
 	if (it != m_chunkIndexMap.end())
 	{
-		int index = it->second;
+		int index = (int)it->second;
 		return &m_chunks[index];
 	}
 	return nullptr;

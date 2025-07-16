@@ -51,8 +51,7 @@ GroundObstacle::GroundObstacle(ObstacleType type, ObstacleDefinition* curDef,Int
 
 GroundObstacle::~GroundObstacle()
 {
-	delete m_spriteSheet;
-	m_spriteSheet = nullptr;
+
 }
 
 void GroundObstacle::Update(float deltaSeconds)

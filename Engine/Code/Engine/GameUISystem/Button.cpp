@@ -65,6 +65,7 @@ Button::Button(GameUISystem* uiSystem, const Vec2& position,
 
 void Button::Update(float deltaTime)
 {
+	UNUSED(deltaTime);
 	UpdatePressState();
 	UpdateHoverState();
 

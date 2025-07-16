@@ -16,7 +16,7 @@ void InventorySlotButton::UpdateFromInventoryItem(InventoryItem* item)
 	{
 		m_item = item;
 		m_iconTexture = item->m_itemDef->m_iconTexture;
-		m_text = std::to_string(20);//m_item->m_quantity
+		m_text = std::to_string(m_item->m_quantity);//
 	}
 	UpdateVertices();
 }
@@ -93,4 +93,9 @@ void InventorySlotButton::Render(Renderer* renderer) const
 
 	renderer->BindTexture(&m_font->GetTexture());
 	renderer->DrawVertexArray(m_textVerts);
+}
+
+void InventorySlotButton::UseInventoryItem(int count)
+{
+	m_item->m_quantity -= count;
 }

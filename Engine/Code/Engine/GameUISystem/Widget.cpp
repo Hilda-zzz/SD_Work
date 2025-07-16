@@ -1,4 +1,5 @@
 #include "Widget.hpp"
+#include "../Core/EngineCommon.hpp"
 
 void Widget::Update(float deltaTime)
 {
@@ -12,6 +13,7 @@ void Widget::Update(float deltaTime)
 
 void Widget::UpdateSelf(float deltaTime)
 {
+	UNUSED(deltaTime);
 }
 
 void Widget::Render(Renderer* renderer) const
@@ -29,10 +31,12 @@ void Widget::Render(Renderer* renderer) const
 
 void Widget::RenderSelf(Renderer* renderer) const
 {
+	UNUSED(renderer);
 }
 
 bool Widget::HandleInput(InputEvent const& event)
 {
+	UNUSED(event);
 	return false;
 }
 
@@ -47,6 +51,7 @@ bool Widget::AddChild(Widget* childWidget)
 
 	m_children.push_back(childWidget);
 	childWidget->m_parent = this;
+	return true;
 }
 
 bool Widget::RemoveChild(Widget* childWidget)
@@ -82,7 +87,7 @@ bool Widget::ProcessInputHierarchy(InputEvent const& event)
 	return HandleInput(event);
 }
 
-bool Widget::ContainsPoint(Vec2 const& point) const
-{
-	return false;
-}
+// bool Widget::ContainsPoint(Vec2 const& point) const
+// {
+// 	return false;
+// }

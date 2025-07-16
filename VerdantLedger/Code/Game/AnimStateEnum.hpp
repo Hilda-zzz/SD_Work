@@ -10,5 +10,6 @@ enum class PlayerBodyStates
 	PICKAXE,
 	SHOVEL,
 	SICKLE,
-	WATER
+	WATER,
+	SEED
 };

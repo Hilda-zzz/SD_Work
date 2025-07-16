@@ -38,6 +38,10 @@ int PlayerBodyIdleState::Update(float deltaTime, const std::unordered_map<std::s
 		{
 			return static_cast<int>(PlayerBodyStates::WATER);
 		}
+		else if (conditions.at("usingSeed"))
+		{
+			return static_cast<int>(PlayerBodyStates::SEED);
+		}
 	}
 	return static_cast<int>(PlayerBodyStates::IDLE);
 }
@@ -144,4 +148,18 @@ int PlayerBodyWaterState::Update(float deltaTime, const std::unordered_map<std::
 		return static_cast<int>(PlayerBodyStates::IDLE);
 	}
 	return static_cast<int>(PlayerBodyStates::WATER);
+}
+
+int PlayerBodySeedState::Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions, Direction curDirection)
+{
+	UNUSED(conditions);
+	m_elapsedTime += deltaTime;
+
+	m_curDirection = curDirection;
+
+	if (m_directionalAnims->at(m_curDirection)->IsPlayOnceFinished(m_elapsedTime))
+	{
+		return static_cast<int>(PlayerBodyStates::IDLE);
+	}
+	return static_cast<int>(PlayerBodyStates::SEED);
 }

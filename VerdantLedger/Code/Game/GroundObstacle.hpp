@@ -34,7 +34,7 @@ private:
 	std::vector<Vertex_PCU> m_verts;
 	ObstacleType m_type;
 	IntVec2 m_gridPos;
-	int m_durability;
+	int m_durability=10;
 
 	SpriteSheet* m_spriteSheet=nullptr;
 	int m_spriteIndex = 0;

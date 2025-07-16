@@ -212,7 +212,7 @@ void Game::InitializeToolBarPanel()
 	Texture* toolBarBkg = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/ToolBarBkg.png");
 
 	float windowWidth = 1600.0f;
-	float windowHeight = 800.0f;
+	//float windowHeight = 800.0f;
 
 	float toolBarWidth = 550.0f;  
 	float toolBarHeight = 150.0f;
@@ -264,7 +264,7 @@ void Game::InitializeToolBarPanel()
 			gameFont,                // BitmapFont* font
 			eventName                // std::string clickEventName
 		);
-		m_toolBarSlots[i].SetHoverSound(-1);
+		m_toolBarSlots[i].SetHoverSound((size_t) - 1);
 		m_toolBarSlots[i].SetSlotIndex(i);
 		m_toolBarPanel.AddChild(&m_toolBarSlots[i]);
 	}
@@ -277,7 +277,7 @@ void Game::UpdateToolBarFromInventory()
 	if (m_player && m_player->GetInventory()) {
 		for (int i = 0; i < 9; i++)
 		{
-			if (i < m_player->GetInventory()->m_items.size())
+			if (i < (int)m_player->GetInventory()->m_items.size())
 			{
 				m_toolBarSlots[i].UpdateFromInventoryItem(&m_player->GetInventory()->m_items[i]);
 			}
@@ -301,6 +301,7 @@ void Game::SelectToolBarSlot(int slotIndex)
 		btn.SetSelectedState(false);
 	}
 	m_toolBarSlots[slotIndex].SetSelectedState(true);
+	m_player->m_curSelectedBtn = &m_toolBarSlots[slotIndex];
 
 	if (m_player && m_player->GetInventory()) 
 	{
@@ -312,6 +313,10 @@ void Game::SelectToolBarSlot(int slotIndex)
 			{
 				m_player->m_curTool = curDef->m_toolType;
 			}
+			else if(curDef->m_itemType == ItemType::ITEM_TYPE_SEED)
+			{
+				m_player->m_curTool = PlayerTools::SEEDS;
+			}
 			else
 			{
 				m_player->m_curTool = PlayerTools::NONE;
@@ -319,7 +324,6 @@ void Game::SelectToolBarSlot(int slotIndex)
 		}
 		else 
 		{
-
 			m_player->m_curTool = PlayerTools::NONE;
 		}
 	}

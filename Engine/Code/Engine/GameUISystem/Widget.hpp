@@ -26,7 +26,7 @@ public:
 	bool IsVisible() const { return m_isVisible; }
 
 	bool ProcessInputHierarchy(InputEvent const& event);
-	bool ContainsPoint(Vec2 const& point) const;
+	//bool ContainsPoint(Vec2 const& point) const;
 
 protected:
 	std::vector<Widget*> m_children;

@@ -2,6 +2,7 @@
 #include "Panel.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Window/Window.hpp"
+#include "../Core/ErrorWarningAssert.hpp"
 
 GameUISystem::GameUISystem(int inputPriority, Renderer* curRenderer, Window* curWindow, InputSystem* curInputSystem)
 	:IInputConsumer(inputPriority)
@@ -95,11 +96,22 @@ void GameUISystem::PushPanel(Panel* panel)
 
 void GameUISystem::PopPanel(Panel* panel)
 {
-	if (!m_panelStack.empty())
+	if (!panel)
 	{
-		Panel* panel = m_panelStack.back();
+		DebuggerPrintf("Warning: Null panel passed to PopPanel\n");
+		return;
+	}
 
-		m_panelStack.pop_back();
+	auto it = std::find(m_panelStack.begin(), m_panelStack.end(), panel);
+	if (it != m_panelStack.end())
+	{
+		m_panelStack.erase(it);
+		DebuggerPrintf("Panel found and removed from stack, remaining: %d\n",
+			(int)m_panelStack.size());
+	}
+	else
+	{
+		DebuggerPrintf("Warning: Panel not found in stack\n");
 	}
 }
 

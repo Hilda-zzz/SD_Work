@@ -111,6 +111,7 @@ TileMap::~TileMap()
 
 void TileMap::Update(float deltaSeconds)
 {
+    UNUSED(deltaSeconds);
 // 	for (int i = 0; i < (int)m_markLayer->m_chunks.size(); i++)
 // 	{
 // 		m_markLayer->m_chunks[i].Update(deltaSeconds);

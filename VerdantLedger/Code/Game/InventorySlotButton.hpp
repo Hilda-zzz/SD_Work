@@ -24,6 +24,8 @@ public:
 
 	InventoryItem* GetItem() { return m_item; }
 
+	void UseInventoryItem(int count);
+
 private:
 	InventoryItem* m_item;
 	int m_slotIndex = 0;

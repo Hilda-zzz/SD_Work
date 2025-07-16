@@ -1,6 +1,7 @@
 #include "Panel.hpp"
 #include "../Core/VertexUtils.hpp"
 #include "../Renderer/Renderer.hpp"
+#include "../Core/EngineCommon.hpp"
 
 Panel::Panel(const Vec2& position, Texture* normalTex, AABB2 const& bkgExtent)
 	:m_texNormal(normalTex)
@@ -42,6 +43,7 @@ void Panel::RenderSelf(Renderer* renderer) const
 
 bool Panel::HandleInput(InputEvent const& event)
 {
+	UNUSED(event);
 	return false;
 }
 

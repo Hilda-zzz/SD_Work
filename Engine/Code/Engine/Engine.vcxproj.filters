@@ -44,6 +44,9 @@
     <Filter Include="GameUISystem">
       <UniqueIdentifier>{64a3428a-b465-438d-82fa-b68be98c594f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{af1728ff-16ba-4f85-a3ab-d6fca2c372a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -279,6 +282,9 @@
     </ClCompile>
     <ClCompile Include="GameUISystem\UIImage.cpp">
       <Filter>GameUISystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetworkSystem.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -548,6 +554,9 @@
     </ClInclude>
     <ClInclude Include="GameUISystem\UIText.hpp">
       <Filter>GameUISystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetworkSystem.hpp">
+      <Filter>Network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

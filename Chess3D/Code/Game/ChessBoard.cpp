@@ -36,9 +36,11 @@ ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 	//ObjLoader::LoadObjFromFile_WithTBN("Data/Models/Woman/Woman.obj", m_women);
 	//g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta");
 
-	m_simpleObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/TutorialBox.meta"));
-	m_womanObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta"));
-	m_womanObject.m_position = Vec3(8.f, 4.f, 0.2f);
+
+	// Load Test Models
+// 	m_simpleObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/TutorialBox.meta"));
+// 	m_womanObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta"));
+// 	m_womanObject.m_position = Vec3(8.f, 4.f, 0.2f);
 }
 
 ChessBoard::~ChessBoard()
@@ -66,8 +68,8 @@ ChessBoard::~ChessBoard()
 
 void ChessBoard::Update(float deltaTime)
 {
-	m_simpleObject.Update(deltaTime);
-	m_womanObject.Update(deltaTime);
+// 	m_simpleObject.Update(deltaTime);
+// 	m_womanObject.Update(deltaTime);
 
 	UpdateDebugKeyInput();
 	for (ChessPiece* piece : m_chessPieces)
@@ -199,15 +201,9 @@ void ChessBoard::Renderer() const
 	}
 
 	//---------------------------- Test for model-----------------------------
-// 	Texture* womenDiffuse = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png");
-// 	Texture* womenNormal = g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png");
-// 	g_theRenderer->BindTexture(womenDiffuse, womenNormal,nullptr);
-// 	g_theRenderer->BindShader(m_shader);
-// 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
-// 	g_theRenderer->DrawVertexArray_WithTBN(m_women);
-	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
-	m_simpleObject.Render();
-	m_womanObject.Render();
+// 	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
+// 	m_simpleObject.Render();
+// 	m_womanObject.Render();
 	//------------------------------------------------------------------------
 
 	if (m_hasValidAimPos)
@@ -216,6 +212,7 @@ void ChessBoard::Renderer() const
 		g_theRenderer->BindTexture(hover);
 		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 		g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+		g_theRenderer->SetModelConstants();
 		g_theRenderer->DrawVertexArray(m_aimHoverQuad);
 	}
 

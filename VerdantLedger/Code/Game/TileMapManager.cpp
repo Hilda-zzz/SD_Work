@@ -4,7 +4,7 @@
 #include "TileTypesInGame.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "RuledTileset.hpp"
-
+#include "Game/TileMap.hpp"
 
 TileMapManager* TileMapManager::s_tileManagerInstance = nullptr;
 

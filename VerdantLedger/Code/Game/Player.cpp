@@ -11,6 +11,8 @@
 #include "Inventory.hpp"
 #include "InventoryItemDef.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Game/InventorySlotButton.hpp"
+#include "Game/InventoryItem.hpp"
 
 extern Window* g_theWindow;
 extern InputSystem* g_theInput;
@@ -32,7 +34,8 @@ static const std::map<PlayerTools, std::string> s_playerToolConditionMap = {
 	{PlayerTools::PICKAXE, "usingPickaxe"},
 	{PlayerTools::SHOVEL, "usingShovel"},
 	{PlayerTools::SICKLE, "usingSickle"},
-	{PlayerTools::WATER, "usingWater"}
+	{PlayerTools::WATER, "usingWater"},
+	{PlayerTools::SEEDS, "usingSeed"}
 };
 
 
@@ -81,7 +84,7 @@ void Player::Initialize()
 	m_shovelTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/Character and Portrait - Tiny Asset Pack/Character/Pre-made/Alex/Shovel.png");
 	m_sickleTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/Character and Portrait - Tiny Asset Pack/Character/Pre-made/Alex/Sickle.png");
 	m_waterTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/Character and Portrait - Tiny Asset Pack/Character/Pre-made/Alex/Watering.png");
-
+	m_seedTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/Character and Portrait - Tiny Asset Pack/Character/Pre-made/Alex/Throwingitems.png");
 	// Initialize anims
 	InitializeAnims();
 
@@ -97,6 +100,7 @@ void Player::Initialize()
 	m_animConditions["usingShovel"] = false;
 	m_animConditions["usingSickle"] = false;
 	m_animConditions["usingWater"] = false;
+	m_animConditions["usingSeed"] = false;
 
 	//-----------------------------------------------------
 	m_inventory = new Inventory(this);
@@ -141,6 +145,10 @@ void Player::InitializeAnims()
 	InitializeStateAnimations("water", m_waterTex, IntVec2(8, 3), PlayerBodyStates::WATER,
 		m_waterDirectionalAnimDefs,
 		new PlayerBodyWaterState(&m_waterDirectionalAnimDefs), SpriteAnimPlaybackType::ONCE, 8);
+
+	InitializeStateAnimations("seed", m_seedTex, IntVec2(5, 3), PlayerBodyStates::SEED,
+		m_seedDirectionalAnimDefs,
+		new PlayerBodySeedState(&m_seedDirectionalAnimDefs), SpriteAnimPlaybackType::ONCE, 8);
 }
 
 void Player::InitializeStateAnimations(const std::string& stateName, Texture* texture, const IntVec2& gridSize,
@@ -218,21 +226,21 @@ void Player::AddStartingSeedsToInventory()
 	InventoryItemDef* potatoSeedDef = InventoryItemDef::GetItemDefFromName("Potato_Seed");
 
 	if (strawberrySeedDef) {
-		bool success = m_inventory->AddItem(strawberrySeedDef, 1);
+		bool success = m_inventory->AddItem(strawberrySeedDef, 10);
 		if (!success) {
 			ERROR_AND_DIE("Failed to add strawberrySeedDef to inventory");
 		}
 	}
 
 	if (greenOnionSeedDef) {
-		bool success = m_inventory->AddItem(greenOnionSeedDef, 1);
+		bool success = m_inventory->AddItem(greenOnionSeedDef, 20);
 		if (!success) {
 			ERROR_AND_DIE("Failed to add  greenOnionSeedDef to inventory");
 		}
 	}
 
 	if (potatoSeedDef) {
-		bool success = m_inventory->AddItem(potatoSeedDef, 1);
+		bool success = m_inventory->AddItem(potatoSeedDef, 30);
 		if (!success) {
 			ERROR_AND_DIE("Failed to add potatoSeedDef to inventory");
 		}
@@ -369,7 +377,7 @@ void Player::UpdateToolUsingResult()
 	std::string curStateName = curState->GetName();
 	if (curStateName!=m_previousAnimStateName && m_toolStates.find(curStateName) != m_toolStates.end())
 	{
-		m_game->m_curMap->UsingToolTowardsGridPos(m_curToolAimGridPos, m_curTool);
+		m_game->m_curMap->UsingToolTowardsGridPos(m_curToolAimGridPos, m_curTool,*m_curSelectedBtn);
 	}
 	m_previousAnimStateName = curStateName;
 }

@@ -60,7 +60,7 @@ uint8_t RuledTileset::ParseBinaryMask(std::string const& binaryStr)
 
 AABB2 RuledTileset::GetUvFromMask(uint8_t neighborMask)
 {
-	for (int i = 0; i < m_rules.size(); i++)
+	for (int i = 0; i < (int)m_rules.size(); i++)
 	{
 		if (neighborMask == m_rules[i].m_neighborMask)
 		{

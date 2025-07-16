@@ -28,7 +28,7 @@ bool Inventory::AddItem(InventoryItemDef const* itemDef, int count)
 	}
 	if (!success)
 	{
-		if (m_items.size() < m_totalSlotsCount)
+		if ((int)m_items.size() < m_totalSlotsCount)
 		{
 			InventoryItem newItem = InventoryItem(itemDef,count);
 			m_items.push_back(newItem);

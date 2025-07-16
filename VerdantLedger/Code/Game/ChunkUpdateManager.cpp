@@ -122,8 +122,8 @@ void ChunkUpddateManger::CheckAndQueueNeighbors(TileChunk* centerChunk, DirtyTyp
 				dirtyRequest.m_timer.Start();
 
 				m_dirtyChunkQueue.push(dirtyRequest);
-				uint64_t chunkKey = TileLayer::GetChunkKey(neighborChunk->m_startPosition);
-				m_queuedChunks.insert(chunkKey);
+				uint64_t curChunkKey = TileLayer::GetChunkKey(neighborChunk->m_startPosition);
+				m_queuedChunks.insert(curChunkKey);
 			}
 		}
 	}

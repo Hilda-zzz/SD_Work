@@ -63,3 +63,10 @@ public:
 	PlayerBodyWaterState(std::map<Direction, SpriteAnimDefinition*>* anim) :AnimState("playerWater", anim) {}
 	int Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions, Direction curDirection) override;
 };
+
+class PlayerBodySeedState : public AnimState
+{
+public:
+	PlayerBodySeedState(std::map<Direction, SpriteAnimDefinition*>* anim) :AnimState("playerSeed", anim) {}
+	int Update(float deltaTime, const std::unordered_map<std::string, bool>& conditions, Direction curDirection) override;
+};

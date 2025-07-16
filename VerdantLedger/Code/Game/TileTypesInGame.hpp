@@ -22,9 +22,9 @@ enum class TerrainType : uint32_t   //may change to uint8
 enum class FarmState : uint8_t {
 	UNPLOWED = 0,   
 	PLOWED = 1,
-	WATER=2,
-	PLANTED = 3,    
-	GROWN = 4       
+// 	WATER=2,
+// 	PLANTED = 3,    
+// 	GROWN = 4       
 };
 
 enum class ObstacleType : uint8_t {
@@ -49,6 +49,8 @@ struct CropInfo
  	ObstacleType m_obstacleType=ObstacleType::NONE;
  	int m_curObstacleDurability = 0; // if m_obstacleType!=none, meaningful
  	FarmState m_farmState = FarmState::UNPLOWED;
+	bool m_isWater = false;
+	bool m_isPlanted = false;
 	CropDefinitions* m_curCrop = nullptr; // if m_farmState==PLANTED/ GROWN, meaningful
 
 	int m_spriteIndex = 0;

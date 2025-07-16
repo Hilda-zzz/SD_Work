@@ -8,6 +8,7 @@
 
 class Game;
 class Inventory;
+class InventorySlotButton;
 
 enum class PlayerTools
 {
@@ -18,6 +19,7 @@ enum class PlayerTools
 	SHOVEL,     // 铲子
 	SICKLE,     // 镰刀
 	WATER,       // 水（浇水工具）
+	SEEDS,
 	NUM
 };
 
@@ -63,6 +65,7 @@ public:
 	float	m_physicsRadius = 0.f;
 	// Tools
 	PlayerTools m_curTool = PlayerTools::NONE;
+	InventorySlotButton* m_curSelectedBtn = nullptr;
 
 private:
 	Game* m_game = nullptr;
@@ -82,6 +85,7 @@ private:
 	Texture* m_shovelTex = nullptr;
 	Texture* m_sickleTex = nullptr;
 	Texture* m_waterTex = nullptr;
+	Texture* m_seedTex = nullptr;
 
 	StateMachine<PlayerBodyStates>	      m_bodyStateMachine;
 	std::unordered_map<std::string, bool> m_animConditions;
@@ -96,6 +100,7 @@ private:
 	std::map<Direction, SpriteAnimDefinition*> m_shovelDirectionalAnimDefs;
 	std::map<Direction, SpriteAnimDefinition*> m_sickleDirectionalAnimDefs;
 	std::map<Direction, SpriteAnimDefinition*> m_waterDirectionalAnimDefs;
+	std::map<Direction, SpriteAnimDefinition*> m_seedDirectionalAnimDefs;
 	//std::unordered_map<std::string, SpriteAnimDefinition*> m_bodySpriteAnimDefs;
 
 	std::vector<Vertex_PCU> m_hoverGridCursorSquareVerts;
@@ -109,10 +114,12 @@ private:
 	"playerPickaxe",
 	"playerShovel",
 	"playerSickle",
-	"playerWater"
+	"playerWater",
+	"playerSeed"
 	};
 
 	std::string m_previousAnimStateName = "";
 
 	Inventory* m_inventory;
+
 };
