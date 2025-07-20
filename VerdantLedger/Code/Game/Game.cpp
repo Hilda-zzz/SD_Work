@@ -42,20 +42,24 @@ Game::Game()
 	g_tileManager = &TileMapManager::GetInstance();
 	g_tileManager->InitAllTilemapResources();
 
+	// ---------------- UI System ---------------------------------
+	InitializeMenuPanel();
+	g_gameUISystem->PushPanel(&m_menuPanel);
+
+	InitializeToolBarPanel();
+	
+	InitializeStatusPanel();
+
+	// g_theEventSystem->SubscribeEventCallbackFuction("UpdateInventoryPanels", UpdateToolBarFromInventory);
+	// g_theEventSystem->SubscribeEventCallbackFuction("UpdateInventoryPanels");
+	//--------------------------------------------------------------
 	m_player = new Player(this);
+	UpdateToolBarFromInventory();
 	m_curMap = new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/MyFarmMap.tmx"], m_player);
 
 	g_theDevConsole->AddLine(DevConsole::HELPLIST, "WASD: Move around\n\
 Tools: 0-None, 1-Axe, 2-Hoe, 3-Pickaxe, 4-Shovel, 5-Sickle, 6-Water\n\
 Left Mouse Button: Use selected tool");
-
- 	InitializeMenuPanel();
- 	g_gameUISystem->PushPanel(&m_menuPanel);
-
-	InitializeToolBarPanel();
-	UpdateToolBarFromInventory();
-
-	InitializeStatusPanel();
 }
 
 Game::~Game()
@@ -272,22 +276,22 @@ void Game::InitializeToolBarPanel()
 
 }
 
-void Game::UpdateToolBarFromInventory()
-{
-	if (m_player && m_player->GetInventory()) {
-		for (int i = 0; i < 9; i++)
-		{
-			if (i < (int)m_player->GetInventory()->m_items.size())
-			{
-				m_toolBarSlots[i].UpdateFromInventoryItem(&m_player->GetInventory()->m_items[i]);
-			}
-			else
-			{
-				m_toolBarSlots[i].UpdateFromInventoryItem(nullptr);
-			}
-		}
-	}
-}
+ void Game::UpdateToolBarFromInventory()
+ {
+ 	if (m_player && m_player->GetInventory()) {
+ 		for (int i = 0; i < 9; i++)
+ 		{
+ 			if (i < (int)m_player->GetInventory()->m_items.size())
+ 			{
+ 				m_toolBarSlots[i].UpdateFromInventoryItem(&m_player->GetInventory()->m_items[i]);
+ 			}
+ 			else
+ 			{
+ 				m_toolBarSlots[i].UpdateFromInventoryItem(nullptr);
+ 			}
+ 		}
+ 	}
+ }
 
 void Game::SelectToolBarSlot(int slotIndex)
 {
@@ -306,7 +310,7 @@ void Game::SelectToolBarSlot(int slotIndex)
 	if (m_player && m_player->GetInventory()) 
 	{
 		InventoryItem* curItem=m_toolBarSlots[slotIndex].GetItem();
-		if (curItem)
+		if (curItem&&curItem->m_itemDef)
 		{
 			InventoryItemDef const* curDef = curItem->m_itemDef;
 			if (curDef->m_itemType == ItemType::ITEM_TYPE_TOOL)
@@ -328,6 +332,25 @@ void Game::SelectToolBarSlot(int slotIndex)
 		}
 	}
 }
+
+// bool Game::UpdateToolBarFromInventory(EventArgs& args)
+// {
+// 	if (g_theGame->m_player && g_theGame->m_player->GetInventory())
+// 	{
+// 		for (int i = 0; i < 9; i++)
+// 		{
+// 			if (i < (int)g_theGame->m_player->GetInventory()->m_items.size())
+// 			{
+// 				g_theGame->m_toolBarSlots[i].UpdateFromInventoryItem(&g_theGame->m_player->GetInventory()->m_items[i]);
+// 			}
+// 			else
+// 			{
+// 				g_theGame->m_toolBarSlots[i].UpdateFromInventoryItem(nullptr);
+// 			}
+// 		}
+// 	}
+// 	return false;
+// }
 
 void Game::InitializeStatusPanel()
 {

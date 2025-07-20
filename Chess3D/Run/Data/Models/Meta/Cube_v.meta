@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MeshMeta>
+	<MeshInfo ObjFilePath="Data/Models/SimpleCube/Cube_v.obj" ShaderName="Data/Shaders/Diffuse" UnitsPerMeter="1.0"
+			   UseIndex="false"/>
+
+	<Textures
+        DiffuseTexture=""
+        NormalTexture=""
+        SpecularTexture=""/>
+
+	<CoordinateSystem>
+		<Forward xyz="1.0,0.0,0.0"/>
+		<Left xyz="0.0,1.0,0.0"/>
+		<Up xyz="0.0,0.0,1.0"/>
+	</CoordinateSystem>
+	
+</MeshMeta>

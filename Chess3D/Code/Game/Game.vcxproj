@@ -80,17 +80,19 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </Text>
-    <Text Include="..\..\Run\Data\Shaders\ShadowMap.hlsl">
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Run\Data\Models\Meta\Cube_v.meta" />
+    <None Include="..\..\Run\Data\Models\Meta\TutorialBox.meta" />
+    <None Include="..\..\Run\Data\Models\Meta\Woman.meta" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\Run\Data\Shaders\ShadowMap.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\Run\Data\Models\Meta\TutorialBox.meta" />
-    <None Include="..\..\Run\Data\Models\Meta\Woman.meta" />
+    </FxCompile>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

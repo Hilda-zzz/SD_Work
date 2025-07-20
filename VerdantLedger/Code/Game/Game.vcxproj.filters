@@ -112,6 +112,9 @@
     <ClCompile Include="CropDefinitions.cpp">
       <Filter>TilemapObjects</Filter>
     </ClCompile>
+    <ClCompile Include="CropObject.cpp">
+      <Filter>TilemapObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -193,6 +196,9 @@
       <Filter>Inventory</Filter>
     </ClInclude>
     <ClInclude Include="CropDefinitions.hpp">
+      <Filter>TilemapObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="CropObject.hpp">
       <Filter>TilemapObjects</Filter>
     </ClInclude>
   </ItemGroup>

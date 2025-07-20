@@ -70,60 +70,60 @@ void ChessMatch::MoveTheChessPiece(std::string fromStr, std::string toStr,ChessM
 	curFromPiece->SetGridPos(toPos);
 	m_chessBoard.m_lastMovingChess = curFromPiece;
 
-	//delete or reverse toChess
-	if (moveResult == ChessMoveResult::VALID_CASTLE_KINGSIDE
-		|| moveResult == ChessMoveResult::VALID_CASTLE_QUEENSIDE)
-	{
-		// ??????????????
-		ChessPiece* rook = nullptr;
-		IntVec2 rookFromPos, rookToPos;
-
-		if (moveResult == ChessMoveResult::VALID_CASTLE_KINGSIDE)
-		{
-			// ????
-			if (curFromPiece->GetFaction() == Faction::WHITE)
-			{
-				rookFromPos = IntVec2(7, 0);  // h1
-				rookToPos = IntVec2(5, 0);    // f1
-			}
-			else
-			{
-				rookFromPos = IntVec2(7, 7);  // h8
-				rookToPos = IntVec2(5, 7);    // f8
-			}
-		}
-		else // VALID_CASTLE_QUEENSIDE
-		{
-			// ????
-			if (curFromPiece->GetFaction() == Faction::WHITE)
-			{
-				rookFromPos = IntVec2(0, 0);  // a1
-				rookToPos = IntVec2(3, 0);    // d1
-			}
-			else
-			{
-				rookFromPos = IntVec2(0, 7);  // a8
-				rookToPos = IntVec2(3, 7);    // d8
-			}
-		}
-
-		// ?????
-		rook = m_chessBoard.GetChessFromGridPos(rookFromPos);
-		if (rook)
-		{
-			rook->SetIsFirstMove(false);
-			rook->m_isSlide = true;
-			rook->m_animationTimer = Timer(2.f, m_game->m_gameClock);
-			rook->SetAimGridPos(rookToPos);
-			rook->SetPrevGridPos(rookFromPos);
-			int rookTaxiDist = GetTaxicabDistance2D(rookToPos, rookFromPos);
-			rook->m_animationTimer.m_period = 0.2f + rookTaxiDist * 0.1f;
-			rook->m_animationTimer.Start();
-			rook->SetGridPos(rookToPos);
-		}
-	}
-	else
-	{
+// 	//delete or reverse toChess
+// 	if (moveResult == ChessMoveResult::VALID_CASTLE_KINGSIDE
+// 		|| moveResult == ChessMoveResult::VALID_CASTLE_QUEENSIDE)
+// 	{
+// 		// ??????????????
+// 		ChessPiece* rook = nullptr;
+// 		IntVec2 rookFromPos, rookToPos;
+// 
+// 		if (moveResult == ChessMoveResult::VALID_CASTLE_KINGSIDE)
+// 		{
+// 			// ????
+// 			if (curFromPiece->GetFaction() == Faction::WHITE)
+// 			{
+// 				rookFromPos = IntVec2(7, 0);  // h1
+// 				rookToPos = IntVec2(5, 0);    // f1
+// 			}
+// 			else
+// 			{
+// 				rookFromPos = IntVec2(7, 7);  // h8
+// 				rookToPos = IntVec2(5, 7);    // f8
+// 			}
+// 		}
+// 		else // VALID_CASTLE_QUEENSIDE
+// 		{
+// 			// ????
+// 			if (curFromPiece->GetFaction() == Faction::WHITE)
+// 			{
+// 				rookFromPos = IntVec2(0, 0);  // a1
+// 				rookToPos = IntVec2(3, 0);    // d1
+// 			}
+// 			else
+// 			{
+// 				rookFromPos = IntVec2(0, 7);  // a8
+// 				rookToPos = IntVec2(3, 7);    // d8
+// 			}
+// 		}
+// 
+// 		// ?????
+// 		rook = m_chessBoard.GetChessFromGridPos(rookFromPos);
+// 		if (rook)
+// 		{
+// 			rook->SetIsFirstMove(false);
+// 			rook->m_isSlide = true;
+// 			rook->m_animationTimer = Timer(2.f, m_game->m_gameClock);
+// 			rook->SetAimGridPos(rookToPos);
+// 			rook->SetPrevGridPos(rookFromPos);
+// 			int rookTaxiDist = GetTaxicabDistance2D(rookToPos, rookFromPos);
+// 			rook->m_animationTimer.m_period = 0.2f + rookTaxiDist * 0.1f;
+// 			rook->m_animationTimer.Start();
+// 			rook->SetGridPos(rookToPos);
+// 		}
+// 	}
+// 	else
+// 	{
 		//Destroy
 		if (curToPiece && curToPiece->GetFaction() != m_currentTurnFaction)
 		{
@@ -142,22 +142,7 @@ void ChessMatch::MoveTheChessPiece(std::string fromStr, std::string toStr,ChessM
 			}
 			m_chessBoard.DestroyChess(curToPiece);
 		}
-	}
-
-
-    AddTurnNum();
-
-	//update game state
-	if (m_turnNumber % 2 == 0)
-	{
-		m_game->m_chessGameState = ChessGameState::FIRST_PLAYER_TURN;
-		m_currentTurnFaction = Faction::WHITE;
-	}
-	else
-	{
-		m_game->m_chessGameState = ChessGameState::SEC_PLAYER_TURN;
-		m_currentTurnFaction = Faction::BLACK;
-	}
+	//}
 }
 
 void ChessMatch::ChangeChessType(std::string posStr, PieceType pieceType)

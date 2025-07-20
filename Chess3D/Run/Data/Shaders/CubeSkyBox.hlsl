@@ -36,11 +36,11 @@ VertexOutPixelIn VertexMain(VertexInput input)
     
     float4x4 viewNoTranslation = WorldToCameraTransform;
     //viewNoTranslation[3] = float4(0, 0, 0, 1);
-    viewNoTranslation._14 = 0; 
-    viewNoTranslation._24 = 0; 
-    viewNoTranslation._34 = 0; 
-    viewNoTranslation._44 = 1; 
-    
+     viewNoTranslation._14 = 0; 
+     viewNoTranslation._24 = 0; 
+     viewNoTranslation._34 = 0; 
+     viewNoTranslation._44 = 1; 
+ 
     float4 camPos = mul(viewNoTranslation, worldPos);
     float4 renderPos = mul(CameraToRenderTransform, camPos);
     float4 clipPos = mul(RenderToClipTransform, renderPos);

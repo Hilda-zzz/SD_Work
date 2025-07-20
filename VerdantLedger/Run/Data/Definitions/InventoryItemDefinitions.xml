@@ -36,6 +36,25 @@
 		<ToolType type="WATER"/>
 	</ItemDefinition>
 
+	<!-- ============= MATERIALS - 材料类物品 ============= -->
+	<!-- 1. Stone (gridPos y=0) -->
+	<ItemDefinition name="Stone" type="ITEM_TYPE_MAT" coinValue="2" description="Common stone for building and crafting">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/MaterialsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="0,0"/>
+	</ItemDefinition>
+
+	<!-- 2. Wood (gridPos y=0) -->
+	<ItemDefinition name="Wood" type="ITEM_TYPE_MAT" coinValue="3" description="Sturdy wood for construction and tools">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/MaterialsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="1,0"/>
+	</ItemDefinition>
+
+	<!-- 3. Grass (gridPos y=0) -->
+	<ItemDefinition name="Weed" type="ITEM_TYPE_MAT" coinValue="1" description="Fresh grass for feeding animals or decoration">
+		<ItemTexture path="Data/Art/FarmAssets/Icons  - Tiny Asset Pack/MaterialsIcons.png"/>
+		<Icon spriteLayout="5,5" gridPos="2,0"/>
+	</ItemDefinition>
+	
 	<!-- ============= CROP SEEDS - 种子类物品 ============= -->
 
 	<!-- 0. Strawberry Seeds (gridPos y=1) -->

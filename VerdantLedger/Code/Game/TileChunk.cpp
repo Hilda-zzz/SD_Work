@@ -9,6 +9,7 @@
 #include "TileMap.hpp"
 #include "GroundObstacle.hpp"
 #include "RuledTileset.hpp"
+#include "CropObject.hpp"
 
 extern Renderer* g_theRenderer;
 
@@ -34,6 +35,12 @@ TileChunk::~TileChunk()
 		delete curObstacle;
 		curObstacle = nullptr;
 	}
+
+	for (CropObject* curCrop : m_cropObjects)
+	{
+		delete curCrop;
+		curCrop = nullptr;
+	}
 }
 
 void TileChunk::Update(float deltaSeconds)
@@ -42,6 +49,11 @@ void TileChunk::Update(float deltaSeconds)
  	{
  		curObstacle->Update(deltaSeconds);
  	}
+
+	for (CropObject* curCrop : m_cropObjects)
+	{
+		curCrop->Update(deltaSeconds);
+	}
 }
 
 void TileChunk::InitializeChunkVerts()
@@ -212,6 +224,11 @@ void TileChunk::RenderDynamicContent() const
 	for (GroundObstacle* curObstacle : m_obstacleWithAnimation)
 	{
 		curObstacle->Render();
+	}
+
+	for (CropObject* curCrop : m_cropObjects)
+	{
+		curCrop->Render();
 	}
 }
 

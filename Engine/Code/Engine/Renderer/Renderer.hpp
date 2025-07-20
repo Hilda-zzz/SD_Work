@@ -115,7 +115,7 @@ public:
 	TextureCube* CreateOrGetCubeTextureFromFiles(const std::string filePaths[6]);
 	TextureCube* GetTextureCubeFromFileName(char const* firstFilePath);
 	TextureCube* CreateCubeTextureFromFiles(const std::string filePaths[6]);
-	void		 BindTextureCube(TextureCube* textureCube);
+	void		 BindTextureCube(TextureCube* textureCube,int slot=0);
 	
 	//-----------------------BitmapFont------------------------------------------------------------
 	BitmapFont* CreateOrGetBitmapFont(char const* imageFilePath);
@@ -245,4 +245,6 @@ protected:
 
 	float m_shadowDimensionX = 2048;
 	float m_shadowDimensionY = 2048;
+	int m_shadowSamplerSlotIndex = 2;
+	int m_shadowTexSlotIndex = 3;
 };

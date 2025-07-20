@@ -41,9 +41,9 @@ v2p_t VertexMain(vs_input_t input)
 
 void PixelMain(v2p_t input)
 {
-    float4 textureColor = diffuseTexture.Sample(samplerState, input.uv);
-    if (textureColor.a < 0.01f)
-    {
-        discard;  
-    }
+     float4 textureColor = diffuseTexture.Sample(samplerState, input.uv);
+     if (textureColor.a < 0.01f)
+     {
+         discard;  
+     }
 }

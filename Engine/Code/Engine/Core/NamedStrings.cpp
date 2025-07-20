@@ -1,4 +1,4 @@
-#include "Engine/Core/NamedStrings.hpp"
+﻿#include "Engine/Core/NamedStrings.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 void NamedStrings::PopulateFromXmlElementAttributes(XmlElement const& element)
@@ -44,7 +44,11 @@ bool NamedStrings::GetValue(std::string const& keyName, bool defaultValue) const
 		return defaultValue;
 	}
 
-	if (strcmp(found->second.c_str(), "True") || strcmp(found->second.c_str(), "TRUE") || strcmp(found->second.c_str(), "1") || strcmp(found->second.c_str(), "true"))
+	// 方案1：使用strcmp（修正逻辑）
+	if (strcmp(found->second.c_str(), "True") == 0 ||
+		strcmp(found->second.c_str(), "TRUE") == 0 ||
+		strcmp(found->second.c_str(), "1") == 0 ||
+		strcmp(found->second.c_str(), "true") == 0)
 	{
 		return true;
 	}

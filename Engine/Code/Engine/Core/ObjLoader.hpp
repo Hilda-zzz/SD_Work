@@ -65,7 +65,7 @@ private:
 	
 
 	static void AddVertsForEachFaceLine_WithTBN(std::string const& faceLine, std::vector<Vertex_PCUTBN>& verts, ObjData const& objData);
-	static Vertex_PCUTBN GetEachPointFromString_WithTBN(std::string const& vertexStr, ObjData const& objData);
+	static Vertex_PCUTBN GetEachPointFromString_WithTBN(std::string const& vertexStr, ObjData const& objData, bool& hasNormal);
 
 	static void CollectUniqueIndexedVertexEachFaceLine(std::string const& faceLine,
 		std::vector<Vertex_PCUTBN>& vertices, std::vector<unsigned int>& indices,
@@ -74,4 +74,6 @@ private:
 	static VertexKey PareseEachVertexKey(std::string const& vertexStr);
 	static Vertex_PCUTBN CreateVertexFromKey(VertexKey const& key, ObjData const& objData,
 		float scale, Mat44 const& transform);
+
+	static Vec3 CalculateTriangleNormal(Vec3 const& posA, Vec3 const& posB, Vec3 const& posC);
 };

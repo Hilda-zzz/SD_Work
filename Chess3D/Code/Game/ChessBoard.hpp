@@ -67,9 +67,9 @@ private:
  	IndexBuffer* m_indexBuffer = nullptr;
 
 	//Light
-	Vec3 m_sunDirection = Vec3(10.f, 2.f, -3.f);
-	float m_sunIntensity =0.2f;
-	float m_ambientIntensity = 0.2f;
+	Vec3 m_sunDirection = Vec3(1.f, 1.f, -1.f);
+	float m_sunIntensity =0.3f;
+	float m_ambientIntensity = 0.3f;
 
 	// debug int
 	int m_debugInt = 0;
@@ -89,7 +89,10 @@ private:
 
 	// OBJ
 	std::vector<Vertex_PCUTBN> m_women;
-	SimpleObject m_simpleObject;
+	SimpleObject m_toturialBox;
 	SimpleObject m_womanObject;
+	SimpleObject m_cubeObject;
+	// shadow
+	IntVec2	m_dimensions=IntVec2(8,8);
 };
 

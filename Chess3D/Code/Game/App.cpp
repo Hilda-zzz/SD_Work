@@ -12,6 +12,7 @@
 #include "Engine/Core/Clock.hpp"
 #include <Engine/Core/DebugRenderSystem.hpp>
 #include "Engine/ResourceManager/ResourceManager.hpp"
+#include "Engine/Network/NetworkSystem.hpp"
 //#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
@@ -22,7 +23,7 @@ Game*			g_theGame = nullptr;
 bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
 ResourceManager* g_theResourceManager = nullptr;
-
+NetworkSystem* g_theNetworkSystem = nullptr;
 
 App::~App()
 {
@@ -53,6 +54,7 @@ void App::Startup()
 	
 	RendererConfig rendererConfig;
 	rendererConfig.m_window = g_theWindow;
+	rendererConfig.m_enableShadow = true;
 	g_theRenderer = new Renderer(rendererConfig);
 	
 	g_systemClock = new Clock();
@@ -68,6 +70,9 @@ void App::Startup()
 
 	g_theResourceManager = new ResourceManager();
 
+	NetworkSystemConfig networkSystemConfig;
+	g_theNetworkSystem = new NetworkSystem(networkSystemConfig);
+
 	g_theEventSystem->Startup();
 	g_theWindow->Startup();
 	g_theRenderer->Startup();
@@ -75,6 +80,7 @@ void App::Startup()
 	g_theInput->Startup();
 	g_theAudio->Startup();
 	g_theResourceManager->Startup(g_theRenderer);
+	g_theNetworkSystem->Startup();
 	DebugRenderSystemStartup(debugRenderConfig);
 
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
@@ -88,6 +94,7 @@ void App::Shutdown()
 	g_theGame = nullptr;
 
 	DebugRenderSystemShutdown();
+	g_theNetworkSystem->Shutdown();
 	g_theResourceManager->Shutdown();
 	g_theAudio->Shutdown();
 	g_theDevConsole->Shutdown();
@@ -95,6 +102,9 @@ void App::Shutdown()
 	g_theWindow->Shutdown();
 	g_theInput->Shutdown();
 	g_theEventSystem->Shutdown();
+
+	delete g_theNetworkSystem;
+	g_theNetworkSystem = nullptr;
 
 	delete g_theResourceManager;
 	g_theResourceManager = nullptr;
@@ -151,6 +161,7 @@ void App::BeginFrame()
 	g_theRenderer->BeginFrame();
 	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
+	g_theNetworkSystem->BeginFrame();
 	DebugRenderBeginFrame();
 	Clock::TickSystemClock();
 }
@@ -199,6 +210,7 @@ void App::EndFrame()
 	g_theWindow->EndFrame();
 	g_theInput->EndFrame();
 	g_theEventSystem->EndFrame();
+	g_theNetworkSystem->EndFrame();
 }
 
 bool OnQuitEvent(EventArgs& args)

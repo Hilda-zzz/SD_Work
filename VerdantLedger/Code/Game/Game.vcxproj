@@ -28,6 +28,7 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ChunkUpdateManager.cpp" />
     <ClCompile Include="CropDefinitions.cpp" />
+    <ClCompile Include="CropObject.cpp" />
     <ClCompile Include="DynamicContentGenerator.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
@@ -55,6 +56,7 @@
     <ClInclude Include="App.hpp" />
     <ClInclude Include="ChunkUpdateManager.hpp" />
     <ClInclude Include="CropDefinitions.hpp" />
+    <ClInclude Include="CropObject.hpp" />
     <ClInclude Include="DynamicContentGenerator.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Game.hpp" />

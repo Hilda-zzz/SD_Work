@@ -8,6 +8,7 @@
 class RuledTileset;
 class GroundObstacle;
 class TileLayer;
+class CropObject;
 
 enum DirtyType
 {
@@ -63,6 +64,9 @@ public:
 	
 	std::vector<GroundObstacle*> m_obstacleWithAnimation;
 	std::unordered_map<uint64_t, GroundObstacle*> m_gridPosToGroundObstacle;
+
+	std::vector<CropObject*> m_cropObjects;
+	std::unordered_map<uint64_t, CropObject*> m_gridPosToCropObject;
 
 private:
 	RuledTileset* m_plowedSoilRuleSet = nullptr;

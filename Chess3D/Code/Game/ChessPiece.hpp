@@ -5,9 +5,11 @@
 #include "Engine/Core/Timer.hpp"
 #include "Engine/Math/ZCylinder.hpp"
 #include "Engine/ResourceManager/StaticMeshComponent.hpp"
+#include "Engine/Core/Vertex_PCUTBN.hpp"
 
 class Texture;
 class ChessMatch;
+class Shader;
 
 enum class Faction {
 	NONE,
@@ -23,6 +25,7 @@ public:
 
 	void Update();
 	void Renderer() const;
+	void RenderShadowTexture() const;
 
 	IntVec2 GetAimGridPos();
 	void SetAimGridPos(IntVec2 const& gridPos);
@@ -78,5 +81,10 @@ private:
 
 	// model
 	StaticMeshComponent m_staticMeshComponent;
+
+	// shadow
+	Shader* m_shadowShader = nullptr;
 	
+	std::vector<Vertex_PCUTBN> m_cubeTestVerts;
+	std::vector<unsigned int>m_cubeTestIndices;
 };

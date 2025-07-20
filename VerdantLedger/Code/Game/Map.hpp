@@ -27,7 +27,7 @@ public:
 	void UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolType,InventorySlotButton& curInventoryBtn);
 
 private:
-	void UpdateCamFollow(float deltaSecondes);
+	void UpdateCamFollow();
 
 	void UpdateVisibleChunk(float deltaSeconds);
 

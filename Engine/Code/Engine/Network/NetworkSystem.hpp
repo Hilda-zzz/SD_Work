@@ -11,10 +11,21 @@ enum class NetState
 	NET_STATE_CLIENT_CONNECTED
 };
 
+struct NetworkSystemConfig
+{
+	std::string m_serverIP = "127.0.0.1";    
+	uint16_t m_serverPort = 3100;            
+
+	std::string m_playerName = "Hilda";      
+	std::string m_opponentName = "";         
+
+	int m_connectionTimeoutMs = 5000;
+};
+
 class NetworkSystem
 {
 public:
-	NetworkSystem();
+	NetworkSystem(NetworkSystemConfig const& config);
 	~NetworkSystem();
 
 	void Startup();
@@ -24,8 +35,23 @@ public:
 
 	void StartServer(int port);
 	void StartClient(std::string const& serverIP, int port);
-	
 
+	void StopServer();
+	void StopClient();
+
+	bool SendCommandToRemote(std::string const& command);
+	bool SendToServer(std::string const& command);
+	bool SendToAllClients(std::string const& command);
+	
+	void ProcessReceivedMessages();
+	void ProcessReceivedMessage(const std::string& receivedCommand);
+
+	bool IsConnected();
+	bool HasConnectedClients();
+
+	NetState GetNetState();
+
+	NetworkSystemConfig m_networkConfig;
 protected:
 private:
 	void BeginFrameServerListening();

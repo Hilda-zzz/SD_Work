@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <stdlib.h>
+#include "../Math/MathUtils.hpp"
 
 void ObjLoader::LoadObjFromFile(const std::string& filePath, std::vector<Vertex_PCU>& verts)
 {
@@ -198,15 +199,37 @@ void ObjLoader::AddVertsForEachFaceLine_WithTBN(std::string const& faceLine, std
 		ERROR_AND_DIE(Stringf("Obj format wrong!"));
 	}
 
-	Vertex_PCUTBN vertexA = GetEachPointFromString_WithTBN(vertexA_str, objData);
-	Vertex_PCUTBN vertexB = GetEachPointFromString_WithTBN(vertexB_str, objData);
-	Vertex_PCUTBN vertexC = GetEachPointFromString_WithTBN(vertexC_str, objData);
+	bool aHasNormal, bHasNormal, cHasNormal;
+	Vertex_PCUTBN vertexA = GetEachPointFromString_WithTBN(vertexA_str, objData, aHasNormal);
+	Vertex_PCUTBN vertexB = GetEachPointFromString_WithTBN(vertexB_str, objData, bHasNormal);
+	Vertex_PCUTBN vertexC = GetEachPointFromString_WithTBN(vertexC_str, objData, cHasNormal);
 
-	Vec3 T, B = Vec3(0.f, 0.f, 0.f);
-	CalculateTangentBitangent(vertexA.m_position, vertexB.m_position, vertexC.m_position,
-		vertexA.m_uvTexCoords, vertexB.m_uvTexCoords, vertexC.m_uvTexCoords,
-		T, B);
+	//-------------- Check if not have normals--------
+	bool needCalculateNormal = (objData.m_normals.empty() ||
+		!aHasNormal ||
+		!bHasNormal ||
+		!cHasNormal);
 
+	if (needCalculateNormal)
+	{
+		Vec3 calculatedNormal = CalculateTriangleNormal(vertexA.m_position,
+			vertexB.m_position,
+			vertexC.m_position);
+		vertexA.m_normal = calculatedNormal;
+		vertexB.m_normal = calculatedNormal;
+		vertexC.m_normal = calculatedNormal;
+	}
+
+	//------------------------------------------------
+	Vec3 T = Vec3(1.f, 0.f, 0.f);
+	Vec3 B = Vec3(0.f, 1.f, 0.f);
+	if (!objData.m_uv.empty())
+	{
+		// Vec3 T, B = Vec3(0.f, 0.f, 0.f);
+		CalculateTangentBitangent(vertexA.m_position, vertexB.m_position, vertexC.m_position,
+			vertexA.m_uvTexCoords, vertexB.m_uvTexCoords, vertexC.m_uvTexCoords,
+			T, B);
+	}
 	vertexA.m_tangent = T;
 	vertexA.m_bitangent = B;
 	vertexB.m_tangent = T;
@@ -219,8 +242,10 @@ void ObjLoader::AddVertsForEachFaceLine_WithTBN(std::string const& faceLine, std
 	verts.push_back(vertexC);
 }
 
-Vertex_PCUTBN ObjLoader::GetEachPointFromString_WithTBN(std::string const& vertexStr, ObjData const& objData)
+Vertex_PCUTBN ObjLoader::GetEachPointFromString_WithTBN(std::string const& vertexStr, ObjData const& objData,bool& hasNormal)
 {
+	hasNormal = true;
+
 	Strings splitStrs = SplitStringOnDelimiter(vertexStr, '/');
 	int nonEmptyCount = 0;
 
@@ -263,6 +288,10 @@ Vertex_PCUTBN ObjLoader::GetEachPointFromString_WithTBN(std::string const& verte
 	if (normalIndex != -1)
 	{
 		normal = objData.m_normals[normalIndex];
+	}
+	else
+	{
+		hasNormal = false;
 	}
 	return Vertex_PCUTBN(objData.m_positions[vertexIndex], Rgba8::WHITE, uv, 
 		Vec3(1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), normal);
@@ -394,6 +423,23 @@ Vertex_PCUTBN ObjLoader::CreateVertexFromKey(VertexKey const& key, ObjData const
 
 	return vertex;
 }
+
+Vec3 ObjLoader::CalculateTriangleNormal(Vec3 const& posA, Vec3 const& posB, Vec3 const& posC)
+{
+	Vec3 edge1 = posB - posA;  // AB
+	Vec3 edge2 = posC - posA;  // AC
+
+	Vec3 normal = CrossProduct3D(edge1, edge2);
+	normal.Normalized();
+
+	return normal;
+}
+
+// bool ObjLoader::HasValidNormalInFaceLine(std::string const& vertexStr)
+// {
+// 	Strings splitStrs = SplitStringOnDelimiter(vertexStr, '/');
+// 	return (splitStrs.size() >= 3 && !splitStrs[2].empty());
+// }
 
 // void ObjLoader::BuildVertexAndIndexArrays(ObjData const& objData, 
 // 	std::unordered_map<VertexKey, Vertex_PCUTBN, VertexKeyHash> const& vertexMap, 

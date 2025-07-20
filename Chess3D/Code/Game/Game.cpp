@@ -20,11 +20,14 @@
 
 #include "Game/ChessMatch.hpp"
 #include "Engine/Core/ObjLoader.hpp"
+#include "Engine/Network/NetworkSystem.hpp"
 
 extern bool g_isDebugDraw;
 extern Renderer* g_theRenderer;
 extern Clock* g_systemClock;
 extern Game* g_theGame;
+extern NetworkSystem* g_theNetworkSystem;
+extern DevConsole* g_theDevConsole;
 
 Game::Game()
 {
@@ -32,23 +35,6 @@ Game::Game()
 
 	m_gameClock = new Clock();
 	m_player = new Player(this);
-// 	m_cube = new Prop(this);
-// 	m_cube2 = new Prop(this);
-// 	m_cube->m_position = Vec3(2.f, 2.f, 0.f);
-// 	m_cube2->m_position = Vec3(-2.f, -2.f, 0.f);
-// 	m_cube2->m_color = Rgba8(100,100,100,255);
-// 	m_groundGrid = new Prop(this);
-// 	m_sphere = new Prop(this);
-// 	m_sphere->m_position = Vec3(10.f, -5.f, 1.f);
-// 	m_sphere->m_texture = m_gridTex;
-// 	AddVertsForSphere3D(m_sphere->m_vertexs, m_sphere->m_position, 1.f, Rgba8::WHITE);
-// 
-// 	AddEntityToList(*m_cube, m_allEntities);
-// 	AddEntityToList(*m_cube2, m_allEntities);
-// 	AddEntityToList(*m_sphere, m_allEntities);
-// 
-// 	AddVertsForGroundGrid();
-// 	AddVertsForCubes();
 
 	IntVec2 clientDimensions = g_theWindow->GetClientDimensions();
 	AABB2 viewport = AABB2(Vec2(0.f, 0.f), Vec2((float)clientDimensions.x, (float)clientDimensions.y));
@@ -72,17 +58,8 @@ Game::Game()
 	//g_theDevConsole->AddLine(DevConsole::EVENT_FEEDBACK, logString);
 
 	//----------sky box--------------------
-	std::string skyboxPaths[] = {
- 	"Data/Images/SkyBox1/skyhsky_lf.png",
- 	"Data/Images/SkyBox1/skyhsky_rt.png",
- 	"Data/Images/SkyBox1/skyhsky_dn.png",
- 	"Data/Images/SkyBox1/skyhsky_up.png",
- 	"Data/Images/SkyBox1/skyhsky_ft.png",
- 	"Data/Images/SkyBox1/skyhsky_bk.png",
-	};
-
 	std::string skyBoxShaderPath = "Data/Shaders/CubeSkyBox";
-	m_cubeSkybox = new CubeSkyBox(g_theRenderer, skyboxPaths,&skyBoxShaderPath);
+	m_cubeSkybox = new CubeSkyBox(g_theRenderer, m_skyboxPaths,&skyBoxShaderPath);
 
 	//------------Chess Game---------------------------------------------
 	StartTheMatch();
@@ -102,7 +79,7 @@ Game::Game()
 		3.0f
 	);
 	m_pointLights.push_back(pointLight);
-	m_pointLights.push_back(pointLight2);
+	//m_pointLights.push_back(pointLight2);
 
 	m_spotLights.reserve(10);
 	SpotLight spotLight1 = SpotLight(
@@ -117,33 +94,40 @@ Game::Game()
 	);
 	m_spotLights.push_back(spotLight1);
 
-	
-// 	ObjLoader::LoadObjFromFile_WithTBN("Data/Models/SimpleCube/Cube_vi.obj",m_cube_withTBN);
-// 	ObjLoader::LoadObjFromFile_WithIndex("Data/Models/SimpleCube/Cube_vn.obj", m_cube_withIndex,m_cubeIndex);
-// 	ObjLoader::LoadObjFromFile_WithTBN_WithIndex("Data/Models/SimpleCube/Cube_vni.obj",m_cube_withTBN_withIndex,m_cubeIndex_withTBN);
+	//---------------------Network Protocol & Commands-----------------------
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessMove", Command_ChessMove, true);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessBeginMatch", Command_ChessBeginMatch, true);
+
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessServerInfo", ChessServerInfo_LocalCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessListen", ChessListen_LocalCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessConnect", ChessConnect_LocalCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessDisconnect", ChessDisconnect_RemoteCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessPlayerInfo", ChessPlayerInfo_RemoteCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessBegin", ChessBegin_RemoteCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessValidate", ChessValidate_RemoteCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessResign", ChessResign_RemoteCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("RemoteCmd", RemoteCmd_LocalCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessOfferDraw", ChessOfferDraw_RemoteCmd);
+	g_theEventSystem->SubscribeEventCallbackFuction("ChessAcceptDraw", ChessAcceptDraw_RemoteCmd);
 }
 
 Game::~Game()
 {
-// 	delete m_cube;
-// 	m_cube = nullptr;
-// 
-// 	delete m_cube2;
-// 	m_cube2 = nullptr;
-// 
-// 	delete m_player;
-// 	m_player = nullptr;
-// 
-// 	delete m_sphere;
-// 	m_sphere = nullptr;
-// 
-// 	delete m_groundGrid;
-// 	m_groundGrid = nullptr;
-
 	if (m_curMatch)
 	{
 		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessMove", Command_ChessMove);
-		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessBegin", Command_ChessBegin);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessBeginMatch", Command_ChessBeginMatch);
+
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessServerInfo", ChessServerInfo_LocalCmd);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessListen", ChessListen_LocalCmd);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessConnect", ChessConnect_LocalCmd);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessDisconnect", ChessDisconnect_RemoteCmd);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessPlayerInfo", ChessPlayerInfo_RemoteCmd);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessBegin", ChessBegin_RemoteCmd);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessResign", ChessResign_RemoteCmd);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessValidate", ChessValidate_RemoteCmd);
+		g_theEventSystem->UnsubscribeEventCallbackFunction("RemoteCmd", RemoteCmd_LocalCmd);
+
 		delete m_curMatch;
 		m_curMatch = nullptr;
 	}
@@ -397,70 +381,6 @@ char const* Game::GetDebugRenderModeDesc(int debugInt) const
 	}
 }
 
-// void Game::AddVertsForGroundGrid()
-// {
-// 	// add verts for ground grid
-// 	for (int i = 1; i <= 101; i++)
-// 	{
-// 		if (i % 5 == 1)
-// 		{
-// 			Vec3 yBl = Vec3(-50.f + (i - 1) - 0.03f, -50.f, -0.03f);
-// 			Vec3 yTr = yBl + Vec3(0.06f, 100.f, 0.06f);
-// 			//AddVertsForAABB3D(m_groundGrid->m_vertexs, AABB3(yBl, yTr), Rgba8::GREEN);
-// 
-// 			Vec3 xBl = Vec3(-50.f, -50.f + (i - 1) - 0.03f, -0.03f);
-// 			Vec3 xTr = xBl + Vec3(100.f, 0.06f, 0.06f);
-// 			//AddVertsForAABB3D(m_groundGrid->m_vertexs, AABB3(xBl, xTr), Rgba8::RED);
-// 		}
-// 
-// 		else
-// 		{
-// 			Vec3 yBl = Vec3(-50.f + (i - 1) - 0.01f, -50.f, -0.01f);
-// 			Vec3 yTr = yBl + Vec3(0.02f, 100.f, 0.02f);
-// 			//AddVertsForAABB3D(m_groundGrid->m_vertexs, AABB3(yBl, yTr), Rgba8(180, 180, 180, 255));
-// 
-// 			Vec3 xBl = Vec3(-50.f, -50.f + (i - 1) - 0.01f, -0.01f);
-// 			Vec3 xTr = xBl + Vec3(100.f, 0.02f, 0.02f);
-// 			//AddVertsForAABB3D(m_groundGrid->m_vertexs, AABB3(xBl, xTr), Rgba8(180, 180, 180, 255));
-// 		}
-// 
-// 	}
-// }
-
-// void Game::AddVertsForCubes()
-// {
-// 	//add cube vertexs to m_cube
-// 	//X
-// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED);
-// 	//-X
-// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN);
-// 	//Y
-// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN);
-// 	//-Y
-// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA);
-// 	//Z
-// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE);
-// 	//-Z
-// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW);
-// 
-// 
-// 	//X
-// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED);
-// 	//-X
-// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN);
-// 	//Y
-// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN);
-// 	//-Y
-// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA);
-// 	//Z
-// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE);
-// 	//-Z
-// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW);
-// 
-// 
-// 
-// }
-
 void Game::AddEntityToList(Entity& thisEntity, EntityList& list)
 {
 	for (int i = 0; i < static_cast<int>(list.size()); i++)
@@ -558,6 +478,7 @@ bool Game::Command_ChessMove(EventArgs& args)
 	}
 
 	// get move info str
+	bool isFromRemote = args.GetValue("remote", false);
 	std::string fromStr = args.GetValue("from", "");
 	std::string toStr = args.GetValue("to", "");
 	bool isCheat = args.GetValue("teleport", false);
@@ -608,6 +529,42 @@ bool Game::Command_ChessMove(EventArgs& args)
 		
 		// move the chess
 		g_theGame->m_curMatch->MoveTheChessPiece(fromStr, toStr,moveResult);
+		if (moveResult == ChessMoveResult::VALID_CASTLE_KINGSIDE)
+		{
+			if (g_theGame->m_curMatch->GetCurFaction()== Faction::WHITE)
+			{
+				g_theGame->m_curMatch->MoveTheChessPiece("h1", "f1", ChessMoveResult::VALID_CASTLE_KINGSIDE);
+			}
+			else
+			{
+				g_theGame->m_curMatch->MoveTheChessPiece("h8", "f8", ChessMoveResult::VALID_CASTLE_KINGSIDE);
+			}
+		}
+		else if (moveResult == ChessMoveResult::VALID_CASTLE_QUEENSIDE)
+		{
+			if (g_theGame->m_curMatch->GetCurFaction() == Faction::WHITE)
+			{
+				g_theGame->m_curMatch->MoveTheChessPiece("a1", "d1", ChessMoveResult::VALID_CASTLE_QUEENSIDE);
+			}
+			else
+			{
+				g_theGame->m_curMatch->MoveTheChessPiece("a8", "d8", ChessMoveResult::VALID_CASTLE_QUEENSIDE);
+			}
+		}
+		// ---------------------------------update turn ---------------------------------------
+		g_theGame->m_curMatch->AddTurnNum();
+			//update game state
+		if (g_theGame->m_curMatch->m_turnNumber % 2 == 0)
+		{
+			g_theGame->m_chessGameState = ChessGameState::FIRST_PLAYER_TURN;
+			g_theGame->m_curMatch->m_currentTurnFaction = Faction::WHITE;
+		}
+		else
+		{
+			g_theGame->m_chessGameState = ChessGameState::SEC_PLAYER_TURN;
+			g_theGame->m_curMatch->m_currentTurnFaction = Faction::BLACK;
+		}
+
 		//update cam
 		if (g_theGame->m_camMode == CamMode::AUTO|| 
 			g_theGame->m_chessGameState==ChessGameState::FIRST_WIN||
@@ -618,6 +575,14 @@ bool Game::Command_ChessMove(EventArgs& args)
 
 		// print sate
 		g_theGame->PrintBoardState();
+
+		//-----------------Network Remote Cmd-------------------------
+		if (!isFromRemote)
+		{
+			std::string remoteCmdString = "RemoteCmd cmd=ChessMove from=" + fromStr + " to=" + toStr;
+			g_theDevConsole->Execute(remoteCmdString);
+		}
+
 		return true;
 	}
 	else
@@ -626,7 +591,7 @@ bool Game::Command_ChessMove(EventArgs& args)
 	}
 }
 
-bool Game::Command_ChessBegin(EventArgs& args)
+bool Game::Command_ChessBeginMatch(EventArgs& args)
 {
 	UNUSED(args);
 	g_theGame->EndTheMatch();
@@ -640,7 +605,7 @@ ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr, bool
 	if (fromStr.empty() || toStr.empty()
 		|| fromStr.length() != 2 || toStr.length() != 2)
 	{
-		AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_BAD_LOCATION);
+		//AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_BAD_LOCATION);
 		return ChessMoveResult::INVALID_MOVE_BAD_LOCATION;
 	}
 
@@ -648,7 +613,7 @@ ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr, bool
 	char toCol = toStr[0];
 	if (fromCol < 'a' || fromCol > 'h' || toCol < 'a' || toCol > 'h')
 	{
-		AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_BAD_LOCATION);
+		//AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_BAD_LOCATION);
 		return ChessMoveResult::INVALID_MOVE_BAD_LOCATION;
 	}
 
@@ -656,14 +621,14 @@ ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr, bool
 	char toRow = toStr[1];
 	if (fromRow < '1' || fromRow > '8' || toRow < '1' || toRow > '8')
 	{
-		AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_BAD_LOCATION);
+		//AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_BAD_LOCATION);
 		return ChessMoveResult::INVALID_MOVE_BAD_LOCATION;
 	}
 
 	// zero distance
 	if (fromStr == toStr)
 	{
-		AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_ZERO_DISTANCE);
+		//AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_ZERO_DISTANCE);
 		return ChessMoveResult::INVALID_MOVE_ZERO_DISTANCE;
 	}
 
@@ -684,12 +649,12 @@ ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr, bool
 	ChessPiece* curFromPiece = g_theGame->m_curMatch->m_chessBoard.GetChessFromIndex(fromIndex);
 	if (!curFromPiece)
 	{
-		AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_NO_PIECE);
+		//AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_NO_PIECE);
 		return ChessMoveResult::INVALID_MOVE_NO_PIECE;
 	}
 	if (curFromPiece->GetFaction() != curFaction)
 	{
-		AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_NOT_YOUR_PIECE);
+		//AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_NOT_YOUR_PIECE);
 		return ChessMoveResult::INVALID_MOVE_NOT_YOUR_PIECE;
 	}
 
@@ -700,7 +665,7 @@ ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr, bool
 	{
 		if (!(curFromPiece->GetPieceType() == PieceType::KING && curToPiece->GetPieceType() == PieceType::ROOK))
 		{
-			AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_DESTINATION_BLOCKED);
+			//AddLineForMoveResult(ChessMoveResult::INVALID_MOVE_DESTINATION_BLOCKED);
 			return ChessMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
 		}
 	}
@@ -714,7 +679,7 @@ ChessMoveResult Game::CheckMovement(std::string fromStr, std::string toStr, bool
 	}
 	
 	ValidatePieceMovement(fromIndex, toIndex, moveResult);
-	AddLineForMoveResult(moveResult);
+	//AddLineForMoveResult(moveResult);
 	return moveResult;
 }
 
@@ -749,6 +714,11 @@ bool Game::IsValidateChessMoveResult(ChessMoveResult result)
 	default:
 		return false;
 	}
+}
+
+Camera Game::GetGameplayCam()
+{
+	return m_player->m_playerCam;
 }
 
 bool Game::ValidatePieceMovement(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result)
@@ -855,7 +825,7 @@ bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 			if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(2, 0))
 			{
 				int rookIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(IntVec2(0, 0));
-				if (ValidateCastling(moveChessIndex, rookIndex, true, out_result))
+				if (ValidateCastling(moveChessIndex, rookIndex, true, out_result)) // 改为rookIndex
 				{
 					out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE;
 					return true;
@@ -866,7 +836,7 @@ bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 			else if (moveGridPos == IntVec2(4, 0) && toGridPos == IntVec2(6, 0))
 			{
 				int rookIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(IntVec2(7, 0));
-				if (ValidateCastling(moveChessIndex, rookIndex, false, out_result))
+				if (ValidateCastling(moveChessIndex, rookIndex, false, out_result)) // 改为rookIndex
 				{
 					out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
 					return true;
@@ -880,7 +850,7 @@ bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 			if (moveGridPos == IntVec2(4, 7) && toGridPos == IntVec2(2, 7))
 			{
 				int rookIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(IntVec2(0, 7));
-				if (ValidateCastling(moveChessIndex, rookIndex, true, out_result))
+				if (ValidateCastling(moveChessIndex, rookIndex, true, out_result)) // 改为rookIndex
 				{
 					out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE;
 					return true;
@@ -891,7 +861,7 @@ bool Game::ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResul
 			else if (moveGridPos == IntVec2(4, 7) && toGridPos == IntVec2(6, 7))
 			{
 				int rookIndex = g_theGame->m_curMatch->m_chessBoard.GetIndexFromGridPos(IntVec2(7, 7));
-				if (ValidateCastling(moveChessIndex, rookIndex, false, out_result))
+				if (ValidateCastling(moveChessIndex, rookIndex, false, out_result)) // 改为rookIndex
 				{
 					out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
 					return true;
@@ -1337,8 +1307,14 @@ bool Game::ValidateCastling(int kingIndex, int targetIndex, bool isQueenside, Ch
         }
     }
     
-
-    out_result = isQueenside ? ChessMoveResult::VALID_CASTLE_QUEENSIDE : ChessMoveResult::VALID_CASTLE_KINGSIDE;
+	if (isQueenside)
+	{
+		out_result = ChessMoveResult::VALID_CASTLE_QUEENSIDE;
+	}
+	else
+	{
+		out_result = ChessMoveResult::VALID_CASTLE_KINGSIDE;
+	}
     return true;
 }
 
@@ -1421,13 +1397,730 @@ void Game::AddLineForMoveResult(ChessMoveResult result)
 	}
 }
 
+bool Game::ChessServerInfo_LocalCmd(EventArgs& args)
+{
+	std::string newIP = args.GetValue("ip", "");
+	std::string newPort = args.GetValue("port", "");
+	if (g_theNetworkSystem && g_theNetworkSystem->IsConnected())
+	{
+		if (!newIP.empty() || !newPort.empty())
+		{
+			g_theDevConsole->AddLine(DevConsole::INVALID, "Cannot change IP/port while connected!");
+			return false;
+		}
+	}
+
+	if (!newIP.empty())
+	{
+		g_theNetworkSystem->m_networkConfig.m_serverIP = newIP;
+	}
+
+	if (!newPort.empty())
+	{
+		int portNum = atoi(newPort.c_str());
+		if (portNum > 0 && portNum <= 65535)
+		{
+			g_theNetworkSystem->m_networkConfig.m_serverPort = (uint16_t)portNum;
+		}
+		else
+		{
+			g_theDevConsole->AddLine(DevConsole::INVALID, "Invalid port number!");
+			return false;
+		}
+	}
+
+	g_theDevConsole->AddLine(DevConsole::TIPS, "=== Chess Network Info ===");
+	g_theDevConsole->AddLine(DevConsole::PLAYER_TIP,
+		Stringf("Player Name: %s", g_theNetworkSystem->m_networkConfig.m_playerName.c_str()));
+	g_theDevConsole->AddLine(DevConsole::PLAYER_TIP,
+		Stringf("Server IP: %s", g_theNetworkSystem->m_networkConfig.m_serverIP.c_str()));
+	g_theDevConsole->AddLine(DevConsole::PLAYER_TIP,
+		Stringf("Port: %d", g_theNetworkSystem->m_networkConfig.m_serverPort));
+
+	// 显示连接状态
+	if (g_theNetworkSystem)
+	{
+		std::string connectionStatus = "DISCONNECTED";
+		NetState netState = g_theNetworkSystem->GetNetState();
+		if (netState ==NetState::NET_STATE_SERVER_LISTENING)
+		{
+			connectionStatus = "SERVER (Listening)";
+		}
+		else if (netState == NetState::NET_STATE_CLIENT_CONNECTED)
+		{
+			connectionStatus = "CLIENT (Connected)";
+		}
+		else if (netState == NetState::NET_STATE_CLIENT_CONNECTING)
+		{
+			connectionStatus = "CLIENT (Connecting...)";
+		}
+		else if (netState == NetState::NET_STATE_INACTIVE)
+		{
+			connectionStatus = "INACTIVE";
+		}
+		else if (netState == NetState::NET_STATE_IDLE)
+		{
+			connectionStatus = "IDLE";
+		}
+		g_theDevConsole->AddLine(DevConsole::PLAYER_TIP,
+			Stringf("Connection Status: %s", connectionStatus.c_str()));
+	}
+	else
+	{
+		g_theDevConsole->AddLine(DevConsole::PLAYER_TIP, "Connection Status: Network System Not Started");
+	}
+
+	// 显示游戏状态
+// 	if (g_theChessGame)
+// 	{
+// 		std::string gameState = g_theChessGame->GetCurrentGameStateString(); // 你需要实现这个方法
+// 		g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+// 			Stringf("Game State: %s", gameState.c_str()));
+// 	}
+// 	else
+// 	{
+// 		g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "Game State: No Active Game");
+// 	}
+
+	return true;
+}
+
+bool Game::ChessListen_LocalCmd(EventArgs& args)
+{
+	std::string portStr = args.GetValue("port", "");
+	if (!portStr.empty())
+	{
+		g_theNetworkSystem->m_networkConfig.m_serverPort= (uint16_t)atoi(portStr.c_str());
+	}
+	g_theNetworkSystem->StartServer(g_theNetworkSystem->m_networkConfig.m_serverPort);
+	return false;
+}
+
+bool Game::ChessConnect_LocalCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+
+	NetworkSystemConfig networkConfig = g_theNetworkSystem->m_networkConfig;
+	//NetState curState = g_theNetworkSystem->GetNetState();
+	if (g_theNetworkSystem->GetNetState() ==NetState::NET_STATE_SERVER_LISTENING 
+		|| g_theNetworkSystem->GetNetState() == NetState::NET_STATE_CLIENT_CONNECTED
+		|| g_theNetworkSystem->GetNetState() == NetState::NET_STATE_CLIENT_CONNECTING)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "Already connected or connecting!");
+		return false;
+	}
+
+	std::string targetIP = args.GetValue("ip", networkConfig.m_serverIP);
+	std::string portStr = args.GetValue("port", std::to_string(networkConfig.m_serverPort));
+
+	int targetPort = atoi(portStr.c_str());
+	if (targetPort <= 0 || targetPort > 65535)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID,
+			Stringf("Invalid port number: %s", portStr.c_str()));
+		return false;
+	}
+
+	if (targetIP.empty())
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "Invalid IP address!");
+		return false;
+	}
+
+	g_theNetworkSystem->m_networkConfig.m_serverIP = targetIP;
+	g_theNetworkSystem->m_networkConfig.m_serverPort = (uint16_t)targetPort;
+
+	if (g_theNetworkSystem->GetNetState() ==NetState::NET_STATE_INACTIVE)
+	{
+		g_theNetworkSystem->Startup();
+		if (g_theNetworkSystem->GetNetState() == NetState::NET_STATE_INACTIVE)
+		{
+			g_theDevConsole->AddLine(DevConsole::INVALID, "Failed to startup NetworkSystem!");
+			return false;
+		}
+	}
+
+	g_theNetworkSystem->StartClient(targetIP, targetPort);
+	if (g_theNetworkSystem->GetNetState()!=NetState::NET_STATE_CLIENT_CONNECTED&&
+		g_theNetworkSystem->GetNetState() != NetState::NET_STATE_CLIENT_CONNECTING)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID,
+			Stringf("Failed to start connection to %s:%d", targetIP.c_str(), targetPort));
+		return false;
+	}
+
+	g_theDevConsole->AddLine(DevConsole::TIPS,
+		Stringf("Attempting to connect to %s:%d...", targetIP.c_str(), targetPort));
+
+	return true;
+}
+
+bool Game::ChessDisconnect_RemoteCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+	NetState curState = g_theNetworkSystem->GetNetState();
+	if (curState != NetState::NET_STATE_SERVER_LISTENING &&
+		curState != NetState::NET_STATE_CLIENT_CONNECTED &&
+		curState != NetState::NET_STATE_CLIENT_CONNECTING)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "Not connected to any remote host!");
+		return false;
+	}
+
+	std::string reason = args.GetValue("reason", "");
+	std::string remoteFlag = args.GetValue("remote", "false");
+	bool isRemoteCommand = (remoteFlag == "true");
+	if (isRemoteCommand)
+	{
+		// 远程断开命令 - 只断开，不回发
+		if (!reason.empty())
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				Stringf("Remote host disconnected: %s", reason.c_str()));
+		}
+		else
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS, "Remote host disconnected.");
+		}
+
+		// 根据当前状态调用对应的停止函数
+		if (curState == NetState::NET_STATE_SERVER_LISTENING)
+		{
+			g_theNetworkSystem->StopServer();
+		}
+		else if (curState == NetState::NET_STATE_CLIENT_CONNECTED ||
+			curState == NetState::NET_STATE_CLIENT_CONNECTING)
+		{
+			g_theNetworkSystem->StopClient();
+		}
+	}
+	else
+	{
+		std::string remoteCmdString = "RemoteCmd cmd=ChessDisconnect";
+		if (!reason.empty())
+		{
+			remoteCmdString += " reason=" + reason;
+		}
+		g_theDevConsole->Execute(remoteCmdString);
+
+		if (!reason.empty())
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				Stringf("Disconnecting: %s", reason.c_str()));
+		}
+		else
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS, "Disconnecting...");
+		}
+
+		// Stop Self
+		if (curState == NetState::NET_STATE_SERVER_LISTENING)
+		{
+			g_theNetworkSystem->StopServer();
+		}
+		else if (curState == NetState::NET_STATE_CLIENT_CONNECTED ||
+			curState == NetState::NET_STATE_CLIENT_CONNECTING)
+		{
+			g_theNetworkSystem->StopClient();
+		}
+	}
+
+	// Verify if success disconnect
+	NetState newState = g_theNetworkSystem->GetNetState();
+	if (newState != NetState::NET_STATE_IDLE && newState != NetState::NET_STATE_INACTIVE)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "Failed to disconnect properly!");
+		return false;
+	}
+
+	return true;
+}
+
+bool Game::ChessPlayerInfo_RemoteCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+	std::string playerName = args.GetValue("name", "");
+	if (playerName.empty())
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "Player name cannot be empty!");
+		return false;
+	}
+
+	bool isRemoteCommand = args.GetValue("remote", false);
+	if (isRemoteCommand)
+	{
+		// 远程命令：设置对手名称
+		g_theNetworkSystem->m_networkConfig.m_opponentName = playerName;
+		g_theDevConsole->AddLine(DevConsole::TIPS,
+			Stringf("Opponent player name set to: %s", playerName.c_str()));
+	}
+	else
+	{
+		// 本地命令：设置自己的名称并发送给远程主机
+		g_theNetworkSystem->m_networkConfig.m_playerName = playerName;
+		g_theDevConsole->AddLine(DevConsole::TIPS,
+			Stringf("Local player name set to: %s", playerName.c_str()));
+
+		// 检查是否有连接可以发送命令
+		NetState curState = g_theNetworkSystem->GetNetState();
+		if (curState == NetState::NET_STATE_CLIENT_CONNECTED ||
+			(curState == NetState::NET_STATE_SERVER_LISTENING && g_theNetworkSystem->HasConnectedClients()))
+		{
+			std::string remoteCmdString = "RemoteCmd cmd=ChessPlayerInfo name=" + playerName;
+			g_theDevConsole->Execute(remoteCmdString);
+		}
+		else
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				"Player name updated locally (no remote connection).");
+		}
+	}
+
+	return true;
+}
+
+bool Game::ChessBegin_RemoteCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+	NetState curState = g_theNetworkSystem->GetNetState();
+	if (curState != NetState::NET_STATE_CLIENT_CONNECTED &&
+		(curState != NetState::NET_STATE_SERVER_LISTENING || !g_theNetworkSystem->HasConnectedClients()))
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "No remote connection available!");
+		return false;
+	}
+
+	std::string firstPlayerName = args.GetValue("firstPlayer", "");
+	std::string remoteFlag = args.GetValue("remote", "false");
+	bool isRemoteCommand = (remoteFlag == "true");
+	std::string myName = g_theNetworkSystem->m_networkConfig.m_playerName;
+	std::string opponentName = g_theNetworkSystem->m_networkConfig.m_opponentName;
+
+	if (isRemoteCommand)
+	{
+		// 远程命令：对方发起新游戏
+		if (firstPlayerName.empty())
+		{
+			firstPlayerName = opponentName;
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				Stringf("Remote host started game without specifying first player, defaulting to %s.", opponentName.c_str()));
+		}
+
+		// 验证firstPlayer是否为有效的玩家名称
+		if (firstPlayerName != myName && firstPlayerName != opponentName)
+		{
+			g_theDevConsole->AddLine(DevConsole::INVALID,
+				Stringf("Invalid firstPlayer '%s' from remote host. Must be '%s' or '%s'. Rejecting game start.",
+					firstPlayerName.c_str(), myName.c_str(), opponentName.c_str()));
+			return false;
+		}
+
+		// 确定谁是先手
+		bool selfIsFirst = (firstPlayerName == myName);
+
+		// 开始新游戏
+		g_theEventSystem->FireEvent("ChessBeginMatch");
+		g_theGame->m_curMatch->m_selfIsFirst = selfIsFirst;
+		g_theGame->m_chessGameState = ChessGameState::FIRST_PLAYER_TURN;
+		// 显示游戏开始信息
+		if (selfIsFirst)
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				Stringf("New game started by %s. You play first (White).", opponentName.c_str()));
+		}
+		else
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				Stringf("New game started by %s. %s plays first (White).", opponentName.c_str(), firstPlayerName.c_str()));
+		}
+	}
+	else
+	{
+		// 本地命令，本地发起新游戏
+		// 如果没有指定firstPlayer，默认为自己
+		if (firstPlayerName.empty())
+		{
+			firstPlayerName = myName;
+		}
+
+		if (firstPlayerName != myName && firstPlayerName != opponentName)
+		{
+			g_theDevConsole->AddLine(DevConsole::INVALID,
+				Stringf("Invalid firstPlayer: %s. Must be '%s' or '%s'.",
+					firstPlayerName.c_str(), myName.c_str(), opponentName.c_str()));
+			return false;
+		}
+
+		bool selfIsFirst = (firstPlayerName == myName);
+
+		g_theEventSystem->FireEvent("ChessBeginMatch");
+		g_theGame->m_curMatch->m_selfIsFirst = selfIsFirst;
+		g_theGame->m_chessGameState = ChessGameState::FIRST_PLAYER_TURN;
+		// construct the cmd
+		std::string remoteCmdString = "RemoteCmd cmd=ChessBegin firstPlayer=" + firstPlayerName;
+		g_theDevConsole->Execute(remoteCmdString);
+
+		// 显示游戏开始信息
+		if (selfIsFirst)
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				"New game started. You play first (White).");
+		}
+		else
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				Stringf("New game started. %s plays first (White).", firstPlayerName.c_str()));
+		}
+	}
+	return true;
+}
+
+bool Game::ChessValidate_RemoteCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+
+	NetState curState = g_theNetworkSystem->GetNetState();
+	if (curState != NetState::NET_STATE_CLIENT_CONNECTED &&
+		(curState != NetState::NET_STATE_SERVER_LISTENING || !g_theNetworkSystem->HasConnectedClients()))
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "No remote connection available!");
+		return false;
+	}
+
+	if (!g_theGame->m_curMatch)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "No active chess match!");
+		return false;
+	}
+
+	std::string remoteFlag = args.GetValue("remote", "false");
+	bool isRemoteCommand = (remoteFlag == "true");
+
+	if (isRemoteCommand)
+	{
+		//std::string remoteState = args.GetValue("state", "");
+		std::string remotePlayer1 = args.GetValue("player1", "");
+		std::string remotePlayer2 = args.GetValue("player2", "");
+		std::string remoteMoveStr = args.GetValue("move", "");
+		std::string remoteBoard = args.GetValue("board", "");
+
+		// 获取本地游戏状态
+		std::string localPlayer1 = g_theNetworkSystem->m_networkConfig.m_playerName;
+		std::string localPlayer2 = g_theNetworkSystem->m_networkConfig.m_opponentName;
+		int localMove = g_theGame->m_curMatch->m_turnNumber;
+		std::string localBoardString = g_theGame->m_curMatch->GetBoardStateString();
+		g_theGame->PrintBoardState();
+
+		// 验证各项是否一致
+		std::vector<std::string> discontinuities;
+
+		bool playerNamesMatch = false;
+		if ((remotePlayer1 == localPlayer1 && remotePlayer2 == localPlayer2) ||
+			(remotePlayer1 == localPlayer2 && remotePlayer2 == localPlayer1))
+		{
+			playerNamesMatch = true;
+		}
+
+		if (!playerNamesMatch)
+		{
+			discontinuities.push_back(Stringf("Player Names: remote='%s,%s', local='%s,%s'",
+				remotePlayer1.c_str(), remotePlayer2.c_str(),
+				localPlayer1.c_str(), localPlayer2.c_str()));
+		}
+
+		int remoteMove = atoi(remoteMoveStr.c_str());
+		if (remoteMove != localMove)
+		{
+			discontinuities.push_back(Stringf("Move Number: remote=%d, local=%d",
+				remoteMove, localMove));
+		}
+
+		if (remoteBoard != localBoardString)
+		{
+			discontinuities.push_back(Stringf("Board State: remote='%s', local='%s'",
+				remoteBoard.c_str(), localBoardString.c_str()));
+		}
+
+		// 如果发现任何不一致
+		if (!discontinuities.empty())
+		{
+			g_theDevConsole->AddLine(DevConsole::INVALID, "=== VALIDATION FAILED ===");
+			g_theDevConsole->AddLine(DevConsole::INVALID, "Game state discontinuities found:");
+
+			for (const std::string& discontinuity : discontinuities)
+			{
+				g_theDevConsole->AddLine(DevConsole::INVALID, "  " + discontinuity);
+			}
+
+			// 发送断开连接消息
+			std::string disconnectCmd = "RemoteCmd cmd=ChessDisconnect reason=\"VALIDATION FAILED\"";
+			g_theDevConsole->Execute(disconnectCmd);
+
+			// 断开连接
+			if (curState == NetState::NET_STATE_SERVER_LISTENING)
+			{
+				g_theNetworkSystem->StopServer();
+			}
+			else if (curState == NetState::NET_STATE_CLIENT_CONNECTED)
+			{
+				g_theNetworkSystem->StopClient();
+			}
+
+			return false;
+		}
+		else
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS, "Game state validation passed successfully.");
+		}
+	}
+	else
+	{
+		// 本地验证命令：发送当前游戏状态给对方验证
+
+		//std::string currentState = g_theGame->m_curMatch->GetCurrentGameStateString();
+		std::string player1 = g_theNetworkSystem->m_networkConfig.m_playerName;
+		std::string player2 = g_theNetworkSystem->m_networkConfig.m_opponentName;
+		int currentMove = g_theGame->m_curMatch->m_turnNumber;
+		std::string boardState = g_theGame->m_curMatch->GetBoardStateString();
+
+		// 构建完整的验证命令
+		std::string validateCmd = "RemoteCmd cmd=ChessValidate";
+		//validateCmd += " state=" + currentState;
+		validateCmd += " player1=" + player1;
+		validateCmd += " player2=" + player2;
+		validateCmd += " move=" + std::to_string(currentMove);
+		validateCmd += " board=" + boardState;
+
+		// 发送验证命令
+		g_theDevConsole->Execute(validateCmd);
+// 		if (sendSuccess)
+// 		{
+// 			g_theDevConsole->AddLine(DevConsole::TIPS, "Validation request sent to opponent.");
+// 		}
+// 		else
+// 		{
+// 			g_theDevConsole->AddLine(DevConsole::INVALID, "Failed to send validation request!");
+// 			return false;
+// 		}
+	}
+
+	return true;
+}
+
+bool Game::ChessResign_RemoteCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+
+	if (!g_theGame->m_curMatch)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "No active chess match!");
+		return false;
+	}
+
+	// 检查游戏是否正在进行中
+	if (g_theGame->m_chessGameState==ChessGameState::WAIT_TO_START_GAME)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "Game is already over!");
+		return false;
+	}
+
+	std::string remoteFlag = args.GetValue("remote", "false");
+	bool isRemoteCommand = (remoteFlag == "true");
+
+	if (isRemoteCommand)
+	{
+		// 远程认输：对手认输了，我获胜
+		g_theDevConsole->AddLine(DevConsole::TIPS,
+			Stringf("%s has resigned. You win!",
+				g_theNetworkSystem->m_networkConfig.m_opponentName.c_str()));
+	}
+	else
+	{
+		// 本地认输：我认输，对手获胜
+		// 检查是否有网络连接来通知对手
+		NetState curState = g_theNetworkSystem->GetNetState();
+		if (curState == NetState::NET_STATE_CLIENT_CONNECTED ||
+			(curState == NetState::NET_STATE_SERVER_LISTENING && g_theNetworkSystem->HasConnectedClients()))
+		{
+			// 通知对手我认输了
+			std::string resignCmd = "RemoteCmd cmd=ChessResign";
+			g_theDevConsole->Execute(resignCmd);
+		}
+
+		g_theDevConsole->AddLine(DevConsole::TIPS, "You have resigned. Game over.");
+	}
+
+	g_theGame->m_chessGameState = ChessGameState::WAIT_TO_START_GAME;
+	return true;
+}
+
+bool Game::ChessOfferDraw_RemoteCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+
+	if (!g_theGame->m_curMatch)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "No active chess match!");
+		return false;
+	}
+
+	std::string remoteFlag = args.GetValue("remote", "false");
+	bool isRemoteCommand = (remoteFlag == "true");
+
+	if (isRemoteCommand)
+	{
+		g_theDevConsole->AddLine(DevConsole::TIPS,
+			Stringf("%s is offering a draw. Use 'ChessAcceptDraw' or 'ChessRejectDraw' to respond.",
+				g_theNetworkSystem->m_networkConfig.m_opponentName.c_str()));
+
+		// 设置对手提议和棋的状态
+		g_theGame->m_curMatch->m_isOpponentOfferedDraw = true;
+	}
+	else
+	{
+		// 本地提议：我向对手提议和棋
+		// 发送和棋提议给对手
+		std::string offerDrawCmd = "RemoteCmd cmd=ChessOfferDraw";
+		g_theDevConsole->Execute(offerDrawCmd);
+
+		g_theDevConsole->AddLine(DevConsole::TIPS, "Draw offer sent to opponent. Waiting for response...");
+
+		// 记录自己在本回合提议了和棋
+		g_theGame->m_curMatch->m_isSelfOfferedDraw=true;
+	}
+
+	return true;
+}
+
+bool Game::ChessAcceptDraw_RemoteCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+
+	if (!g_theGame->m_curMatch)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "No active chess match!");
+		return false;
+	}
+
+	std::string remoteFlag = args.GetValue("remote", "false");
+	bool isRemoteCommand = (remoteFlag == "true");
+
+	if (isRemoteCommand)
+	{
+		if (g_theGame->m_curMatch->m_isSelfOfferedDraw)
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				Stringf("Opponent accept your draw offer."));
+		}
+	}
+	else
+	{
+		if (g_theGame->m_curMatch->m_isOpponentOfferedDraw)
+		{
+			g_theDevConsole->AddLine(DevConsole::TIPS,
+				Stringf("You accept opponent's draw."));
+			std::string resignCmd = "RemoteCmd cmd=ChessAcceptDraw";
+			g_theDevConsole->Execute(resignCmd);
+		}
+	}
+	g_theGame->m_curMatch->m_isSelfOfferedDraw = false;
+	g_theGame->m_curMatch->m_isOpponentOfferedDraw = false;
+	g_theGame->m_chessGameState = ChessGameState::WAIT_TO_START_GAME;
+
+	return true;
+}
+
+bool Game::RemoteCmd_LocalCmd(EventArgs& args)
+{
+	if (!g_theNetworkSystem)
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "NetworkSystem not available!");
+		return false;
+	}
+
+	// 检查网络连接
+	NetState curState = g_theNetworkSystem->GetNetState();
+	if (curState != NetState::NET_STATE_CLIENT_CONNECTED &&
+		(curState != NetState::NET_STATE_SERVER_LISTENING || !g_theNetworkSystem->HasConnectedClients()))
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "No remote connection available!");
+		return false;
+	}
+
+	// 获取命令名称
+	std::string commandName = args.GetValue("cmd", "");
+	if (commandName.empty())
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID, "RemoteCmd requires cmd parameter!");
+		return false;
+	}
+
+	// 构建远程命令字符串（不包含 "RemoteCmd cmd="）
+	std::string remoteCommand = commandName;
+
+	// 添加其他所有参数（除了cmd）
+	for (const auto& pair : args.m_keyValuePairs)
+	{
+		if (pair.first != "cmd")
+		{
+			remoteCommand += " " + pair.first + "=" + pair.second;
+		}
+	}
+
+	// 发送到网络
+	bool sendSuccess = g_theNetworkSystem->SendCommandToRemote(remoteCommand);
+
+	if (sendSuccess)
+	{
+		g_theDevConsole->AddLine(DevConsole::TIPS,
+			Stringf("Sent remote command: %s", remoteCommand.c_str()));
+	}
+	else
+	{
+		g_theDevConsole->AddLine(DevConsole::INVALID,
+			Stringf("Failed to send remote command: %s", remoteCommand.c_str()));
+	}
+
+	return sendSuccess;
+}
+
 void Game::StartTheMatch()
 {
 	if (!m_curMatch)
 	{
 		m_curMatch = new ChessMatch(this);
-		g_theEventSystem->SubscribeEventCallbackFuction("ChessMove", Command_ChessMove, true);
-		g_theEventSystem->SubscribeEventCallbackFuction("ChessBegin", Command_ChessBegin, true);
 		m_chessGameState = ChessGameState::FIRST_PLAYER_TURN;
 		g_theDevConsole->AddLine(DevConsole::PLAYER_TIP, "The Match is Begin!");
 		PrintBoardState();
@@ -1444,8 +2137,6 @@ void Game::EndTheMatch()
 {
 	if (m_curMatch)
 	{
-		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessMove", Command_ChessMove);
-		g_theEventSystem->UnsubscribeEventCallbackFunction("ChessBegin", Command_ChessBegin);
 		delete m_curMatch;
 		m_curMatch = nullptr;
 		m_chessGameState = ChessGameState::WAIT_TO_START_GAME;

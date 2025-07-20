@@ -10,7 +10,7 @@
  	m_shader = m_pRenderer->CreateShaderFromFile(shaderPaths->c_str());
     m_texture = m_pRenderer->CreateOrGetCubeTextureFromFiles(filePaths);
 
-    m_scale = 10000.f;
+    m_scale = 10.f;
     m_wireframeMode = false;
 
  	AddVertsForCubeSkyBox(m_verts, Vec3(), m_scale, Rgba8::WHITE);

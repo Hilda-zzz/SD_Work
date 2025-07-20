@@ -85,6 +85,7 @@ public:
 	static ChessMoveResult CheckMovement(std::string fromStr, std::string toStr, bool isCheat);
 	static bool IsValidateChessMoveResult(ChessMoveResult result);
 
+	Camera GetGameplayCam();
 private:
 	void UpdateAttractMode(float deltaTime);
 	void UpdateGameplayMode(float deltaTime);
@@ -103,7 +104,7 @@ private:
 	void PrintBoardState();
 
 	static bool Command_ChessMove(EventArgs& args);
-	static bool Command_ChessBegin(EventArgs& args);
+	static bool Command_ChessBeginMatch(EventArgs& args);
 
 	static bool ValidatePieceMovement(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
 	static bool ValidateKingMove(int moveChessIndex, int toChessIndex, ChessMoveResult& out_result);
@@ -115,6 +116,22 @@ private:
 	static bool ValidateCastling(int kingIndex, int targetIndex, bool isQueenside, ChessMoveResult& out_result);
 	static void AddLineForMoveResult(ChessMoveResult result);
 
+	//----------------------Network Protocol & Commands----------------------------
+	static bool ChessServerInfo_LocalCmd(EventArgs& args);
+	static bool ChessListen_LocalCmd(EventArgs& args);
+	static bool ChessConnect_LocalCmd(EventArgs& args);
+	static bool ChessDisconnect_RemoteCmd(EventArgs& args);
+	static bool ChessPlayerInfo_RemoteCmd(EventArgs& args);
+
+	static bool ChessBegin_RemoteCmd(EventArgs& args);
+	static bool ChessValidate_RemoteCmd(EventArgs& args);
+	static bool ChessResign_RemoteCmd(EventArgs& args);
+
+	static bool ChessOfferDraw_RemoteCmd(EventArgs& args);
+	static bool ChessAcceptDraw_RemoteCmd(EventArgs& args);
+
+	static bool RemoteCmd_LocalCmd(EventArgs& args);
+
 public:
 	Clock* m_gameClock = nullptr;
 	bool m_isAttractMode = true;
@@ -125,6 +142,15 @@ public:
 	CamMode m_camMode = CamMode::AUTO;
 
 	ChessGameState m_chessGameState = ChessGameState::WAIT_TO_START_GAME;
+
+	std::string m_skyboxPaths[6] = {
+	"Data/Images/SkyBox1/skyhsky_lf.png",
+	"Data/Images/SkyBox1/skyhsky_rt.png",
+	"Data/Images/SkyBox1/skyhsky_dn.png",
+	"Data/Images/SkyBox1/skyhsky_up.png",
+	"Data/Images/SkyBox1/skyhsky_ft.png",
+	"Data/Images/SkyBox1/skyhsky_bk.png"
+	};
 
 private:
 	Camera m_screenCamera;

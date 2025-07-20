@@ -12,9 +12,11 @@
 #include "Game/ChessMatch.hpp"
 #include "Engine/Core/ObjLoader.hpp"
 #include "Engine/ResourceManager/ResourceManager.hpp"
+#include "Game/Game.hpp"
 
 extern InputSystem* g_theInput;
 extern ResourceManager* g_theResourceManager;
+extern Game* g_theGame;
 
 ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 {
@@ -38,9 +40,11 @@ ChessBoard::ChessBoard(ChessMatch* match):ChessObject(match)
 
 
 	// Load Test Models
-// 	m_simpleObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/TutorialBox.meta"));
-// 	m_womanObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta"));
-// 	m_womanObject.m_position = Vec3(8.f, 4.f, 0.2f);
+//  	m_toturialBox = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/TutorialBox.meta"));
+//  	m_womanObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Woman.meta"));
+// 	m_cubeObject = SimpleObject(g_theResourceManager->CreateOrGetObjMeshFromMetaFile("Data/Models/Meta/Cube_v.meta"));
+// 	m_cubeObject.m_position = Vec3(0.f, 4.f, 0.2f);
+//  	m_womanObject.m_position = Vec3(8.f, 4.f, 0.2f);
 }
 
 ChessBoard::~ChessBoard()
@@ -68,8 +72,10 @@ ChessBoard::~ChessBoard()
 
 void ChessBoard::Update(float deltaTime)
 {
-// 	m_simpleObject.Update(deltaTime);
-// 	m_womanObject.Update(deltaTime);
+	UNUSED(deltaTime);
+//  	m_toturialBox.Update(deltaTime);
+//  	m_womanObject.Update(deltaTime);
+// 	m_cubeObject.Update(deltaTime);
 
 	UpdateDebugKeyInput();
 	for (ChessPiece* piece : m_chessPieces)
@@ -146,7 +152,15 @@ void ChessBoard::Update(float deltaTime)
 				EventArgs args;
 				args.SetValue("from",fromStr );
 				args.SetValue("to",toStr );
-				args.SetValue("teleport",std::to_string(isCheat));
+				if (isCheat)
+				{
+					args.SetValue("teleport", "true");
+				}
+				else
+				{
+					args.SetValue("teleport", "false");
+				}
+				
 				g_theEventSystem->FireEvent("ChessMove",args);
 				m_selectedPiece->m_isSelected = false;
 				m_selectedPiece = nullptr;
@@ -181,6 +195,19 @@ void ChessBoard::Update(float deltaTime)
 
 void ChessBoard::Renderer() const
 {
+	//------------------------------ shadow map---------------------------------------
+	//g_theRenderer->BeginCamera(g_theGame->GetGameplayCam());
+	Mat44 lightViewProjection = g_theRenderer->GetDirectLightProjectionMat(m_sunDirection, 
+		Vec3(m_dimensions.x * 0.5f - 1.f, m_dimensions.y * 0.5f - 1.f, 0.f), m_dimensions.GetLength() * 0.5f);
+	g_theRenderer->BeginShadowMapRender(lightViewProjection);
+	for (ChessPiece* chess : m_chessPieces)
+	{
+		chess->RenderShadowTexture();
+	}
+	g_theRenderer->EndShadowMapRender();
+	//g_theRenderer->EndCamera(g_theGame->GetGameplayCam());
+	//---------------------------------------------------------------------------------
+	g_theRenderer->BeginCamera(g_theGame->GetGameplayCam());
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
@@ -192,18 +219,32 @@ void ChessBoard::Renderer() const
 	g_theRenderer->BindTexture(m_diffuseTex,m_normalTex,m_sgeTex);
 	g_theRenderer->SetPerFrameConstants(0.f, m_debugInt, 0.f);
 
+	g_theRenderer->SetShadowConstants(lightViewProjection);
+	g_theRenderer->SetShadowSampleState();
+	g_theRenderer->BindShadowTexture();
+
+	TextureCube* skyboxTex = g_theRenderer->CreateOrGetCubeTextureFromFiles(g_theGame->m_skyboxPaths);
+	g_theRenderer->BindTextureCube(skyboxTex,4);
+
 	g_theRenderer->DrawVertexArray_WithTBN(m_vertexs, m_indexs, m_vertexBuffer, m_indexBuffer);
 
 	for (ChessPiece* chess : m_chessPieces)
 	{
+		//shadow
+  		g_theRenderer->SetShadowConstants(lightViewProjection);
+		g_theRenderer->SetShadowSampleState();
+		g_theRenderer->BindShadowTexture();
+		g_theRenderer->BindTextureCube(skyboxTex, 4);
+
 		g_theRenderer->BindShader(m_shader);
 		chess->Renderer();
 	}
 
 	//---------------------------- Test for model-----------------------------
 // 	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
-// 	m_simpleObject.Render();
+// 	m_toturialBox.Render();
 // 	m_womanObject.Render();
+// 	m_cubeObject.Render();
 	//------------------------------------------------------------------------
 
 	if (m_hasValidAimPos)
@@ -216,6 +257,7 @@ void ChessBoard::Renderer() const
 		g_theRenderer->DrawVertexArray(m_aimHoverQuad);
 	}
 
+	g_theRenderer->EndCamera(g_theGame->GetGameplayCam());
 }
 
 void ChessBoard::UpdateDebugKeyInput()

@@ -37,12 +37,15 @@ public:
 	void Update();
 	void Renderer() const;
 
+	void UpdateToolBarFromInventory();
 private:
 	void InitializeMenuPanel();
 
 	void InitializeToolBarPanel();
-	void UpdateToolBarFromInventory();
+	
 	void SelectToolBarSlot(int slotIndex);
+
+	// static bool UpdateToolBarFromInventory(EventArgs& args);
 
 	void InitializeStatusPanel();
 

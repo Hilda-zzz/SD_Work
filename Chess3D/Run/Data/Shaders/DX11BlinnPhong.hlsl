@@ -22,7 +22,9 @@ struct VertexOutPixelIn
 
  	float4 v_modelTangent : MODEL_TANGENT;      
  	float4 v_modelBitangent : MODEL_BITANGENT;  
- 	float4 v_modelNormal : MODEL_NORMAL;        
+ 	float4 v_modelNormal : MODEL_NORMAL;     
+
+	float4 v_lightSpacePos : LIGHT_SPACE;   
 };
 
 cbuffer LightConstants : register(b1)
@@ -80,6 +82,11 @@ cbuffer SpotLightBuffer : register(b5)
 	SpotLight c_spotLights[10];
 	uint c_activeSpotLightCount;
 	float3 c_padding_spot;
+};
+
+cbuffer ShadowConstants : register(b6)
+{
+    float4x4 LightViewProjection;     
 };
 
 // debug use
@@ -161,9 +168,12 @@ float3 GetCameraWorldPosition(float4x4 viewMatrix)
 Texture2D t_diffuseTexture : register(t0);
 Texture2D<float4> t_normalTexture : register(t1);
 Texture2D<float4> t_sgeTexture : register(t2);
+Texture2D t_shadowmapTexture: register(t3);
+TextureCube t_skyboxTexture : register(t4);
 //------------------------------------------------------------------------------------------------
 SamplerState s_samplerState : register(s0);
 SamplerState s_normalSampler : register(s1);
+SamplerComparisonState s_shadowSamplerState : register(s2);
 //------------------------------------------------------------------------------------------------
 
 VertexOutPixelIn VertexMain(VertexInput input)
@@ -178,6 +188,8 @@ VertexOutPixelIn VertexMain(VertexInput input)
  	float4 worldBitangent = mul(c_modelToWorldTransform, float4(input.a_modelBitangent, 0.0f)); 
  	float4 worldNormal = mul(c_modelToWorldTransform, float4(input.a_modelNormal, 0.0f));       
 
+	float4 lightSpacePos=mul(LightViewProjection,worldPosition);
+
 	VertexOutPixelIn v2p;
 	v2p.v_clipPosition = clipPosition;
 	v2p.v_color = input.a_color;
@@ -191,11 +203,48 @@ VertexOutPixelIn VertexMain(VertexInput input)
 	v2p.v_modelBitangent = float4(input.a_modelBitangent, 0.0f);  
 	v2p.v_modelNormal = float4(input.a_modelNormal, 0.0f);      
 
+	v2p.v_lightSpacePos=lightSpacePos;
+
 	return v2p;
 }
 //------------------------------------------------------------------------------------------------
 float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 {
+	//---------- shadow-------------------------------------------------
+    float2 shadowTexCoords;
+    shadowTexCoords.x = 0.5f + (input.v_lightSpacePos.x / input.v_lightSpacePos.w * 0.5f);
+    shadowTexCoords.y = 0.5f - (input.v_lightSpacePos.y / input.v_lightSpacePos.w * 0.5f);
+    float pixelDepth = input.v_lightSpacePos.z / input.v_lightSpacePos.w;
+
+    float shadowFactor = 1.0f;
+
+    if ((saturate(shadowTexCoords.x) == shadowTexCoords.x) &&
+    (saturate(shadowTexCoords.y) == shadowTexCoords.y) &&
+    (pixelDepth > 0.0f))
+    {
+        //calculate epsilon
+        float NdotL = max(dot(normalize(input.v_worldNormal.xyz), -normalize(c_sunDirection)), 0.0f);
+
+        float margin = acos(saturate(NdotL));
+        #ifdef LINEAR
+        float epsilon = 0.0005f / margin;
+        #else
+        float epsilon = 0.001f / margin;
+        #endif
+
+        epsilon = clamp(epsilon, 0.0f, 0.1f);
+        
+        //depth test
+        shadowFactor = float(t_shadowmapTexture.SampleCmpLevelZero(
+            s_shadowSamplerState,
+            shadowTexCoords,
+            pixelDepth + epsilon));
+        //if shadowFactor is 0.0---------in shadow
+        // shadowFactor is 1.0------------not in shadow
+
+    }
+	//-----------------------------------------------------------------------------    
+
 	// ambient
  	float ambient = c_ambientIntensity;
 
@@ -238,6 +287,15 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	float shininess =lerp(1.0, 32.0, gloss);
 	float specularTerm=pow(max(dot(pixelNormalWorldSpace,halfVector),0),shininess);
 	float3 specular=specularTerm*specularColor*c_sunIntensity;
+
+	// sky box reflection
+	float3 reflectionVector = reflect(-viewDir, normalize(pixelNormalWorldSpace));
+	float3 environmentColor = t_skyboxTexture.Sample(s_samplerState, reflectionVector).rgb;
+	float NdotV = max(dot(normalize(pixelNormalWorldSpace), viewDir), 0.0);
+	float fresnel = pow(1.0 - NdotV, 2.0);
+	float environmentReflectivity = specularColor * fresnel * gloss;
+	float3 environmentSpecular = environmentColor *environmentReflectivity*0.8f;
+	specular+=environmentSpecular;
 
 	//  emissive
 	float3 emissive = textureColor.rgb * emission; 
@@ -343,10 +401,10 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	float diffuseIntensityVertexNormal =c_sunIntensity * saturate(dot(surfaceNormalWorldSpace, -sunDir));
 	float4 totalLightingVertexNormal= float4((ambient + diffuseIntensityVertexNormal).xxx, 1);
 
-	float diffuseIntensityPixelNormal =c_sunIntensity * saturate(dot(normalize(pixelNormalWorldSpace.xyz), -sunDir));
+	float diffuseIntensityPixelNormal =c_sunIntensity * saturate(dot(normalize(pixelNormalWorldSpace.xyz), -sunDir))*shadowFactor;
 	float4 totalLightingPixelNormal=  float4((ambient + diffuseIntensityPixelNormal).xxx, 1);
 
-//+pointLighting         +spotLighting+pointLighting
+	//+pointLighting         +spotLighting+pointLighting
 	float4 finalColor = float4( diffuseColor.rgb * totalLightingPixelNormal.rgb+specular+emissive+spotLighting+pointLighting, diffuseColor.a ); 
 
 	if (c_debugInt == 1)

@@ -226,7 +226,7 @@ void Player::AddStartingSeedsToInventory()
 	InventoryItemDef* potatoSeedDef = InventoryItemDef::GetItemDefFromName("Potato_Seed");
 
 	if (strawberrySeedDef) {
-		bool success = m_inventory->AddItem(strawberrySeedDef, 10);
+		bool success = m_inventory->AddItem(strawberrySeedDef, 2);
 		if (!success) {
 			ERROR_AND_DIE("Failed to add strawberrySeedDef to inventory");
 		}
@@ -239,12 +239,12 @@ void Player::AddStartingSeedsToInventory()
 		}
 	}
 
-	if (potatoSeedDef) {
-		bool success = m_inventory->AddItem(potatoSeedDef, 30);
-		if (!success) {
-			ERROR_AND_DIE("Failed to add potatoSeedDef to inventory");
-		}
-	}
+// 	if (potatoSeedDef) {
+// 		bool success = m_inventory->AddItem(potatoSeedDef, 30);
+// 		if (!success) {
+// 			ERROR_AND_DIE("Failed to add potatoSeedDef to inventory");
+// 		}
+// 	}
 }
 
 void Player::Update(float deltaSeconds)

@@ -1,4 +1,4 @@
-#include "Game/Map.hpp"
+﻿#include "Game/Map.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Player.hpp"
 #include "GameCommon.hpp"
@@ -10,6 +10,10 @@
 #include "Game/TileTypesInGame.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Game/TileChunk.hpp"
+#include "Game/Inventory.hpp"
+#include "CropObject.hpp"
+#include "Game/InventoryItemDef.hpp"
+#include "CropDefinitions.hpp"
 
 extern Renderer* g_theRenderer;
 extern Window* g_theWindow;
@@ -36,12 +40,11 @@ void Map::Update(float deltaSeconds)
 	m_playerPrevPos = m_player->m_position;
 	m_player->Update(deltaSeconds);
 	CheckPlayerCollWithSolidTiles();
-	m_gameplayCam.SetOrthographicView(m_player->m_position - g_halfGameCamDimensions, m_player->m_position + g_halfGameCamDimensions, 0.f, 1000.f);
+	UpdateCamFollow();
 
 	IntVec2 m_playerFrontGridPos = GetTileCoordsFromPoint(m_player->m_position)+IntVec2(0,-1);
  	m_tileMap->UpdateTransparentObject(m_playerFrontGridPos);
  	m_tileMap->Update(deltaSeconds);
-
 
 	//m_chunkUpdateManager.UpdateVisibleChunks(deltaSeconds,camCenter,camSize);
 	UpdateVisibleChunk(deltaSeconds);
@@ -60,12 +63,24 @@ void Map::Render() const
 	g_theRenderer->EndCamera(m_gameplayCam);
 }
 
-void Map::UpdateCamFollow(float deltaSeconds)
+void Map::UpdateCamFollow()
 {
-	Vec2 aimCamCenter = m_player->m_position;
-	Vec2 cameraSmoothPos = Interpolate(m_playerPrevPos, aimCamCenter, 2.f * deltaSeconds);
+	Vec2 idealCamPos = m_player->m_position;
+	float minCamX = g_halfGameCamDimensions.x;  // left bound
+	float maxCamX = 110.f - g_halfGameCamDimensions.x;  // right bound
+	float minCamY = -63.f + g_halfGameCamDimensions.y;  // bot bound
+	float maxCamY = -g_halfGameCamDimensions.y;   // top bound
 
-	m_gameplayCam.SetOrthographicView(cameraSmoothPos - g_halfGameCamDimensions, cameraSmoothPos + g_halfGameCamDimensions, 0.f, 1000.f);
+	Vec2 clampedCamPos;
+	clampedCamPos.x = GetClamped(idealCamPos.x, minCamX, maxCamX);
+	clampedCamPos.y = GetClamped(idealCamPos.y, minCamY, maxCamY);
+
+	m_gameplayCam.SetOrthographicView(
+		clampedCamPos - g_halfGameCamDimensions,
+		clampedCamPos + g_halfGameCamDimensions,
+		0.f,
+		1000.f
+	);
 }
 
 void Map::UpdateVisibleChunk(float deltaSeconds)
@@ -182,12 +197,25 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 			&& it->second.m_obstacleType == ObstacleType::NONE
 			&& toolType == PlayerTools::SEEDS&&!it->second.m_isPlanted)
 		{
-			curInventoryBtn.UseInventoryItem(1);
-			curInventoryBtn.UpdateFromInventoryItem(curInventoryBtn.GetItem());
-			it->second.m_isPlanted = true;
-			// add a crop object
-			// 
-			// m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_FARMLAND, aimGridPos);
+			if (curInventoryBtn.GetItem()->m_quantity > 0)
+			{
+				// add a crop object
+				Strings cropSeedName = SplitStringOnDelimiter(curInventoryBtn.GetItem()->m_itemDef->m_name, '_');
+				std::string cropName = cropSeedName[0];
+				CropDefinitions* curCropDef = CropDefinitions::s_cropDefinitions[cropName];
+				CropObject* curCropObject = new CropObject(curCropDef, aimGridPos);
+				curChunk->m_cropObjects.push_back(curCropObject);
+				curChunk->m_gridPosToCropObject[tileKey] = curCropObject;
+
+				// Consume from inventory
+				m_player->m_inventory->RemoveItem(curInventoryBtn.GetItem()->m_itemDef, 1);
+
+				// Mark the chunk tile type to planted
+				it->second.m_isPlanted = true;
+
+				// Update Panel
+				m_game->UpdateToolBarFromInventory();
+			}
 		}
 	}
 }

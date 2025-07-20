@@ -102,7 +102,7 @@ struct ShadowConstants
 {
 	Mat44 LightViewProjection; 
 };
-static const int k_shadowConstantsSlot = 8;
+static const int k_shadowConstantsSlot = 6;
 
 struct PerFrameConstants
 {
@@ -992,11 +992,11 @@ TextureCube* Renderer::CreateCubeTextureFromFiles(const std::string filePaths[6]
 	return newCubeTex;
 }
 
-void Renderer::BindTextureCube(TextureCube* textureCube)
+void Renderer::BindTextureCube(TextureCube* textureCube, int slot)
 {
 	if (textureCube)
 	{
-		m_deviceContext->PSSetShaderResources(0, 1, &textureCube->m_shaderResourceView);
+		m_deviceContext->PSSetShaderResources(slot, 1, &textureCube->m_shaderResourceView);
 	}
 	else
 	{
@@ -1411,7 +1411,7 @@ void Renderer::BeginShadowMapRender(Mat44 const& lightViewProjection)
 {
 	// 首先解绑阴影贴图的着色器资源视图（从槽位1）
 	ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
-	m_deviceContext->PSSetShaderResources(1, 1, nullSRV);  // 注意是槽位1
+	m_deviceContext->PSSetShaderResources(m_shadowTexSlotIndex, 1, nullSRV);  // 注意是槽位1
 
 	// 暂时解绑所有渲染目标
 	ID3D11RenderTargetView* nullRTV[1] = { nullptr };
@@ -1508,7 +1508,7 @@ void Renderer::BindShadowTexture()
 {
 	if (m_shadowMapTexture)
 	{
-		m_deviceContext->PSSetShaderResources(1, 1, &m_shadowResourceView);
+		m_deviceContext->PSSetShaderResources(m_shadowTexSlotIndex, 1, &m_shadowResourceView);
 	}
 	else
 	{
@@ -1523,7 +1523,7 @@ void Renderer::BindShadowTexture()
 
 void Renderer::SetShadowSampleState()
 {
-	m_deviceContext->PSSetSamplers(1, 1, &m_comparisonSampler_point);
+	m_deviceContext->PSSetSamplers(m_shadowSamplerSlotIndex, 1, &m_comparisonSampler_point);
 }
 
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)

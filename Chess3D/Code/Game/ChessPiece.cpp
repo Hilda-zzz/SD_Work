@@ -10,6 +10,8 @@ extern Renderer* g_theRenderer;
 
 ChessPiece::ChessPiece(ChessMatch* match,Faction facion, PieceType type, IntVec2 const& gridPos):ChessObject(match)
 {
+	m_shadowShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/ShadowMap", VertexType::VERTEX_PCUTBN);
+
 	m_match = match;
 	m_texWhite = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/FunkyBricks_d.png");
 	m_texBlack = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures1/Cobblestone_Diffuse.png");
@@ -39,6 +41,8 @@ ChessPiece::ChessPiece(ChessMatch* match,Faction facion, PieceType type, IntVec2
 	{
 		m_orientaion = EulerAngles(-90.f, 0.f, 0.f);
 	}
+
+	AddVertsForAABB3D_WithTBN(m_cubeTestVerts,m_cubeTestIndices,Vec3(0.f,0.f,0.f),Vec3(1.f,1.f,1.f),Rgba8::RED,AABB2::ZERO_TO_ONE);
 }
 
 void ChessPiece::Update()
@@ -124,7 +128,6 @@ void ChessPiece::Renderer() const
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-	
 
 	if (m_faction == Faction::WHITE)
 	{
@@ -137,15 +140,17 @@ void ChessPiece::Renderer() const
 		g_theRenderer->DrawGameIndexedVertexBuffer(m_def->m_vertexBufferByPlyaer[1], m_def->m_indexBufferByPlyaer[1]);
 	}
 
- 	std::vector<Vertex_PCU> cylinderVerts;
- 	cylinderVerts.reserve(100);
- 	AddVertsForCylinder3D(cylinderVerts, m_collider.m_center - Vec3(0.f, 0.f, m_collider.m_halfHeight),
- 		m_collider.m_center + Vec3(0.f, 0.f, m_collider.m_halfHeight), m_collider.m_radius, Rgba8::BLUE);
- 	g_theRenderer->BindTexture(nullptr);
- 	g_theRenderer->SetModelConstants();
- 	g_theRenderer->BindShader(nullptr);
- 	g_theRenderer->SetRasterizerMode(RasterizerMode::WIREFRAME_CULL_BACK);
- 	g_theRenderer->DrawVertexArray(cylinderVerts);
+	//g_theRenderer->DrawVertexArray_WithTBN(m_cubeTestVerts,m_cubeTestIndices);
+
+  	std::vector<Vertex_PCU> cylinderVerts;
+  	cylinderVerts.reserve(100);
+  	AddVertsForCylinder3D(cylinderVerts, m_collider.m_center - Vec3(0.f, 0.f, m_collider.m_halfHeight),
+  		m_collider.m_center + Vec3(0.f, 0.f, m_collider.m_halfHeight), m_collider.m_radius, Rgba8::BLUE);
+  	g_theRenderer->BindTexture(nullptr);
+  	g_theRenderer->SetModelConstants();
+  	g_theRenderer->BindShader(nullptr);
+  	g_theRenderer->SetRasterizerMode(RasterizerMode::WIREFRAME_CULL_BACK);
+  	//g_theRenderer->DrawVertexArray(cylinderVerts);
 
 	if (m_isImpacted)
 	{
@@ -190,6 +195,25 @@ void ChessPiece::Renderer() const
 		g_theRenderer->DrawVertexArray(hoverSquareVerts);
 	}
 	
+}
+
+void ChessPiece::RenderShadowTexture() const
+{
+	Vec3 position = m_curPos;
+	Mat44 transMat = Mat44::MakeTranslation3D(position);
+	Mat44 rotateMat = m_orientaion.GetAsMatrix_IFwd_JLeft_KUp();
+	transMat.Append(rotateMat);
+
+	g_theRenderer->BindShader(m_shadowShader);
+	g_theRenderer->SetModelConstants(transMat,Rgba8::WHITE);
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
+	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
+
+	//g_theRenderer->DrawVertexArray_WithTBN(m_cubeTestVerts, m_cubeTestIndices);
+	g_theRenderer->DrawGameIndexedVertexBuffer(m_def->m_vertexBufferByPlyaer[0], m_def->m_indexBufferByPlyaer[0]);
 }
 
 IntVec2 ChessPiece::GetAimGridPos()

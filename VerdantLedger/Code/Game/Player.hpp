@@ -66,6 +66,7 @@ public:
 	// Tools
 	PlayerTools m_curTool = PlayerTools::NONE;
 	InventorySlotButton* m_curSelectedBtn = nullptr;
+	Inventory* m_inventory;
 
 private:
 	Game* m_game = nullptr;
@@ -120,6 +121,6 @@ private:
 
 	std::string m_previousAnimStateName = "";
 
-	Inventory* m_inventory;
+	
 
 };

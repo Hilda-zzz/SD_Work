@@ -121,9 +121,6 @@
     <Text Include="..\..\Run\Data\Shaders\DX11BlinnPhong.hlsl">
       <Filter>Shaders</Filter>
     </Text>
-    <Text Include="..\..\Run\Data\Shaders\ShadowMap.hlsl">
-      <Filter>Shaders</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Run\Data\Models\Meta\Woman.meta">
@@ -132,5 +129,13 @@
     <None Include="..\..\Run\Data\Models\Meta\TutorialBox.meta">
       <Filter>Definitions\ModelMeta</Filter>
     </None>
+    <None Include="..\..\Run\Data\Models\Meta\Cube_v.meta">
+      <Filter>Definitions\ModelMeta</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\Run\Data\Shaders\ShadowMap.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

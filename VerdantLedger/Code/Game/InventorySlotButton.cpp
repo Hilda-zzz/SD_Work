@@ -15,10 +15,17 @@ void InventorySlotButton::UpdateFromInventoryItem(InventoryItem* item)
 	if (item)
 	{
 		m_item = item;
+		if (!item->m_itemDef)
+		{
+			//m_iconTexture = nullptr;
+			m_text = "";
+			UpdateVertices();
+			return;
+		}
 		m_iconTexture = item->m_itemDef->m_iconTexture;
 		m_text = std::to_string(m_item->m_quantity);//
+		UpdateVertices();
 	}
-	UpdateVertices();
 }
 
 InventorySlotButton::InventorySlotButton(GameUISystem* uiSystem, const Vec2& position,
@@ -47,15 +54,18 @@ void InventorySlotButton::UpdateVertices()
 	AddVertsForAABB2D(m_bkgVerts, AABB2(bkgMins, bkgMaxs), Rgba8::WHITE);
 
 	m_iconVerts.clear();
-	if (m_item)
+	if (m_item&&m_item->m_itemDef)
 	{
 		AABB2 iconUV = m_item->m_itemDef->GetIconUV();
 		AddVertsForAABB2D(m_iconVerts, AABB2(bkgMins, bkgMaxs), Rgba8::WHITE, iconUV.m_mins, iconUV.m_maxs);
 	}
 
 	m_boarderVerts.clear();
-	AddVertsForAABB2D(m_boarderVerts, AABB2(bkgMins, bkgMaxs), Rgba8::WHITE);
-
+	if (m_item && m_item->m_itemDef)
+	{
+		AddVertsForAABB2D(m_boarderVerts, AABB2(bkgMins, bkgMaxs), Rgba8::WHITE);
+	}
+	
 	m_textVerts.clear();
 	Vec2 textMins = m_position + m_textBox.m_mins;
 	Vec2 textMaxs = m_position + m_textBox.m_maxs;
