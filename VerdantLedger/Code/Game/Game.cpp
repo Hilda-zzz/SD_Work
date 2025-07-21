@@ -50,7 +50,7 @@ Game::Game()
 	
 	InitializeStatusPanel();
 
-	// g_theEventSystem->SubscribeEventCallbackFuction("UpdateInventoryPanels", UpdateToolBarFromInventory);
+	g_theEventSystem->SubscribeEventCallbackFuction("UpdateInventoryPanels", UpdateToolBarFromInventoryEvent);
 	// g_theEventSystem->SubscribeEventCallbackFuction("UpdateInventoryPanels");
 	//--------------------------------------------------------------
 	m_player = new Player(this);
@@ -76,6 +76,8 @@ Game::~Game()
 	CropDefinitions::ShutdownCropDefinitions();
 	ObstacleDefinition::ShutdownObstacleDefinition();
 	InventoryItemDef::ShutdownInventoryItemDefinition();
+
+	g_theEventSystem->UnsubscribeEventCallbackFunction("UpdateInventoryPanels", UpdateToolBarFromInventoryEvent);
 }
 
 void Game::Update()
@@ -331,6 +333,24 @@ void Game::SelectToolBarSlot(int slotIndex)
 			m_player->m_curTool = PlayerTools::NONE;
 		}
 	}
+}
+
+bool Game::UpdateToolBarFromInventoryEvent(EventArgs& args)
+{
+	if (g_theGame->m_player && g_theGame->m_player->GetInventory()) {
+		for (int i = 0; i < 9; i++)
+		{
+			if (i < (int)g_theGame->m_player->GetInventory()->m_items.size())
+			{
+				g_theGame->m_toolBarSlots[i].UpdateFromInventoryItem(&g_theGame->m_player->GetInventory()->m_items[i]);
+			}
+			else
+			{
+				g_theGame->m_toolBarSlots[i].UpdateFromInventoryItem(nullptr);
+			}
+		}
+	}
+	return false;
 }
 
 // bool Game::UpdateToolBarFromInventory(EventArgs& args)

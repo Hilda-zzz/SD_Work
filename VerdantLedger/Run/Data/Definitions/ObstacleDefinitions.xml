@@ -40,7 +40,7 @@
 		</SpriteVariants>
 	</ObstacleDefinition>
 
-	<ObstacleDefinition	type="TREE" maxDurability="4" isObject="true">
+	<ObstacleDefinition	type="TREE" maxDurability="3" isObject="true">
 		<SpriteVariants spriteLayout="10,7">
 			<SpriteGridPos gridPos="4,0"/>
 			<SpriteGridPos gridPos="5,0"/>

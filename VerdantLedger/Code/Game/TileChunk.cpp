@@ -258,6 +258,32 @@ IntVec2 TileChunk::GetGridPos(int tileIndex) const
 	return IntVec2(relativeX, relativeY);
 }
 
+bool TileChunk::RemoveTheGroundObstacle(GroundObstacle* curObstacle)
+{
+	if (!curObstacle) 
+	{
+		return false;
+	}
+
+	bool removed = false;
+
+	auto animIt = std::find(m_obstacleWithAnimation.begin(), m_obstacleWithAnimation.end(), curObstacle);
+	if (animIt != m_obstacleWithAnimation.end()) {
+		m_obstacleWithAnimation.erase(animIt);
+		removed = true;
+	}
+
+	for (auto it = m_gridPosToGroundObstacle.begin(); it != m_gridPosToGroundObstacle.end(); ++it) {
+		if (it->second == curObstacle) {
+			m_gridPosToGroundObstacle.erase(it);
+			removed = true;
+			break;
+		}
+	}
+
+	return removed;
+}
+
 uint8_t TileChunk::GetPlowedNeighborMask(IntVec2 const& tileGridPos)
 {
 	uint8_t mask = 0;

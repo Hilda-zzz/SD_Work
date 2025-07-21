@@ -28,6 +28,7 @@ public:
 	}
 
 	bool IsDestroyed() const { return m_durability <= 0; }
+	void SetDurability(int durability) { m_durability = durability; }
 
 private:
 	ObstacleDefinition* m_obstacleDef = nullptr;

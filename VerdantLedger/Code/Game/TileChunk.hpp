@@ -46,6 +46,8 @@ public:
 	template<typename Func>
 	void ForEachTileInChunk(Func callback);
 
+	bool RemoveTheGroundObstacle(GroundObstacle* curObstacle);
+
 private:
 	uint8_t GetPlowedNeighborMask(IntVec2 const& tileGridPos);
 	uint8_t GetWateredNeighborMask(IntVec2 const& tileGridPos);

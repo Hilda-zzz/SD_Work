@@ -22,7 +22,7 @@ bool Inventory::AddItem(InventoryItemDef const* itemDef, int count)
 
 	bool success = false;
 
-	for (InventoryItem item : m_items)
+	for (InventoryItem& item : m_items)
 	{
 		if (item.m_itemDef == itemDef)
 		{

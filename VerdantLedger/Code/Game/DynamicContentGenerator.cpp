@@ -135,6 +135,7 @@ void DynamicContentGenerator::GenerateSpecificObstacle(TileChunk* curChunk, IntV
 		if (curDef->m_isObject)
 		{
 			GroundObstacle* groundObstacle = new GroundObstacle(obstacleType,curDef, gridPos,spriteIndex);
+			groundObstacle->SetDurability(curDef->m_maxDurability);
 			curChunk->m_obstacleWithAnimation.push_back(groundObstacle);
 			curChunk->m_gridPosToGroundObstacle[tilePosKey] = groundObstacle;
 		}

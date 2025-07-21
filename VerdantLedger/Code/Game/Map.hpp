@@ -37,6 +37,7 @@ private:
 
 	void TileMapRender() const;
 
+	std::string GetObstacleName(ObstacleType type);
 public:
 	Camera  m_gameplayCam;
 private:

@@ -45,7 +45,7 @@ private:
 	
 	void SelectToolBarSlot(int slotIndex);
 
-	// static bool UpdateToolBarFromInventory(EventArgs& args);
+	static bool UpdateToolBarFromInventoryEvent(EventArgs& args);
 
 	void InitializeStatusPanel();
 

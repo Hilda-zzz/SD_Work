@@ -14,6 +14,7 @@
 #include "CropObject.hpp"
 #include "Game/InventoryItemDef.hpp"
 #include "CropDefinitions.hpp"
+#include "GroundObstacle.hpp"
 
 extern Renderer* g_theRenderer;
 extern Window* g_theWindow;
@@ -165,19 +166,47 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 	if (it != curChunk->m_keyToDynamicTileData.end())
 	{
 		if ((it->second.m_obstacleType == ObstacleType::ROCK&& toolType==PlayerTools::PICKAXE)||
-			(it->second.m_obstacleType == ObstacleType::WEED&& toolType == PlayerTools::SICKLE))
+			(it->second.m_obstacleType == ObstacleType::WEED&& 
+				(toolType == PlayerTools::SICKLE||toolType == PlayerTools::SHOVEL || toolType == PlayerTools::HOE)))
 		{
 			it->second.m_curObstacleDurability--;
 			if (it->second.m_curObstacleDurability <= 0)
 			{
+				// add item to inventory
+				std::string itemName = GetObstacleName(it->second.m_obstacleType);
+				if (!itemName.empty())
+				{
+					InventoryItemDef* curItemDef = InventoryItemDef::s_itemDefinitions[itemName];
+					m_player->GetInventory()->AddItem(curItemDef, 3);
+					g_theEventSystem->FireEvent("UpdateInventoryPanels");
+				}
+
 				it->second.m_obstacleType = ObstacleType::NONE;
 				m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_STATIC_OBS, aimGridPos);
 			}
 		}
 
+		if (it->second.m_obstacleType == ObstacleType::TREE && toolType == PlayerTools::AXE)
+		{
+			GroundObstacle* curTree = curChunk->m_gridPosToGroundObstacle[tileKey];
+			curTree->TakeDamage(1);
+			if (curTree->GetHealth() <= 0)
+			{
+				// add item
+				std::string itemName = GetObstacleName(it->second.m_obstacleType);
+				InventoryItemDef* curItemDef = InventoryItemDef::s_itemDefinitions[itemName];
+				m_player->GetInventory()->AddItem(curItemDef, 3);
+				g_theEventSystem->FireEvent("UpdateInventoryPanels");
+				// clear chunk data
+				it->second.m_obstacleType = ObstacleType::NONE;
+				// delete object
+				curChunk->RemoveTheGroundObstacle(curTree);
+			}
+		}
+
 		if (it->second.m_farmState == FarmState::UNPLOWED
 			&& it->second.m_obstacleType == ObstacleType::NONE
-			&& toolType == PlayerTools::SHOVEL)
+			&& (toolType == PlayerTools::SHOVEL|| toolType == PlayerTools::HOE))
 		{
 			it->second.m_farmState = FarmState::PLOWED;
 			m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_FARMLAND, aimGridPos);
@@ -248,4 +277,18 @@ void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhy
 
 void Map::TileMapRender() const
 {
+}
+
+std::string Map::GetObstacleName(ObstacleType type)
+{
+	switch (type)
+	{
+	case ObstacleType::ROCK:
+		return "Stone";
+	case ObstacleType::TREE:
+		return "Wood";
+	case ObstacleType::WEED:
+		return "Weed";
+	}
+	return "";
 }
