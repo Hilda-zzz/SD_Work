@@ -16,9 +16,12 @@ public:
 	void Update(float deltaSeconds);
 	void Render() const;
 
+	void BeWatering() { m_hasWater = true; }
 	IntVec2 GetGridPos() const { return m_gridPos; }
 
 	void SettleDailyState();
+	bool CanHarvest() { return m_canHarvest; }
+	CropDefinitions* GetCropDef() { return m_cropDef; }
 
 private:
 	CropDefinitions* m_cropDef = nullptr;

@@ -4,8 +4,11 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "GroundObstacle.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Game.hpp"
+#include "Map.hpp"
 
 extern Renderer* g_theRenderer;
+extern Game* g_theGame;
 
 TileMap::TileMap(XmlElement* rootElement)
 {
@@ -131,7 +134,14 @@ void TileMap::Render(std::vector<IntVec2> const& visibleChunkList) const
 		}
         else
         {
-            curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/OutsideAtlas.png");
+            if (g_theGame->m_curMap->m_isInside)
+            {
+                curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/Interior - Tiny Asset Pack/InnerHouse.png");
+            }
+            else
+            {
+                curTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/FarmTinyAssetPack/Tileset/OutsideAtlas.png");
+            }
         }
         //for (int j = 0; j < (int)m_layers[i]->m_chunks.size(); j++)
         for (int j = 0; j < (int)visibleChunkList.size(); j++)
@@ -239,5 +249,13 @@ void TileMap::UpdateTransparentObject(IntVec2 const& aimGridPos)
     else
     {
         m_lastTransparentTreePos = IntVec2(-999, -999);
+    }
+}
+
+void TileMap::UpdateStateForNewDayInTileMap()
+{
+    for (TileChunk& chunk : m_markLayer->m_chunks)
+    {
+        chunk.UpdateStateForNewDayInChunk();
     }
 }

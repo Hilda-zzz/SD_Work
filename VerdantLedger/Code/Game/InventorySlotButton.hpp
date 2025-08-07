@@ -26,6 +26,8 @@ public:
 
 	void UseInventoryItem(int count);
 
+	void SetIconTexture(Texture* iconTex);
+
 private:
 	InventoryItem* m_item;
 	int m_slotIndex = 0;

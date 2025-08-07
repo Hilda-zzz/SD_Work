@@ -20,6 +20,9 @@
 #include "InventoryItemDef.hpp"
 #include "Game/Inventory.hpp"
 #include "CropDefinitions.hpp"
+#include "DayTimeSystem.hpp"
+#include "Game/TileMap.hpp"
+
 
 
 extern GameUISystem* g_gameUISystem;
@@ -35,6 +38,7 @@ Vec2 const g_halfGameCamDimensions{ 10.f, 5.f };
 Game::Game()
 {
 	m_gameClock = new Clock();
+	m_dayTimeSystem = new DayTimeSystem(5.f);
 	ObstacleDefinition::InitializeObstacleDefinitionFromFile();
 	InventoryItemDef::InitializeInventoryItemDefinitionFromFile();
 	CropDefinitions::InitializeCropDefinitionsFromFile();
@@ -50,16 +54,47 @@ Game::Game()
 	
 	InitializeStatusPanel();
 
+	InitializeSeedShopPanel();
+
+	InitializeSidePanel();
+
 	g_theEventSystem->SubscribeEventCallbackFuction("UpdateInventoryPanels", UpdateToolBarFromInventoryEvent);
+	g_theEventSystem->SubscribeEventCallbackFuction("StartNewDay", StartNewDayEvent);
+	g_theEventSystem->SubscribeEventCallbackFuction("UpdateCoinUI", UpdateCoinEvent);
 	// g_theEventSystem->SubscribeEventCallbackFuction("UpdateInventoryPanels");
+	AddVertsForAABB2D(m_instructionVerts, AABB2(Vec2(500.f,100.f), Vec2(1100.f,700.f)), Rgba8::WHITE);
+
 	//--------------------------------------------------------------
 	m_player = new Player(this);
 	UpdateToolBarFromInventory();
-	m_curMap = new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/MyFarmMap.tmx"], m_player);
+	//m_curMap = new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/MyFarmMap.tmx"], m_player);
+	m_innerMap= new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/InnerHouse.tmx"], m_player);
+	m_outsideMap= new Map(this, g_tileManager->m_loadedMaps["Data/Tiled/MyFarmMap.tmx"], m_player);
+	m_curMap = m_innerMap;
+
+	m_innerMap->m_transMapTriggerBox = AABB2(Vec2(17.f,-18.f), Vec2(21.f,-16.f));
+	m_outsideMap->m_transMapTriggerBox = AABB2(Vec2(95.f,-8.f), Vec2(99.f,-6.f));
+	m_innerMap->m_playerStartPos = Vec2(18.f, -15.f);
+	m_outsideMap->m_playerStartPos = Vec2(96.f, -8.f);
+	m_innerMap->m_transToMap = m_outsideMap;
+	m_outsideMap->m_transToMap = m_innerMap;
+	m_innerMap->m_isInside = true;
 
 	g_theDevConsole->AddLine(DevConsole::HELPLIST, "WASD: Move around\n\
 Tools: 0-None, 1-Axe, 2-Hoe, 3-Pickaxe, 4-Shovel, 5-Sickle, 6-Water\n\
 Left Mouse Button: Use selected tool");
+
+	// Sound
+	m_bgm = g_theAudio->CreateOrGetSound("Data/Audio/BGM.mp3");
+	m_coinSound = g_theAudio->CreateOrGetSound("Data/Audio/Coin.wav");
+	m_doorSound = g_theAudio->CreateOrGetSound("Data/Audio/Door.wav");
+	m_plowSound = g_theAudio->CreateOrGetSound("Data/Audio/Plow.wav");
+	m_rockSound = g_theAudio->CreateOrGetSound("Data/Audio/Rock.wav");
+	m_waterSound = g_theAudio->CreateOrGetSound("Data/Audio/Water.wav");
+	m_weedSound = g_theAudio->CreateOrGetSound("Data/Audio/Weed.wav");
+	m_woodSound = g_theAudio->CreateOrGetSound("Data/Audio/Wood.wav");
+
+	g_theAudio->StartSound(m_bgm, true);
 }
 
 Game::~Game()
@@ -67,10 +102,18 @@ Game::~Game()
 	delete m_gameClock;
 	m_gameClock = nullptr;
 
+	delete m_dayTimeSystem;
+	m_dayTimeSystem = nullptr;
+
 	TileMapManager::DestroyInstance();
 	g_tileManager = nullptr;
 
-	delete m_curMap;
+	delete m_innerMap;
+	m_innerMap = nullptr;
+
+	delete m_outsideMap;
+	m_outsideMap = nullptr;
+
 	m_curMap = nullptr;
 
 	CropDefinitions::ShutdownCropDefinitions();
@@ -78,6 +121,14 @@ Game::~Game()
 	InventoryItemDef::ShutdownInventoryItemDefinition();
 
 	g_theEventSystem->UnsubscribeEventCallbackFunction("UpdateInventoryPanels", UpdateToolBarFromInventoryEvent);
+	g_theEventSystem->UnsubscribeEventCallbackFunction("StartNewDay", StartNewDayEvent);
+	g_theEventSystem->UnsubscribeEventCallbackFunction("UpdateCoinUI", UpdateCoinEvent);
+
+	for (InventoryItem* item : m_seedShopItems)
+	{
+		delete item;
+		item = nullptr;
+	}
 }
 
 void Game::Update()
@@ -90,6 +141,10 @@ void Game::Update()
 	if (framerate < 200)
 		m_dropTimes += 1;
 
+	// Day time and status panel time rendering
+	m_dayTimeSystem->Update(deltaSeconds);
+	m_timeText.ChangeText(m_dayTimeSystem->GetFormattedTime());
+	m_daysText.ChangeText(m_dayTimeSystem->GetFormatDay());
 	UpdateCamera(deltaSeconds);
 
 	g_gameUISystem->Update(deltaSeconds);
@@ -195,22 +250,22 @@ void Game::InitializeMenuPanel()
 	m_btnMenuStartNew = Button(g_gameUISystem,btnNormalPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
 		bkgExtent, textExtent, "New", textHeight, gameFont, "StartNew");
 
-	Vec2 btnGoldPos = Vec2(leftMargin + btnWidth / 2.0f, startY - buttonSpacing);
-	m_btnMenuLoad = Button(g_gameUISystem, btnGoldPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
-		bkgExtent, textExtent, "Load", textHeight, gameFont, "Load");
+// 	Vec2 btnGoldPos = Vec2(leftMargin + btnWidth / 2.0f, startY - buttonSpacing);
+// 	m_btnMenuLoad = Button(g_gameUISystem, btnGoldPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
+// 		bkgExtent, textExtent, "Load", textHeight, gameFont, "Load");
 
-	Vec2 btnTutorialPos = Vec2(leftMargin + btnWidth / 2.0f, startY - 2 * buttonSpacing);
+	Vec2 btnTutorialPos = Vec2(leftMargin + btnWidth / 2.0f, startY - buttonSpacing);
 	m_btnMenuExit = Button(g_gameUISystem, btnTutorialPos, menuBtnTexture1, menuBtnTexture2, menuBtnTexture3,
 		bkgExtent, textExtent, "Exit", textHeight, gameFont, "Exit");
 
 	//call back
 	g_theEventSystem->SubscribeEventCallbackFuction("StartNew", BtnEvent_StartNew, true);
-	g_theEventSystem->SubscribeEventCallbackFuction("Load", BtnEvent_Load, true);
+	//g_theEventSystem->SubscribeEventCallbackFuction("Load", BtnEvent_Load, true);
 	g_theEventSystem->SubscribeEventCallbackFuction("Exit", BtnEvent_Exit, true);
 
 	m_menuPanel.AddChild(&m_btnMenuStartNew);
-	m_menuPanel.AddChild(&m_btnMenuLoad);
-	m_menuPanel.AddChild(&m_btnMenuExit);
+ 	//m_menuPanel.AddChild(&m_btnMenuLoad);
+ 	m_menuPanel.AddChild(&m_btnMenuExit);
 }
 
 void Game::InitializeToolBarPanel()
@@ -295,6 +350,12 @@ void Game::InitializeToolBarPanel()
  	}
  }
 
+ void Game::TransMap(Map* toMap, Vec2 const& playerPos)
+ {
+	 m_curMap = toMap;
+	 m_player->m_position = playerPos;
+ }
+
 void Game::SelectToolBarSlot(int slotIndex)
 {
 	if (slotIndex < 0 || slotIndex >= 9)
@@ -337,6 +398,7 @@ void Game::SelectToolBarSlot(int slotIndex)
 
 bool Game::UpdateToolBarFromInventoryEvent(EventArgs& args)
 {
+	UNUSED(args);
 	if (g_theGame->m_player && g_theGame->m_player->GetInventory()) {
 		for (int i = 0; i < 9; i++)
 		{
@@ -425,8 +487,251 @@ void Game::InitializeStatusPanel()
 	Vec2 coinTextPos = Vec2(textStartX, startY - 3.f * textSpacing+5.f) + statusPanelPos;
 	AABB2 coinTextBounds = AABB2(coinTextPos.x - textWidth / 2, coinTextPos.y - textHeight / 2,
 		coinTextPos.x + textWidth / 2, coinTextPos.y + textHeight / 2);
-	m_coinText = UIText("CoinText", "Coins: 1000", gameFont, coinTextBounds, textHeight,Rgba8::BLACK);
+	m_coinText = UIText("CoinText", "0", gameFont, coinTextBounds, textHeight,Rgba8::BLACK);
 	m_statusPanel.AddChild(&m_coinText);
+}
+
+void Game::InitializeSeedShopPanel()
+{
+	Texture* shopBkg = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Inventory/SeedShop.png");
+	float windowWidth = 1600.0f;
+	float windowHeight = 800.0f;
+
+	float shopWidth = 600.0f;
+	float shopHeight = 400.0f;
+	float shopX = windowWidth / 2.0f;
+	float shopY = windowHeight / 2.0f;
+
+	Vec2 shopPos = Vec2(shopX, shopY);
+	AABB2 shopExtent = AABB2(-shopWidth / 2.0f, -shopHeight / 2.0f,
+		shopWidth / 2.0f, shopHeight / 2.0f);
+
+	m_seedShopPanel =Panel(shopPos, shopBkg, shopExtent);
+	m_seedShopPanel.SetIsrenderSelf(true);
+	m_seedShopPanel.SetActive(m_isSeedShopOpen);
+
+	g_theEventSystem->SubscribeEventCallbackFuction("SeedShopSlotClicked", BtnEvent_SeedShopSlotClicked, this);
+	g_theEventSystem->SubscribeEventCallbackFuction("SeedShopBuyClicked", BtnEvent_SeedShopBuyClicked, this);
+
+	InitializeSeedShopSlots(shopPos);
+	InitializeSeedShopBuyButton(shopPos);
+
+	// 初始化商店库存
+	InitializeSeedShopInventory();
+	UpdateSeedShopDisplay();
+}
+
+void Game::InitializeSeedShopSlots(Vec2 const& panelPos)
+{
+	// 物品槽纹理
+	Texture* slotNormalTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Inventory/InventorySlotBtn1.png");
+	Texture* slotSelectedTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Inventory/InventorySlotBtn2.png");
+	Texture* slotBorderTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Inventory/InventorySlotBtn3.png");
+
+	BitmapFont* gameFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+
+	float slotSize = 60.0f;
+	float slotSpacing = 80.0f;
+	float rowSpacing = 90.0f;
+	AABB2 slotExtent = AABB2(-slotSize / 2.0f, -slotSize / 2.0f,
+		slotSize / 2.0f, slotSize / 2.0f);
+	AABB2 textExtent = AABB2(Vec2(-25.f, -25.f), Vec2(25.f, -10.f)); // 价格显示在下方
+
+	// 计算起始位置，使网格居中（相对于面板中心）
+	float totalWidth = (SEED_SHOP_COLS - 1) * slotSpacing;
+	float totalHeight = (SEED_SHOP_ROWS - 1) * rowSpacing;
+	float startX = -totalWidth / 2.0f+panelPos.x;
+	float startY = totalHeight / 2.0f + 30.0f + panelPos.y; // 稍微偏上，给购买按钮留空间
+
+	// 创建商品槽网格
+	for (int row = 0; row < SEED_SHOP_ROWS; row++)
+	{
+		for (int col = 0; col < SEED_SHOP_COLS; col++)
+		{
+			int index = row * SEED_SHOP_COLS + col;
+			Vec2 slotPos = Vec2(startX + col * slotSpacing,
+				startY - row * rowSpacing);
+
+			m_seedShopSlots[index] = InventorySlotButton(
+				g_gameUISystem,
+				slotPos,  // 相对于面板的位置
+				slotNormalTexture,
+				slotSelectedTexture,
+				slotSelectedTexture,
+				nullptr,  // 图标稍后设置
+				slotBorderTexture,
+				slotExtent,
+				textExtent,
+				"",       // 价格文本稍后设置
+				12.0f,
+				gameFont,
+				"SeedShopSlotClicked"
+			);
+
+			m_seedShopSlots[index].SetHoverSound((size_t)-1);
+			m_seedShopSlots[index].SetSlotIndex(index);
+			//m_seedShopSlots[index]->SetTextColor(Rgba8(255, 215, 0)); // 金色价格文字
+			m_seedShopPanel.AddChild(&m_seedShopSlots[index]);
+		}
+	}
+}
+
+void Game::InitializeSeedShopInventory()
+{
+	m_seedShopItemsDef[0] = InventoryItemDef::GetItemDefFromName("Strawberry_Seed");
+	m_seedShopItemsDef[1] = InventoryItemDef::GetItemDefFromName("GreenOnion_Seed");
+	m_seedShopItemsDef[2] = InventoryItemDef::GetItemDefFromName("Potato_Seed");
+	m_seedShopItemsDef[3] = InventoryItemDef::GetItemDefFromName("Onion_Seed");
+	m_seedShopItemsDef[4] = InventoryItemDef::GetItemDefFromName("Carrot_Seed");
+
+	m_seedShopItemsDef[5] = InventoryItemDef::GetItemDefFromName("Blueberry_Seed");
+	m_seedShopItemsDef[6] = InventoryItemDef::GetItemDefFromName("WhiteCarrot_Seed");
+	m_seedShopItemsDef[7] = InventoryItemDef::GetItemDefFromName("Lettuce_Seed");
+	m_seedShopItemsDef[8] = InventoryItemDef::GetItemDefFromName("WhiteBroccoli_Seed");
+	m_seedShopItemsDef[9] = InventoryItemDef::GetItemDefFromName("Grain_Seed");
+
+	for (int i = 0; i < SEED_SHOP_SLOTS; i++)
+	{
+		if (m_seedShopItemsDef[i] != nullptr)
+		{
+			m_seedShopItems[i] = new InventoryItem(m_seedShopItemsDef[i], 999);
+		}
+		else
+		{
+			m_seedShopItems[i] = nullptr;
+		}
+	}
+}
+
+void Game::InitializeSeedShopBuyButton(Vec2 const& panelPos)
+{
+	Texture* btnNormalTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/BuyButton1.png");
+	Texture* btnHoverTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/BuyButton2.png");
+	Texture* btnClickTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/BuyButton3.png");
+
+	BitmapFont* gameFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+
+	// 按钮位置和尺寸（相对于面板中心）
+	Vec2 buyBtnPos = Vec2(0.0f, -110.0f)+ panelPos; // 在商店底部
+	AABB2 buyBtnExtent = AABB2(-80.0f, -30.0f, 80.0f, 30.0f);
+	AABB2 buyBtnTextExtent = AABB2(-60.0f, -20.0f, 60.0f, 20.0f);
+
+	m_seedShopBuyButton =Button(
+		g_gameUISystem,
+		buyBtnPos,  // 相对于面板的位置
+		btnNormalTex,
+		btnHoverTex,
+		btnClickTex,
+		buyBtnExtent,
+		buyBtnTextExtent,
+		"Buy",
+		24.0f,
+		gameFont,
+		"SeedShopBuyClicked"
+	);
+
+	//m_seedShopBuyButton->SetTextColor(Rgba8::WHITE);
+	//m_seedShopBuyButton->SetIsActive(false); // 初始禁用，选中物品后启用
+	m_seedShopPanel.AddChild(&m_seedShopBuyButton);
+}
+
+void Game::UpdateSeedShopDisplay()
+{
+	for (int i = 0; i < SEED_SHOP_SLOTS; i++)
+	{
+		if (m_seedShopItemsDef[i] != nullptr)
+		{
+			//m_seedShopSlots[i]->SetIconTexture(m_seedShopItemsDef[i]->m_iconTexture);
+			m_seedShopSlots[i].UpdateFromInventoryItem(m_seedShopItems[i]);
+
+			std::string priceText = "    $" + std::to_string(m_seedShopItemsDef[i]->m_coinValue);
+			m_seedShopSlots[i].SetText(priceText);
+		}
+	}
+}
+
+void Game::SelectSeedShopSlot(int slotIndex)
+{
+	if (slotIndex < 0 || slotIndex > SEED_SHOP_SLOTS)
+	{
+		return;
+	}
+
+	for (int i = 0; i < SEED_SHOP_SLOTS; i++)
+	{
+		InventorySlotButton& btn = m_seedShopSlots[i];
+		btn.SetSelectedState(false);
+	}
+
+	m_seedShopSlots[slotIndex].SetSelectedState(true);
+	m_selectedSeedShopSlot = slotIndex;
+	// m_player->m_curSelectedBtn = &m_toolBarSlots[slotIndex];
+}
+
+void Game::InitializeSidePanel()
+{
+	Texture* sidePanelBkg = nullptr; 
+	float screenWidth = 1600.f;
+	float panelWidth = 200.f;
+	float panelHeight = 300.f;
+	Vec2 sidePanelPos = Vec2(screenWidth - panelWidth / 2.f - 20.f, 400.f); 
+	AABB2 sidePanelExtent = AABB2(-panelWidth / 2.f, -panelHeight / 2.f, panelWidth / 2.f, panelHeight / 2.f);
+
+	m_sidePanel = Panel(sidePanelPos, sidePanelBkg, sidePanelExtent);
+
+	Texture* sideBtnTexture1 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/SeedShopIcon1.png");
+	Texture* sideBtnTexture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/SeedShopIcon2.png");
+	Texture* sideBtnTexture3 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/SeedShopIcon3.png");
+
+	Texture* sideBtnTexture4 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/TutorialBtn1.png");
+	Texture* sideBtnTexture5 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/TutorialBtn2.png");
+	Texture* sideBtnTexture6 = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/TutorialBtn3.png");
+
+
+	// 按钮尺寸和布局参数
+	float btnWidth = 60.0f;
+	float btnHeight = 60.0f;
+	float buttonSpacing = 80.0f;
+	float startY = 50.0f; // 相对于panel中心的起始Y位置
+
+	AABB2 bkgExtent = AABB2(-btnWidth / 2.0f, -btnHeight / 2.0f, btnWidth / 2.0f, btnHeight / 2.0f);
+	AABB2 textExtent = AABB2(-btnWidth / 2.0f + 8.0f, -btnHeight / 2.0f + 8.0f,
+		btnWidth / 2.0f - 8.0f, btnHeight / 2.0f - 8.0f);
+
+	BitmapFont* gameFont = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+	float textHeight = 24.0f;
+
+
+	Vec2 btnSeedShopPos = Vec2(60.0f, startY)+ sidePanelPos; 
+	m_btnSeedShop = Button(g_gameUISystem, btnSeedShopPos, sideBtnTexture1, sideBtnTexture2, sideBtnTexture3,
+		bkgExtent, textExtent, "", textHeight, gameFont, "ToggleSeedShop");
+
+
+	Vec2 btnTutorialPos = Vec2(60.0f, startY - buttonSpacing) + sidePanelPos;
+	m_btnTutorial = Button(g_gameUISystem, btnTutorialPos, sideBtnTexture4, sideBtnTexture5, sideBtnTexture6,
+		bkgExtent, textExtent, "", textHeight, gameFont, "ToggleTutorial");
+
+
+	g_theEventSystem->SubscribeEventCallbackFuction("ToggleSeedShop", BtnEvent_ToggleSeedShop, true);
+ 	g_theEventSystem->SubscribeEventCallbackFuction("ToggleTutorial", BtnEvent_ToggleTutorial, true);
+
+
+	m_sidePanel.AddChild(&m_btnSeedShop);
+	m_sidePanel.AddChild(&m_btnTutorial);
+}
+
+
+
+void Game::InitializeInventoryPanel()
+{
+}
+
+void Game::InitializeInventoryLeftPanel()
+{
+}
+
+void Game::InitializeInventoryRightPanel()
+{
 }
 
 void Game::UpdateAttractMode(float deltaTime)
@@ -557,9 +862,9 @@ void Game::RenderGameplayMode() const
 		curTool += "Unknown";
 		break;
 	}
-	curTool += " || Use 0-6 to switch tools || Use mouse left btn to use the tool (Pickaxe--Rock || Sickle--Weed)";
-	font->AddVertsForTextInBox2D(title, curTool,
-		AABB2(Vec2(10.f, 745.f), Vec2(1000.f, 765.f)), 15.f, Rgba8::BLACK, 0.7f, Vec2(0.f, 0.f));
+// 	curTool += " || Use 0-6 to switch tools || Use mouse left btn to use the tool (Pickaxe--Rock || Sickle--Weed)";
+// 	font->AddVertsForTextInBox2D(title, curTool,
+// 		AABB2(Vec2(10.f, 745.f), Vec2(1000.f, 765.f)), 15.f, Rgba8::BLACK, 0.7f, Vec2(0.f, 0.f));
 
 	float framerate = 1.f / m_curDeltaTime;
 	DebuggerPrintf("Framerate: %.2f\n", framerate);
@@ -572,7 +877,7 @@ void Game::RenderGameplayMode() const
 	std::string statsMessage(buffer);
 
 	font->AddVertsForTextInBox2D(title, statsMessage,
-		AABB2(Vec2(10.f, 500.f), Vec2(600.f, 700.f)), 15.f, Rgba8::WHITE, 0.7f, Vec2(0.f, 1.f));
+		AABB2(Vec2(10.f, 745.f), Vec2(1000.f, 785.f)), 15.f, Rgba8::WHITE, 0.7f, Vec2(0.f, 1.f));
 
 	g_theRenderer->BindTexture(&font->GetTexture());
 	g_theRenderer->DrawVertexArray(title);
@@ -581,7 +886,13 @@ void Game::RenderGameplayMode() const
 
 void Game::RenderGameplayUI() const
 {
-
+	if (m_isOpenInstruction)
+	{
+		Texture* tex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/Instructions.png");
+		g_theRenderer->BindTexture(tex);
+		g_theRenderer->SetModelConstants();
+		g_theRenderer->DrawVertexArray(m_instructionVerts);
+	}
 }
 
 void Game::RenderDebugMode()const
@@ -639,6 +950,7 @@ void Game::ExitAttractMode()
 void Game::ExitGameplayMode()
 {
 	g_gameUISystem->PopAllPanel();
+	m_dayTimeSystem->PauseTime();
 }
 
 void Game::EnterAttractMode()
@@ -650,6 +962,10 @@ void Game::EnterGameplayMode()
 {
 	g_gameUISystem->PushPanel(&m_toolBarPanel);
 	g_gameUISystem->PushPanel(&m_statusPanel);
+	m_dayTimeSystem->StartTime();
+
+	g_gameUISystem->PushPanel(&m_seedShopPanel);
+	g_gameUISystem->PushPanel(&m_sidePanel);
 }
 
 bool Game::BtnEvent_StartNew(EventArgs& args)
@@ -684,6 +1000,69 @@ bool Game::BtnEvent_ToolBarSlotClicked(EventArgs& args)
 	}
 
 	return true;
+}
+
+bool Game::BtnEvent_SeedShopSlotClicked(EventArgs& args)
+{
+	std::string slotIndexStr = args.GetValue("slotIndex", "-1");
+	int slotIndex = std::stoi(slotIndexStr);
+	g_theGame->m_selectedInventorySlot = slotIndex;
+	if (slotIndex >= 0 && slotIndex < SEED_SHOP_SLOTS)
+	{
+		g_theGame->SelectSeedShopSlot(slotIndex);
+	}
+
+	return true;
+}
+
+bool Game::BtnEvent_SeedShopBuyClicked(EventArgs& args)
+{
+	UNUSED(args);
+	int slotIndex = g_theGame->m_selectedInventorySlot;
+	if (slotIndex >= 0 && slotIndex < SEED_SHOP_SLOTS)
+	{
+		// buy current select seed
+		InventoryItemDef const* itemDef = g_theGame->m_seedShopSlots[slotIndex].GetItem()->m_itemDef;
+		int costCoin = itemDef->m_coinValue;
+		if (g_theGame->m_player->IsAffordable(costCoin))
+		{
+			if (g_theGame->m_player->GetInventory()->AddItem(itemDef, 1))
+			{
+				g_theGame->UpdateToolBarFromInventory();
+				g_theGame->m_player->UseCoin(costCoin);
+			}
+		}
+	}
+	return true;
+}
+
+bool Game::BtnEvent_ToggleSeedShop(EventArgs& args)
+{
+	UNUSED(args);
+	g_theGame->m_isSeedShopOpen = !g_theGame->m_isSeedShopOpen;
+	g_theGame->m_seedShopPanel.SetActive(g_theGame->m_isSeedShopOpen);
+	return true;
+}
+
+bool Game::BtnEvent_ToggleTutorial(EventArgs& args)
+{
+	UNUSED(args);
+	g_theGame->m_isOpenInstruction = !g_theGame->m_isOpenInstruction;
+	return true;
+}
+
+bool Game::StartNewDayEvent(EventArgs& args)
+{
+	UNUSED(args);
+	g_theGame->m_curMap->GetCurTileMap()->UpdateStateForNewDayInTileMap();
+	return true;
+}
+
+bool Game::UpdateCoinEvent(EventArgs& args)
+{
+	std::string curTotalCoin = args.GetValue("coin", "-1");
+	g_theGame->m_coinText.ChangeText(curTotalCoin);
+	return false;
 }
 
 

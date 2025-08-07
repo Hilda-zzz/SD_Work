@@ -29,6 +29,7 @@
     <ClCompile Include="ChunkUpdateManager.cpp" />
     <ClCompile Include="CropDefinitions.cpp" />
     <ClCompile Include="CropObject.cpp" />
+    <ClCompile Include="DayTimeSystem.cpp" />
     <ClCompile Include="DynamicContentGenerator.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="ChunkUpdateManager.hpp" />
     <ClInclude Include="CropDefinitions.hpp" />
     <ClInclude Include="CropObject.hpp" />
+    <ClInclude Include="DayTimeSystem.hpp" />
     <ClInclude Include="DynamicContentGenerator.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Game.hpp" />
@@ -83,6 +85,8 @@
   <ItemGroup>
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx" />
     <None Include="..\..\Run\Data\Tiled\HouseMap.tmx" />
+    <None Include="..\..\Run\Data\Tiled\InnerHouse.tmx" />
+    <None Include="..\..\Run\Data\Tiled\InnerHouse.tsx" />
     <None Include="..\..\Run\Data\Tiled\Road.tsx" />
     <None Include="..\..\Run\Data\Tiled\TileMark.tsx" />
   </ItemGroup>

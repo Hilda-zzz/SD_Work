@@ -2,7 +2,7 @@
 <ObstacleDefinitions>
 	<ObstacleTexture path="Data/Art/FarmAssets/Obstacles.png"/>
 
-	<ObstacleDefinition	type="ROCK" maxDurability="4" isObject="false">
+	<ObstacleDefinition	type="ROCK" maxDurability="2" isObject="false">
 		<SpriteVariants spriteLayout="20,21">
 			<SpriteGridPos gridPos="0,0"/>
 			<SpriteGridPos gridPos="1,0"/>

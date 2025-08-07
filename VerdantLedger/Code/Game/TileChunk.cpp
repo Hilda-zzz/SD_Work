@@ -284,6 +284,25 @@ bool TileChunk::RemoveTheGroundObstacle(GroundObstacle* curObstacle)
 	return removed;
 }
 
+void TileChunk::UpdateStateForNewDayInChunk()
+{
+	// clear all water ground data
+	for (auto& [key, tileData] : m_keyToDynamicTileData) 
+	{
+		tileData.m_isWater = false;  
+	}
+	// clear water verts
+	m_wateredFarmlandVerts.clear();
+	// settle crop new day
+	for (auto* crop : m_cropObjects)
+	{
+		if (crop) 
+		{
+			crop->SettleDailyState();  
+		}
+	}
+}
+
 uint8_t TileChunk::GetPlowedNeighborMask(IntVec2 const& tileGridPos)
 {
 	uint8_t mask = 0;

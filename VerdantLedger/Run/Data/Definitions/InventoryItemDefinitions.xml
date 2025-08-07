@@ -112,7 +112,7 @@
 	</ItemDefinition>
 
 	<!-- 9. Grain Seeds (gridPos y=19) -->
-	<ItemDefinition name="WhiteBroccoli_Seed" type="ITEM_TYPE_SEED" coinValue="2" description="Seeds for growing nutritious grain">
+	<ItemDefinition name="Grain_Seed" type="ITEM_TYPE_SEED" coinValue="2" description="Seeds for growing nutritious grain">
 		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
 		<Icon spriteLayout="14,26" gridPos="8,19"/>
 	</ItemDefinition>
@@ -132,7 +132,7 @@
 	</ItemDefinition>
 
 	<!-- 1. Green Onion Harvest (gridPos y=3, x+1) -->
-	<ItemDefinition name="Lettuce_Harvest" type="ITEM_TYPE_CROP" coinValue="8" description="Fresh green onions for cooking">
+	<ItemDefinition name="GreenOnion_Harvest" type="ITEM_TYPE_CROP" coinValue="8" description="Fresh green onions for cooking">
 		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
 		<Icon spriteLayout="14,26" gridPos="7,3"/>
 	</ItemDefinition>
@@ -180,7 +180,7 @@
 	</ItemDefinition>
 
 	<!-- 9. Grain Harvest (gridPos y=19, x+1) -->
-	<ItemDefinition name="WhiteBroccoli_Harvest" type="ITEM_TYPE_CROP" coinValue="6" description="Nutritious grain for cooking">
+	<ItemDefinition name="Grain_Harvest" type="ITEM_TYPE_CROP" coinValue="6" description="Nutritious grain for cooking">
 		<ItemTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
 		<Icon spriteLayout="14,26" gridPos="7,19"/>
 	</ItemDefinition>

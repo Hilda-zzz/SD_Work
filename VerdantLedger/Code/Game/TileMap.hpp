@@ -40,6 +40,9 @@ public:
 	TileLayer* FindLayerById(int layerId);
 
 	void UpdateTransparentObject(IntVec2 const& aimGridPos);
+	void UpdateStateForNewDayInTileMap();
+
+	std::string GetName() { return m_name; }
 
 private:
 	IntVec2 m_lastTransparentTreePos = IntVec2(-999, -999);

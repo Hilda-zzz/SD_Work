@@ -134,7 +134,7 @@ void Button::Render(Renderer* renderer) const
 
 bool Button::HandleInput(InputEvent const& event)
 {
-	if (!m_canReceiveInput || !m_isVisible)
+	if (!m_canReceiveInput || !m_isActive)
 	{
 		return false;
 	}

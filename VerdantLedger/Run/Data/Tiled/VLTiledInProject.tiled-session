@@ -19,12 +19,24 @@
                 "y": 279
             }
         },
-        "MyFarmMap.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 4,
+        "InnerHouse.tmx": {
+            "scale": 4,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 854,
-                "y": 594
+                "x": 354.375,
+                "y": 274.625
+            }
+        },
+        "InnerHouse.tsx": {
+            "scaleInDock": 3,
+            "scaleInEditor": 1
+        },
+        "MyFarmMap.tmx": {
+            "scale": 5.5,
+            "selectedLayer": 7,
+            "viewCenter": {
+                "x": 1515.3636363636365,
+                "y": 160.8181818181818
             }
         },
         "OutsideTileset.tsx": {
@@ -40,7 +52,7 @@
             "scaleInEditor": 1
         }
     },
-    "last.imagePath": "C:/p4/Personal/SD/VerdantLedger/Run/Data/Art/FarmAssets/FarmTinyAssetPack/Tileset",
+    "last.imagePath": "C:/p4/Personal/SD/VerdantLedger/Run/Data/Art/FarmAssets/Interior - Tiny Asset Pack",
     "map.fixedSize": false,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
@@ -50,7 +62,9 @@
         "TileMark.tsx",
         "GrassSpring.tsx",
         "MyFarmMap.tmx",
-        "OutsideTileset.tsx"
+        "OutsideTileset.tsx",
+        "InnerHouse.tmx",
+        "InnerHouse.tsx"
     ],
     "project": "VLTiledInProject.tiled-project",
     "property.type": "bool",
@@ -58,6 +72,8 @@
         "HouseMap.tmx",
         "TileMark.tsx",
         "GrassSpring.tsx",
+        "InnerHouse.tsx",
+        "InnerHouse.tmx",
         "OutsideTileset.tsx",
         "MyFarmMap.tmx",
         "Road.tsx"

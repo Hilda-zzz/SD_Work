@@ -279,6 +279,9 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	// combine pixel normal with world normal
 	float3x3 tbnToWorldMat = float3x3(surfaceTangentWorldSpace, surfaceBitangentWorldSpace, surfaceNormalWorldSpace);
 	float3 pixelNormalWorldSpace = mul(pixelNormalTBNSpace, tbnToWorldMat);
+ 
+// 	float diffuseFactor = max(dot(pixelNormalWorldSpace, sunDir), 0.0);
+// 	diffuseColor *= diffuseFactor;
 
 	// specular
 	float3 cameraWorldPos = GetCameraWorldPosition(c_worldToCameraTransform);

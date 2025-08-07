@@ -45,6 +45,8 @@ Player::Player(Game* game):m_game(game)
 
 	AddVertsForAABB2D(m_hoverGridCursorSquareVerts, AABB2(Vec2(-1.5f, -1.5f), Vec2(1.5f, 1.5f)), Rgba8::WHITE,Vec2(0.f,0.f),Vec2(0.5f,1.f));
 
+	AddVertsForAABB2D(m_xTipVerts, AABB2(Vec2(-0.5f, 1.f), Vec2(0.5f, 2.f)), Rgba8::WHITE);
+
 	Initialize();
 }
 
@@ -223,7 +225,7 @@ void Player::AddStartingSeedsToInventory()
 {
 	InventoryItemDef* strawberrySeedDef = InventoryItemDef::GetItemDefFromName("Strawberry_Seed");
 	InventoryItemDef* greenOnionSeedDef = InventoryItemDef::GetItemDefFromName("GreenOnion_Seed");
-	InventoryItemDef* potatoSeedDef = InventoryItemDef::GetItemDefFromName("Potato_Seed");
+	//InventoryItemDef* potatoSeedDef = InventoryItemDef::GetItemDefFromName("Potato_Seed");
 
 	if (strawberrySeedDef) {
 		bool success = m_inventory->AddItem(strawberrySeedDef, 2);
@@ -310,17 +312,36 @@ void Player::UpdateAnimations(float deltaTime)
 	{
 		m_animConditions[pair.second] = false;
 	}
+ 	if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+ 	{
+ 		if (!m_game->m_curMap->HarvestTowardsGridPos(m_curCursorHoverGridPos))
+ 		{
+ 			// update using tool
+ 			if (m_curTool != PlayerTools::NONE)
+ 			{
+ 				auto curToolCondition = s_playerToolConditionMap.find(m_curTool);
+ 				if (curToolCondition != s_playerToolConditionMap.end())
+ 				{
+ 					m_animConditions[curToolCondition->second] = true;
+ 					m_curDirection = GetDirectionFromIntVec2(m_curToolToPlayerDirection);
+ 				}
+ 				// change direction by using tool
+ 			}
+ 		}
+ 	}
+
 	// update using tool
-	if (m_curTool != PlayerTools::NONE && g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
-	{
-		auto curToolCondition = s_playerToolConditionMap.find(m_curTool);
-		if (curToolCondition != s_playerToolConditionMap.end())
-		{
-			m_animConditions[curToolCondition->second] = true;
-			m_curDirection = GetDirectionFromIntVec2(m_curToolToPlayerDirection);
-		}
-		// change direction by using tool
-	}
+// 	if (m_curTool != PlayerTools::NONE && g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+// 	{
+// 		auto curToolCondition = s_playerToolConditionMap.find(m_curTool);
+// 		if (curToolCondition != s_playerToolConditionMap.end())
+// 		{
+// 			m_animConditions[curToolCondition->second] = true;
+// 			m_curDirection = GetDirectionFromIntVec2(m_curToolToPlayerDirection);
+// 		}
+// 		// change direction by using tool
+// 	}
+
 	//--------------------------------------------------------------------------------------------
 	m_bodyStateMachine.Update(deltaTime, m_animConditions, m_curDirection);
 	UpdateToolUsingResult();
@@ -385,10 +406,25 @@ void Player::UpdateToolUsingResult()
 IntVec2 Player::GetCurrentCursorGridPos()
 {
 	Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
-	Vec2 mousePositionInGameCam= AABB2(Vec2(0.f, 0.f), 2.f*Vec2(g_halfGameCamDimensions.x, g_halfGameCamDimensions.y)).GetPointAtUV(mouseUV);
-	Vec2 mousePosInWorldPlace = mousePositionInGameCam - Vec2(g_halfGameCamDimensions.x, g_halfGameCamDimensions.y) + m_position;
 
-	return m_game->m_curMap->GetTileCoordsFromPoint(mousePosInWorldPlace);
+	// 获取相机的实际中心位置（考虑地图边界限制）
+	Vec2 actualCameraBL = m_game->m_curMap->m_gameplayCam.GetOrthoBottomLeft();
+	Vec2 actualCameraTR = m_game->m_curMap->m_gameplayCam.GetOrthoTopRight();
+	Vec2 actualCameraCenter = (actualCameraBL + actualCameraTR) * 0.5f;
+
+	Vec2 cameraWorldMin = actualCameraCenter - g_halfGameCamDimensions;
+	Vec2 cameraWorldMax = actualCameraCenter + g_halfGameCamDimensions;
+	AABB2 cameraWorldBounds(cameraWorldMin, cameraWorldMax);
+
+	Vec2 mousePosInWorld = cameraWorldBounds.GetPointAtUV(mouseUV);
+
+	return m_game->m_curMap->GetTileCoordsFromPoint(mousePosInWorld);
+
+// 	Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+// 	Vec2 mousePositionInGameCam= AABB2(Vec2(0.f, 0.f), 2.f*Vec2(g_halfGameCamDimensions.x, g_halfGameCamDimensions.y)).GetPointAtUV(mouseUV);
+// 	Vec2 mousePosInWorldPlace = mousePositionInGameCam - Vec2(g_halfGameCamDimensions.x, g_halfGameCamDimensions.y) + m_position;
+// 
+// 	return m_game->m_curMap->GetTileCoordsFromPoint(mousePosInWorldPlace);
 }
 
 IntVec2 Player::GetCurDirectionIntVec2()
@@ -459,6 +495,13 @@ void Player::Render() const
 	g_theRenderer->SetModelConstants(modelMatrix);
 	g_theRenderer->DrawVertexArray(m_verts);
 
+	if (m_isInTrigger)
+	{
+		Texture* ETex = g_theRenderer->CreateOrGetTextureFromFile("Data/Art/FarmAssets/UI - Tiny Asset Pack/E.png");
+		g_theRenderer->BindTexture(ETex);
+		g_theRenderer->DrawVertexArray(m_xTipVerts);
+	}
+
 	if (m_bodyStateMachine.GetCurrentState()->GetName() != "playerWalk" &&
 		m_bodyStateMachine.GetCurrentState()->GetName() != "playerRun") {
 		Mat44 hoverModelMatrix = Mat44::MakeTranslation3D(
@@ -471,4 +514,39 @@ void Player::Render() const
 		g_theRenderer->DrawVertexArray(m_hoverGridCursorSquareVerts);
 	}
 	
+}
+
+void Player::AddCoin(int addCoin)
+{
+	m_coin += addCoin;
+
+	EventArgs args;
+	args.SetValue("coin", std::to_string(m_coin));
+	g_theEventSystem->FireEvent("UpdateCoinUI",args);
+}
+
+bool Player::UseCoin(int useCoin)
+{
+	if (m_coin >= useCoin)
+	{
+		m_coin -= useCoin;
+
+		EventArgs args;
+		args.SetValue("coin", std::to_string(m_coin));
+		g_theEventSystem->FireEvent("UpdateCoinUI", args);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool Player::IsAffordable(int useCoin)
+{
+	if (m_coin >= useCoin)
+	{
+		return true;
+	}
+	return false;
 }

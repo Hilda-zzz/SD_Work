@@ -31,6 +31,7 @@ void UIText::RenderSelf(Renderer* renderer) const
 void UIText::ChangeText(std::string const& newContent)
 {
 	m_content = newContent;
+	UpdateVertices();
 }
 
 void UIText::UpdateVertices()

@@ -33,6 +33,10 @@ public:
 	void Render() const;
 
 	Inventory* GetInventory() { return m_inventory; };
+	
+	void AddCoin(int addCoin);
+	bool UseCoin(int useCoin);
+	bool IsAffordable(int useCoin);
 
 private:
 	void Initialize();
@@ -54,9 +58,11 @@ private:
 	IntVec2 GetCurrentCursorGridPos();
 	IntVec2 GetCurDirectionIntVec2();
 	Direction GetDirectionFromIntVec2(IntVec2 const& directionVec);
+	//Vec2 GetActualCameraCenter() const;
 
 public:
-	Vec2	m_position = Vec2(10.f,-10.f);
+	//Vec2	m_position = Vec2(96.f,-8.f);
+	Vec2	m_position = Vec2(18.f, -15.f);
 	Vec2 m_inputDirection = Vec2::ZERO; 
 	Direction m_curDirection = Direction::DOWN;
 	float	m_orientation = 0.f;
@@ -67,6 +73,8 @@ public:
 	PlayerTools m_curTool = PlayerTools::NONE;
 	InventorySlotButton* m_curSelectedBtn = nullptr;
 	Inventory* m_inventory;
+
+	bool m_isInTrigger = false;
 
 private:
 	Game* m_game = nullptr;
@@ -109,6 +117,8 @@ private:
 	IntVec2 m_curToolAimGridPos;
 	IntVec2 m_curToolToPlayerDirection;
 
+	std::vector<Vertex_PCU> m_xTipVerts;
+
 	std::unordered_set<std::string> m_toolStates = {
 	"playerAxe",
 	"playerHoe",
@@ -121,6 +131,6 @@ private:
 
 	std::string m_previousAnimStateName = "";
 
-	
-
+	// Money
+	int m_coin = 0;
 };

@@ -109,3 +109,11 @@ void InventorySlotButton::UseInventoryItem(int count)
 {
 	m_item->m_quantity -= count;
 }
+
+void InventorySlotButton::SetIconTexture(Texture* iconTex)
+{
+	if (iconTex)
+	{
+		m_iconTexture = iconTex;
+	}
+}

@@ -21,7 +21,10 @@ void GameUISystem::Update(float deltaTime)
 	for (auto it = m_panelStack.rbegin(); it != m_panelStack.rend(); ++it)
 	{
 		Panel* child = *it;
-		child->Update(deltaTime);
+		if (child->IsActive())
+		{
+			child->Update(deltaTime);
+		}
 	}
 }
 
@@ -42,7 +45,11 @@ void GameUISystem::Render() const
 {
 	for (Panel* panel : m_panelStack)
 	{
-		panel->Render(m_curRenderer);
+		if (panel->IsActive())
+		{
+			panel->Render(m_curRenderer);
+		}
+		
 	}
 }
 
@@ -61,7 +68,7 @@ bool GameUISystem::DispatchDiscreteEvent(InputEvent const& event)
 	for (auto it = m_panelStack.rbegin(); it != m_panelStack.rend(); ++it)
 	{
 		Panel* panel = *it;
-		if (panel && panel->IsVisible())
+		if (panel && panel->IsActive())
 		{
 			if (panel->ProcessInputHierarchy(event))
 			{

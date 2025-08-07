@@ -22,7 +22,7 @@ void Widget::Render(Renderer* renderer) const
 
 	for (Widget* child : m_children) 
 	{
-		if (child && child->IsVisible()) 
+		if (child && child->IsActive()) 
 		{
 			child->Render(renderer);
 		}
@@ -72,7 +72,7 @@ bool Widget::RemoveChild(Widget* childWidget)
 
 bool Widget::ProcessInputHierarchy(InputEvent const& event)
 {
-	if (!m_isVisible || !m_canReceiveInput) 
+	if (!m_isActive || !m_canReceiveInput) 
 	{
 		return false;
 	}

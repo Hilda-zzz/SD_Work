@@ -48,6 +48,8 @@ public:
 
 	bool RemoveTheGroundObstacle(GroundObstacle* curObstacle);
 
+	void UpdateStateForNewDayInChunk();
+
 private:
 	uint8_t GetPlowedNeighborMask(IntVec2 const& tileGridPos);
 	uint8_t GetWateredNeighborMask(IntVec2 const& tileGridPos);

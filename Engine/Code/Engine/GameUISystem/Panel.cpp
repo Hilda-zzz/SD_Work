@@ -50,7 +50,5 @@ bool Panel::HandleInput(InputEvent const& event)
 void Panel::UpdateVertices()
 {
 	m_bkgVerts.clear();
-// 	Vec2 bkgMins = m_position + m_bkgBox.m_mins;
-// 	Vec2 bkgMaxs = m_position + m_bkgBox.m_maxs;
 	AddVertsForAABB2D(m_bkgVerts, m_bounds, Rgba8::WHITE);
 }

@@ -11,14 +11,14 @@
 	<CropDefinition name="GreenOnion" description="Fresh green onion" matureDay="6" spriteStateCount="6">
 		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
 		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,3"/>
-		<SeedItem name="Lettuce_Seed"/>
-		<HarvestItem name="Lettuce_Harvest"/>
+		<SeedItem name="GreenOnion_Seed"/>
+		<HarvestItem name="GreenOnion_Harvest"/>
 	</CropDefinition>
 
 	<!-- 2 -->
 	<CropDefinition name="Potato" description="Potato potato i love potato" matureDay="6" spriteStateCount="6">
 		<CropTexture path="Data/Art/FarmAssets/Farm Crops - Tiny Asset Pack/AllCrops.png"/>
-		<SpriteInfo spriteLayout="16,16" spriteStartGridPos="0,5"/>
+		<SpriteInfo spriteLayout="14,26" spriteStartGridPos="0,5"/>
 		<SeedItem name="Potato_Seed"/>
 		<HarvestItem name="Potato_Harvest"/>
 	</CropDefinition>

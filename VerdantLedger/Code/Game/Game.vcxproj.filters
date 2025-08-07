@@ -115,6 +115,9 @@
     <ClCompile Include="CropObject.cpp">
       <Filter>TilemapObjects</Filter>
     </ClCompile>
+    <ClCompile Include="DayTimeSystem.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -201,6 +204,9 @@
     <ClInclude Include="CropObject.hpp">
       <Filter>TilemapObjects</Filter>
     </ClInclude>
+    <ClInclude Include="DayTimeSystem.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Run\Data\Tiled\GrassSpring.tsx">
@@ -213,6 +219,12 @@
       <Filter>TiledDef</Filter>
     </None>
     <None Include="..\..\Run\Data\Tiled\Road.tsx">
+      <Filter>TiledDef</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Tiled\InnerHouse.tmx">
+      <Filter>TiledDef</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Tiled\InnerHouse.tsx">
       <Filter>TiledDef</Filter>
     </None>
   </ItemGroup>

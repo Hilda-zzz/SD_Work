@@ -104,6 +104,7 @@ void TileMapManager::LoadAllTilesets()
 	LoadTileset("Data/Tiled/TileMark.tsx");
 	LoadTileset("Data/Tiled/Road.tsx");
 	LoadTileset("Data/Tiled/OutsideTileset.tsx");
+	LoadTileset("Data/Tiled/InnerHouse.tsx");
 }
 
 void TileMapManager::LoadAllRuedTilesets()
@@ -163,6 +164,7 @@ void TileMapManager::LoadAllMaps()
 // 		curDynamicTileData.m_obstacleType == ObstacleType::ROCK;
 // 	}
 // 	m_dynamicTiles[tilePosKey] = curDynamicTileData;
+	LoadMap("Data/Tiled/InnerHouse.tmx");
 }
 
 TileMap* TileMapManager::LoadMap(const std::string& mapPath)

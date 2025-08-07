@@ -15,6 +15,7 @@
 #include "Game/InventoryItemDef.hpp"
 #include "CropDefinitions.hpp"
 #include "GroundObstacle.hpp"
+#include "Game/CropDefinitions.hpp"
 
 extern Renderer* g_theRenderer;
 extern Window* g_theWindow;
@@ -30,6 +31,8 @@ Map::Map(Game* game, TileMap* tileMap, Player* player):
 // 	m_dirtyFarmlandDelayTimer = Timer(0.5f);
 
 	m_chunkUpdateManager = ChunkUpddateManger(m_tileMap->m_markLayer);
+
+	m_camBound = Vec2(110.f, -63.f);
 }
 
 Map::~Map()
@@ -43,6 +46,15 @@ void Map::Update(float deltaSeconds)
 	CheckPlayerCollWithSolidTiles();
 	UpdateCamFollow();
 
+	if (IsPointInsideAABB2D(m_player->m_position, m_transMapTriggerBox))
+	{
+		m_player->m_isInTrigger = true;
+	}
+	else
+	{
+		m_player->m_isInTrigger = false;
+	}
+
 	IntVec2 m_playerFrontGridPos = GetTileCoordsFromPoint(m_player->m_position)+IntVec2(0,-1);
  	m_tileMap->UpdateTransparentObject(m_playerFrontGridPos);
  	m_tileMap->Update(deltaSeconds);
@@ -50,6 +62,15 @@ void Map::Update(float deltaSeconds)
 	//m_chunkUpdateManager.UpdateVisibleChunks(deltaSeconds,camCenter,camSize);
 	UpdateVisibleChunk(deltaSeconds);
 	m_chunkUpdateManager.UpdateDirtyChunks();
+
+	if (m_player->m_isInTrigger)
+	{
+		if (g_theInput->WasKeyJustPressed('E'))
+		{
+			// trans map
+			m_game->TransMap(m_game->m_curMap->m_transToMap, m_game->m_curMap->m_transToMap->m_playerStartPos);
+		}
+	}
 }
 
 void Map::Render() const
@@ -60,6 +81,10 @@ void Map::Render() const
 
 	// transparent things must be rendered at the end
 	m_tileMap->Render(m_visibleChunk);
+
+// 	g_theRenderer->BindTexture(nullptr);
+// 	g_theRenderer->SetModelConstants();
+// 	DebugDrawBox(m_transMapTriggerBox.m_mins, m_transMapTriggerBox.m_maxs,Rgba8::RED);
 
 	g_theRenderer->EndCamera(m_gameplayCam);
 }
@@ -158,6 +183,7 @@ IntVec2 Map::GetTileCoordsFromPoint(Vec2 const& point)
     return IntVec2(static_cast<int>(floorf(point.x)), static_cast<int>(floorf(point.y)));
 }
 
+
 void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolType, InventorySlotButton& curInventoryBtn)
 {
 	TileChunk* curChunk=m_tileMap->m_markLayer->GetChunkContaining(aimGridPos);
@@ -169,6 +195,15 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 			(it->second.m_obstacleType == ObstacleType::WEED&& 
 				(toolType == PlayerTools::SICKLE||toolType == PlayerTools::SHOVEL || toolType == PlayerTools::HOE)))
 		{
+			if (it->second.m_obstacleType == ObstacleType::WEED)
+			{
+				g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Weed.wav"), false, 1.3f);
+			}
+			else if (it->second.m_obstacleType == ObstacleType::ROCK)
+			{
+				g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Rock.wav"),false,1.4f);
+			}
+
 			it->second.m_curObstacleDurability--;
 			if (it->second.m_curObstacleDurability <= 0)
 			{
@@ -177,8 +212,10 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 				if (!itemName.empty())
 				{
 					InventoryItemDef* curItemDef = InventoryItemDef::s_itemDefinitions[itemName];
-					m_player->GetInventory()->AddItem(curItemDef, 3);
-					g_theEventSystem->FireEvent("UpdateInventoryPanels");
+// 					m_player->GetInventory()->AddItem(curItemDef, 3);
+// 					g_theEventSystem->FireEvent("UpdateInventoryPanels");
+					m_player->AddCoin(curItemDef->m_coinValue);
+					g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Coin.wav"));
 				}
 
 				it->second.m_obstacleType = ObstacleType::NONE;
@@ -190,13 +227,16 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 		{
 			GroundObstacle* curTree = curChunk->m_gridPosToGroundObstacle[tileKey];
 			curTree->TakeDamage(1);
+			g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Wood.wav"));
 			if (curTree->GetHealth() <= 0)
 			{
 				// add item
 				std::string itemName = GetObstacleName(it->second.m_obstacleType);
 				InventoryItemDef* curItemDef = InventoryItemDef::s_itemDefinitions[itemName];
-				m_player->GetInventory()->AddItem(curItemDef, 3);
-				g_theEventSystem->FireEvent("UpdateInventoryPanels");
+// 				m_player->GetInventory()->AddItem(curItemDef, 3);
+// 				g_theEventSystem->FireEvent("UpdateInventoryPanels");
+ 				m_player->AddCoin(curItemDef->m_coinValue);
+				g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Coin.wav"));
 				// clear chunk data
 				it->second.m_obstacleType = ObstacleType::NONE;
 				// delete object
@@ -210,8 +250,11 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 		{
 			it->second.m_farmState = FarmState::PLOWED;
 			m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_FARMLAND, aimGridPos);
+
+			g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Plow.wav"));
 		}
 
+		// Water
 		if (it->second.m_farmState == FarmState::PLOWED
 			&& it->second.m_obstacleType == ObstacleType::NONE
 			&& toolType == PlayerTools::WATER)
@@ -219,6 +262,12 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 			//it->second.m_farmState = FarmState::WATER;
 			it->second.m_isWater = true;
 			m_chunkUpdateManager.MarkChunkDirty(curChunk, DirtyType::DIRTY_FARMLAND, aimGridPos);
+			if (it->second.m_isPlanted)
+			{
+				curChunk->m_gridPosToCropObject[tileKey]->BeWatering();
+			}
+
+			g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Water.wav"));
 		}
 
 		// Planting
@@ -242,11 +291,67 @@ void Map::UsingToolTowardsGridPos(IntVec2 const& aimGridPos, PlayerTools toolTyp
 				// Mark the chunk tile type to planted
 				it->second.m_isPlanted = true;
 
+				// if water BeWatering
+				if (it->second.m_isWater)
+				{
+					curCropObject->BeWatering();
+				}
+
 				// Update Panel
 				m_game->UpdateToolBarFromInventory();
 			}
 		}
 	}
+}
+
+bool Map::HarvestTowardsGridPos(IntVec2 const& aimGridPos)
+{
+	TileChunk* curChunk = m_tileMap->m_markLayer->GetChunkContaining(aimGridPos);
+	if (!curChunk) 
+	{ 
+		return false;
+	}
+
+	uint64_t tileKey = m_tileMap->GetTileKey(aimGridPos);
+	auto it = curChunk->m_keyToDynamicTileData.find(tileKey);
+	if (it != curChunk->m_keyToDynamicTileData.end())
+	{
+		auto crop = curChunk->m_gridPosToCropObject.find(tileKey);
+		if (crop != curChunk->m_gridPosToCropObject.end())
+		{
+			if (crop->second->CanHarvest())
+			{
+				CropObject* cropPtr = crop->second;
+
+				// add item to inventory
+				// m_player->GetInventory()->AddItem(cropPtr->GetCropDef()->m_harvestItemDef, 2);
+				m_player->AddCoin(cropPtr->GetCropDef()->m_harvestItemDef->m_coinValue);
+
+				// 从vector中移除（在delete之前）
+				auto cropIt = std::find(curChunk->m_cropObjects.begin(),
+					curChunk->m_cropObjects.end(),
+					cropPtr);
+				if (cropIt != curChunk->m_cropObjects.end()) {
+					curChunk->m_cropObjects.erase(cropIt);
+				}
+
+				// 从map中移除（在delete之前）
+				curChunk->m_gridPosToCropObject.erase(crop);
+
+				// delete crop at the end
+				delete cropPtr;
+
+				// clear dynamic data is planted
+				it->second.m_isPlanted = false;
+
+				//  m_game->UpdateToolBarFromInventory();
+				g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Weed.wav"));
+				g_theAudio->StartSound(g_theAudio->CreateOrGetSound("Data/Audio/Coin.wav"));
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 void Map::PushOutOfEachTile(IntVec2 tileCoords, Vec2& entityPos, float entityPhyRadius)

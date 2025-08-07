@@ -17,5 +17,5 @@ public:
 	Player* m_curPlayer = nullptr;
 	std::vector<InventoryItem> m_items;
 
-	int m_totalSlotsCount = 36;
+	int m_totalSlotsCount = 9;
 };
