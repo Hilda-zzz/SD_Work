@@ -8,6 +8,7 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
+#include "ThreadPool.hpp"
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
@@ -17,6 +18,8 @@ GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
 Game::Game()
 {
 	m_gameClock = new Clock();
+
+	ThreadPool pool(4);
 }
 
 Game::~Game()
