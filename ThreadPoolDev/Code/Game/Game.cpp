@@ -9,17 +9,99 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
 #include "ThreadPool.hpp"
+#include <iostream>
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
 GameState Game::m_curGameState = GameState::GAME_STATE_ATTRACT;
 GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
 
+void sleepFor(int seconds) {
+	std::cout << "Start Sleep " << seconds << " Secs..." << std::endl;
+	std::this_thread::sleep_for(std::chrono::seconds(seconds));
+	std::cout << "Slept " << seconds << " Secs Finished" << std::endl;
+}
+
+// test task funcs
+int fibonacci(int n) {
+	if (n <= 1) return n;
+	return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+std::string getMessage(const std::string& name, int waitSeconds) {
+	std::this_thread::sleep_for(std::chrono::seconds(waitSeconds));
+	return "Hello, " + name + "! (waited " + std::to_string(waitSeconds) + "s)";
+}
+
+void printMessage(const std::string& message) {
+	std::cout << "Message: " << message << std::endl;
+}
+
 Game::Game()
 {
 	m_gameClock = new Clock();
 
-	ThreadPool pool(4);
+	// Initialize thread pool
+	size_t threadCount = std::thread::hardware_concurrency();
+	std::cout << "The System has " << threadCount << " CPU cores" << std::endl;
+	threadCount = threadCount == 0 ? 1 : threadCount;
+
+	size_t poolThreads = std::min(threadCount, (size_t)4);
+
+	try {
+		std::cout << "\n--- Test Start ---" << std::endl;
+		ThreadPool pool(poolThreads);
+
+		std::vector<std::future<int>> fibs;
+		std::vector<std::future<std::string>> msgs;
+		std::vector<std::future<void>> prints;
+
+		std::cout << "Start Submitting tasks!" << std::endl;
+		std::cout << "Fibonacci tasks..." << std::endl;
+		for (int i = 20; i < 25; ++i) {
+			fibs.push_back(
+				pool.Enqueue(fibonacci, i)
+			);
+		}
+
+		std::cout << "GetMessages tasks..." << std::endl;
+		for (int i = 1; i <= 3; ++i) {
+			msgs.push_back(
+				pool.Enqueue(getMessage, "User" + std::to_string(i), 1)
+			);
+		}
+
+		std::cout << "PrintMessages tasks..." << std::endl;
+		for (int i = 0; i < 3; ++i) {
+			prints.push_back(
+				pool.Enqueue(printMessage, "This is message " + std::to_string(i) + "\n")
+			);
+		}
+
+		std::cout << "\n---Get tasks' results!---" << std::endl;
+		for (size_t i = 0; i < fibs.size(); ++i) {
+			std::cout << "fibonacci(" << (i + 20) << ") = " << fibs[i].get() << std::endl;
+		}
+
+		for (auto& future : msgs) {
+			std::cout << future.get() << std::endl;
+		}
+
+		for (auto& future : prints) {
+			future.wait();
+		}
+
+		std::cout << "\n--- Tests completed! ---" << std::endl;
+
+		std::cout << "Is the pool stopped: " << (pool.IsStopped() ? "Yes" : "No") << std::endl;
+
+	}
+	catch(std::exception const& e){
+		std::cerr << "exception when constructing thread pool in Game.cpp";
+		return;
+	}
+
+	std::cout << "\n--- Test Complete ---" << std::endl;
 }
 
 Game::~Game()
