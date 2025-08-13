@@ -25,7 +25,11 @@ public:
 		-> std::future<typename std::invoke_result<F,Args...>::type>;
 
 	bool IsStopped();
-	int GetTasksCount();
+
+	size_t GetTasksCount();
+	size_t GetThreadCount() const;
+	size_t GetCompletedTaskCount() const;
+	size_t GetActiveThreadCount() const;
 
 private:
 	void WorkerThread();
@@ -39,6 +43,9 @@ private:
 	std::condition_variable m_condition;
 
 	std::atomic<bool> m_stop{ false };
+
+	std::atomic<size_t> m_completedTasks{ 0 }; // safe in the thread even without mutex
+	std::atomic<size_t> m_activeThreads{ 0 };
 };
 
 /**

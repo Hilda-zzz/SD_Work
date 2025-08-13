@@ -1,4 +1,4 @@
-#include "Game/Game.hpp"
+﻿#include "Game/Game.hpp"
 #include "App.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -37,6 +37,32 @@ void printMessage(const std::string& message) {
 	std::cout << "Message: " << message << std::endl;
 }
 
+// Test time
+int longComputation(int duration)
+{
+	std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+	return duration;
+}
+
+// throw exception
+int errorProneTask(int n)
+{
+	if (n % 3 == 0)
+	{
+		throw std::runtime_error("Number is divisible by 3!");
+	}
+	return n * n;
+}
+
+// Log
+void printPoolStatus(ThreadPool& pool, const std::string& stage) {
+	std::cout << "\n=== " << stage << " ===" << std::endl;
+	std::cout << " ThreadCount " << pool.GetThreadCount() << std::endl;
+	std::cout << "  ActiveThreadCount " << pool.GetActiveThreadCount() << std::endl;
+	std::cout << "  TasksCount " << pool.GetTasksCount() << std::endl;
+	std::cout << "  CompletedTaskCount " << pool.GetCompletedTaskCount() << std::endl;
+}
+
 Game::Game()
 {
 	m_gameClock = new Clock();
@@ -52,52 +78,101 @@ Game::Game()
 		std::cout << "\n--- Test Start ---" << std::endl;
 		ThreadPool pool(poolThreads);
 
-		std::vector<std::future<int>> fibs;
-		std::vector<std::future<std::string>> msgs;
-		std::vector<std::future<void>> prints;
+		printPoolStatus(pool, "Start State");
 
-		std::cout << "Start Submitting tasks!" << std::endl;
-		std::cout << "Fibonacci tasks..." << std::endl;
-		for (int i = 20; i < 25; ++i) {
-			fibs.push_back(
-				pool.Enqueue(fibonacci, i)
-			);
+// 		std::vector<std::future<int>> fibs;
+// 		std::vector<std::future<std::string>> msgs;
+// 		std::vector<std::future<void>> prints;
+// 
+// 		std::cout << "Start Submitting tasks!" << std::endl;
+// 		std::cout << "Fibonacci tasks..." << std::endl;
+// 		for (int i = 20; i < 25; ++i) {
+// 			fibs.push_back(
+// 				pool.Enqueue(fibonacci, i)
+// 			);
+// 		}
+// 
+// 		std::cout << "GetMessages tasks..." << std::endl;
+// 		for (int i = 1; i <= 3; ++i) {
+// 			msgs.push_back(
+// 				pool.Enqueue(getMessage, "User" + std::to_string(i), 1)
+// 			);
+// 		}
+// 
+// 		std::cout << "PrintMessages tasks..." << std::endl;
+// 		for (int i = 0; i < 3; ++i) {
+// 			prints.push_back(
+// 				pool.Enqueue(printMessage, "This is message " + std::to_string(i) + "\n")
+// 			);
+// 		}
+// 
+// 		std::cout << "\n---Get tasks' results!---" << std::endl;
+// 		for (size_t i = 0; i < fibs.size(); ++i) {
+// 			std::cout << "fibonacci(" << (i + 20) << ") = " << fibs[i].get() << std::endl;
+// 		}
+// 
+// 		for (auto& future : msgs) {
+// 			std::cout << future.get() << std::endl;
+// 		}
+// 
+// 		for (auto& future : prints) {
+// 			future.wait();
+// 		}
+// 
+// 		std::cout << "\n--- Tests completed! ---" << std::endl;
+// 
+// 		std::cout << "Is the pool stopped: " << (pool.IsStopped() ? "Yes" : "No") << std::endl;
+// 
+
+		// Day 4 tests
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<> durDist(100, 500); // ms
+
+		std::cout << "\nSubmit 10 normal tasks..." << std::endl;
+		std::vector<std::future<int>> results;
+		for (int i = 0; i < 10; ++i) {
+			int duration = durDist(gen);
+			results.push_back(pool.Enqueue(longComputation, duration));
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(50)); 
+		printPoolStatus(pool, "After 10 normal tasks, delay 50 ms- State");
+
+		std::cout << "\nSubmit 10 exception tasks..." << std::endl;
+		std::vector<std::future<int>> errorResults;
+		for (int i = 0; i < 10; ++i) {
+			errorResults.push_back(pool.Enqueue(errorProneTask, i));
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		printPoolStatus(pool, "After 10 except tasks, delay 50 ms- State");
+
+		std::cout << "\nWaiting normal tasks completing..." << std::endl;
+		for (size_t i = 0; i < results.size(); ++i) {
+			try {
+				int duration = results[i].get();
+				std::cout << "Normal tasks " << i << " Consume time " << duration << "ms" << std::endl;
+			}
+			catch (const std::exception& e) {
+				std::cout << "Normal tasks " << i << " Throw exception " << e.what() << std::endl;
+			}
 		}
 
-		std::cout << "GetMessages tasks..." << std::endl;
-		for (int i = 1; i <= 3; ++i) {
-			msgs.push_back(
-				pool.Enqueue(getMessage, "User" + std::to_string(i), 1)
-			);
+		std::cout << "\nWaiting exc tasks completing..." << std::endl;
+		for (size_t i = 0; i < errorResults.size(); ++i) {
+			try {
+				int result = errorResults[i].get();
+				std::cout << "exc " << i << " Consume time = " << result << std::endl;
+			}
+			catch (const std::exception& e) {
+				std::cout << "exc " << i << " Throw exception: " << e.what() << std::endl;
+			}
 		}
 
-		std::cout << "PrintMessages tasks..." << std::endl;
-		for (int i = 0; i < 3; ++i) {
-			prints.push_back(
-				pool.Enqueue(printMessage, "This is message " + std::to_string(i) + "\n")
-			);
-		}
-
-		std::cout << "\n---Get tasks' results!---" << std::endl;
-		for (size_t i = 0; i < fibs.size(); ++i) {
-			std::cout << "fibonacci(" << (i + 20) << ") = " << fibs[i].get() << std::endl;
-		}
-
-		for (auto& future : msgs) {
-			std::cout << future.get() << std::endl;
-		}
-
-		for (auto& future : prints) {
-			future.wait();
-		}
-
-		std::cout << "\n--- Tests completed! ---" << std::endl;
-
-		std::cout << "Is the pool stopped: " << (pool.IsStopped() ? "Yes" : "No") << std::endl;
+		printPoolStatus(pool, "Final State");
 
 	}
-	catch(std::exception const& e){
-		std::cerr << "exception when constructing thread pool in Game.cpp";
+	catch (std::exception const& e) {
+		std::cerr << "exception when constructing thread pool in Game.cpp" << e.what() << std::endl;
 		return;
 	}
 

@@ -41,9 +41,25 @@ bool ThreadPool::IsStopped()
 	return m_stop;
 }
 
-int ThreadPool::GetTasksCount()
+size_t ThreadPool::GetTasksCount()
 {
-	return (int)m_tasks.size();
+	std::unique_lock<std::mutex> lock(m_queueMutex);
+	return m_tasks.size();
+}
+
+size_t ThreadPool::GetThreadCount() const
+{
+	return m_workers.size();
+}
+
+size_t ThreadPool::GetCompletedTaskCount() const
+{
+	return m_completedTasks;
+}
+
+size_t ThreadPool::GetActiveThreadCount() const
+{
+	return m_activeThreads;
 }
 
 void ThreadPool::WorkerThread()
@@ -76,6 +92,7 @@ void ThreadPool::WorkerThread()
 		// Execute task out of the lock in case of blocking other threads
 		if (task)
 		{
+			++m_activeThreads;
 			try {
 				task();
 			}
@@ -86,6 +103,8 @@ void ThreadPool::WorkerThread()
 			catch (...) {
 				std::cout << "Unknown exception when executing the task." << std::endl;
 			}
+			++m_completedTasks;
+			--m_activeThreads;
 		}
 	}
 }
