@@ -9,6 +9,8 @@
 #include <functional>
 #include <stdexcept>
 #include <atomic>
+#include <unordered_set>
+#include "TaskInfo.hpp"
 
 class ThreadPool
 {
@@ -24,61 +26,146 @@ public:
 	auto Enqueue(F&& f, Args&&...args)
 		-> std::future<typename std::invoke_result<F,Args...>::type>;
 
+	template<class F,class...Args>
+	auto EqueueWithPriority(TaskPriority priority, F&& f, Args&&...args)
+		-> std::future<typename std::invoke_result<F, Args...>::type>;
+
+	template<class F, class... Args>
+	auto EnqueueWithInfo(std::string taskId, std::string description,
+		TaskPriority priority, F&& f, Args&&... args)
+		-> std::future<typename std::invoke_result<F, Args...>::type>;
+
+	template<class F, class... Args>
+	auto CreateTaskFunction(std::shared_ptr<std::promise<typename std::invoke_result<F, Args...>::type>> promise,
+		F&& f, Args&&... args)
+		->std::function<void()>;
+
 	bool IsStopped();
 
-	size_t GetTasksCount();
 	size_t GetThreadCount() const;
-	size_t GetCompletedTaskCount() const;
 	size_t GetActiveThreadCount() const;
+	size_t GetWaitingThreadCount() const;
+
+	size_t GetTasksCount();
+	size_t GetCompletedTaskCount() const;
+	size_t GetFailedTaskCount() const;
+
+	void Resize(size_t newSize);
+	void Pause();
+	void Resume();
+	void WaitForTasks();
+	void ClearTasks();
 
 private:
-	void WorkerThread();
+	void WorkerThread(size_t id);
 
 private:
 	std::vector<std::thread> m_workers;
 
-	std::queue<std::function<void()>> m_tasks;
+	//std::queue<std::function<void()>> m_tasks;
+	std::priority_queue<TaskInfo> m_tasks;
+
+	std::unordered_set<size_t> m_threadsToStop;
 
 	std::mutex m_queueMutex;
 	std::condition_variable m_condition;
+	std::condition_variable m_waitCondition;
 
 	std::atomic<bool> m_stop{ false };
+	std::atomic<bool> m_paused{ false };
 
 	std::atomic<size_t> m_completedTasks{ 0 }; // safe in the thread even without mutex
+	std::atomic<size_t> m_failedTasks{ 0 };
 	std::atomic<size_t> m_activeThreads{ 0 };
 };
 
-/**
- * @brief Enqueues a callable object with its arguments to be executed by the thread pool
- * @tparam F Type of the callable object (function, lambda, functor, etc.)
- * @tparam Args Types of the arguments to be passed to the callable
- * @param f The callable object to be executed (forwarded as universal reference)
- * @param args Arguments to be passed to the callable (forwarded as universal references)
- * @return std::future containing the result of the callable execution
- */
 template<class F, class ...Args>
-inline auto ThreadPool::Enqueue(F&& f, Args && ...args) -> std::future<typename std::invoke_result<F, Args ...>::type>
+inline auto ThreadPool::Enqueue(F&& f, Args && ...args) 
+-> std::future<typename std::invoke_result<F, Args ...>::type>
 {
-	// func return type
+	return enqueueWithPriority(TaskPriority::MEDIUM,
+		std::forward<F>(f),
+		std::forward<Args>(args)...);
+}
+
+template<class F, class ...Args>
+inline auto ThreadPool::EqueueWithPriority(TaskPriority priority, F&& f, Args && ...args) 
+-> std::future<typename std::invoke_result<F, Args ...>::type>
+{
+	return EnqueueWithInfo("", "", priority,
+		std::forward<F>(f), std::forward<Args>(args)...);
+}
+
+template<class F, class ...Args>
+inline auto ThreadPool::EnqueueWithInfo(std::string taskId, std::string description, TaskPriority priority, F&& f, Args && ...args) 
+-> std::future<typename std::invoke_result<F, Args ...>::type>
+{
 	using return_type = typename std::invoke_result<F, Args...>::type;
 
-	auto task = std::make_shared<std::packaged_task<return_type()>>( // a shared ptr  // is that safe?
-		std::bind(std::forward<F>(f),std::forward<Args>(args)...)  //bind f and args
-	);
+	// out of lock
+	auto promise = std::make_shared<std::promise<return_type>>();
+	std::future<return_type> result = promise->get_future();
 
-	std::future<return_type> result = task->get_future();
+	auto taskFunction = createTaskFunction(promise, std::forward<F>(f), std::forward<Args>(args)...);
 
 	{
 		std::unique_lock<std::mutex> lock(m_queueMutex);
-
 		if (m_stop)
 		{
 			throw std::runtime_error("enqueue on stopped ThreadPool");
 		}
 
-		m_tasks.emplace([task]() {(*task)(); });
+		// logTaskSubmission(taskId, description, priority);
+
+		m_tasks.emplace(
+			std::move(taskFunction),
+			priority,
+			taskId,
+			description
+		);
+
+		if (!taskId.empty()) {
+			taskIdMap[taskId] = tasks.size();
+		}
+
+// 		metrics.totalTasks++;
+// 		metrics.updateQueueSize(tasks.size());
 	}
-	
-	m_condition.notify_one();
+	condition.notify_one();
 	return result;
+}
+
+template<class F, class ...Args>
+inline auto ThreadPool::CreateTaskFunction(std::shared_ptr<std::promise<typename std::invoke_result<F, Args...>::type>> promise, F&& f, Args && ...args) 
+-> std::function<void()>
+{
+	using return_type = typename std::invoke_result<F, Args...>::type;
+
+	return [promise,
+		f = std::forward<F>(f),
+		args = std::make_tuple(std::forward<Args>(args)...)]() mutable
+		{
+			try
+			{
+				if constexpr (std:is_void_v<return_type>)
+				{
+					std::apply(f, args);
+					promise->set_value();
+				}
+				else
+				{
+					promise->set_value(std::apply(f, args));
+				}
+			}
+			catch (std::exception const&)
+			{
+				promise->set_exception(std::current_exception());
+				throw;
+			}
+			catch (...)
+			{
+				promise->set_exception(std::current_exception());
+				throw;
+			}
+		}
 }

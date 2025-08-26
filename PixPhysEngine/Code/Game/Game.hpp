@@ -42,11 +42,6 @@ private:
 	void ExitAttractMode();
 	void ExitGameplayMode();
 
-	//-----------Thread Pool Tests---------
-	void TestForDay3();
-	void TestForDay4();
-	void TestForDay5();
-
 public:
 	static GameState m_curGameState;
 	static GameState m_nextGameState;
