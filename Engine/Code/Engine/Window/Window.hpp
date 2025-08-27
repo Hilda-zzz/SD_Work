@@ -9,6 +9,7 @@ struct WindowConfig
 	InputSystem*		m_inputSystem=nullptr;
 	float				m_aspectRatio=(16.f/9.f);
 	std::string			m_windowTitle = "Unnamed Application";
+	bool				m_isFullscreen = false;
 };
 class Window
 {

@@ -291,8 +291,20 @@ void Window::CreateOSWindow()
 	RegisterClassEx(&windowClassDescription);
 
 	// #SD1ToDo: Add support for fullscreen mode (requires different window style flags than windowed mode)
-	DWORD const windowStyleFlags = WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
-	DWORD const windowStyleExFlags = WS_EX_APPWINDOW;
+// 	DWORD const windowStyleFlags = WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
+// 	DWORD const windowStyleExFlags = WS_EX_APPWINDOW;
+	DWORD windowStyleFlags;
+	DWORD windowStyleExFlags;
+	if (m_config.m_isFullscreen)
+	{
+		windowStyleFlags = WS_POPUP | WS_VISIBLE;
+		windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+	}
+	else
+	{
+		windowStyleFlags = WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
+		windowStyleExFlags = WS_EX_APPWINDOW;
+	}
 
 	// Get desktop rect, dimensions, aspect
 	RECT desktopRect;
@@ -303,28 +315,47 @@ void Window::CreateOSWindow()
 	float desktopAspect = desktopWidth / desktopHeight;
 
 	// Calculate maximum client size (as some % of desktop size)
-	constexpr float maxClientFractionOfDesktop = 0.90f;
-	float clientWidth = desktopWidth * maxClientFractionOfDesktop;
-	float clientHeight = desktopHeight * maxClientFractionOfDesktop;
-	if (clientAspect > desktopAspect)
+	float clientWidth, clientHeight;
+	if (m_config.m_isFullscreen)
 	{
-		// Client window has a wider aspect than desktop; shrink client height to match its width
-		clientHeight = clientWidth / clientAspect;
+		clientWidth = desktopWidth;
+		clientHeight = desktopHeight;
 	}
 	else
 	{
-		// Client window has a taller aspect than desktop; shrink client width to match its height
-		clientWidth = clientHeight * clientAspect;
+		constexpr float maxClientFractionOfDesktop = 0.90f;
+		clientWidth = desktopWidth * maxClientFractionOfDesktop;
+		clientHeight = desktopHeight * maxClientFractionOfDesktop;
+
+		if (clientAspect > desktopAspect)
+		{
+			// Client window has a wider aspect than desktop; shrink client height to match its width
+			clientHeight = clientWidth / clientAspect;
+		}
+		else
+		{
+			// Client window has a taller aspect than desktop; shrink client width to match its height
+			clientWidth = clientHeight * clientAspect;
+		}
 	}
 
-	// Calculate client rect bounds by centering the client area
-	float clientMarginX = 0.5f * (desktopWidth - clientWidth);
-	float clientMarginY = 0.5f * (desktopHeight - clientHeight);
 	RECT clientRect;
-	clientRect.left = (int)clientMarginX;
-	clientRect.right = clientRect.left + (int)clientWidth;
-	clientRect.top = (int)clientMarginY;
-	clientRect.bottom = clientRect.top + (int)clientHeight;
+	if (m_config.m_isFullscreen)
+	{
+		clientRect.left = 0;
+		clientRect.right = (int)clientWidth;
+		clientRect.top = 0;
+		clientRect.bottom = (int)clientHeight;
+	}
+	else
+	{
+		float clientMarginX = 0.5f * (desktopWidth - clientWidth);
+		float clientMarginY = 0.5f * (desktopHeight - clientHeight);
+		clientRect.left = (int)clientMarginX;
+		clientRect.right = clientRect.left + (int)clientWidth;
+		clientRect.top = (int)clientMarginY;
+		clientRect.bottom = clientRect.top + (int)clientHeight;
+	}
 
 	//Store Client Dimension
 	m_clientDimension.x = (int)clientWidth;
@@ -332,7 +363,10 @@ void Window::CreateOSWindow()
 
 	// Calculate the outer dimensions of the physical window, including frame et. al.
 	RECT windowRect = clientRect;
-	AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
+	if (!m_config.m_isFullscreen)
+	{
+		AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
+	}
 
 	WCHAR windowTitle[1024];
 	MultiByteToWideChar(GetACP(), 0, m_config.m_windowTitle.c_str(), -1, windowTitle, sizeof(windowTitle) / sizeof(windowTitle[0]));

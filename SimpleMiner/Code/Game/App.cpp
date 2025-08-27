@@ -47,7 +47,8 @@ void App::Startup()
 	WindowConfig windowConfig;
 	windowConfig.m_inputSystem = g_theInput;
 	windowConfig.m_aspectRatio = 2.f;
-	windowConfig.m_windowTitle = "Protogame3D";
+	windowConfig.m_windowTitle = "Simple Miner";
+	//windowConfig.m_isFullscreen = true;
 	g_theWindow = new Window(windowConfig);
 	
 	RendererConfig rendererConfig;
@@ -151,7 +152,7 @@ void App::Update()
 {
 	if (g_theWindow->IsFocus())
 	{
-		if (!g_theGame->m_isAttractMode&&!g_theGame->m_isDevConsole)
+		if (g_theGame->m_curGameState==GameState::GAME_STATE_GAMEPLAY&&!g_theGame->m_isDevConsole)
 		{
 			g_theInput->SetCursorMode(CursorMode::FPS);
 			g_theWindow->SetCursorVisible(false);
