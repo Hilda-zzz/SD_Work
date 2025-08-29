@@ -4,10 +4,12 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Plane3.hpp"
 #include "Engine/Math/EulerAngles.hpp"
+
 struct Vec2;
 struct Vec3;
 struct Vec4;
 struct IntVec2;
+struct IntVec3;
 class OBB2;
 class LineSegment2;
 class Capsule2;
@@ -134,6 +136,7 @@ float CrossProduct2D(Vec2 const& a, Vec2 const& b);
 Vec3 CrossProduct3D(Vec3 const& a, Vec3 const& b);
 
 float GetDistance2DInt(IntVec2 const& positionA, IntVec2 const& positionB);
+float GetDistance3DInt(IntVec3 const& positionA, IntVec3 const& positionB);
 
 float NormalizeByte(unsigned char uc);
 float DenormalizeByte(float f);

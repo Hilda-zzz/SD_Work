@@ -44,7 +44,13 @@
       <Filter>Gameplay</Filter>
     </ClCompile>
     <ClCompile Include="BlockDefinition.cpp">
-      <Filter>Framework</Filter>
+      <Filter>Defs</Filter>
+    </ClCompile>
+    <ClCompile Include="Chunk.cpp">
+      <Filter>MinerStruct</Filter>
+    </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>MinerStruct</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -74,6 +80,12 @@
     </ClInclude>
     <ClInclude Include="BlockDefinition.hpp">
       <Filter>Defs</Filter>
+    </ClInclude>
+    <ClInclude Include="Chunk.hpp">
+      <Filter>MinerStruct</Filter>
+    </ClInclude>
+    <ClInclude Include="World.hpp">
+      <Filter>MinerStruct</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

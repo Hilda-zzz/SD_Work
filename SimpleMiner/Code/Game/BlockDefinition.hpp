@@ -4,6 +4,7 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/XmlUtils.hpp"
+#include <unordered_map>
 class SpriteSheet;
 
 constexpr float SPRITE_SIZE_PIXELS = 64.0f;
@@ -20,6 +21,7 @@ public:
 	static void InitializeBlockDefinitionsFromFile();
 	static void ShutdownBlockDefinitions();
 	static std::vector<BlockDefinition> s_blockDefs;
+	static std::unordered_map<std::string, uint8_t> s_nameToIndexMap;
 	static SpriteSheet* s_blockSheet;
 
 	std::string m_name="";

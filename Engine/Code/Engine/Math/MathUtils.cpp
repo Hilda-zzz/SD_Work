@@ -13,6 +13,7 @@
 #include "RandomNumberGenerator.hpp"
 #include "OBB3.hpp"
 #include "Mat44.hpp"
+#include "IntVec3.hpp"
 
 
 
@@ -122,6 +123,13 @@ float GetDistance2DInt(IntVec2 const& positionA, IntVec2 const& positionB)
 {
 	return std::sqrtf((float)((positionA.x - positionB.x) * (positionA.x - positionB.x) +
 		(positionA.y - positionB.y) * (positionA.y - positionB.y)));
+}
+
+float GetDistance3DInt(IntVec3 const& positionA, IntVec3 const& positionB)
+{
+	return std::sqrtf((float)((positionA.x - positionB.x) * (positionA.x - positionB.x) +
+		(positionA.y - positionB.y) * (positionA.y - positionB.y) +
+		(positionA.z - positionB.z) * (positionA.z - positionB.z)));
 }
 
 float GetDistanceSquared2D(Vec2 const& positionA, Vec2 const& positionB) 

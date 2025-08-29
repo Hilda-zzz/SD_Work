@@ -10,6 +10,7 @@ class Player;
 class Texture;
 class Entity;
 class CubeSkyBox;
+class World;
 
 typedef std::vector<Entity*> EntityList;
 
@@ -73,7 +74,7 @@ private:
 	bool m_isSlow = false;
 	bool m_pauseAfterUpdate = false;
 
-
+	World* m_world = nullptr;
 	EntityList  m_allEntities;
 	Player* m_player = nullptr;
 	Prop* m_cube = nullptr;

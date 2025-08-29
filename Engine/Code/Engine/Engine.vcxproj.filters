@@ -286,6 +286,9 @@
     <ClCompile Include="Network\NetworkSystem.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Math\IntVec3.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -557,6 +560,9 @@
     </ClInclude>
     <ClInclude Include="Network\NetworkSystem.hpp">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\IntVec3.hpp">
+      <Filter>Math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

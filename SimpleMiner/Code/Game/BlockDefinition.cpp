@@ -6,6 +6,7 @@
 extern Renderer* g_theRenderer;
 
 std::vector<BlockDefinition> BlockDefinition::s_blockDefs;
+std::unordered_map<std::string, uint8_t> BlockDefinition::s_nameToIndexMap;
 SpriteSheet* BlockDefinition::s_blockSheet;
 
 BlockDefinition::BlockDefinition(XmlElement const* blockDefElement)
@@ -61,6 +62,7 @@ void BlockDefinition::InitializeBlockDefinitionsFromFile()
 
 		BlockDefinition newBlockDef = BlockDefinition(blockDefElement);
 		s_blockDefs.push_back(newBlockDef);
+		s_nameToIndexMap[newBlockDef.m_name] = s_blockDefs.size()-1;
 
 		blockDefElement = blockDefElement->NextSiblingElement("BlockDefinition");
 	}

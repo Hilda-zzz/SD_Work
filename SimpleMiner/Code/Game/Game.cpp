@@ -18,6 +18,8 @@
 #include "Engine/Window/Window.hpp"
 #include "Engine/Renderer/CubeSkyBox.hpp"
 #include "BlockDefinition.hpp"
+#include "World.hpp"
+#include "Chunk.hpp"
 
 extern bool g_isDebugDraw;
 extern Renderer* g_theRenderer;
@@ -31,6 +33,8 @@ Game::Game()
 	m_gridTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
 
 	m_gameClock = new Clock();
+
+	
 
 	m_cube = new Prop(this);
 	m_cube2 = new Prop(this);
@@ -52,6 +56,8 @@ Game::Game()
 	AddVertsForGroundGrid();
 	AddVertsForCubes();
 
+	
+
 	IntVec2 clientDimensions = g_theWindow->GetClientDimensions();
 	AABB2 viewport = AABB2(Vec2(0.f, 0.f), Vec2((float)clientDimensions.x, (float)clientDimensions.y));
 	m_screenCamera.SetViewport(viewport);
@@ -63,7 +69,7 @@ Game::Game()
 
 	m_player->m_playerCam.SetViewport(viewport);
 	float camAspect = viewport.GetDimensions().x / viewport.GetDimensions().y;
-	m_player->m_playerCam.SetPerspectiveView(camAspect, 60.f, 0.1f, 100.f);
+	m_player->m_playerCam.SetPerspectiveView(camAspect, 60.f, 0.1f, 300.f);
 
 	std::string logString = "\
 	Mouse x-axis / Right stick x-axis         Yaw\n\
@@ -92,6 +98,8 @@ Game::Game()
 
 	//----------------------Definitions-----------------------------
 	BlockDefinition::InitializeBlockDefinitionsFromFile();
+	Chunk::SetBlockAtlasTexture(&BlockDefinition::s_blockSheet->GetTexture());
+	m_world = new World(m_player);
 }
 
 Game::~Game()
@@ -116,6 +124,9 @@ Game::~Game()
 
 	delete m_cubeSkybox;
 	m_cubeSkybox = nullptr;
+
+	delete m_world;
+	m_world = nullptr;
 
 	BlockDefinition::ShutdownBlockDefinitions();
 }
@@ -200,7 +211,8 @@ void Game::UpdateAttractMode(float deltaTime)
 void Game::UpdateGameplayMode(float deltaTime)
 {
 	UNUSED(deltaTime);
-	m_player->Update((float)g_systemClock->GetDeltaSeconds());
+	//m_player->Update((float)g_systemClock->GetDeltaSeconds());
+	m_world->Update(deltaTime);
 	//-----------------------------------------------------------------------------------------
 	float cube2Color = CosDegrees(50.f * (float)m_gameClock->GetTotalSeconds());
 	cube2Color =RangeMapClamped(cube2Color, -1.f, 1.f, 0.f, 1.f);
@@ -337,6 +349,8 @@ void Game::RenderGameplayMode() const
 	m_cube2->Render();
 	m_sphere->Render();
 	m_groundGrid->Render();
+
+	m_world->Render();
 
 	g_theRenderer->EndCamera(m_player->m_playerCam);
 
