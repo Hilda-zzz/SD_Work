@@ -187,6 +187,46 @@ void AddVertsForArrow2D(std::vector<Vertex_PCU>& verts, Vec2 tailPos, Vec2 tipPo
 	AddVertsForLinSegment2D(verts, rightArrow, tipPos, lineThickness, color);
 }
 
+void AddVertsForAABBWire2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, float width, bool isOutsideFrame)
+{
+	AABB2 outerBounds, innerBounds;
+
+	if (isOutsideFrame) {
+		// Outside frame: entire wireframe is outside the original bounds
+		outerBounds = AABB2(
+			Vec2(bounds.m_mins.x - width, bounds.m_mins.y - width),
+			Vec2(bounds.m_maxs.x + width, bounds.m_maxs.y + width)
+		);
+		innerBounds = bounds;
+	}
+	else {
+		// Inside frame: entire wireframe is inside the original bounds
+		outerBounds = bounds;
+		innerBounds = AABB2(
+			Vec2(bounds.m_mins.x + width, bounds.m_mins.y + width),
+			Vec2(bounds.m_maxs.x - width, bounds.m_maxs.y - width)
+		);
+	}
+
+	// Add vertices for four edge rectangles
+	// Top edge
+	AddVertsForAABB2D(verts, AABB2(Vec2(outerBounds.m_mins.x, innerBounds.m_maxs.y),
+		Vec2(outerBounds.m_maxs.x, outerBounds.m_maxs.y)),
+		color, Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 0.0f);
+	// Bottom edge
+	AddVertsForAABB2D(verts, AABB2(Vec2(outerBounds.m_mins.x, outerBounds.m_mins.y),
+		Vec2(outerBounds.m_maxs.x, innerBounds.m_mins.y)),
+		color, Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 0.0f);
+	// Left edge
+	AddVertsForAABB2D(verts, AABB2(Vec2(outerBounds.m_mins.x, innerBounds.m_mins.y),
+		Vec2(innerBounds.m_mins.x, innerBounds.m_maxs.y)),
+		color, Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 0.0f);
+	// Right edge
+	AddVertsForAABB2D(verts, AABB2(Vec2(innerBounds.m_maxs.x, innerBounds.m_mins.y),
+		Vec2(outerBounds.m_maxs.x, innerBounds.m_maxs.y)),
+		color, Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 0.0f);
+}
+
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft, const Rgba8& color, const AABB2& UVs)
 {
 	verts.push_back(Vertex_PCU(Vec3(bottomLeft.x, bottomLeft.y, bottomLeft.z), color, UVs.m_mins));                    
@@ -552,11 +592,10 @@ void AddVertsForOBB3D(std::vector<Vertex_PCU>& verts, const OBB3& box, const Rgb
 	}
 }
 
-void AddVertsForAABB3DWireFrame(std::vector<Vertex_PCU>& verts, const AABB3& bounds, const Rgba8& color, const AABB2& UVs)
+void AddVertsForAABB3DWireFrame(std::vector<Vertex_PCU>& verts, const AABB3& bounds, float radius, const Rgba8& color, const AABB2& UVs)
 {
 	Vec3 mins = bounds.m_mins;
 	Vec3 maxs = bounds.m_maxs;
-	float radius = 0.03f; 
 
 	AddVertsForCylinder3D(verts, Vec3(mins.x, mins.y, mins.z), Vec3(maxs.x, mins.y, mins.z), radius, color, UVs);
 	AddVertsForCylinder3D(verts, Vec3(maxs.x, mins.y, mins.z), Vec3(maxs.x, maxs.y, mins.z), radius, color, UVs);
@@ -684,7 +723,7 @@ void AddVertsForCylinder3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& 
 void AddVertsForOBB3DWireFrame(std::vector<Vertex_PCU>& verts, const OBB3& box, const Rgba8& color, const AABB2& UVs)
 {
 	size_t originalSize = verts.size();
-	AddVertsForAABB3DWireFrame(verts, AABB3(-box.m_halfDimensions, box.m_halfDimensions),color,UVs);
+	AddVertsForAABB3DWireFrame(verts, AABB3(-box.m_halfDimensions, box.m_halfDimensions),0.03f,color,UVs);
 
 	Mat44 mat = Mat44(box.m_iBasis, box.m_jBasis, box.m_kBasis, box.m_center);
 	for (size_t i = originalSize; i < verts.size(); i++)

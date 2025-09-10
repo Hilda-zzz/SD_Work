@@ -54,7 +54,7 @@ void App::Startup()
 
 	g_systemClock = new Clock();
 	DevConsoleConfig devConsoleConfig("Data/Fonts/SquirrelFixedFont", 0.7f, 45.f);
-	g_theDevConsole = new DevConsole(devConsoleConfig);
+	g_theDevConsole = new DevConsole(devConsoleConfig,0);
 
 	g_theEventSystem->Startup();
 	g_theWindow->Startup();

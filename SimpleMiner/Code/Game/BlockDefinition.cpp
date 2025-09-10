@@ -62,7 +62,7 @@ void BlockDefinition::InitializeBlockDefinitionsFromFile()
 
 		BlockDefinition newBlockDef = BlockDefinition(blockDefElement);
 		s_blockDefs.push_back(newBlockDef);
-		s_nameToIndexMap[newBlockDef.m_name] = s_blockDefs.size()-1;
+		s_nameToIndexMap[newBlockDef.m_name] =(char)(s_blockDefs.size()-(uint8_t)1);
 
 		blockDefElement = blockDefElement->NextSiblingElement("BlockDefinition");
 	}

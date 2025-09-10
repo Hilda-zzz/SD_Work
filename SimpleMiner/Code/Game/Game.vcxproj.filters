@@ -100,5 +100,8 @@
     <Xml Include="..\..\Run\Data\Definitions\BlockSpriteSheet_BlockDefinitions.xml">
       <Filter>DefFiles</Filter>
     </Xml>
+    <Xml Include="..\..\Run\Data\GameConfig.xml">
+      <Filter>DefFiles</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

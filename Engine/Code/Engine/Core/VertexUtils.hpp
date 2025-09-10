@@ -34,6 +34,7 @@ void AddVertsForTriangle2D(std::vector<Vertex_PCU>& verts, Triangle2 const& tria
 void AddVertsForLinSegment2D(std::vector<Vertex_PCU>& verts, Vec2 const& start,Vec2 const& end,float thickness, Rgba8 const& color);
 //void AddVertsForLinSegment2D(std::vector<Vertex_PCU>& verts,LineSegment2 const& lineSegment,float thickness , Rgba8 const& color);
 void AddVertsForArrow2D(std::vector<Vertex_PCU>& verts, Vec2 tailPos, Vec2 tipPos, float arrowSize, float lineThickness, Rgba8 const& color);
+void AddVertsForAABBWire2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, float width,bool isOutsideFrame);
 
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
@@ -62,7 +63,7 @@ void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const 
 void AddVertsForOBB3D(std::vector<Vertex_PCU>& verts, const OBB3& box,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
 
-void AddVertsForAABB3DWireFrame(std::vector<Vertex_PCU>& verts, const AABB3& bounds,
+void AddVertsForAABB3DWireFrame(std::vector<Vertex_PCU>& verts, const AABB3& bounds, float radius = 0.03f,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForSphere3DWireFrame(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);

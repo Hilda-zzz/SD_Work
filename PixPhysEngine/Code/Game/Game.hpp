@@ -3,6 +3,8 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
 class Clock;
+class SandboxMap;
+class SandboxPlayer;
 
 enum class GameState
 {
@@ -55,4 +57,9 @@ private:
 	bool m_isSlow = false;
 	bool m_pauseAfterUpdate = false;
 	bool m_isDevConsole = false;
+
+	SandboxMap* m_sandboxMap = nullptr;
+	SandboxPlayer* m_sandboxPlayer = nullptr;
+
+	float m_curDeltaTime;
 };

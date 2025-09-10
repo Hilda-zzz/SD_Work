@@ -2,6 +2,8 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "BlockDefinition.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/VertexBuffer.hpp"
+#include "Engine/Renderer/IndexBuffer.hpp"
 
 RandomNumberGenerator Chunk::s_rng;
 Texture* Chunk::s_blockAtlasTexture = nullptr;
@@ -31,9 +33,13 @@ void Chunk::Initialize()
 	m_vertexBuffer= g_theRenderer->CreateVertexBuffer(BLOCKS_PER_CHUNK*24, sizeof(Vertex_PCUTBN));
 	m_indexBuffer = g_theRenderer->CreateIndexBuffer(BLOCKS_PER_CHUNK*36);
 
+	AddVertsForAABB3DWireFrame(m_debugVertexArray, m_worldBounds,0.05f);
+
 	GenerateBlocks();
 
 	RebuildMesh();
+
+	
 }
 
 void Chunk::GenerateBlocks()
@@ -89,24 +95,34 @@ void Chunk::RebuildMesh()
 {
 	if (!m_isDirty) return;
 
+	m_vertsCount = 0;
+	m_indicesCount = 0;
 	m_vertices.clear();
 	m_indices.clear();
 	m_vertices.reserve(BLOCKS_PER_CHUNK * 24); 
 	m_indices.reserve(BLOCKS_PER_CHUNK * 36);
 
-	for (int z = 0; z < CHUNK_HEIGHT; ++z) 
-	{        
-		for (int y = 0; y < CHUNK_SIZE_Y; ++y) 
-		{ 
-			for (int x = 0; x < CHUNK_SIZE_X; ++x) 
-			{ 
-				IntVec3 coords(x, y, z);
-				int index = x + y * CHUNK_SIZE_X + z * CHUNK_SIZE_X * CHUNK_SIZE_Y;
-				Block block = m_blocks[index];      
-				if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
-					AddBlockVerts(coords, block); 
-				}
-			}
+// 	for (int z = 0; z < CHUNK_HEIGHT; ++z) 
+// 	{        
+// 		for (int y = 0; y < CHUNK_SIZE_Y; ++y) 
+// 		{ 
+// 			for (int x = 0; x < CHUNK_SIZE_X; ++x) 
+// 			{ 
+// 				IntVec3 coords(x, y, z);
+// 				int index = x + y * CHUNK_SIZE_X + z * CHUNK_SIZE_X * CHUNK_SIZE_Y;
+// 				Block block = m_blocks[index];      
+// 				if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
+// 					AddBlockVerts(coords, block); 
+// 				}
+// 			}
+// 		}
+// 	}
+	for (int i = 0; i < BLOCKS_PER_CHUNK; i++)
+	{
+		IntVec3 blockCoords = GetBlockCoords(i);
+		Block block = m_blocks[i];
+		if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
+			AddBlockVerts(blockCoords, block);
 		}
 	}
 
@@ -114,6 +130,8 @@ void Chunk::RebuildMesh()
 	g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
 
 	m_isDirty = false;
+	m_indicesCount = (int)m_indices.size();
+	m_vertsCount = (int)m_vertices.size();
 }
 
 void Chunk::RebuildDebugMesh()
@@ -138,6 +156,14 @@ void Chunk::Render() const
 
 void Chunk::RenderDebug() const
 {
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+	g_theRenderer->BindShader(nullptr);
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->DrawVertexArray(m_debugVertexArray);
 }
 
 Block Chunk::GetBlock(const IntVec3& localCoords) const
@@ -161,14 +187,15 @@ void Chunk::SetBlock(const IntVec3& localCoords, const Block& block)
 	m_isDirty = true;
 }
 
-Block Chunk::GetBlockAtGlobalCoords(const IntVec3& globalCoords) const
-{
-	return Block();
-}
+// Block Chunk::GetBlockAtGlobalCoords(const IntVec3& globalCoords) const
+// {
+// 	return Block();
+// }
 
-void Chunk::SetBlockAtGlobalCoords(const IntVec3& globalCoords, const Block& block)
-{
-}
+// void Chunk::SetBlockAtGlobalCoords(const IntVec3& globalCoords, const Block& block)
+// {
+// 	
+// }
 
 IntVec3 Chunk::GlobalToLocalCoords(const IntVec3& globalCoords) const
 {
@@ -206,7 +233,17 @@ Vec3 Chunk::LocalCoordsToWorldPos(const IntVec3& localCoords) const
 
 int Chunk::GetBlockIndex(const IntVec3& localCoords) const
 {
-	return localCoords.x + localCoords.y * CHUNK_SIZE_X + localCoords.z * CHUNK_SIZE_X * CHUNK_SIZE_Y;
+	//return localCoords.x + localCoords.y * CHUNK_SIZE_X + localCoords.z * CHUNK_SIZE_X * CHUNK_SIZE_Y;
+	return localCoords.x | (localCoords.y << CHUNK_BITS_X)
+		| (localCoords.z << (CHUNK_BITS_X + CHUNK_BITS_Y));
+}
+
+IntVec3 Chunk::GetBlockCoords(int index) const
+{
+	int x = index & CHUNK_MASK_X;
+	int y = (index>> CHUNK_BITS_X) & CHUNK_MASK_Y;
+	int z = (index >> (CHUNK_BITS_X+CHUNK_BITS_Y)) & CHUNK_MASK_Z;
+	return IntVec3(x, y, z);
 }
 
 int Chunk::CalculateTerrainHeight(int globalX, int globalY) const
@@ -298,4 +335,7 @@ void Chunk::AddBlockVerts(const IntVec3& localCoords, Block const& block)
 
 void Chunk::CalculateWorldBounds()
 {
+	Vec3 minBound = Vec3((float)m_chunkCoords.x*(float)CHUNK_SIZE_X, (float)m_chunkCoords.y * (float)CHUNK_SIZE_Y, 0.f);
+	Vec3 maxBound = minBound + Vec3((float)CHUNK_SIZE_X, (float)CHUNK_SIZE_Y, (float)CHUNK_HEIGHT);
+	m_worldBounds = AABB3(minBound, maxBound);
 }

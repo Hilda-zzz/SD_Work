@@ -8,6 +8,8 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Window/Window.hpp"
+#include "SandboxMap.hpp"
+#include "SandboxPlayer.hpp"
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
@@ -17,6 +19,8 @@ GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
 Game::Game()
 {
 	m_gameClock = new Clock();
+	m_sandboxPlayer = new SandboxPlayer(IntVec2(500, 250));
+	m_sandboxMap = new SandboxMap(m_sandboxPlayer,IntVec2(500,250));
 }
 
 Game::~Game()
@@ -29,7 +33,7 @@ Game::~Game()
 void Game::Update()
 {
 	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
-
+	m_curDeltaTime=deltaSeconds;
 	UpdateCamera(deltaSeconds);
 
 	// Update Game State
@@ -106,6 +110,9 @@ void Game::UpdateAttractMode(float deltaTime)
 void Game::UpdateGameplayMode(float deltaTime)
 {
 	UNUSED(deltaTime);
+
+	m_sandboxMap->Update(deltaTime);
+
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
 	{
 		m_nextGameState = GameState::GAME_STATE_ATTRACT;
@@ -173,8 +180,24 @@ void Game::RenderAttractMode() const
 
 void Game::RenderGameplayMode() const
 {
+	m_sandboxMap->Render();
+
 	g_theRenderer->BeginCamera(m_screenCamera);
-	RenderUI();
+	float framerate = 1.f / m_curDeltaTime;
+	char buffer[256];
+	sprintf_s(buffer,
+		"DT = %.2f\n"
+		"Framerate = %.2f\n",
+		m_curDeltaTime * 1000.f,
+		framerate);
+	std::string statsMessage(buffer);
+	std::vector<Vertex_PCU> title;
+	BitmapFont* font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+	font->AddVertsForTextInBox2D(title, statsMessage,
+		AABB2(Vec2(100.f, 650.f), Vec2(1000.f, 750.f)), 15.f, Rgba8::CYAN, 0.7f, Vec2(0.f, 1.f));
+	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+	g_theRenderer->BindTexture(&font->GetTexture());
+	g_theRenderer->DrawVertexArray(title);
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 

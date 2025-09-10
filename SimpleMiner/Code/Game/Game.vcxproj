@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\Definitions\BlockSpriteSheet_BlockDefinitions.xml" />
+    <Xml Include="..\..\Run\Data\GameConfig.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

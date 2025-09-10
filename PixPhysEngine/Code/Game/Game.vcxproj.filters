@@ -5,6 +5,12 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="ParticleMaterial">
+      <UniqueIdentifier>{59d52b49-9772-4ac0-a1eb-8f745964c73e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SandboxMode">
+      <UniqueIdentifier>{e382f90c-715d-4fc6-8317-9a6ff68e03cb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -19,6 +25,12 @@
     <ClCompile Include="GameCommon.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="SandboxMap.cpp">
+      <Filter>SandboxMode</Filter>
+    </ClCompile>
+    <ClCompile Include="SandboxPlayer.cpp">
+      <Filter>SandboxMode</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -32,6 +44,18 @@
     </ClInclude>
     <ClInclude Include="EngineBuildPreferences.hpp">
       <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Cell.hpp">
+      <Filter>ParticleMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="CellMatDef.hpp">
+      <Filter>ParticleMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="SandboxMap.hpp">
+      <Filter>SandboxMode</Filter>
+    </ClInclude>
+    <ClInclude Include="SandboxPlayer.hpp">
+      <Filter>SandboxMode</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

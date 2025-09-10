@@ -6,7 +6,7 @@ IntVec3::IntVec3(const IntVec3& copyFrom):x(copyFrom.x),y(copyFrom.y),z(copyFrom
 {
 }
 
-IntVec3::IntVec3(const IntVec2& copyFrom, int initialZ):x(copyFrom.x),y(copyFrom.y),z(z)
+IntVec3::IntVec3(const IntVec2& copyFrom, int initialZ):x(copyFrom.x),y(copyFrom.y),z(initialZ)
 {
 }
 

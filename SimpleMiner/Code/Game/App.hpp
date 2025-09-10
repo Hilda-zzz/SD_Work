@@ -22,8 +22,13 @@ private:
 	void BeginFrame();
 	void Render() const;
 	void EndFrame();
+	void LoadingGameConfig(std::string const& filePath);
 
 private:
 	float m_timeLastFrameStart=0;
+
+	float m_windowAspect = 2.f;
+	bool m_windowFullscreen = false;
+	std::string m_windowTitle = "Simple Miner A01";
 };
 bool OnQuitEvent(EventArgs& args);

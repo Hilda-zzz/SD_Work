@@ -29,6 +29,8 @@ public:
 	void Update();
 	void Renderer() const;
 
+	Vec2 GetScreenSize() { return m_screenSize; }
+
 private:
 	void UpdateAttractMode(float deltaTime);
 	void UpdateGameplayMode(float deltaTime);
@@ -56,6 +58,8 @@ private:
 	void AddVertsForGroundGrid();
 	void AddVertsForCubes();
 	void AddEntityToList(Entity& thisEntity, EntityList& list);
+
+	
 
 public:
 	static GameState m_curGameState;

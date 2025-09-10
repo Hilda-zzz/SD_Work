@@ -12,8 +12,8 @@ Player::Player(Game* owner) :Entity(owner)
 	m_orientation = EulerAngles(45.f, 45.f, 0.f);
 	m_playerCam = Camera();
 	
-	m_playerCam.SetCameraToRenderTransform(Mat44(Vec3(0.f, 0.f, 1.f), Vec3(-1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f)));
-	m_playerCam.SetPositionAndOrientation(Vec3(0.f, 0.f, 0.f), EulerAngles(0.f, 0.f, 0.f));
+ 	m_playerCam.SetCameraToRenderTransform(Mat44(Vec3(0.f, 0.f, 1.f), Vec3(-1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f)));
+ 	m_playerCam.SetPositionAndOrientation(m_position, m_orientation);
 }
 
 void Player::Update(float deltaSeconds)
@@ -24,7 +24,7 @@ void Player::Update(float deltaSeconds)
 	//--------------------------------------------------------
 	UpdateKBInput(deltaSeconds);
 	UpdateControllerInput(deltaSeconds);
-	
+
 	m_playerCam.SetPosition(m_position);
 	m_playerCam.SetOrientation(m_orientation);
 }
@@ -107,13 +107,6 @@ void Player::UpdateKBInput(float deltaSeconds)
 	m_velocity = aimDirection;
 	m_position += m_velocity * deltaSeconds;
 
-	if (g_theInput->IsKeyDown(KEYCODE_F8))
-	{
-		m_orientation.m_pitchDegrees = 0.f;
-		m_orientation.m_rollDegrees = 0.f;
-		m_orientation.m_yawDegrees = 0.f;
-		m_position = Vec3(0.f, 0.f, 0.f);
-	}
 }
 
 void Player::UpdateControllerInput(float deltaSeconds)
@@ -127,7 +120,7 @@ void Player::UpdateControllerInput(float deltaSeconds)
 	if (controller.IsConnected())
 	{
 		float curMoveSpeed;
-		if (controller.IsButtonDown(XboxButtonID::A))
+		if (controller.GetLeftTrigger() > 0.f|| controller.GetRightTrigger() > 0.f)
 		{
 			curMoveSpeed = m_moveSpeed * m_sprintFactor;
 		}
@@ -136,13 +129,13 @@ void Player::UpdateControllerInput(float deltaSeconds)
 			curMoveSpeed = m_moveSpeed;
 		}
 
-		if (controller.IsButtonDown(XboxButtonID::B))
-		{
-			m_orientation.m_pitchDegrees = 0.f;
-			m_orientation.m_rollDegrees = 0.f;
-			m_orientation.m_yawDegrees = 0.f;
-			m_position = Vec3(0.f, 0.f, 0.f);
-		}
+// 		if (controller.IsButtonDown(XboxButtonID::B))
+// 		{
+// 			m_orientation.m_pitchDegrees = 0.f;
+// 			m_orientation.m_rollDegrees = 0.f;
+// 			m_orientation.m_yawDegrees = 0.f;
+// 			m_position = Vec3(0.f, 0.f, 0.f);
+// 		}
 
 		Vec3 moveDirection = Vec3();
 		float leftStickMagnitude = controller.GetLeftStick().GetMagnitude();
@@ -153,14 +146,14 @@ void Player::UpdateControllerInput(float deltaSeconds)
 			moveDirection += controller.GetLeftStick().GetPosition().y* fwdDirection;
 
 		}
-		if (controller.IsButtonDown(XboxButtonID::LEFT_SHOULDER))
-		{
-			m_position += Vec3(0.f, 0.f, 1.f) * curMoveSpeed*deltaSeconds;
-		}
-		if (controller.IsButtonDown(XboxButtonID::RIGHT_SHOULDER))
-		{
-			m_position += Vec3(0.f, 0.f, -1.f) * curMoveSpeed * deltaSeconds;
-		}
+ 		if (controller.IsButtonDown(XboxButtonID::LEFT_SHOULDER))
+ 		{
+ 			m_position += Vec3(0.f, 0.f, 1.f) * curMoveSpeed*deltaSeconds;
+ 		}
+ 		if (controller.IsButtonDown(XboxButtonID::RIGHT_SHOULDER))
+ 		{
+ 			m_position += Vec3(0.f, 0.f, -1.f) * curMoveSpeed * deltaSeconds;
+ 		}
 		moveDirection.Normalized();
 		m_velocity = moveDirection * (leftStickMagnitude * curMoveSpeed);
 
@@ -171,27 +164,27 @@ void Player::UpdateControllerInput(float deltaSeconds)
 			m_angularVelocity.m_pitchDegrees = -controller.GetRightStick().GetPosition().y* m_pitchSpeed;
 		}
 
-		m_angularVelocity.m_rollDegrees = 0.f;
-		if (controller.GetLeftTrigger()>0.f)
-		{
-			m_angularVelocity.m_rollDegrees += -m_gamepadSensitivity * controller.GetLeftTrigger();
-		}
-		if (controller.GetRightTrigger() > 0.f)
-		{
-			m_angularVelocity.m_rollDegrees += m_gamepadSensitivity * controller.GetRightTrigger();
-		}
+// 		m_angularVelocity.m_rollDegrees = 0.f;
+// 		if (controller.GetLeftTrigger()>0.f)
+// 		{
+// 			m_angularVelocity.m_rollDegrees += -m_gamepadSensitivity * controller.GetLeftTrigger();
+// 		}
+// 		if (controller.GetRightTrigger() > 0.f)
+// 		{
+// 			m_angularVelocity.m_rollDegrees += m_gamepadSensitivity * controller.GetRightTrigger();
+// 		}
 
 		m_orientation = m_orientation + m_angularVelocity * deltaSeconds;
 		m_orientation.m_rollDegrees = GetClamped(m_orientation.m_rollDegrees, -45.f, 45.f);
 		m_orientation.m_pitchDegrees = GetClamped(m_orientation.m_pitchDegrees, -85.f, 85.f);
 		m_position += m_velocity * deltaSeconds;
 
-		if (controller.IsButtonDown(XboxButtonID::START))
-		{
-			m_orientation.m_pitchDegrees = 0.f;
-			m_orientation.m_rollDegrees = 0.f;
-			m_orientation.m_yawDegrees = 0.f;
-			m_position = Vec3(0.f, 0.f, 0.f);
-		}
+// 		if (controller.IsButtonDown(XboxButtonID::START))
+// 		{
+// 			m_orientation.m_pitchDegrees = 0.f;
+// 			m_orientation.m_rollDegrees = 0.f;
+// 			m_orientation.m_yawDegrees = 0.f;
+// 			m_position = Vec3(0.f, 0.f, 0.f);
+// 		}
 	}
 }
