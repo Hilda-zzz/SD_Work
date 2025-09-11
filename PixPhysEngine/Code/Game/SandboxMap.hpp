@@ -4,6 +4,7 @@
 #include <vector>
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include <utility>
 class SandboxPlayer;
 
 constexpr float GRAVITY = -98.f;           
@@ -83,4 +84,8 @@ private:
 	std::vector<Vertex_PCU> m_boundVerts;
 
 	float m_curDeltaTime = 0.f;
+
+	//------------
+	std::vector<std::pair<int, int>> m_updateOrder;
+	int m_frameCount = 0;
 };

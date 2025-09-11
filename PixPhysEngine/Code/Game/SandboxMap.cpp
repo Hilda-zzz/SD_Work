@@ -144,141 +144,6 @@ float SandboxMap::GetFrameTime()
 
 void SandboxMap::UpdateSandParticle(int x, int y)
 {
-	// rules
-	// 1 drop down first
-	// 2 if not empty, slide to diagno
-	// 3 random l or r
-// 	Cell& cell = m_grid[y][x];
-// 
-// 	cell.m_velocityY += GRAVITY * GetFrameTime();
-// 	bool canFallDown = IsValidPosition(x, y - 1) && m_grid[y - 1][x].IsEmpty();
-// 
-// 	if (canFallDown) {
-// 		if (cell.m_velocityY < TERMINAL_VELOCITY) {
-// 			cell.m_velocityY = TERMINAL_VELOCITY;
-// 		}
-// 		cell.m_accumulatedMoveY += cell.m_velocityY * GetFrameTime();
-// 
-// 		int curY = y;
-// 		while (m_grid[curY][x].m_accumulatedMoveY <= -1.0f) {
-// 			if (TryMoveParticle(x, curY, x, curY - 1)) {
-// 				curY -= 1;
-// 			}
-// 			else {
-// 				m_grid[curY][x].m_velocityY = 0.0f;
-// 				m_grid[curY][x].m_accumulatedMoveY = 0.0f;
-// 				break;
-// 			}
-// 		}
-// 		return;
-// 	}
-//  	else {
-//  		if (IsValidPosition(x, y - 1) &&
-//  			m_grid[y - 1][x].m_type == CellMatType::MAT_SAND) {
-//  
-//  			Cell& belowCell = m_grid[y - 1][x];
-//  
-//  			// pass the velocity (-v)
-// 			bool belowIsMoving = (belowCell.m_velocityY < -0.1f) ||
-// 				(belowCell.m_accumulatedMoveY < -0.1f);
-// 
-// 			if (belowIsMoving) {
-// 				if(m_grid[y][x].m_velocityY<belowCell.m_velocityY)
-// 					HandleSpeedTransfer(x, y, x, y - 1);
-// 				return;
-// 			}
-//  		}
-// 
-// 
-//  		// if cannot drop down, reset y velocity
-//  		cell.m_velocityY = 0.0f;
-//  		cell.m_accumulatedMoveY = 0.0f;
-//  
-//  		// try Diagonal Slide
-//  		TryDiagonalSlide(x, y);
-//  	}
-// 
-// 	Cell& cell = m_grid[y][x];
-// 	cell.m_accumulatedMoveY += cell.m_velocityY * GetFrameTime();
-// 	cell.m_velocityY += GRAVITY * GetFrameTime();
-// 	if (cell.m_velocityY < TERMINAL_VELOCITY) {
-// 		cell.m_velocityY = TERMINAL_VELOCITY;
-// 	}
-// 
-// 	// track cur particle's pos
-// 	int currentX = x;
-// 	int currentY = y;
-// 
-// 	while (m_grid[y][x].m_accumulatedMoveY <= -1.0f) {
-// 		int targetY = currentY - 1;
-// 
-// 		if (!IsValidPosition(currentX, targetY)) {
-// // 			m_grid[currentY][currentX].m_velocityY = 0.0f;
-// // 			m_grid[currentY][currentX].m_accumulatedMoveY = 0.0f;
-// 			if (currentX != x || currentY != y)
-// 			{
-// 				m_grid[currentY][currentX] = m_grid[y][x];
-// 				m_grid[y][x].SetEmpty();
-// 			}
-// 			break;
-// 		}
-// 
-// 		Cell& targetCell = m_grid[targetY][currentX];
-// 
-// 		if (targetCell.IsEmpty()) {
-// // 			if (TryMoveParticle(currentX, currentY, currentX, targetY)) {
-// // 				currentY = targetY; 
-// // 				m_grid[currentY][currentX].m_accumulatedMoveY += 1.0f;  
-// // 			}
-// // 			else {
-// // 				// 移动失败，停止
-// // 				m_grid[currentY][currentX].m_velocityY = 0.0f;
-// // 				m_grid[currentY][currentX].m_accumulatedMoveY = 0.0f;
-// // 				break;
-// // 			}
-// 			currentY = targetY;
-// 			m_grid[y][x].m_accumulatedMoveY += 1.0f;  
-// 		}
-// 		else if (targetCell.m_type == CellMatType::MAT_SAND) {
-// 			// 目标位置是沙子
-// 			bool targetIsMoving = (targetCell.m_velocityY < -0.1f);
-// 				//||(targetCell.m_accumulatedMoveY < -0.1f);
-// 
-// 			if (targetIsMoving) {
-// 				// 目标沙子在运动，比较速度
-// 				if (m_grid[y][x].m_velocityY < targetCell.m_velocityY) {
-// 					// 当前粒子更快，交换速度
-// 					HandleSpeedTransfer(currentX, currentY, currentX, targetY);
-// 					return;
-// 					// 交换后继续尝试移动（因为速度可能已经改变）
-// 				}
-// 			}
-// 			else {
-// 				// 目标沙子静止，无法向下移动，尝试侧边
-// 				m_grid[currentY][currentX].m_velocityY = 0.0f;
-// 				m_grid[currentY][currentX].m_accumulatedMoveY = 0.0f;
-// 				TryDiagonalSlide(currentX, currentY);
-// 				break;
-// 			}
-// 		}
-// // 		else {
-// // 			// 目标位置是其他固体，无法移动
-// // 			m_grid[currentY][currentX].m_velocityY = 0.0f;
-// // 			m_grid[currentY][currentX].m_accumulatedMoveY = 0.0f;
-// // 			TryDiagonalSlide(currentX, currentY);
-// // 			break;
-// // 		}
-// 	}
-// 	if (currentX != x || currentY != y)
-// 	{
-// 		m_grid[currentY][currentX] = m_grid[y][x];
-// 		m_grid[y][x].SetEmpty();
-// 	}
-// // 	if (m_grid[currentY][currentX].m_velocityY == 0.0f &&
-// // 		m_grid[currentY][currentX].m_accumulatedMoveY == 0.0f) {
-// // 		TryDiagonalSlide(currentX, currentY);
-// // 	}
-
 	Cell& cell = m_grid[y][x];
 
 	//=== 1. Phys====
@@ -286,20 +151,21 @@ void SandboxMap::UpdateSandParticle(int x, int y)
 	cell.m_velocityY += GRAVITY * dt;
 	cell.m_velocityY = std::min(cell.m_velocityY, TERMINAL_VELOCITY);
 	cell.m_accumulatedMoveY += cell.m_velocityY * dt;
-	cell.m_accumulatedMoveX += cell.m_velocityX * dt;
-	if (IsValidPosition(x, y-1) && !m_grid[y-1][x].IsEmpty()) {
-		cell.m_velocityY *= 0.8f; // 摩擦减速
-	}
+	//cell.m_accumulatedMoveX += cell.m_velocityX * dt;
+// 	if (IsValidPosition(x, y-1) && !m_grid[y-1][x].IsEmpty()) {
+// 		cell.m_velocityX *= 0.6f; // 摩擦减速
+// 		cell.m_velocityY *= 0.8f; // 摩擦减速
+// 	}
 
 	// === 2. 基于速度的移动尝试 ===
-	if (TryVelocityMove(x, y)) {
-		return; // 成功移动，结束
-	}
-
- 	// === 3. 简单下降 ===
- 	if (TrySimpleFall(x, y)) {
- 		return; // 成功下降，结束
- 	}
+// 	if () {
+// 		return; // 成功移动，结束
+// 	}
+	TryVelocityMove(x, y);
+  	// === 3. 简单下降 ===
+//   	if (TrySimpleFall(x, y)) {
+//   		return; // 成功下降，结束
+//   	}
  
  	// === 4. 对角滑落 ===
  	if (TryDiagonalSlide(x, y)) {
@@ -307,7 +173,7 @@ void SandboxMap::UpdateSandParticle(int x, int y)
  	}
  
  	// === 5. 无法移动，减速 ===
- 	HandleStuckParticle(x, y);
+ 	//HandleStuckParticle(x, y);
 
 }
 
@@ -580,32 +446,6 @@ void SandboxMap::HandleHorizontalSpeedTransfer(int x1, int y1, int x2, int y2)
 
 bool SandboxMap::TryVelocityMove(int x, int y)
 {
-// 	Cell& cell = m_grid[y][x];
-// 
-// 	// 计算目标位置
-// 	int targetX = x + (int)cell.m_velocityX * m_curDeltaTime;
-// 	int targetY = y + (int)cell.m_velocityY * m_curDeltaTime;
-// 
-// 	// 边界检查
-// 	if (!IsValidPosition(targetX, targetY)) {
-// 		return false;
-// 	}
-// 
-// 	Cell& target = m_grid[targetY][targetX];
-// 
-// 	if (target.IsEmpty()) {
-// 		// 目标为空，直接移动
-// 		MoveParticle(x, y, targetX, targetY);
-// 		return true;
-// 	}
-// 
-// 	if (target.m_type == CellMatType::MAT_SAND && !target.m_updatedThisFrame) {
-// 		// 目标是沙粒，检查是否可以推动
-// 		return TryPushParticle(x, y, targetX, targetY);
-// 	}
-// 
-// 	return false;
-
 	Cell& cell = m_grid[y][x];
 
 	// 检查是否有足够的累积移动距离进行移动
@@ -623,15 +463,15 @@ bool SandboxMap::TryVelocityMove(int x, int y)
 		moveStepsY = std::min(moveStepsY, 10); // 限制单帧最大移动距离，避免穿透
 	}
 
-	// X方向移动步数
-	if (cell.m_accumulatedMoveX >= 1.0f) {
-		moveStepsX = (int)floor(cell.m_accumulatedMoveX);
-		moveStepsX = std::min(moveStepsX, 3);
-	}
-	else if (cell.m_accumulatedMoveX <= -1.0f) {
-		moveStepsX = -(int)floor(-cell.m_accumulatedMoveX);
-		moveStepsX = std::max(moveStepsX, -3);
-	}
+// 	// X方向移动步数
+ 	if (cell.m_accumulatedMoveX >= 1.0f) {
+ 		moveStepsX = (int)floor(cell.m_accumulatedMoveX);
+ 		moveStepsX = std::min(moveStepsX, 3);
+ 	}
+ 	else if (cell.m_accumulatedMoveX <= -1.0f) {
+ 		moveStepsX = -(int)floor(-cell.m_accumulatedMoveX);
+ 		moveStepsX = std::max(moveStepsX, -3);
+ 	}
 
 	// 当前位置
 	int currentX = x;
@@ -657,17 +497,18 @@ bool SandboxMap::TryVelocityMove(int x, int y)
 			actualMoveY = step;
 			currentY = nextY;
 		}
-// 		else if (nextCell.m_type == CellMatType::MAT_SAND && !nextCell.m_updatedThisFrame) {
-// 			// 遇到其他沙粒，尝试推动
-// 			if (TryPushParticle(currentX, currentY, currentX, nextY)) {
-// 				// 推动成功，位置已经在TryPushParticle中处理了
-// 				return true;
-// 			}
-// 			else {
-// 				// 推动失败，停止移动
-// 				break;
-// 			}
-// 		}
+ 		else if (nextCell.m_type == CellMatType::MAT_SAND && !nextCell.m_updatedThisFrame) {
+ 			// 遇到其他沙粒，尝试推动
+ 			if (TryPushParticle(currentX, currentY, currentX, nextY)) {
+ 				// 推动成功，位置已经在TryPushParticle中处理了
+ 				//return true;
+				moveStepsY = (int)floor(-m_grid[currentY][currentX].m_accumulatedMoveY);
+ 			}
+ 			else {
+ 				// 推动失败，停止移动
+ 				break;
+ 			}
+ 		}
 		else {
 			// 遇到其他障碍物，停止移动
 			break;
@@ -675,14 +516,15 @@ bool SandboxMap::TryVelocityMove(int x, int y)
 	}
 
 	// === 水平移动：如果有水平速度且垂直移动受阻 ===
-	if (moveStepsX != 0 && actualMoveY == 0) {
-		int nextX = x + (moveStepsX > 0 ? 1 : -1);
-
-		if (IsValidPosition(nextX, y) && m_grid[y][nextX].IsEmpty()) {
-			currentX = nextX;
-			actualMoveX = (moveStepsX > 0 ? 1 : -1);
-		}
-	}
+	//&& actualMoveY == 0
+ 	if (moveStepsX != 0 ) {
+ 		int nextX = x + (moveStepsX > 0 ? 1 : -1);
+ 
+ 		if (IsValidPosition(nextX, y) && m_grid[y][nextX].IsEmpty()) {
+ 			currentX = nextX;
+ 			actualMoveX = (moveStepsX > 0 ? 1 : -1);
+ 		}
+ 	}
 
 	// === 执行移动 ===
 	if (actualMoveY > 0 || actualMoveX != 0) {
@@ -704,16 +546,16 @@ bool SandboxMap::TryVelocityMove(int x, int y)
 		// 垂直方向：如果期望移动但实际没有移动到期望位置
 	if (moveStepsY > 0 && actualMoveY < moveStepsY) {
 		// 垂直方向被阻挡，重置垂直累积移动和速度
-		cell.m_accumulatedMoveY = 0.0f;
+		//cell.m_accumulatedMoveY = 0.0f;
 		cell.m_velocityY *= 0.5f; // 碰撞减速
 	}
 
 	// 水平方向：如果期望移动但实际没有移动
-	if (moveStepsX != 0 && actualMoveX == 0) {
-		// 水平方向被阻挡，重置水平累积移动和速度
-		cell.m_accumulatedMoveX = 0.0f;
-		cell.m_velocityX *= 0.5f; // 碰撞减速
-	}
+ 	if (moveStepsX != 0 && actualMoveX == 0) {
+ 		// 水平方向被阻挡，重置水平累积移动和速度
+ 		cell.m_accumulatedMoveX = 0.0f;
+ 		cell.m_velocityX = 0.5f; // 碰撞减速
+ 	}
 
 	return false;
 }
@@ -848,35 +690,153 @@ bool SandboxMap::TryDiagonalSlide(int x, int y)
 // 			newCell.m_velocityY = -20.0f;
 // 		}
 // 	}
-	bool leftOk = IsValidPosition(x - 1, y - 1) && m_grid[y-1][x-1].IsEmpty();
+// 	bool botOk= IsValidPosition(x , y - 1) && !m_grid[y - 1][x].IsEmpty();
+// 	bool leftOk = IsValidPosition(x - 1, y - 1) && m_grid[y-1][x-1].IsEmpty();
+// 	bool rightOk = IsValidPosition(x + 1, y - 1) && m_grid[y - 1][x + 1].IsEmpty();
+// 	if (!botOk) return false;
+// 	if (!leftOk && !rightOk) {
+// 		return false;
+// 	}
+// 
+// 	Cell& cell = m_grid[y][x];
+// 
+// 	// 在液体中时不随机选择方向
+// 	int targetX;
+// 	if (leftOk && rightOk) {
+// 		// 确定性随机选择
+// 		int direction = (rand() % 2 == 0) ? -1 : 1;
+// 		targetX = x + direction;
+// 	}
+// 	else {
+// 		targetX = leftOk ? x - 1 : x + 1;
+// 	}
+// 
+// 	// 执行对角移动
+// 	MoveParticle(x, y, targetX, y - 1);
+// 
+// 	// 对角移动时设置适当的水平速度
+// 	Cell& moved = m_grid[y - 1][targetX];
+// 	moved.m_velocityX = (targetX > x) ? 1.0f : -1.0f;
+// 	moved.m_velocityY *= 0.9f; // 轻微减速
+// 
+// 	return true;
+	Cell& cell = m_grid[y][x];
+
+	// 检查正下方是否被阻挡（对角滑落的前提条件）
+	bool botBlocked = IsValidPosition(x, y - 1) && !m_grid[y - 1][x].IsEmpty();
+	if (!botBlocked) {
+		return false; // 正下方没有阻挡，不需要对角滑落
+	}
+
+	// 检查左下和右下是否可以滑落
+	bool leftOk = IsValidPosition(x - 1, y - 1) && m_grid[y - 1][x - 1].IsEmpty();
 	bool rightOk = IsValidPosition(x + 1, y - 1) && m_grid[y - 1][x + 1].IsEmpty();
 
 	if (!leftOk && !rightOk) {
-		return false;
+		return false; // 两个对角方向都被阻挡
 	}
 
-	Cell& cell = m_grid[y][x];
+	// 计算基于向下速度的滑落步数
+// 	float downwardSpeed = std::abs(cell.m_velocityY);
+// 	if (downwardSpeed < 5.0f) {
+// 		return false; // 速度太小，不足以滑落
+// 	}
 
-	// 在液体中时不随机选择方向
-	int targetX;
+	// 基于累积移动距离计算滑落步数
+	int slideSteps = 0;
+	if (cell.m_accumulatedMoveY <= -1.0f) {
+		slideSteps = (int)floor(-cell.m_accumulatedMoveY);
+		slideSteps = std::min(slideSteps, 8); // 限制最大滑落距离，避免过度移动
+		//slideSteps = std::max(slideSteps, 8);
+	}
+
+	if (slideSteps <= 0) {
+		return false; // 没有足够的累积移动距离
+	}
+
+	// 选择滑落方向
+	int direction = 0;
 	if (leftOk && rightOk) {
-		// 确定性随机选择
+		// 两边都可以，确定性随机选择（避免偏向性）
 		int direction = (rand() % 2 == 0) ? -1 : 1;
-		targetX = x + direction;
+	}
+	else if (leftOk) {
+		direction = -1; // 只能向左
 	}
 	else {
-		targetX = leftOk ? x - 1 : x + 1;
+		direction = 1;  // 只能向右
 	}
 
-	// 执行对角移动
-	MoveParticle(x, y, targetX, y - 1);
+	// 沿对角线逐步检查能滑落多远
+	int actualSlideSteps = 0;
+	int currentX = x;
+	int currentY = y;
 
-	// 对角移动时设置适当的水平速度
-	Cell& moved = m_grid[y - 1][targetX];
-	moved.m_velocityX = (targetX > x) ? 1.0f : -1.0f;
-	moved.m_velocityY *= 0.9f; // 轻微减速
+	for (int step = 1; step <= slideSteps; step++) {
+		int nextX = x + direction * step;  // 水平位移随步数增加
+		int nextY = y - step;              // 垂直向下
 
-	return true;
+		// 边界检查
+		if (!IsValidPosition(nextX, nextY)) {
+			break;
+		}
+
+		Cell& nextCell = m_grid[nextY][nextX];
+
+		if (nextCell.IsEmpty()) {
+			// 位置为空，可以继续滑落
+			actualSlideSteps = step;
+			currentX = nextX;
+			currentY = nextY;
+		}
+		else if (nextCell.m_type == CellMatType::MAT_SAND && !nextCell.m_updatedThisFrame) {
+			// 遇到其他沙粒，尝试推动
+			if (TryPushParticle(x, y, nextX, nextY)) {
+				// 推动成功，移动已在TryPushParticle中处理
+				return true;
+			}
+			else {
+				// 推动失败，停止滑落
+				break;
+			}
+		}
+		else {
+			// 遇到其他障碍物，停止滑落
+			break;
+		}
+	}
+
+	// 执行滑落移动
+	if (actualSlideSteps > 0) {
+		// 移动到最终位置
+		MoveParticle(x, y, currentX, currentY);
+
+		// 更新移动后粒子的状态
+		Cell& movedCell = m_grid[currentY][currentX];
+
+		// 消耗累积移动距离
+		movedCell.m_accumulatedMoveY += actualSlideSteps;
+
+		// 根据滑落距离调整速度
+		float speedRetention = 0.85f + (actualSlideSteps * 0.02f); // 滑落越远保持更多速度
+		speedRetention = std::min(speedRetention, 0.95f);
+
+		movedCell.m_velocityY *= speedRetention;
+
+		// 设置水平速度（基于滑落方向和距离）
+		float horizontalSpeed = actualSlideSteps * 2.0f; // 滑落距离越大，水平速度越大
+		movedCell.m_velocityX = direction * horizontalSpeed;
+
+		return true;
+	}
+
+	// 无法滑落，重置部分累积移动（因为遇到了阻挡）
+	if (slideSteps > actualSlideSteps) {
+		cell.m_accumulatedMoveY = -(float)actualSlideSteps; // 保留没有消耗的部分
+		cell.m_velocityY *= 0.7f; // 因阻挡而减速
+	}
+
+	return false;
 }
 
 void SandboxMap::HandleSpeedTransfer(int x1, int y1, int x2, int y2)
