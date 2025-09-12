@@ -8,7 +8,7 @@
 class SandboxPlayer;
 
 constexpr float GRAVITY = -98.f;           
-constexpr float TERMINAL_VELOCITY = -200.0f; 
+constexpr float TERMINAL_SPEED = 200.0f; 
 constexpr float AIR_RESISTANCE = 0.98f;    
 constexpr float SAND_FRICTION = 0.7f;  
 
@@ -36,42 +36,16 @@ private:
 	float GetFrameTime();
 
 	void UpdateCell(int x, int y);
-	void HandlePlayerInteraction();
-	void renderGrid();
 
 	void UpdatePhysics();
 	void ResetUpdateFlags();
-	bool TryMoveParticle(int fromX, int fromY, int toX, int toY);
-	bool TryDiagonalSlide(int x, int y);
-	void HandleSpeedTransfer(int x1, int y1, int x2, int y2);
+	bool IsInBounds(int x, int y);
 	
 	// update diff mats
 	void UpdateSandParticle(int x, int y);
+	void UpdateSandY(int x, int y);
 
 
-	bool ProcessVerticalMovement(int startX, int startY, int& finalX, int& finalY);
-	bool HandleSandCollision(int currentX, int currentY, int finalX, int targetY);
-	void TransferMomentum(Cell& faster, Cell& slower);
-	void ProcessDiagonalSlide(int startX, int startY, int& finalX, int& finalY);
-	void ApplyPositionChange(int startX, int startY, int finalX, int finalY);
-	void UpdateWaterParticle(int x, int y);
-	void HandleWaterFlow(int x, int y);
-	void TryWaterHozrizontalFlow(int x, int y);
-	int  GetEffectiveHeight(int x, int baseY);
-
-	bool TryVerticalFlow(int x, int y);
-	bool TryDiagonalFlow(int x, int y);
-	void TryHorizontalFlow(int x, int y);
-	bool IsPathClear(int fromX, int fromY, int toX, int toY);
-	void HandleHorizontalSpeedTransfer(int x1, int y1, int x2, int y2);
-
-	bool TryVelocityMove(int x, int y);
-	bool TryPushParticle(int fromX, int fromY, int toX, int toY);
-	void SwapParticles(int x1, int y1, int x2, int y2);
-	void MoveParticle(int fromX, int fromY, int toX, int toY);
-	bool TrySimpleFall(int x, int y);
-	void HandleStuckParticle(int x, int y);
-	//bool TryDiagonalSlide(int x, int y);
 public:
 	
 

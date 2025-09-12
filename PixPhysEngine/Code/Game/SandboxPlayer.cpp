@@ -51,27 +51,23 @@ void SandboxPlayer::HandleInput()
 		int gridX = floor(mousePosInWorld.x);
 		int gridY = floor(mousePosInWorld.y);
 
-		// Only place material if position is valid and different from last frame
 		if (m_curMap->IsValidPosition(gridX, gridY))
 		{
-			// Check if this is a new position to avoid redundant placement
-			//if (gridX != m_lastPlacedPos.x || gridY != m_lastPlacedPos.y)
-			//{
-			if(m_isSand)
+			if (m_isSand)
+			{
 				m_curMap->PlaceMaterial(gridX, gridY, CellMatType::MAT_SAND, 1);
+				if (m_curMap->IsValidPosition(gridX + 1, gridY))
+					m_curMap->PlaceMaterial(gridX + 1, gridY, CellMatType::MAT_SAND, 1);
+				if (m_curMap->IsValidPosition(gridX - 1, gridY))
+					m_curMap->PlaceMaterial(gridX - 1, gridY, CellMatType::MAT_SAND, 1);
+				if (m_curMap->IsValidPosition(gridX, gridY + 1))
+					m_curMap->PlaceMaterial(gridX, gridY + 1, CellMatType::MAT_SAND, 1);
+				if (m_curMap->IsValidPosition(gridX, gridY - 1))
+					m_curMap->PlaceMaterial(gridX, gridY - 1, CellMatType::MAT_SAND, 1);
+			}
 			else
 				m_curMap->PlaceMaterial(gridX, gridY, CellMatType::MAT_WATER, 1);
-
-				m_lastPlacedPos.x = gridX;
-				m_lastPlacedPos.y= gridY;
-			//}
 		}
-	}
-	else
-	{
-		// Reset last placed position when mouse is released
-		m_lastPlacedPos.x = -1;
-		m_lastPlacedPos.y = -1;
 	}
 }
 

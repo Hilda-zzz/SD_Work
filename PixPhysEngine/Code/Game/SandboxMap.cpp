@@ -48,13 +48,13 @@ void SandboxMap::Render() const
 
 void SandboxMap::Initialize()
 {
-	AddVertsForAABBWire2D(m_boundVerts, m_mapBound, Rgba8::WHITE, m_mapSize.x/100.f, true);
+	AddVertsForAABBWire2D(m_boundVerts, m_mapBound, Rgba8::WHITE, m_mapSize.x / 100.f, true);
 }
 
 void SandboxMap::PlaceMaterial(int x, int y, CellMatType type, int brushSize)
 {
 	m_grid[y][x].m_type = type;
-	if(type==CellMatType::MAT_SAND)
+	if (type == CellMatType::MAT_SAND)
 		m_grid[y][x].m_color = Rgba8::HILDA;
 	else
 		m_grid[y][x].m_color = Rgba8::CYAN;
@@ -78,11 +78,11 @@ void SandboxMap::UpdateCell(int x, int y)
 	currentCell.m_updatedThisFrame = true;
 	switch (currentCell.m_type)
 	{
-	case CellMatType::MAT_SAND:  
+	case CellMatType::MAT_SAND:
 		UpdateSandParticle(x, y);
 		break;
 	case CellMatType::MAT_WATER:
-		UpdateWaterParticle(x, y);
+		//UpdateWaterParticle(x, y);
 		break;
 	default:
 		break;
@@ -98,7 +98,7 @@ void SandboxMap::UpdatePhysics()
 	{
 		for (int x = 0; x < m_mapSize.x; x++)
 		{
-			if (!m_grid[y][x].m_updatedThisFrame && m_grid[y][x].m_type!=CellMatType::MAT_EMPTY)
+			if (!m_grid[y][x].m_updatedThisFrame && m_grid[y][x].m_type != CellMatType::MAT_EMPTY)
 			{
 				UpdateCell(x, y);
 			}
@@ -117,24 +117,13 @@ void SandboxMap::ResetUpdateFlags()
 	}
 }
 
-bool SandboxMap::TryMoveParticle(int fromX, int fromY, int toX, int toY)
+bool SandboxMap::IsInBounds(int x, int y)
 {
-// 	if (!IsValidPosition(toX, toY))
-// 	{
-// 		return false;
-// 	}
-// 	if (m_grid[toY][toX].m_type!=CellMatType::MAT_EMPTY)
-// 	{
-// 		return false;
-// 	}
-	
-	m_grid[toY][toX] = m_grid[fromY][fromX];
-	m_grid[toY][toX].m_updatedThisFrame = true;
-	m_grid[fromY][fromX].SetEmpty();
-	m_grid[fromY][fromX].m_color = Rgba8::WHITE;
-
-	//m_grid[toY][toX].m_accumulatedMoveY += 1.0f;
-	return true;
+	if (x >= 0 && x < m_mapSize.x && y >= 0 && y < m_mapSize.y)
+	{
+		return true;
+	}
+	return false;
 }
 
 float SandboxMap::GetFrameTime()
@@ -146,704 +135,124 @@ void SandboxMap::UpdateSandParticle(int x, int y)
 {
 	Cell& cell = m_grid[y][x];
 
-	//=== 1. Phys====
-	float dt = GetFrameTime();
-	cell.m_velocityY += GRAVITY * dt;
-	cell.m_velocityY = std::min(cell.m_velocityY, TERMINAL_VELOCITY);
-	cell.m_accumulatedMoveY += cell.m_velocityY * dt;
-	//cell.m_accumulatedMoveX += cell.m_velocityX * dt;
-// 	if (IsValidPosition(x, y-1) && !m_grid[y-1][x].IsEmpty()) {
-// 		cell.m_velocityX *= 0.6f; // 摩擦减速
-// 		cell.m_velocityY *= 0.8f; // 摩擦减速
-// 	}
+	// 物理更新 (重力向下，所以是负值)
+	cell.m_velocityY += GRAVITY * m_curDeltaTime; 
+	cell.m_velocityY = std::max(cell.m_velocityY, -TERMINAL_SPEED);
+	cell.m_accumulMoveY += cell.m_velocityY * m_curDeltaTime;
+	cell.m_accumulMoveX += cell.m_velocityX * m_curDeltaTime;
 
-	// === 2. 基于速度的移动尝试 ===
-// 	if () {
-// 		return; // 成功移动，结束
-// 	}
-	TryVelocityMove(x, y);
-  	// === 3. 简单下降 ===
-//   	if (TrySimpleFall(x, y)) {
-//   		return; // 成功下降，结束
-//   	}
- 
- 	// === 4. 对角滑落 ===
- 	if (TryDiagonalSlide(x, y)) {
- 		return; // 成功滑落，结束
- 	}
- 
- 	// === 5. 无法移动，减速 ===
- 	//HandleStuckParticle(x, y);
-
-}
-
-void SandboxMap::UpdateWaterParticle(int x, int y)
-{
-	Cell& cell = m_grid[y][x];
-	cell.m_velocityY += GRAVITY * 0.8f * GetFrameTime();
-
-	float waterTerminalVelocity = TERMINAL_VELOCITY * 0.7f;
-	if (cell.m_velocityY < waterTerminalVelocity) {
-		cell.m_velocityY = waterTerminalVelocity;
+	// 检查累积移动是否足够 (向下移动，累积值为负)
+	if (std::abs(cell.m_accumulMoveY) < 1.0f&& std::abs(cell.m_accumulMoveX) < 1.0f) {
+		return; // 累积移动小于1，不移动
 	}
 
-	if (TryVerticalFlow(x, y)) {
-		return;
-	}
+	// 计算目标移动距离 (向下移动的格数)
+	int moveStepsY = static_cast<int>(std::abs(cell.m_accumulMoveY));
+	//cell.m_accumulMoveY += moveStepsY; // 消耗累积的移动 (因为是负值，所以加回去)
 
-	if (TryDiagonalFlow(x, y)) {
-		return;
-	}
-
-	TryHorizontalFlow(x, y);
-}
-
-void SandboxMap::HandleWaterFlow(int x, int y)
-{
-	Cell& cell = m_grid[y][x];
-
-	// reset y velocity
-	cell.m_velocityY = 0.0f;
-	cell.m_accumulatedMoveY = 0.0f;
-
-	TryWaterHozrizontalFlow(x, y);
-}
-
-void SandboxMap::TryWaterHozrizontalFlow(int x, int y)
-{
-	Cell& cell = m_grid[y][x];
-
-	// diagonal
-	bool canFlowDownLeft = IsValidPosition(x - 1, y - 1) && m_grid[y - 1][x - 1].IsEmpty();
-	bool canFlowDownRight = IsValidPosition(x + 1, y - 1) && m_grid[y + 1][x + 1].IsEmpty();
-
-	if (canFlowDownLeft && canFlowDownRight) {
-		int direction = (rand() % 2 == 0) ? -1 : 1;
-		TryMoveParticle(x, y, x + direction, y - 1);
-		return;
-	}
-	else if (canFlowDownLeft) {
-		TryMoveParticle(x, y, x - 1, y - 1);
-		return;
-	}
-	else if (canFlowDownRight) {
-		TryMoveParticle(x, y, x + 1, y - 1);
-		return;
-	}
-
-	const int SPREAD_RANGE = 5;  
-	const int FALL_RANGE = 2;    
-
-	int searchDirection = (rand() % 2 == 0) ? 1 : -1;
-
-	for (int dy = 0; dy < FALL_RANGE; dy++) {
-		for (int dx = 1; dx <= SPREAD_RANGE; dx++) {
-			int targetX = x + dx * searchDirection;
-			int targetY = y - dy;
-
-			if (IsValidPosition(targetX, targetY) && m_grid[targetY][targetX].IsEmpty()) {
-				TryMoveParticle(x, y, targetX, targetY);
-				return;
-			}
-
-			targetX = x - dx * searchDirection;
-			if (IsValidPosition(targetX, targetY) && m_grid[targetY][targetX].IsEmpty()) {
-				TryMoveParticle(x, y, targetX, targetY);
-				return;
-			}
-		}
-	}
-}
-
-int SandboxMap::GetEffectiveHeight(int x, int baseY)
-{
-	if (!IsValidPosition(x, baseY)) return 0;
-
-	int groundLevel = 0;
-	int checkY = baseY;
-
-	// find toward +y
-	while (IsValidPosition(x, checkY) &&
-		!m_grid[checkY][x].IsEmpty()) {  
-		groundLevel++;
-		checkY++;
-	}
-
-	return groundLevel;
-}
-
-bool SandboxMap::TryVerticalFlow(int x, int y)
-{
-	Cell& cell = m_grid[y][x];
-	bool canFallDown = IsValidPosition(x, y - 1) && m_grid[y - 1][x].IsEmpty();
-
-	if (canFallDown) {
-		cell.m_accumulatedMoveY += cell.m_velocityY * GetFrameTime();
-		int curY = y;
-
-		while (m_grid[curY][x].m_accumulatedMoveY <= -1.0f) {
-			if (TryMoveParticle(x, curY, x, curY - 1)) {
-				curY -= 1;
-			}
-		}
-		return true;
-	}
-	else {
-		if (IsValidPosition(x, y - 1) &&
-			!m_grid[y - 1][x].IsEmpty()) {
-
-			Cell& belowCell = m_grid[y - 1][x];
-
-			// pass the velocity (-v)
-			bool belowIsMoving = (belowCell.m_velocityY < -0.1f) ||
-				(belowCell.m_accumulatedMoveY < -0.1f);
-
-			if (belowIsMoving) {
-				if (m_grid[y][x].m_velocityY < belowCell.m_velocityY)
-					HandleSpeedTransfer(x, y, x, y - 1);
-			}
-			return true;
-		}
-
-		// if cannot drop down, reset y velocity
-		cell.m_velocityY = 0.0f;
-		cell.m_accumulatedMoveY = 0.0f;
-		return false;
-	}
-	return false;
-}
-
-bool SandboxMap::TryDiagonalFlow(int x, int y)
-{
-	bool canFlowDownLeft = IsValidPosition(x - 1, y - 1) && m_grid[y - 1][x - 1].IsEmpty();
-	bool canFlowDownRight = IsValidPosition(x + 1, y - 1) && m_grid[y + 1][x + 1].IsEmpty();
-
-	if (canFlowDownLeft && canFlowDownRight) {
-		int direction = (rand() % 2 == 0) ? -1 : 1;
-		if (TryMoveParticle(x, y, x + direction, y - 1)) {
-			Cell& newCell = m_grid[y - 1][x + direction];
-			newCell.m_velocityX = direction * WATER_HORIZONTAL_SPEED;
-			return true;
-		}
-	}
-	else if (canFlowDownLeft) {
-		if (TryMoveParticle(x, y, x - 1, y - 1)) {
-			Cell& newCell = m_grid[y - 1][x - 1];
-			newCell.m_velocityX = -WATER_HORIZONTAL_SPEED;
-			return true;
-		}
-	}
-	else if (canFlowDownRight) {
-		if (TryMoveParticle(x, y, x + 1, y - 1)) {
-			Cell& newCell = m_grid[y - 1][x + 1];
-			newCell.m_velocityX = WATER_HORIZONTAL_SPEED;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void SandboxMap::TryHorizontalFlow(int x, int y)
-{
-	Cell& cell = m_grid[y][x];
-
-	// 如果没有水平速度，随机给予一个方向
-	if (abs(cell.m_velocityX) < 0.1f) {
-		int direction = (rand() % 2 == 0) ? -1 : 1;
-		cell.m_velocityX = direction * WATER_HORIZONTAL_SPEED;
-	}
-
-	// 确定移动方向
-	int moveDirection = (cell.m_velocityX > 0) ? 1 : -1;
-	bool canMoveHorizontal = IsValidPosition(x + moveDirection, y) &&
-		m_grid[y][x + moveDirection].IsEmpty();
-
-	if (canMoveHorizontal) {
-		// 可以水平移动
-		cell.m_accumulatedMoveX += cell.m_velocityX * GetFrameTime();
-		int curX = x;
-
-		while (abs(m_grid[y][curX].m_accumulatedMoveX) >= 1.0f) {
-			int stepDirection = (m_grid[y][curX].m_accumulatedMoveX > 0) ? 1 : -1;
-			if (TryMoveParticle(curX, y, curX + stepDirection, y)) {
-				curX += stepDirection;
-				m_grid[y][curX].m_accumulatedMoveX -= stepDirection;
-			}
-			else {
-				// 移动失败，停止
-				m_grid[y][curX].m_velocityX = 0.0f;
-				m_grid[y][curX].m_accumulatedMoveX = 0.0f;
-				break;
-			}
-		}
-	}
-	else {
-		// 不能水平移动，检查侧面是什么
-		if (IsValidPosition(x + moveDirection, y) &&
-			!m_grid[y][x + moveDirection].IsEmpty()) {
-
-			Cell& sideCell = m_grid[y][x + moveDirection];
-
-			// 如果侧面是水，可以交换速度
-			if (sideCell.m_type == CellMatType::MAT_WATER) {
-// 				bool sideIsMoving = (abs(sideCell.m_velocityX) > 0.1f) ||
-// 					(abs(sideCell.m_accumulatedMoveX) > 0.1f);
-
-				if (abs(cell.m_velocityX) > abs(sideCell.m_velocityX)) {
-					HandleHorizontalSpeedTransfer(x, y, x + moveDirection, y);
-				}
-
-// 				if (sideIsMoving) {
-// 					// 检查速度是否需要交换（当前水比侧面水快）
-// 				
-// 				}
-// 				else {
-// 					// 侧面的水是静止的，当前水减速但不完全停止
-// 					cell.m_velocityX *= WATER_FLOW_DAMPING;
-// 					cell.m_accumulatedMoveX = 0.0f;
-// 				}
-			}
-			else {
-				// 侧面是沙子等固体，完全停止
-				cell.m_velocityX = 0.0f;
-				cell.m_accumulatedMoveX = 0.0f;
-			}
-		}
-	}
-}
-
-bool SandboxMap::IsPathClear(int fromX, int fromY, int toX, int toY)
-{
-	if (abs(toX - fromX) <= 1 && abs(toY - fromY) <= 1) {
-		return IsValidPosition(toX, toY) && m_grid[toY][toX].IsEmpty();
-	}
-
-	int dx = abs(toX - fromX);
-	int dy = abs(toY - fromY);
-	int steps = std::max(dx, dy);
-
-	for (int i = 1; i <= steps; i++) {
-		int checkX = fromX + (toX - fromX) * i / steps;
-		int checkY = fromY + (toY - fromY) * i / steps;
-
-		if (!IsValidPosition(checkX, checkY) || !m_grid[checkY][checkX].IsEmpty()) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-void SandboxMap::HandleHorizontalSpeedTransfer(int x1, int y1, int x2, int y2)
-{
-	Cell& fastCell = m_grid[y1][x1];
-	Cell& slowCell = m_grid[y2][x2];
-
-	std::swap(fastCell.m_velocityX, slowCell.m_velocityX);
-	std::swap(fastCell.m_accumulatedMoveX, slowCell.m_accumulatedMoveX);
-}
-
-bool SandboxMap::TryVelocityMove(int x, int y)
-{
-	Cell& cell = m_grid[y][x];
-
-	// 检查是否有足够的累积移动距离进行移动
-	if (cell.m_accumulatedMoveY > -1.0f && cell.m_accumulatedMoveX < 1.0f && cell.m_accumulatedMoveX > -1.0f) {
-		return false; // 累积移动距离不够，不移动
-	}
-
-	// 计算这一帧要移动的格数
-	int moveStepsY = 0;
-	int moveStepsX = 0;
-
-	// Y方向移动步数（向下为负）
-	if (cell.m_accumulatedMoveY <= -1.0f) {
-		moveStepsY = (int)floor(-cell.m_accumulatedMoveY); // 向下移动的格数
-		moveStepsY = std::min(moveStepsY, 10); // 限制单帧最大移动距离，避免穿透
-	}
-
-// 	// X方向移动步数
- 	if (cell.m_accumulatedMoveX >= 1.0f) {
- 		moveStepsX = (int)floor(cell.m_accumulatedMoveX);
- 		moveStepsX = std::min(moveStepsX, 3);
- 	}
- 	else if (cell.m_accumulatedMoveX <= -1.0f) {
- 		moveStepsX = -(int)floor(-cell.m_accumulatedMoveX);
- 		moveStepsX = std::max(moveStepsX, -3);
- 	}
-
-	// 当前位置
+	// 沿路径逐步检查
 	int currentX = x;
 	int currentY = y;
 
-	// 实际移动的距离
-	int actualMoveY = 0;
-	int actualMoveX = 0;
+	//--------------------------------------------------------------
+	for (int step = 0; step < moveStepsY; step++) {
+		int nextY = currentY - 1; // 向下移动 (Y轴向上，所以-1是向下)
 
-	// === 垂直移动：逐格向下检查 ===
-	for (int step = 1; step <= moveStepsY; step++) {
-		int nextY = y - step; // 向下移动（Y坐标减小）
-
-		// 边界检查
-		if (!IsValidPosition(currentX, nextY)) {
-			break; // 超出边界，停止移动
-		}
-
-		Cell& nextCell = m_grid[nextY][currentX];
-
-		if (nextCell.IsEmpty()) {
-			// 下方为空，可以继续向下
-			actualMoveY = step;
-			currentY = nextY;
-		}
- 		else if (nextCell.m_type == CellMatType::MAT_SAND && !nextCell.m_updatedThisFrame) {
- 			// 遇到其他沙粒，尝试推动
- 			if (TryPushParticle(currentX, currentY, currentX, nextY)) {
- 				// 推动成功，位置已经在TryPushParticle中处理了
- 				//return true;
-				moveStepsY = (int)floor(-m_grid[currentY][currentX].m_accumulatedMoveY);
- 			}
- 			else {
- 				// 推动失败，停止移动
- 				break;
- 			}
+		 // 检查是否可以直接下移
+ 		if (IsInBounds(currentX, nextY) && m_grid[nextY][currentX].IsEmpty()) {
+ 			currentY = nextY;
+			cell.m_accumulMoveY += 1.f;
+ 			continue;
  		}
-		else {
-			// 遇到其他障碍物，停止移动
-			break;
-		}
-	}
-
-	// === 水平移动：如果有水平速度且垂直移动受阻 ===
-	//&& actualMoveY == 0
- 	if (moveStepsX != 0 ) {
- 		int nextX = x + (moveStepsX > 0 ? 1 : -1);
  
- 		if (IsValidPosition(nextX, y) && m_grid[y][nextX].IsEmpty()) {
- 			currentX = nextX;
- 			actualMoveX = (moveStepsX > 0 ? 1 : -1);
- 		}
- 	}
+		// 检查下一个位置
+		if (!IsInBounds(currentX, nextY) || !m_grid[nextY][currentX].IsEmpty()) {
+			// 遇到阻挡，尝试斜下移动
+			int directionLR = 0;
+			if(cell.m_velocityX<0.2f) 
+				directionLR = (rand() % 2 == 0) ? -1 : 1;
+			else
+				directionLR = (cell.m_velocityX < 0.f) ? -1 : 1;
 
-	// === 执行移动 ===
-	if (actualMoveY > 0 || actualMoveX != 0) {
-		// 移动粒子到新位置
-		MoveParticle(x, y, currentX, currentY);
+			// 尝试随机方向的斜下
+			if (IsInBounds(currentX + directionLR, nextY) &&
+				m_grid[nextY][currentX + directionLR].IsEmpty()) {
 
-		// 更新累积移动距离（扣除已移动的距离）
-		Cell& movedCell = m_grid[currentY][currentX];
-		movedCell.m_accumulatedMoveY += actualMoveY; // 消耗向下移动的距离
+				// 移动到斜下位置
+				currentY = nextY;
+				currentX = currentX + directionLR;
+				cell.m_velocityX += 0.2f* cell.m_velocityY;
+				cell.m_velocityY *= 0.8f;
+				cell.m_accumulMoveY += 1.f;
+				continue;
+			}
 
-		if (actualMoveX != 0) {
-			movedCell.m_accumulatedMoveX -= actualMoveX; // 消耗水平移动的距离
+			// 尝试另一个方向的斜下
+			if (IsInBounds(currentX - directionLR, nextY) &&
+				m_grid[nextY][currentX - directionLR].IsEmpty()) {
+				currentY = nextY;
+				currentX = currentX - directionLR;
+				cell.m_velocityX += 0.2f* cell.m_velocityY;
+				cell.m_velocityY *= 0.8f;
+				cell.m_accumulMoveY += 1.f;
+				continue;
+			}
+
 		}
-
-		return true;
-	}
-
-	// === 处理被阻挡的移动 ===
-		// 垂直方向：如果期望移动但实际没有移动到期望位置
-	if (moveStepsY > 0 && actualMoveY < moveStepsY) {
-		// 垂直方向被阻挡，重置垂直累积移动和速度
-		//cell.m_accumulatedMoveY = 0.0f;
+		// 完全被阻挡，停止移动
 		cell.m_velocityY *= 0.5f; // 碰撞减速
+		break;
 	}
 
-	// 水平方向：如果期望移动但实际没有移动
- 	if (moveStepsX != 0 && actualMoveX == 0) {
- 		// 水平方向被阻挡，重置水平累积移动和速度
- 		cell.m_accumulatedMoveX = 0.0f;
- 		cell.m_velocityX = 0.5f; // 碰撞减速
- 	}
+	//--------------------------------------------------------------------------
+ 	// 检查累积移动是否足够 (向下移动，累积值为负)
+//   	if (std::abs(cell.m_accumulMoveX) < 1.0f) {
+//   		return; // 累积移动小于1，不移动
+//   	}
+	float directionX = (cell.m_velocityX < 0.f) ? -1.f : 1.f;
+	int moveStepsX = static_cast<int>(std::abs(cell.m_accumulMoveX));
 
-	return false;
-}
+	for (int step = 0; step < moveStepsX; step++) {
+		int nextX = currentX + (int)directionX;
 
-bool SandboxMap::TryPushParticle(int fromX, int fromY, int toX, int toY)
-{
-	Cell& pusher = m_grid[fromY][fromX];
-	Cell& target = m_grid[toY][toX];
-
-	// 计算速度差
-	float pusherSpeed = abs(pusher.m_velocityY);
-	float targetSpeed = abs(target.m_velocityY);
-	float speedDiff = pusherSpeed - targetSpeed;
-
-	// 只有速度差足够大才能推动
-	if (speedDiff > SPEED_THRESHOLD) {
-		// 交换位置
-		SwapParticles(fromX, fromY, toX, toY);
-		return true;
-	}
-
-	return false;
-}
-
-void SandboxMap::SwapParticles(int x1, int y1, int x2, int y2)
-{
-	Cell& cell1 = m_grid[y1][x1];
-	Cell& cell2 = m_grid[y2][x2];
-
-	// 交换粒子数据
-	Cell temp = cell1;
-	cell1 = cell2;
-	cell2 = temp;
-
-	// 动量传递（简化版）
-	float dampingFactor = 0.9f;
-
-	// 交换并调整速度
-	std::swap(cell1.m_velocityY, cell2.m_velocityY);
-	std::swap(cell1.m_velocityX, cell2.m_velocityX);
-
-	cell1.m_velocityY *= dampingFactor;
-	cell2.m_velocityY *= dampingFactor;
-
-	// 交换累积移动
-	std::swap(cell1.m_accumulatedMoveY, cell2.m_accumulatedMoveY);
-	std::swap(cell1.m_accumulatedMoveX, cell2.m_accumulatedMoveX);
-
-	// 标记已更新
-	cell1.m_updatedThisFrame = true;
-	cell2.m_updatedThisFrame = true;
-}
-
-void SandboxMap::MoveParticle(int fromX, int fromY, int toX, int toY)
-{
-	if (fromX == toX && fromY == toY) {
-		return; // 没有实际移动
-	}
-
-	Cell& source = m_grid[fromY][fromX];
-	Cell& target = m_grid[toY][toX];
-
-	// 移动粒子
-	target = source;
-	source.SetEmpty();
-}
-
-bool SandboxMap::TrySimpleFall(int x, int y)
-{
-	if (!IsValidPosition(x, y - 1)) {
-		return false;
-	}
-
-	Cell& below = m_grid[y - 1][x];
-
-	if (below.IsEmpty()) {
-		MoveParticle(x, y, x, y - 1);
-		return true;
-	}
-
-	if (below.m_type == CellMatType::MAT_SAND && !below.m_updatedThisFrame) {
-		Cell& current = m_grid[y][x];
-		if (abs(current.m_velocityY) > abs(below.m_velocityY) + 1.0f) {
-			SwapParticles(x, y, x, y - 1);
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void SandboxMap::HandleStuckParticle(int x, int y)
-{
-	Cell& cell = m_grid[y][x];
-
-	// 减速（摩擦效果）
-	cell.m_velocityY *= 0.85f;
-	cell.m_velocityX *= 0.7f;
-
-	// 如果速度太小，完全停止
-	if (abs(cell.m_velocityY) < 0.1f) {
-		cell.m_velocityY = 0.0f;
-	}
-	if (abs(cell.m_velocityX) < 0.1f) {
-		cell.m_velocityX = 0.0f;
-	}
-}
-
-bool SandboxMap::TryDiagonalSlide(int x, int y)
-{
-// 	Cell& cell = m_grid[y][x];
-// 
-// 	bool canSlideLeft = IsValidPosition(x - 1, y - 1) && m_grid[y - 1][x - 1].IsEmpty();
-// 	bool canSlideRight = IsValidPosition(x + 1, y - 1) && m_grid[y - 1][x + 1].IsEmpty();
-// 
-// 	if (canSlideLeft && canSlideRight) {
-// 		int direction = (rand() % 2 == 0) ? -1 : 1;
-// 		if (TryMoveParticle(x, y, x + direction, y - 1)) {
-// 			Cell& newCell = m_grid[y - 1][x + direction];
-// 			newCell.m_velocityY = -20.0f; 
-// 		}
-// 	}
-// 	else if (canSlideLeft) {
-// 		if (TryMoveParticle(x, y, x - 1, y - 1)) {
-// 			Cell& newCell = m_grid[y - 1][x - 1];
-// 			newCell.m_velocityY = -20.0f;
-// 		}
-// 	}
-// 	else if (canSlideRight) {
-// 		if (TryMoveParticle(x, y, x + 1, y - 1)) {
-// 			Cell& newCell = m_grid[y - 1][x + 1];
-// 			newCell.m_velocityY = -20.0f;
-// 		}
-// 	}
-// 	bool botOk= IsValidPosition(x , y - 1) && !m_grid[y - 1][x].IsEmpty();
-// 	bool leftOk = IsValidPosition(x - 1, y - 1) && m_grid[y-1][x-1].IsEmpty();
-// 	bool rightOk = IsValidPosition(x + 1, y - 1) && m_grid[y - 1][x + 1].IsEmpty();
-// 	if (!botOk) return false;
-// 	if (!leftOk && !rightOk) {
-// 		return false;
-// 	}
-// 
-// 	Cell& cell = m_grid[y][x];
-// 
-// 	// 在液体中时不随机选择方向
-// 	int targetX;
-// 	if (leftOk && rightOk) {
-// 		// 确定性随机选择
-// 		int direction = (rand() % 2 == 0) ? -1 : 1;
-// 		targetX = x + direction;
-// 	}
-// 	else {
-// 		targetX = leftOk ? x - 1 : x + 1;
-// 	}
-// 
-// 	// 执行对角移动
-// 	MoveParticle(x, y, targetX, y - 1);
-// 
-// 	// 对角移动时设置适当的水平速度
-// 	Cell& moved = m_grid[y - 1][targetX];
-// 	moved.m_velocityX = (targetX > x) ? 1.0f : -1.0f;
-// 	moved.m_velocityY *= 0.9f; // 轻微减速
-// 
-// 	return true;
-	Cell& cell = m_grid[y][x];
-
-	// 检查正下方是否被阻挡（对角滑落的前提条件）
-	bool botBlocked = IsValidPosition(x, y - 1) && !m_grid[y - 1][x].IsEmpty();
-	if (!botBlocked) {
-		return false; // 正下方没有阻挡，不需要对角滑落
-	}
-
-	// 检查左下和右下是否可以滑落
-	bool leftOk = IsValidPosition(x - 1, y - 1) && m_grid[y - 1][x - 1].IsEmpty();
-	bool rightOk = IsValidPosition(x + 1, y - 1) && m_grid[y - 1][x + 1].IsEmpty();
-
-	if (!leftOk && !rightOk) {
-		return false; // 两个对角方向都被阻挡
-	}
-
-	// 计算基于向下速度的滑落步数
-// 	float downwardSpeed = std::abs(cell.m_velocityY);
-// 	if (downwardSpeed < 5.0f) {
-// 		return false; // 速度太小，不足以滑落
-// 	}
-
-	// 基于累积移动距离计算滑落步数
-	int slideSteps = 0;
-	if (cell.m_accumulatedMoveY <= -1.0f) {
-		slideSteps = (int)floor(-cell.m_accumulatedMoveY);
-		slideSteps = std::min(slideSteps, 8); // 限制最大滑落距离，避免过度移动
-		//slideSteps = std::max(slideSteps, 8);
-	}
-
-	if (slideSteps <= 0) {
-		return false; // 没有足够的累积移动距离
-	}
-
-	// 选择滑落方向
-	int direction = 0;
-	if (leftOk && rightOk) {
-		// 两边都可以，确定性随机选择（避免偏向性）
-		int direction = (rand() % 2 == 0) ? -1 : 1;
-	}
-	else if (leftOk) {
-		direction = -1; // 只能向左
-	}
-	else {
-		direction = 1;  // 只能向右
-	}
-
-	// 沿对角线逐步检查能滑落多远
-	int actualSlideSteps = 0;
-	int currentX = x;
-	int currentY = y;
-
-	for (int step = 1; step <= slideSteps; step++) {
-		int nextX = x + direction * step;  // 水平位移随步数增加
-		int nextY = y - step;              // 垂直向下
-
-		// 边界检查
-		if (!IsValidPosition(nextX, nextY)) {
-			break;
+		bool currentHasSupport = (currentY == 0) ||
+			!m_grid[currentY - 1][currentX].IsEmpty();
+		bool nextHasSupport = false;
+		if (IsInBounds(nextX, currentY)) {
+			nextHasSupport = (currentY == 0) ||
+				!m_grid[currentY - 1][nextX].IsEmpty();
 		}
 
-		Cell& nextCell = m_grid[nextY][nextX];
+		if (IsInBounds(nextX, currentY) &&
+			currentHasSupport &&
+			nextHasSupport &&
+			m_grid[currentY][nextX].IsEmpty()) {
 
-		if (nextCell.IsEmpty()) {
-			// 位置为空，可以继续滑落
-			actualSlideSteps = step;
 			currentX = nextX;
-			currentY = nextY;
-		}
-		else if (nextCell.m_type == CellMatType::MAT_SAND && !nextCell.m_updatedThisFrame) {
-			// 遇到其他沙粒，尝试推动
-			if (TryPushParticle(x, y, nextX, nextY)) {
-				// 推动成功，移动已在TryPushParticle中处理
-				return true;
+			cell.m_velocityX *= 0.65f;
+
+			// 修正：根据方向正确消耗累积值
+			if (cell.m_velocityX > 0) {
+				cell.m_accumulMoveX -= 1.0f;  // 向右移动，减少正值
 			}
 			else {
-				// 推动失败，停止滑落
-				break;
+				cell.m_accumulMoveX += 1.0f;  // 向左移动，减少负值（加正值）
 			}
+			continue;
 		}
-		else {
-			// 遇到其他障碍物，停止滑落
-			break;
-		}
+
+		cell.m_velocityX *= 0.5f;
+		break;
 	}
-
-	// 执行滑落移动
-	if (actualSlideSteps > 0) {
-		// 移动到最终位置
-		MoveParticle(x, y, currentX, currentY);
-
-		// 更新移动后粒子的状态
-		Cell& movedCell = m_grid[currentY][currentX];
-
-		// 消耗累积移动距离
-		movedCell.m_accumulatedMoveY += actualSlideSteps;
-
-		// 根据滑落距离调整速度
-		float speedRetention = 0.85f + (actualSlideSteps * 0.02f); // 滑落越远保持更多速度
-		speedRetention = std::min(speedRetention, 0.95f);
-
-		movedCell.m_velocityY *= speedRetention;
-
-		// 设置水平速度（基于滑落方向和距离）
-		float horizontalSpeed = actualSlideSteps * 2.0f; // 滑落距离越大，水平速度越大
-		movedCell.m_velocityX = direction * horizontalSpeed;
-
-		return true;
-	}
-
-	// 无法滑落，重置部分累积移动（因为遇到了阻挡）
-	if (slideSteps > actualSlideSteps) {
-		cell.m_accumulatedMoveY = -(float)actualSlideSteps; // 保留没有消耗的部分
-		cell.m_velocityY *= 0.7f; // 因阻挡而减速
-	}
-
-	return false;
+ 	//--------------------------------------------------------------------------
+	//如果成功移动了一定距离，执行最终移动
+ 	if (currentY != y||currentX!=x) {
+ 		m_grid[currentY][currentX] = m_grid[y][x];
+ 		m_grid[y][x].SetEmpty();
+ 	}
 }
 
-void SandboxMap::HandleSpeedTransfer(int x1, int y1, int x2, int y2)
+void SandboxMap::UpdateSandY(int x, int y)
 {
-	Cell& fastCell = m_grid[y1][x1];
-	Cell& slowCell = m_grid[y2][x2];
-
-	std::swap(fastCell.m_velocityY, slowCell.m_velocityY);
-	std::swap(fastCell.m_accumulatedMoveY, slowCell.m_accumulatedMoveY);
 }
+
