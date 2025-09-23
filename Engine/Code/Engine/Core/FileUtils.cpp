@@ -34,3 +34,25 @@ int FileReadToString(std::string& outString, const std::string& filename)
 	outString = std::string(cstr);
 	return (int)outString.size();
 }
+
+bool FileExists(std::string const& filename)
+{
+	struct stat buffer;
+	return (stat(filename.c_str(), &buffer) == 0);
+}
+
+int FileWriteFromBuffer(std::vector<uint8_t>& inBuffer, const std::string& filename)
+{
+	FILE* fp = nullptr;
+	errno_t err = fopen_s(&fp, filename.c_str(), "wb"); // create file automatically it not exist
+	if (err != 0 || fp == nullptr)
+	{
+		printf("File opening failed");
+		return -1;
+	}
+
+	size_t bytesWritten = fwrite(inBuffer.data(), sizeof(uint8_t), inBuffer.size(), fp);
+	fclose(fp);
+
+	return (int)bytesWritten;
+}

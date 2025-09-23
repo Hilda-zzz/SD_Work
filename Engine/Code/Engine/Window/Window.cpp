@@ -5,13 +5,37 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include <ThirdParty/imgui/imgui.h>
+#include "Engine/Renderer/Renderer.hpp"
 
 Window* Window::s_mainWindow = nullptr;
 
 Window* g_theWindow = nullptr;
 
+extern Renderer* g_theRenderer;
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessageCode, WPARAM wParam, LPARAM lParam)
 {
+	if (g_theRenderer && g_theRenderer->IsImGuiEnabled()) {
+ 		ImGui_ImplWin32_WndProcHandler(windowHandle, wmMessageCode, wParam, lParam);
+ 
+ 		ImGuiIO& io = ImGui::GetIO();
+ 
+ 		if (wmMessageCode >= WM_MOUSEFIRST && wmMessageCode <= WM_MOUSELAST) {
+ 			if (io.WantCaptureMouse) {
+ 				return 0; 
+ 			}
+ 		}
+ 		if ((wmMessageCode >= WM_KEYFIRST && wmMessageCode <= WM_KEYLAST) ||
+ 			wmMessageCode == WM_CHAR || wmMessageCode == WM_SYSCHAR) {
+ 			if (io.WantCaptureKeyboard) {
+ 				return 0;
+ 			}
+ 		}
+	}
+
 	InputSystem* input = nullptr;
 	if (Window::s_mainWindow)
 	{

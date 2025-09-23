@@ -41,6 +41,9 @@ void* m_dxgiDebugModule = nullptr;
 #include "TextureCube.hpp"
 #include "PointLight.hpp"
 #include "../Math/MathUtils.hpp"
+#include "ThirdParty/imgui/imgui.h"
+#include "ThirdParty/imgui/backends/imgui_impl_win32.h"
+#include "ThirdParty/imgui/backends/imgui_impl_dx11.h"
 //-------------------------------------------------------------
 constexpr int MAX_POINT_LIGHTS= 10;
 constexpr int MAX_SPOT_LIGHTS = 10;
@@ -436,6 +439,12 @@ void Renderer::Startup()
 	{
 		InitializeShadowMapping();
 	}
+
+	if (m_config.m_imguiInitialized)
+	{
+		InitializeImgui();
+		m_enableImgui = true;
+	}
 }
 
 void Renderer::BeginFrame()
@@ -443,6 +452,7 @@ void Renderer::BeginFrame()
 	//Set render target
 	//m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
 	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
+
 }
 
 void Renderer::EndFrame()
@@ -563,7 +573,11 @@ void Renderer::Shutdown()
 		delete m_shadowViewport;
 		m_shadowViewport=nullptr;
 	}
-
+	if (m_config.m_imguiInitialized)
+	{
+		ShutdownImgui();
+		m_enableImgui = false;
+	}
 #if defined(ENGINE_DEBUG_RENDER)
 	((IDXGIDebug*)m_dxgiDebug)->ReportLiveObjects(
 		DXGI_DEBUG_ALL,
@@ -1524,6 +1538,60 @@ void Renderer::BindShadowTexture()
 void Renderer::SetShadowSampleState()
 {
 	m_deviceContext->PSSetSamplers(m_shadowSamplerSlotIndex, 1, &m_comparisonSampler_point);
+}
+
+void Renderer::InitializeImgui()
+{
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+
+	// Setup scaling
+	float main_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(::MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.ScaleAllSizes(main_scale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+	style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+
+	// Setup Platform/Renderer backends
+	if (!ImGui_ImplWin32_Init(m_config.m_window->GetHwnd())) {
+		return;
+	}
+	if (!ImGui_ImplDX11_Init(m_device, m_deviceContext)) {
+		ImGui_ImplWin32_Shutdown();
+		return;
+	}
+}
+
+void Renderer::ShutdownImgui()
+{
+	// Cleanup
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+}
+
+void Renderer::BeginImguiFrame()
+{
+	if (!m_enableImgui) return;
+
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+}
+
+void Renderer::RenderImguiFrame()
+{
+	if (!m_enableImgui) return;
+
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)

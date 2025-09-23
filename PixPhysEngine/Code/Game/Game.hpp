@@ -25,7 +25,7 @@ private:
 	void UpdateAttractMode(float deltaTime);
 	void UpdateGameplayMode(float deltaTime);
 
-	void UpdateDeveloperCheats(float deltaTime);
+	void UpdateDeveloperCheats(float& deltaTime);
 	void UpdateCamera(float deltaTime);
 	void AdjustForPauseAndTimeDitortion(float& deltaSeconds);
 
@@ -62,4 +62,5 @@ private:
 	SandboxPlayer* m_sandboxPlayer = nullptr;
 
 	float m_curDeltaTime;
+
 };

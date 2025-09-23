@@ -26,6 +26,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="BlockDefinition.cpp" />
+    <ClCompile Include="BlockIterator.cpp" />
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -33,12 +34,15 @@
     <ClCompile Include="Main_Windows.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Prop.cpp" />
+    <ClCompile Include="TerrainGenerator .cpp" />
+    <ClCompile Include="TerrainGenerator.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
     <ClInclude Include="Block.hpp" />
     <ClInclude Include="BlockDefinition.hpp" />
+    <ClInclude Include="BlockIterator.hpp" />
     <ClInclude Include="Chunk.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Entity.hpp" />
@@ -46,6 +50,7 @@
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="Prop.hpp" />
+    <ClInclude Include="TerrainGenerator.hpp" />
     <ClInclude Include="World.hpp" />
   </ItemGroup>
   <ItemGroup>

@@ -79,6 +79,8 @@ struct RendererConfig
 {
 	Window* m_window = nullptr;
 	bool m_enableShadow = false;
+
+	bool m_imguiInitialized = false;
 };
 
 class Renderer
@@ -158,6 +160,13 @@ public:
 	Mat44 GetDirectLightProjectionMat(Vec3 const& sunDirection, Vec3 const& sceneCenter, float sceneRadius);
 	void BindShadowTexture();
 	void SetShadowSampleState();
+
+	//----------------------Imgui--------------------------------------------
+	void InitializeImgui();
+	void ShutdownImgui();
+	void BeginImguiFrame();
+	void RenderImguiFrame();
+	bool IsImGuiEnabled() { return m_enableImgui; };
 
 public:
 	std::vector<Texture*>		m_loadedTextures;
@@ -247,4 +256,6 @@ protected:
 	float m_shadowDimensionY = 2048;
 	int m_shadowSamplerSlotIndex = 2;
 	int m_shadowTexSlotIndex = 3;
+
+	bool m_enableImgui = false;
 };

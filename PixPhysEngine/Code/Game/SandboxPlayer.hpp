@@ -30,7 +30,7 @@ private:
 	void HandleCameraControls();
 	void HandleMaterialSelection();
 	void HandleBrushControls();
-
+	
 public:
 	Camera m_camera;
 private:
@@ -39,4 +39,12 @@ private:
 	int m_brushSize = 1;
 	IntVec2 m_lastPlacedPos = IntVec2(-1, -1);
 	bool m_isSand = true;
+
+	bool m_isRightMouseDragging = false;
+	int m_dragStartX = 0;
+	int m_dragStartY = 0;
+	int m_dragCurrentX = 0;
+	int m_dragCurrentY = 0;
+
+
 };

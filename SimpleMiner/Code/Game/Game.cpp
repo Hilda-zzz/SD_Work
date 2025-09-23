@@ -30,7 +30,7 @@ GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
 
 Game::Game()
 {
-	m_gridTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
+	//m_gridTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
 
 	m_gameClock = new Clock();
 
@@ -51,14 +51,21 @@ Game::Game()
 	m_player->m_playerCam.SetPerspectiveView(camAspect, 60.f, 0.1f, 300.f);
 
 	std::string logString = "\
-	Mouse x-axis / Right stick x-axis         Yaw\n\
-	Mouse y-axis / Right stick y-axis         Pitch\n\
-	A / D / Left stick x-axis                 Move left or right, relative to the camera\n\
-	W / S / Left stick y-axis                 Move forward or back, relative to the camera\n\
-	Q / E / Left shoulder / right shoulder    Move up or down, relative to the world\n\
-	Shift / Left trigger / right trigger     Increase speed while held\n\
-	F2 / A button                             Toggle debug draw\n\
-	F8 / B button                             Reload";
+Mouse x-axis / Right stick x-axis           Yaw\n\
+Mouse y-axis / Right stick y-axis           Pitch\n\
+A / D / Left stick x-axis                   Move left or right, relative to the camera\n\
+W / S / Left stick y-axis                   Move forward or back, relative to the camera\n\
+Q / E / Left shoulder / right shoulder      Move up or down, relative to the world\n\
+Shift / Left trigger / right trigger        Increase speed while held\n\
+C / Dpad Up                                 Toggle camera mode\n\
+LMB / X button                              Digs a block\n\
+RMB / Y button                              Places a block\n\
+1 / Dpad left                               Select glowstone\n\
+2 / Dpad down                               Select cobblestone\n\
+3 / Dpad right                              Select chiseled brick\n\
+F2 / A button                               Toggle debug draw\n\
+F8 / B button                               Reload";
+
 	g_theDevConsole->AddLine(DevConsole::EVENT_FEEDBACK, logString);
 
 	//----------sky box--------------------
@@ -83,17 +90,17 @@ Game::Game()
 
 Game::~Game()
 {
-	delete m_cube;
-	m_cube = nullptr;
-
-	delete m_cube2;
-	m_cube2 = nullptr;
+// 	delete m_cube;
+// 	m_cube = nullptr;
+// 
+// 	delete m_cube2;
+// 	m_cube2 = nullptr;
 
 	delete m_player;
 	m_player = nullptr;
 
-	delete m_sphere;
-	m_sphere = nullptr;
+// 	delete m_sphere;
+// 	m_sphere = nullptr;
 
 	delete m_groundGrid;
 	m_groundGrid = nullptr;
@@ -200,24 +207,25 @@ void Game::UpdateGameplayMode(float deltaTime)
 	}
 	m_world->Update(deltaTime);
 	
-	char timeBuffer[256];
-	snprintf(timeBuffer, sizeof(timeBuffer),
-		"Time: %.2f  FPS: %.2f",
-		g_systemClock->GetTotalSeconds(), 1.f/g_systemClock->GetDeltaSeconds());
-
- 	float textWidth = 490.f;
- 	float textHeight = 50.f;
- 	float margin = 10.f;
- 	Vec2 topRight = Vec2(m_screenSize.x - margin - textWidth, m_screenSize.y - margin - textHeight);
- 	Vec2 bottomLeft = Vec2(m_screenSize.x - margin, m_screenSize.y - margin);
-
- 	DebugAddScreenText(std::string(timeBuffer),
- 		AABB2(topRight, bottomLeft),
- 		20.f,
- 		Vec2(1.f, 1.f),
- 		0.f,
- 		Rgba8::WHITE,
- 		Rgba8::WHITE);
+// 	char timeBuffer[256];
+// 	snprintf(timeBuffer, sizeof(timeBuffer),
+// 		"Time: %.2f  FPS: %.2f",
+// 		g_systemClock->GetTotalSeconds(), 1.f/g_systemClock->GetDeltaSeconds());
+// 
+//  	float textWidth = 490.f;
+//  	float textHeight = 50.f;
+//  	float margin = 10.f;
+//  	Vec2 topRight = Vec2(m_screenSize.x - margin - textWidth, m_screenSize.y - margin - textHeight);
+//  	Vec2 bottomLeft = Vec2(m_screenSize.x - margin, m_screenSize.y - margin);
+// 
+//  	DebugAddScreenText(std::string(timeBuffer),
+//  		AABB2(topRight, bottomLeft),
+//  		20.f,
+//  		Vec2(1.f, 1.f),
+//  		0.f,
+//  		Rgba8::WHITE,
+//  		Rgba8::WHITE);
+	AddDebugText();
 
 	//-----------------------------------------------------------------------------------------
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
@@ -378,39 +386,39 @@ void Game::AddVertsForGroundGrid()
 	}
 }
 
-void Game::AddVertsForCubes()
-{
-	//add cube vertexs to m_cube
-	//X
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED);
-	//-X
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN);
-	//Y
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN);
-	//-Y
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA);
-	//Z
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE);
-	//-Z
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW);
-
-
-	//X
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED);
-	//-X
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN);
-	//Y
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN);
-	//-Y
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA);
-	//Z
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE);
-	//-Z
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW);
-
-
-
-}
+// void Game::AddVertsForCubes()
+// {
+// 	//add cube vertexs to m_cube
+// 	//X
+// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED);
+// 	//-X
+// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN);
+// 	//Y
+// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN);
+// 	//-Y
+// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA);
+// 	//Z
+// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE);
+// 	//-Z
+// 	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW);
+// 
+// 
+// 	//X
+// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED);
+// 	//-X
+// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN);
+// 	//Y
+// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN);
+// 	//-Y
+// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA);
+// 	//Z
+// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE);
+// 	//-Z
+// 	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW);
+// 
+// 
+// 
+// }
 
 void Game::AddEntityToList(Entity& thisEntity, EntityList& list)
 {
@@ -423,6 +431,37 @@ void Game::AddEntityToList(Entity& thisEntity, EntityList& list)
 		}
 	}
 	list.push_back(&thisEntity);
+}
+
+void Game::AddDebugText()
+{
+	float margin = 10.f;
+	float textHeight = 50.f;
+	//float fontSize = 20.f;
+	float topY = m_screenSize.y - margin - textHeight;
+	float bottomY = m_screenSize.y - margin;
+
+	// Merge all info into one buffer
+	char debugInfoBuffer[1024];
+	const char* cameraModeName = (m_player->m_isSpectatorFull) ? "SpectatorFull" : "SpectatorXY";
+	snprintf(debugInfoBuffer, sizeof(debugInfoBuffer),
+		"[LMB] Dig  [RMB] Add  %s  [1] Glowstone  [2] Cobblestone  [3] ChiseledBrick      [C] Camera: %s     Time: %.2f  FPS: %.2f",
+		m_player->m_curBlockBrushName.c_str(),
+		cameraModeName,
+		g_systemClock->GetTotalSeconds(),
+		1.f / g_systemClock->GetDeltaSeconds());
+
+	// Display the merged text across the full width
+	Vec2 topLeft = Vec2(margin, topY);
+	Vec2 bottomRight = Vec2(m_screenSize.x - margin, bottomY);
+	DebugAddScreenText(std::string(debugInfoBuffer),
+		AABB2(topLeft, bottomRight),
+		textHeight,
+		Vec2(0.f, 0.5f),  // Left-aligned, vertically centered
+		0.f,
+		Rgba8::YELLOW,
+		Rgba8::YELLOW);
+
 }
 
 

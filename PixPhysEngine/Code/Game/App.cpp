@@ -23,7 +23,7 @@ Game*			g_theGame = nullptr;
 bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
 
-constexpr float TARGET_FPS = 240.0f;
+constexpr float TARGET_FPS = 60.0f;
 constexpr float TARGET_FRAME_TIME = (1.0f / TARGET_FPS) * 1000.f;
 
 
@@ -56,6 +56,7 @@ void App::Startup()
 	
 	RendererConfig rendererConfig;
 	rendererConfig.m_window = g_theWindow;
+	rendererConfig.m_imguiInitialized = true;
 	g_theRenderer = new Renderer(rendererConfig);
 	
 	g_systemClock = new Clock();
@@ -147,6 +148,9 @@ void App::BeginFrame()
 	g_theInput->BeginFrame();
 	g_theWindow->BeginFrame();
 	g_theRenderer->BeginFrame();
+
+	g_theRenderer->BeginImguiFrame();
+
 	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
 	Clock::TickSystemClock();
@@ -167,6 +171,8 @@ void App::Render()  const
 {
 	g_theRenderer->ClearScreen(Rgba8::BLACK);
 	g_theGame->Renderer();
+
+	g_theRenderer->RenderImguiFrame();
 }
 
 void App::EndFrame()

@@ -2,6 +2,7 @@
 #include "Engine/Window/Window.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "SandboxMap.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 extern Window* g_theWindow;
 extern InputSystem* g_theInput;
 
@@ -12,7 +13,9 @@ SandboxPlayer::SandboxPlayer(IntVec2 const& mapSize)
 
 void SandboxPlayer::Update(float deltaTime)
 {
+	UNUSED(deltaTime);
 	HandleInput();
+
 }
 
 void SandboxPlayer::Render() const
@@ -48,25 +51,86 @@ void SandboxPlayer::HandleInput()
 	{
 		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
 		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
-		int gridX = floor(mousePosInWorld.x);
-		int gridY = floor(mousePosInWorld.y);
+		int gridX =static_cast<int> (floor(mousePosInWorld.x));
+		int gridY = static_cast<int> (floor(mousePosInWorld.y));
 
 		if (m_curMap->IsValidPosition(gridX, gridY))
 		{
 			if (m_isSand)
 			{
-				m_curMap->PlaceMaterial(gridX, gridY, CellMatType::MAT_SAND, 1);
-				if (m_curMap->IsValidPosition(gridX + 1, gridY))
-					m_curMap->PlaceMaterial(gridX + 1, gridY, CellMatType::MAT_SAND, 1);
-				if (m_curMap->IsValidPosition(gridX - 1, gridY))
-					m_curMap->PlaceMaterial(gridX - 1, gridY, CellMatType::MAT_SAND, 1);
-				if (m_curMap->IsValidPosition(gridX, gridY + 1))
-					m_curMap->PlaceMaterial(gridX, gridY + 1, CellMatType::MAT_SAND, 1);
-				if (m_curMap->IsValidPosition(gridX, gridY - 1))
-					m_curMap->PlaceMaterial(gridX, gridY - 1, CellMatType::MAT_SAND, 1);
+				for (int dx = -1; dx <= 1; dx++)
+				{
+					for (int dy = -1; dy <= 1; dy++)
+					{
+						int targetX = gridX + dx;
+						int targetY = gridY + dy;
+						if (m_curMap->IsValidPosition(targetX, targetY))
+						{
+							m_curMap->PlaceMaterial(targetX, targetY, CellMatType::MAT_SAND, 1);
+						}
+					}
+				}
 			}
 			else
+			{
 				m_curMap->PlaceMaterial(gridX, gridY, CellMatType::MAT_WATER, 1);
+				if (m_curMap->IsValidPosition(gridX + 1, gridY))
+					m_curMap->PlaceMaterial(gridX + 1, gridY, CellMatType::MAT_WATER, 1);
+				if (m_curMap->IsValidPosition(gridX - 1, gridY))
+					m_curMap->PlaceMaterial(gridX - 1, gridY, CellMatType::MAT_WATER, 1);
+				if (m_curMap->IsValidPosition(gridX, gridY + 1))
+					m_curMap->PlaceMaterial(gridX, gridY + 1, CellMatType::MAT_WATER, 1);
+				if (m_curMap->IsValidPosition(gridX, gridY - 1))
+					m_curMap->PlaceMaterial(gridX, gridY - 1, CellMatType::MAT_WATER, 1);
+			}
+		}
+	}
+
+	if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
+	{
+		// Start dragging
+		m_isRightMouseDragging = true;
+		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+		m_dragStartX = static_cast<int>(floor(mousePosInWorld.x));
+		m_dragStartY = static_cast<int>(floor(mousePosInWorld.y));
+	}
+
+	if (g_theInput->IsKeyDown(KEYCODE_RIGHT_MOUSE) && m_isRightMouseDragging)
+	{
+		// Update current drag position
+		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+		m_dragCurrentX = static_cast<int>(floor(mousePosInWorld.x));
+		m_dragCurrentY = static_cast<int>(floor(mousePosInWorld.y));
+	}
+
+	if (g_theInput->WasKeyJustReleased(KEYCODE_RIGHT_MOUSE) && m_isRightMouseDragging)
+	{
+		// Finish dragging and fill rectangle with stone
+		m_isRightMouseDragging = false;
+
+		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+		int endX = static_cast<int>(floor(mousePosInWorld.x));
+		int endY = static_cast<int>(floor(mousePosInWorld.y));
+
+		// Calculate rectangle bounds
+		int minX = (m_dragStartX < endX) ? m_dragStartX : endX;
+		int maxX = (m_dragStartX > endX) ? m_dragStartX : endX;
+		int minY = (m_dragStartY < endY) ? m_dragStartY : endY;
+		int maxY = (m_dragStartY > endY) ? m_dragStartY : endY;
+
+		// Fill rectangle with stone
+		for (int x = minX; x <= maxX; x++)
+		{
+			for (int y = minY; y <= maxY; y++)
+			{
+				if (m_curMap->IsValidPosition(x, y))
+				{
+					m_curMap->PlaceMaterial(x, y, CellMatType::MAT_STONE, 1);
+				}
+			}
 		}
 	}
 }

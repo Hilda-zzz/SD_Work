@@ -11,6 +11,9 @@ struct Cell {
 	bool m_updatedThisFrame = false;
 	Rgba8 m_color;
 
+	bool m_isFreeFalling = true;
+	int m_framesWithoutMovement = 0;
+
 	bool IsEmpty() const { return m_type == CellMatType::MAT_EMPTY; }
 	void SetEmpty() {
 		m_type = CellMatType::MAT_EMPTY;

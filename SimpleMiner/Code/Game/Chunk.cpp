@@ -4,6 +4,9 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
+#include "TerrainGenerator.hpp"
+#include "BlockIterator.hpp"
+#include "Engine/Core/FileUtils.hpp"
 
 RandomNumberGenerator Chunk::s_rng;
 Texture* Chunk::s_blockAtlasTexture = nullptr;
@@ -20,7 +23,9 @@ Chunk::Chunk(IntVec2 const& chunkCoords)
 Chunk::~Chunk()
 {
 	delete m_vertexBuffer;
+	m_vertexBuffer = nullptr;
 	delete m_indexBuffer;
+	m_indexBuffer = nullptr;
 }
 
 void Chunk::SetBlockAtlasTexture(Texture* texture)
@@ -30,65 +35,95 @@ void Chunk::SetBlockAtlasTexture(Texture* texture)
 
 void Chunk::Initialize()
 {
+	m_isDirty = true;
+	m_needsSaving = false;
+
 	m_vertexBuffer= g_theRenderer->CreateVertexBuffer(BLOCKS_PER_CHUNK*24, sizeof(Vertex_PCUTBN));
 	m_indexBuffer = g_theRenderer->CreateIndexBuffer(BLOCKS_PER_CHUNK*36);
 
 	AddVertsForAABB3DWireFrame(m_debugVertexArray, m_worldBounds,0.05f);
 
-	GenerateBlocks();
+	// block generation
+	// if have file
+	std::string filename = "Saves/Chunk(" + std::to_string(m_chunkCoords.x) + "," + std::to_string(m_chunkCoords.y) + ").chunk";
+	// Check if chunk file exists
+	if (FileExists(filename))
+	{
+		// Load from file
+		if (LoadChunkFromFile(filename))
+		{
+			// Successfully loaded from file
+			m_needsSaving = false;  // File is up to date
+		}
+		else
+		{
+			// File exists but failed to load, generate terrain as fallback
+			printf("Warning: Failed to load chunk (%d,%d) from file, generating new terrain\n",
+				m_chunkCoords.x, m_chunkCoords.y);
+			TerrainGenerator::GenerateBlocksForChunk(this);
+		}
+	}
+	else
+	{
+		// else no file
+		TerrainGenerator::GenerateBlocksForChunk(this);
+	}
 
-	RebuildMesh();
-
-	
+	RebuildMeshWithCulling();
 }
 
 void Chunk::GenerateBlocks()
 {
-	for (int i = 0; i < BLOCKS_PER_CHUNK; ++i) 
+	static const Block airBlock = BlockDefinition::s_nameToIndexMap["Air"];
+	static const Block waterBlock = BlockDefinition::s_nameToIndexMap["Water"];
+	static const Block grassBlock = BlockDefinition::s_nameToIndexMap["Grass"];
+	static const Block dirtBlock = BlockDefinition::s_nameToIndexMap["Dirt"];
+
+	for (int i = 0; i < BLOCKS_PER_CHUNK; ++i)
 	{
-		m_blocks[i] = BlockDefinition::s_nameToIndexMap["Air"]; // initial all blocks to air
+		m_blocks[i] = airBlock;
 	}
 
-	for (int x = 0; x < CHUNK_SIZE_X; ++x) 
+	for (int y = 0; y < CHUNK_SIZE_Y; ++y)
 	{
-		for (int y = 0; y < CHUNK_SIZE_Y; ++y) 
+		for (int x = 0; x < CHUNK_SIZE_X; ++x)
 		{
-			IntVec3 localCoords(x, y, 0);
-			IntVec3 globalCoords = LocalToGlobalCoords(localCoords);
-			int terrainHeight = CalculateTerrainHeight(globalCoords.x, globalCoords.y);
+			int globalX = x + (m_chunkCoords.x << CHUNK_BITS_X);
+			int globalY = y + (m_chunkCoords.y << CHUNK_BITS_Y);
+			int terrainHeight = CalculateTerrainHeight(globalX, globalY);
 
-			for (int z = 0; z < CHUNK_HEIGHT; ++z)
+			int dirtDepth = s_rng.RollRandomIntInRange(3, 4);
+			int dirtStartLevel = terrainHeight - dirtDepth;
+
+			for (int z = 0; z < CHUNK_SIZE_Z; ++z)
 			{
-				IntVec3 coords(x, y, z);
 				Block block;
 
-				if (z > terrainHeight) 
+				if (z > terrainHeight)
 				{
-					if (z <= WATER_LEVEL) {
-						block = BlockDefinition::s_nameToIndexMap["Water"];
-					}
-					else {
-						block = BlockDefinition::s_nameToIndexMap["Air"]; 
-					}
+					block = (z <= WATER_LEVEL) ? waterBlock : airBlock;
 				}
-				else if (z == terrainHeight) 
+				else if (z == terrainHeight)
 				{
-					block = BlockDefinition::s_nameToIndexMap["Grass"];  
+					block = grassBlock;
 				}
-				else if (z >= terrainHeight - s_rng.RollRandomIntInRange(3, 4)) 
+				else if (z >= dirtStartLevel)
 				{
-					block = BlockDefinition::s_nameToIndexMap["Dirt"];  
+					block = dirtBlock;
 				}
-				else 
+				else
 				{
 					uint8_t blockType = GetRandomOreType();
 					block = Block(blockType);
 				}
 
-				SetBlock(coords, block);
+				int blockIndex = (z << (CHUNK_BITS_X + CHUNK_BITS_Y)) |
+					(y << CHUNK_BITS_X) | x;
+				m_blocks[blockIndex] = block;
 			}
 		}
 	}
+	m_isDirty = true;
 }
 
 void Chunk::RebuildMesh()
@@ -102,24 +137,9 @@ void Chunk::RebuildMesh()
 	m_vertices.reserve(BLOCKS_PER_CHUNK * 24); 
 	m_indices.reserve(BLOCKS_PER_CHUNK * 36);
 
-// 	for (int z = 0; z < CHUNK_HEIGHT; ++z) 
-// 	{        
-// 		for (int y = 0; y < CHUNK_SIZE_Y; ++y) 
-// 		{ 
-// 			for (int x = 0; x < CHUNK_SIZE_X; ++x) 
-// 			{ 
-// 				IntVec3 coords(x, y, z);
-// 				int index = x + y * CHUNK_SIZE_X + z * CHUNK_SIZE_X * CHUNK_SIZE_Y;
-// 				Block block = m_blocks[index];      
-// 				if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
-// 					AddBlockVerts(coords, block); 
-// 				}
-// 			}
-// 		}
-// 	}
 	for (int i = 0; i < BLOCKS_PER_CHUNK; i++)
 	{
-		IntVec3 blockCoords = GetBlockCoords(i);
+		IntVec3 blockCoords = IndexToLocalCoords(i);
 		Block block = m_blocks[i];
 		if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
 			AddBlockVerts(blockCoords, block);
@@ -127,6 +147,38 @@ void Chunk::RebuildMesh()
 	}
 
  	g_theRenderer->CopyGameVertexBufferToGPU(m_vertices.data(), (int)m_vertices.size(),m_vertexBuffer);
+	g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
+
+	m_isDirty = false;
+	m_indicesCount = (int)m_indices.size();
+	m_vertsCount = (int)m_vertices.size();
+}
+
+void Chunk::RebuildMeshWithCulling()
+{
+	if (!m_isDirty) return;
+
+	m_vertsCount = 0;
+	m_indicesCount = 0;
+	m_vertices.clear();
+	m_indices.clear();
+	int estimatedVertices = static_cast<int>(BLOCKS_PER_CHUNK * 6 * 4 * VISIBLE_FACE_RATIO);
+	int estimatedIndices = static_cast<int>(BLOCKS_PER_CHUNK * 6 * 6 * VISIBLE_FACE_RATIO);
+	m_vertices.reserve(estimatedVertices);
+	m_indices.reserve(estimatedIndices);
+	//-----
+	
+	for (int i = 0; i < BLOCKS_PER_CHUNK; i++)
+	{
+		IntVec3 blockCoords = IndexToLocalCoords(i);
+		Block block = m_blocks[i];
+		if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
+			AddBlockVertsWithCulling(i, block);
+		}
+	}
+
+	//-----
+	g_theRenderer->CopyGameVertexBufferToGPU(m_vertices.data(), (int)m_vertices.size(), m_vertexBuffer);
 	g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
 
 	m_isDirty = false;
@@ -172,7 +224,12 @@ Block Chunk::GetBlock(const IntVec3& localCoords) const
 		return Block(0); // return air
 	}
 
-	int index = GetBlockIndex(localCoords);
+	int index = LocalCoordsToIndex(localCoords);
+	return m_blocks[index];
+}
+
+Block Chunk::GetBlock(int index) const
+{
 	return m_blocks[index];
 }
 
@@ -182,7 +239,15 @@ void Chunk::SetBlock(const IntVec3& localCoords, const Block& block)
 		return;
 	}
 
-	int index = GetBlockIndex(localCoords);
+	int index = LocalCoordsToIndex(localCoords);
+	m_blocks[index] = block;
+	m_isDirty = true;
+}
+
+void Chunk::SetBlock(int index, const Block& block)
+{
+	if (!IsValidIndex(index)) return;
+
 	m_blocks[index] = block;
 	m_isDirty = true;
 }
@@ -197,53 +262,209 @@ void Chunk::SetBlock(const IntVec3& localCoords, const Block& block)
 // 	
 // }
 
-IntVec3 Chunk::GlobalToLocalCoords(const IntVec3& globalCoords) const
-{
-	int localX = globalCoords.x - (m_chunkCoords.x * CHUNK_SIZE_X);
-	int localY = globalCoords.y - (m_chunkCoords.y * CHUNK_SIZE_Y);
-	int localZ = globalCoords.z;
-
-	return IntVec3(localX, localY, localZ);
-}
+// IntVec3 Chunk::GlobalToLocalCoords(const IntVec3& globalCoords) const
+// {
+// 	int localX = globalCoords.x - (m_chunkCoords.x * CHUNK_SIZE_X);
+// 	int localY = globalCoords.y - (m_chunkCoords.y * CHUNK_SIZE_Y);
+// 	int localZ = globalCoords.z;
+// 
+// 	return IntVec3(localX, localY, localZ);
+// }
 
 IntVec3 Chunk::LocalToGlobalCoords(const IntVec3& localCoords) const
 {
-	int globalX = localCoords.x + (m_chunkCoords.x * CHUNK_SIZE_X);
-	int globalY = localCoords.y + (m_chunkCoords.y * CHUNK_SIZE_Y);
-	int globalZ = localCoords.z; 
-
+	int globalX = localCoords.x + (m_chunkCoords.x << CHUNK_BITS_X);  
+	int globalY = localCoords.y + (m_chunkCoords.y << CHUNK_BITS_Y);  
+	int globalZ = localCoords.z;  
 	return IntVec3(globalX, globalY, globalZ);
 }
 
 bool Chunk::IsValidLocalCoords(const IntVec3& localCoords) const
 {
-	return localCoords.x>=0&&localCoords.x<=15
-		&& localCoords.y >= 0 && localCoords.y <= 15
-		&& localCoords.z >= 0 && localCoords.x <= 127;
+	return localCoords.x>=0&&localCoords.x<=CHUNK_MAX_X
+		&& localCoords.y >= 0 && localCoords.y <= CHUNK_MAX_Y
+		&& localCoords.z >= 0 && localCoords.z <= CHUNK_MAX_Z;
+}
+
+bool Chunk::IsValidIndex(int index) const
+{
+	return index>=0&&index<BLOCKS_PER_CHUNK;
 }
 
 Vec3 Chunk::LocalCoordsToWorldPos(const IntVec3& localCoords) const
 {
 	return Vec3(
-		static_cast<float>(m_chunkCoords.x * CHUNK_SIZE_X + localCoords.x),
-		static_cast<float>(m_chunkCoords.y * CHUNK_SIZE_Y + localCoords.y),
+		static_cast<float>((m_chunkCoords.x << CHUNK_BITS_X) + localCoords.x),  
+		static_cast<float>((m_chunkCoords.y << CHUNK_BITS_Y) + localCoords.y),  
 		static_cast<float>(localCoords.z)
 	);
 }
 
-int Chunk::GetBlockIndex(const IntVec3& localCoords) const
+int Chunk::LocalCoordsToIndex(const IntVec3& localCoords) const
 {
 	//return localCoords.x + localCoords.y * CHUNK_SIZE_X + localCoords.z * CHUNK_SIZE_X * CHUNK_SIZE_Y;
 	return localCoords.x | (localCoords.y << CHUNK_BITS_X)
 		| (localCoords.z << (CHUNK_BITS_X + CHUNK_BITS_Y));
 }
 
-IntVec3 Chunk::GetBlockCoords(int index) const
+int Chunk::LocalCoordsToIndex(int x, int y, int z) const
 {
-	int x = index & CHUNK_MASK_X;
-	int y = (index>> CHUNK_BITS_X) & CHUNK_MASK_Y;
-	int z = (index >> (CHUNK_BITS_X+CHUNK_BITS_Y)) & CHUNK_MASK_Z;
+	return x | (y << CHUNK_BITS_X)
+		| (z << (CHUNK_BITS_X + CHUNK_BITS_Y));
+}
+
+int Chunk::IndexToLocalX(int index)
+{
+	return index & CHUNK_MASK_X;
+}
+
+int Chunk::IndexToLocalY(int index)
+{
+	return (index & CHUNK_MASK_Y) >> CHUNK_BITS_X;
+}
+
+int Chunk::IndexToLocalZ(int index)
+{
+	return (index & CHUNK_MASK_Z) >> (CHUNK_BITS_X + CHUNK_BITS_Y);
+}
+
+IntVec3 Chunk::IndexToLocalCoords(int index) const
+{
+	int x = index & CHUNK_MASK_X;                                    
+	int y = (index & CHUNK_MASK_Y) >> CHUNK_BITS_X;                
+	int z = (index & CHUNK_MASK_Z) >> (CHUNK_BITS_X + CHUNK_BITS_Y); 
 	return IntVec3(x, y, z);
+}
+
+int Chunk::GlobalCoordsToIndex(const IntVec3& globalCoords)
+{
+	int localX = globalCoords.x & CHUNK_MAX_X;
+	int localY = globalCoords.y & CHUNK_MAX_Y;
+	int localZ = globalCoords.z & CHUNK_MAX_Z;
+
+	return (localZ << (CHUNK_BITS_X + CHUNK_BITS_Y)) |
+		(localY << CHUNK_BITS_X) |
+		localX;
+}
+
+int Chunk::GlobalCoordsToIndex(int x, int y, int z)
+{
+	int localX = x & CHUNK_MAX_X;
+	int localY = y & CHUNK_MAX_Y;
+	int localZ = z & CHUNK_MAX_Z;
+
+	return (localZ << (CHUNK_BITS_X + CHUNK_BITS_Y)) |
+		(localY << CHUNK_BITS_X) |
+		localX;
+}
+
+IntVec2 Chunk::GetChunkCoords(Vec3 const& position)
+{
+	int globalX = static_cast<int>(floor(position.x));
+	int globalY = static_cast<int>(floor(position.y));
+	//int globalZ = static_cast<int>(floor(position.z));
+
+	int chunkX, chunkY;
+
+	// Correct handling for negative coordinates
+	if (globalX >= 0) {
+		chunkX = globalX >> CHUNK_BITS_X;
+	}
+	else {
+		chunkX = (globalX + 1) / CHUNK_SIZE_X - 1;
+	}
+
+	if (globalY >= 0) {
+		chunkY = globalY >> CHUNK_BITS_Y;
+	}
+	else {
+		chunkY = (globalY + 1) / CHUNK_SIZE_Y - 1;
+	}
+
+	return IntVec2(chunkX, chunkY);
+}
+
+IntVec2 Chunk::GetChunkCoords(const IntVec3& globalCoords)
+{
+	int chunkX, chunkY;
+	if (globalCoords.x >= 0) {
+		chunkX = globalCoords.x >> CHUNK_BITS_X;  
+	}
+	else {
+		chunkX = (globalCoords.x - CHUNK_MAX_X) >> CHUNK_BITS_X; 
+	}
+
+	if (globalCoords.y >= 0) {
+		chunkY = globalCoords.y >> CHUNK_BITS_Y;  
+	}
+	else {
+		chunkY = (globalCoords.y - CHUNK_MAX_Y) >> CHUNK_BITS_Y; 
+	}
+
+	return IntVec2(chunkX, chunkY);
+}
+
+IntVec2 Chunk::GetChunkCenter()
+{
+	int centerX = m_chunkCoords.x * CHUNK_SIZE_X + CHUNK_SIZE_X / 2;
+	int centerY = m_chunkCoords.y * CHUNK_SIZE_Y + CHUNK_SIZE_Y / 2;
+
+	return IntVec2(centerX, centerY);
+}
+
+IntVec2 Chunk::GetChunkCenter(const IntVec2& chunkCoords)
+{
+	int centerX = chunkCoords.x * CHUNK_SIZE_X + CHUNK_SIZE_X / 2;
+	int centerY = chunkCoords.y * CHUNK_SIZE_Y + CHUNK_SIZE_Y / 2;
+
+	return IntVec2(centerX, centerY);
+}
+
+IntVec3 Chunk::GlobalCoordsToLocalCoords(const IntVec3& globalCoords)
+{
+	int localX = globalCoords.x & CHUNK_MAX_X;
+	int localY = globalCoords.y & CHUNK_MAX_Y;
+	int localZ = globalCoords.z & CHUNK_MAX_Z;
+	return IntVec3(localX, localY, localZ);
+}
+
+IntVec3 Chunk::GetGlobalCoords(const IntVec2& chunkCoords, int blockIndex)
+{
+	int localX = blockIndex & CHUNK_MAX_X;                                    
+	int localY = (blockIndex & CHUNK_MASK_Y) >> CHUNK_BITS_X;              
+	int localZ = (blockIndex & CHUNK_MASK_Z) >> (CHUNK_BITS_X + CHUNK_BITS_Y); 
+
+	int globalX = (chunkCoords.x << CHUNK_BITS_X) + localX;  
+	int globalY = (chunkCoords.y << CHUNK_BITS_Y) + localY; 
+	int globalZ = localZ;
+
+	return IntVec3(globalX, globalY, globalZ);
+}
+
+IntVec3 Chunk::GetGlobalCoords(const IntVec2& chunkCoords, const IntVec3& localCoords)
+{
+	int globalX = (chunkCoords.x << CHUNK_BITS_X) + localCoords.x;  
+	int globalY = (chunkCoords.y << CHUNK_BITS_Y) + localCoords.y;  
+	int globalZ = localCoords.z; 
+
+	return IntVec3(globalX, globalY, globalZ);
+}
+
+IntVec2 Chunk::GetGlobalCoords(int localX, int localY)
+{
+	int globalX = (m_chunkCoords.x << CHUNK_BITS_X) + localX;
+	int globalY = (m_chunkCoords.y << CHUNK_BITS_Y) + localY;
+
+	return IntVec2(globalX, globalY);
+}
+
+IntVec3 Chunk::GetGlobalCoords(const Vec3& position)
+{
+	int globalX = static_cast<int>(floor(position.x));
+	int globalY = static_cast<int>(floor(position.y));
+	int globalZ = static_cast<int>(floor(position.z));
+
+	return IntVec3(globalX, globalY, globalZ);
 }
 
 int Chunk::CalculateTerrainHeight(int globalX, int globalY) const
@@ -331,11 +552,282 @@ void Chunk::AddBlockVerts(const IntVec3& localCoords, Block const& block)
 		Rgba8(255, 255, 255), def.m_bottomUVs);
 }
 
+void Chunk::AddBlockVertsWithCulling(int blockIndex,Block const& block)
+{
+	const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
+	if (!def.m_isVisible) return;
+
+	BlockIterator iter(this, blockIndex);
+	IntVec3 localCoords = iter.GetLocalCoords();
+	Vec3 blockWorldPos = LocalCoordsToWorldPos(localCoords);
+
+	// +X
+	BlockIterator fwdX = iter.GetFwdX();
+	if (!fwdX.IsValid() || !fwdX.IsOpaque()) {
+		Vec3 bl = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+			Rgba8(230, 230, 230), def.m_sideUVs);
+	}
+
+	// -X
+	BlockIterator negX = iter.GetNegX();
+	if (!negX.IsValid() || !negX.IsOpaque()) {
+		Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+			Rgba8(230, 230, 230), def.m_sideUVs);
+	}
+
+	// +Y
+	BlockIterator fwdY = iter.GetFwdY();
+	if (!fwdY.IsValid() || !fwdY.IsOpaque()) {
+		Vec3 bl = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+			Rgba8(200, 200, 200), def.m_sideUVs);
+	}
+
+	// -Y
+	BlockIterator negY = iter.GetNegY();
+	if (!negY.IsValid() || !negY.IsOpaque()) {
+		Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+			Rgba8(200, 200, 200), def.m_sideUVs);
+	}
+
+	// +Z
+	BlockIterator fwdZ = iter.GetFwdZ();
+	if (!fwdZ.IsValid() || !fwdZ.IsOpaque()) {
+		Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+		Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+		Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+			Rgba8(255, 255, 255), def.m_topUVs);
+	}
+
+	// -Z
+	BlockIterator negZ = iter.GetNegZ();
+	if (!negZ.IsValid() || !negZ.IsOpaque()) {
+		Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+		Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+			Rgba8(255, 255, 255), def.m_bottomUVs);
+	}
+}
 
 
 void Chunk::CalculateWorldBounds()
 {
 	Vec3 minBound = Vec3((float)m_chunkCoords.x*(float)CHUNK_SIZE_X, (float)m_chunkCoords.y * (float)CHUNK_SIZE_Y, 0.f);
-	Vec3 maxBound = minBound + Vec3((float)CHUNK_SIZE_X, (float)CHUNK_SIZE_Y, (float)CHUNK_HEIGHT);
+	Vec3 maxBound = minBound + Vec3((float)CHUNK_SIZE_X, (float)CHUNK_SIZE_Y, (float)CHUNK_SIZE_Z);
 	m_worldBounds = AABB3(minBound, maxBound);
+}
+
+int Chunk::SaveChunkToFile(std::string const& saveFolder)
+{
+	std::vector<uint8_t> byteBuffer;
+
+	//== header ==
+	ChunkFileHeader header;
+	header.m_fourCC[0] = 'G';
+	header.m_fourCC[1] = 'C';
+	header.m_fourCC[2] = 'H';
+	header.m_fourCC[3] = 'K';
+	header.m_version = 1;
+	header.m_chunkBitsX = CHUNK_BITS_X;
+	header.m_chunkBitsY = CHUNK_BITS_Y;
+	header.m_chunkBitsZ = CHUNK_BITS_Z;
+
+	byteBuffer.push_back(header.m_fourCC[0]);
+	byteBuffer.push_back(header.m_fourCC[1]);
+	byteBuffer.push_back(header.m_fourCC[2]);
+	byteBuffer.push_back(header.m_fourCC[3]);
+	byteBuffer.push_back(header.m_version);
+	byteBuffer.push_back(header.m_chunkBitsX);
+	byteBuffer.push_back(header.m_chunkBitsY);
+	byteBuffer.push_back(header.m_chunkBitsZ);
+
+	ChunkFileRun currentRun;
+	currentRun.blockType = m_blocks[0].GetTypeIndex();
+	currentRun.runLength = 0;
+
+	// Loop over each block in the chunk
+	for (int blockIndex = 0; blockIndex < BLOCKS_PER_CHUNK; blockIndex++)
+	{
+		uint8_t currentBlockType = m_blocks[blockIndex].GetTypeIndex();
+
+		// Check if run is complete
+		bool runComplete = false;
+
+		if (currentBlockType != currentRun.blockType)
+		{
+			// Current block type is not equal to the block type of the run
+			runComplete = true;
+		}
+		else if (blockIndex == BLOCKS_PER_CHUNK - 1)
+		{
+			// We are at the end of the chunk
+			currentRun.runLength++;  // Increment for the current block
+			runComplete = true;
+		}
+		else if (currentRun.runLength >= 255)
+		{
+			// The run length is at the max of 255
+			runComplete = true;
+		}
+		else
+		{
+			// Increment the length of the run
+			currentRun.runLength++;
+		}
+
+		// When the run is complete, push back its member variables into the byte buffer vector
+		if (runComplete)
+		{
+			byteBuffer.push_back(currentRun.blockType);
+			byteBuffer.push_back(currentRun.runLength);
+
+			// Start a new run by setting the type to the current block type and zeroing out the length
+			if (blockIndex < BLOCKS_PER_CHUNK - 1)  // Don't start new run if we're at the end
+			{
+				currentRun.blockType = currentBlockType;
+				currentRun.runLength = 1;  // Start with 1 for the current block
+			}
+		}
+	}
+
+	// Generate filename: "Chunk(x,y).chunk"
+	std::string filename = saveFolder + "/Chunk(" + std::to_string(m_chunkCoords.x) + "," + std::to_string(m_chunkCoords.y) + ").chunk";
+
+	// Call FileWriteFromBuffer with the byte buffer vector
+	return FileWriteFromBuffer(byteBuffer, filename);
+
+	return 0;
+}
+
+bool Chunk::LoadChunkFromFile(std::string const& filename)
+{
+	std::vector<uint8_t> fileBuffer;
+	int bytesRead = FileReadToBuffer(fileBuffer, filename);
+
+	if (bytesRead == -1)
+	{
+		printf("Failed to read chunk file: %s\n", filename.c_str());
+		return false;
+	}
+
+	// Check minimum file size
+	if (fileBuffer.size() < sizeof(ChunkFileHeader))
+	{
+		printf("Chunk file too small: %s (size: %zu, minimum: %zu)\n",
+			filename.c_str(), fileBuffer.size(), sizeof(ChunkFileHeader));
+		return false;
+	}
+
+	// Read and validate header
+	ChunkFileHeader header;
+	size_t offset = 0;
+
+	// Copy header data from buffer
+	header.m_fourCC[0] = fileBuffer[offset++];
+	header.m_fourCC[1] = fileBuffer[offset++];
+	header.m_fourCC[2] = fileBuffer[offset++];
+	header.m_fourCC[3] = fileBuffer[offset++];
+	header.m_version = fileBuffer[offset++];
+	header.m_chunkBitsX = fileBuffer[offset++];
+	header.m_chunkBitsY = fileBuffer[offset++];
+	header.m_chunkBitsZ = fileBuffer[offset++];
+
+	// Validate header
+	if (header.m_fourCC[0] != 'G' || header.m_fourCC[1] != 'C' ||
+		header.m_fourCC[2] != 'H' || header.m_fourCC[3] != 'K')
+	{
+		printf("Invalid chunk file header (bad fourCC): %s\n", filename.c_str());
+		return false;
+	}
+
+	if (header.m_version != 1)
+	{
+		printf("Unsupported chunk file version: %d in file %s\n",
+			header.m_version, filename.c_str());
+		return false;
+	}
+
+	if (header.m_chunkBitsX != 4 || header.m_chunkBitsY != 4 || header.m_chunkBitsZ != 7)
+	{
+		printf("Chunk dimensions mismatch in file %s (got %d,%d,%d, expected 4,4,7)\n",
+			filename.c_str(), header.m_chunkBitsX, header.m_chunkBitsY, header.m_chunkBitsZ);
+		return false;
+	}
+
+	// Decode RLE data
+	int blockIndex = 0;
+	//size_t totalRuns = (fileBuffer.size() - sizeof(ChunkFileHeader)) / sizeof(ChunkFileRun);
+
+	while (offset < fileBuffer.size() && blockIndex < BLOCKS_PER_CHUNK)
+	{
+		// Check if we have enough bytes for a complete run
+		if (offset + 1 >= fileBuffer.size())
+		{
+			printf("Incomplete run data in chunk file: %s\n", filename.c_str());
+			return false;
+		}
+
+		// Read run data
+		ChunkFileRun currentRun;
+		currentRun.blockType = fileBuffer[offset++];
+		currentRun.runLength = fileBuffer[offset++];
+
+		// Validate run length
+		if (currentRun.runLength == 0)
+		{
+			printf("Invalid run length (0) in chunk file: %s\n", filename.c_str());
+			return false;
+		}
+
+		// Check if run would exceed chunk bounds
+		if (blockIndex + currentRun.runLength > BLOCKS_PER_CHUNK)
+		{
+			printf("Run extends beyond chunk bounds in file %s (index: %d, length: %d, max: %d)\n",
+				filename.c_str(), blockIndex, currentRun.runLength, BLOCKS_PER_CHUNK);
+			return false;
+		}
+
+		// Apply run to blocks
+		for (int i = 0; i < currentRun.runLength; i++)
+		{
+			Block curBlock = Block(currentRun.blockType);
+			SetBlock(blockIndex, curBlock);
+			blockIndex++;
+		}
+	}
+
+	if (blockIndex != BLOCKS_PER_CHUNK)
+	{
+		printf("Block count mismatch in chunk file %s (got %d blocks, expected %d)\n",
+			filename.c_str(), blockIndex, BLOCKS_PER_CHUNK);
+		return false;
+	}
+
+	if (offset < fileBuffer.size())
+	{
+		printf("Warning: Extra data at end of chunk file: %s (%zu extra bytes)\n",
+			filename.c_str(), fileBuffer.size() - offset);
+	}
+
+	printf("Successfully loaded chunk from file: %s\n", filename.c_str());
+	return true;
 }

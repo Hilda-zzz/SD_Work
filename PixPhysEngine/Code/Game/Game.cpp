@@ -10,6 +10,10 @@
 #include "Engine/Window/Window.hpp"
 #include "SandboxMap.hpp"
 #include "SandboxPlayer.hpp"
+
+#include "ThirdParty/imgui/imgui.h"
+#include "CellMatManager.hpp"
+
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
 
@@ -19,6 +23,8 @@ GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
 Game::Game()
 {
 	m_gameClock = new Clock();
+
+	CellMatManager::InitializeMaterials();
 	m_sandboxPlayer = new SandboxPlayer(IntVec2(500, 250));
 	m_sandboxMap = new SandboxMap(m_sandboxPlayer,IntVec2(500,250));
 }
@@ -33,6 +39,7 @@ Game::~Game()
 void Game::Update()
 {
 	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
+	UpdateDeveloperCheats(deltaSeconds);
 	m_curDeltaTime=deltaSeconds;
 	UpdateCamera(deltaSeconds);
 
@@ -72,7 +79,7 @@ void Game::Update()
 		break;
 	}
 
-	UpdateDeveloperCheats(deltaSeconds);
+	
 }
 
 void Game::Renderer() const
@@ -92,6 +99,44 @@ void Game::Renderer() const
 	g_theRenderer->BeginCamera(m_screenCamera);
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
+
+// 	static bool showDemoWindow = true; 
+// 	static bool showAnotherWindow = true;
+// 	if (showDemoWindow) {
+// 		ImGui::ShowDemoWindow(&showDemoWindow);
+// 	}
+// 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+// 	{
+// 		static float f = 0.0f;
+// 		static int counter = 0;
+// 
+// 		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+// 
+// 		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+// 		ImGui::Checkbox("Demo Window", &showDemoWindow);      // Edit bools storing our window open/close state
+// 		//ImGui::Checkbox("Another Window", &show_another_window);
+// 
+// 		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+// 		//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+// 
+// 		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+// 			counter++;
+// 		ImGui::SameLine();
+// 		ImGui::Text("counter = %d", counter);
+// 
+// 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / 60.f, 60.f);
+// 		ImGui::End();
+// 	}
+// 
+// 	// 3. Show another simple window.
+// 	if (showAnotherWindow)
+// 	{
+// 		ImGui::Begin("Another Window", &showAnotherWindow);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+// 		ImGui::Text("Hello from another window!");
+// 		if (ImGui::Button("Close Me"))
+// 			showAnotherWindow = false;
+// 		ImGui::End();
+// 	}
 }
 
 void Game::UpdateAttractMode(float deltaTime)
@@ -119,9 +164,8 @@ void Game::UpdateGameplayMode(float deltaTime)
 	}
 }
 
-void Game::UpdateDeveloperCheats(float deltaTime)
+void Game::UpdateDeveloperCheats(float& deltaTime)
 {
-	UNUSED(deltaTime);
 	AdjustForPauseAndTimeDitortion(deltaTime);
 	if (g_theInput->WasKeyJustPressed('L'))
 	{
@@ -187,14 +231,14 @@ void Game::RenderGameplayMode() const
 	char buffer[256];
 	sprintf_s(buffer,
 		"DT = %.2f\n"
-		"Framerate = %.2f\n",
+		"Framerate = %.2f\nPress C to change material",
 		m_curDeltaTime * 1000.f,
 		framerate);
 	std::string statsMessage(buffer);
 	std::vector<Vertex_PCU> title;
 	BitmapFont* font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 	font->AddVertsForTextInBox2D(title, statsMessage,
-		AABB2(Vec2(100.f, 650.f), Vec2(1000.f, 750.f)), 15.f, Rgba8::CYAN, 0.7f, Vec2(0.f, 1.f));
+		AABB2(Vec2(100.f, 450.f), Vec2(1000.f, 750.f)), 15.f, Rgba8::CYAN, 0.7f, Vec2(0.f, 1.f));
 	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
 	g_theRenderer->BindTexture(&font->GetTexture());
 	g_theRenderer->DrawVertexArray(title);

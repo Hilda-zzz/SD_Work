@@ -3,13 +3,14 @@
 #include "Game/GameCommon.hpp"
 #include <Engine/Math/MathUtils.hpp>
 #include "Engine/Window/Window.hpp"
+#include "World.hpp"
 
 extern Window* g_theWindow;
 Player::Player(Game* owner) :Entity(owner)
 {
-	m_position = Vec3(-50.f, -50.f, 150.f);
+	m_position = Vec3(0.f, 0.f, 128.f);
 	//m_position = Vec3(0.f, 0.f, 0.f);
-	m_orientation = EulerAngles(45.f, 45.f, 0.f);
+	m_orientation = EulerAngles(-45.f, 30.f, 0.f);
 	m_playerCam = Camera();
 	
  	m_playerCam.SetCameraToRenderTransform(Mat44(Vec3(0.f, 0.f, 1.f), Vec3(-1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f)));
@@ -25,6 +26,8 @@ void Player::Update(float deltaSeconds)
 	UpdateKBInput(deltaSeconds);
 	UpdateControllerInput(deltaSeconds);
 
+	HandleGameplayKBInput();
+
 	m_playerCam.SetPosition(m_position);
 	m_playerCam.SetOrientation(m_orientation);
 }
@@ -39,10 +42,25 @@ Player::~Player()
 
 void Player::UpdateKBInput(float deltaSeconds)
 {
+	// change mode
+	if (g_theInput->WasKeyJustPressed('C'))
+	{
+		m_isSpectatorFull = !m_isSpectatorFull;
+	}
+
 	Vec3 fwdDirection;
 	Vec3 leftDirection;
 	Vec3 upDirection;
-	m_orientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
+	if (m_isSpectatorFull)
+	{
+		m_orientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
+	}
+	else
+	{
+		EulerAngles xyOrientation(m_orientation.m_yawDegrees, 0.f, 0.f);  // Only use yaw
+		xyOrientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
+	}
+
 
 	float curMoveSpeed;
 	if (g_theInput->IsKeyDown(KEYCODE_LEFT_SHIFT))
@@ -72,24 +90,14 @@ void Player::UpdateKBInput(float deltaSeconds)
 	{
 		aimDirection -= leftDirection;
 	}
-	if (g_theInput->IsKeyDown('Z'))
-	{
-		m_position += Vec3(0.f, 0.f, 1.f) * curMoveSpeed * deltaSeconds;
-	}
-	if (g_theInput->IsKeyDown('C'))
-	{
-		m_position += Vec3(0.f, 0.f, -1.f) * curMoveSpeed * deltaSeconds;
-	}
 
 	m_angularVelocity.m_rollDegrees = 0.f;
 	if (g_theInput->IsKeyDown('Q'))
 	{
-		//m_angularVelocity.m_rollDegrees += -m_rollSpeed*deltaSeconds;
 		m_position += Vec3(0.f, 0.f, 1.f) * curMoveSpeed * deltaSeconds;
 	}
 	if (g_theInput->IsKeyDown('E'))
 	{
-		//m_angularVelocity.m_rollDegrees += m_rollSpeed * deltaSeconds;
 		m_position += Vec3(0.f, 0.f, -1.f) * curMoveSpeed * deltaSeconds;
 	}
 
@@ -107,18 +115,60 @@ void Player::UpdateKBInput(float deltaSeconds)
 	m_velocity = aimDirection;
 	m_position += m_velocity * deltaSeconds;
 
+	// digging
+
+}
+
+void Player::HandleGameplayKBInput()
+{
+	// Block digging and placing
+	if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+	{
+		m_curWorld->DigBlock(m_position);
+	}
+	if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
+	{
+		m_curWorld->PlaceBlock(m_curBlockBrushName, m_position);
+	}
+
+	// Block selection
+	if (g_theInput->WasKeyJustPressed('1'))
+	{
+		m_curBlockBrushName = "Glowstone";
+	}
+	if (g_theInput->WasKeyJustPressed('2'))
+	{
+		m_curBlockBrushName = "Cobblestone";
+	}
+	if (g_theInput->WasKeyJustPressed('3'))
+	{
+		m_curBlockBrushName = "ChiseledBrick";
+	}
 }
 
 void Player::UpdateControllerInput(float deltaSeconds)
 {
-	Vec3 fwdDirection;
-	Vec3 leftDirection;
-	Vec3 upDirection;
-	m_orientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
-
 	XboxController const& controller = g_theInput->GetController(0);
 	if (controller.IsConnected())
 	{
+		if (controller.WasButtonJustPressed(XboxButtonID::DPAD_UP))
+		{
+			m_isSpectatorFull = !m_isSpectatorFull;
+		}
+
+		Vec3 fwdDirection;
+		Vec3 leftDirection;
+		Vec3 upDirection;
+		if (m_isSpectatorFull)
+		{
+			m_orientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
+		}
+		else
+		{
+			EulerAngles xyOrientation(m_orientation.m_yawDegrees, 0.f, 0.f);  // Only use yaw
+			xyOrientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
+		}
+
 		float curMoveSpeed;
 		if (controller.GetLeftTrigger() > 0.f|| controller.GetRightTrigger() > 0.f)
 		{
@@ -128,14 +178,6 @@ void Player::UpdateControllerInput(float deltaSeconds)
 		{
 			curMoveSpeed = m_moveSpeed;
 		}
-
-// 		if (controller.IsButtonDown(XboxButtonID::B))
-// 		{
-// 			m_orientation.m_pitchDegrees = 0.f;
-// 			m_orientation.m_rollDegrees = 0.f;
-// 			m_orientation.m_yawDegrees = 0.f;
-// 			m_position = Vec3(0.f, 0.f, 0.f);
-// 		}
 
 		Vec3 moveDirection = Vec3();
 		float leftStickMagnitude = controller.GetLeftStick().GetMagnitude();
@@ -164,27 +206,39 @@ void Player::UpdateControllerInput(float deltaSeconds)
 			m_angularVelocity.m_pitchDegrees = -controller.GetRightStick().GetPosition().y* m_pitchSpeed;
 		}
 
-// 		m_angularVelocity.m_rollDegrees = 0.f;
-// 		if (controller.GetLeftTrigger()>0.f)
-// 		{
-// 			m_angularVelocity.m_rollDegrees += -m_gamepadSensitivity * controller.GetLeftTrigger();
-// 		}
-// 		if (controller.GetRightTrigger() > 0.f)
-// 		{
-// 			m_angularVelocity.m_rollDegrees += m_gamepadSensitivity * controller.GetRightTrigger();
-// 		}
-
 		m_orientation = m_orientation + m_angularVelocity * deltaSeconds;
 		m_orientation.m_rollDegrees = GetClamped(m_orientation.m_rollDegrees, -45.f, 45.f);
 		m_orientation.m_pitchDegrees = GetClamped(m_orientation.m_pitchDegrees, -85.f, 85.f);
 		m_position += m_velocity * deltaSeconds;
 
-// 		if (controller.IsButtonDown(XboxButtonID::START))
-// 		{
-// 			m_orientation.m_pitchDegrees = 0.f;
-// 			m_orientation.m_rollDegrees = 0.f;
-// 			m_orientation.m_yawDegrees = 0.f;
-// 			m_position = Vec3(0.f, 0.f, 0.f);
-// 		}
 	}
+}
+
+void Player::HandleGameplayControllerInput()
+{
+	XboxController const& controller = g_theInput->GetController(0);
+
+	// Block digging and placing
+ 	if (controller.WasButtonJustPressed(XboxButtonID::X))
+ 	{
+		m_curWorld->DigBlock(m_position);
+ 	}
+ 	if (controller.WasButtonJustPressed(XboxButtonID::Y))
+ 	{
+		m_curWorld->PlaceBlock(m_curBlockBrushName, m_position);
+ 	}
+ 
+ 	// Block selection
+ 	if (controller.WasButtonJustPressed(XboxButtonID::DPAD_LEFT))
+ 	{
+		m_curBlockBrushName = "Glowstone";
+ 	}
+ 	if (controller.WasButtonJustPressed(XboxButtonID::DPAD_DOWN))
+ 	{
+		m_curBlockBrushName = "Cobblestone";
+ 	}
+ 	if (controller.WasButtonJustPressed(XboxButtonID::DPAD_RIGHT))
+ 	{
+		m_curBlockBrushName = "ChiseledBrick";
+ 	}
 }

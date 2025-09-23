@@ -59,6 +59,7 @@ private:
 	void AddVertsForCubes();
 	void AddEntityToList(Entity& thisEntity, EntityList& list);
 
+	void AddDebugText();
 	
 
 public:
@@ -79,14 +80,14 @@ private:
 	bool m_pauseAfterUpdate = false;
 
 	World* m_world = nullptr;
-	EntityList  m_allEntities;
+//	EntityList  m_allEntities;
 	Player* m_player = nullptr;
-	Prop* m_cube = nullptr;
-	Prop* m_cube2 = nullptr;
-	Prop* m_sphere = nullptr;
+// 	Prop* m_cube = nullptr;
+// 	Prop* m_cube2 = nullptr;
+// 	Prop* m_sphere = nullptr;
 	Prop* m_groundGrid = nullptr;
 
-	Texture* m_gridTex = nullptr;
+//	Texture* m_gridTex = nullptr;
 
 	float m_previousTimeScale = 1.f;
 
