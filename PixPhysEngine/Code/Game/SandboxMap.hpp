@@ -5,6 +5,7 @@
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include <utility>
+#include "Game/CellChunk.hpp"
 class SandboxPlayer;
 
 constexpr float GRAVITY = -98.f;           
@@ -17,14 +18,32 @@ constexpr float WATER_FLOW_DAMPING = 0.8f;
 
 static const float SPEED_THRESHOLD = 5.0f;
 
+enum class UpdateOrder {
+	FIXED,       // 固定顺序 0→1→2→3
+	ROTATING,    // 轮换顺序
+	RANDOM       // 随机顺序
+};
+
+enum class CellColorMode {
+	NORMAL = 0,           // Normal material colors
+	STATIC_DYNAMIC = 1,   // Red=static, Green=dynamic, White=static solid
+	FRAME_COUNT = 2       // Red->Green gradient by frame count, White=static solid
+};
+
 class SandboxMap {
 public:
 	SandboxMap(SandboxPlayer* playerPtr,IntVec2 const& size=IntVec2(1920,1080));
+	~SandboxMap();
 
 	void Update(float deltaTime);
 	void Render() const;
 	void RenderImGuiStats() const;
 	void RenderCellInfo() const;
+	void RenderDebugDrawPanel();
+
+	void ChunkAddVerts(CellChunk* chunk, std::vector<Vertex_PCU>& outVerts) const;
+
+	Rgba8 GetCellDebugColor(const Cell& cell) const;
 
 	void Initialize();
 
@@ -34,77 +53,71 @@ public:
 	Cell& GetCell(int x, int y);
 	bool IsValidPosition(int x, int y) const;
 
+	void SetUpdateOrder(UpdateOrder order) { m_updateOrder = order; }
+	//=======Chunk Base New ===============
+	Cell& GetCellInChunk(int worldX, int worldY);
+	bool IsInBounds_Chunk(int worldX, int worldY) const;
+	void PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, int brushSize = 1);
+	void UpdateChunksOfPhase(int phaseIndex);
+	void UpdateSingleChunk(CellChunk* chunk);
+	bool MSCanMoveToInChunk(int x, int y, float curDensity);
+	bool LiquidCanMoveToInChunk(int x, int y, float curDensity);
+	bool CanMoveHorizontallyInChunk(int x, int y, const Cell& cell);
+	bool HasSupportInChunk(int x, int y);
+	//=====================================
+
 	void UpdateStatistics();
 	void UpdateMouseGridPosition();
-private:
-	float GetFrameTime();
 
-	void UpdateCell(int x, int y);
-
-	void UpdatePhysics();
-	void ResetUpdateFlags();
+	//=============== useful in refractor code ===========================
+	float GetDeltaTime();
 	bool IsInBounds(int x, int y) const;
-	
-	// update diff mats
-	void UpdateSandParticle(int x, int y);
-	void UpdateSandY(int x, int y);
+	void UpdateAccumulatedMovement(int oldX, int oldY, int newX, int newY); 
+	void UpdateAccumulatedMovementLiquid(int oldX, int oldY, int newX, int newY);
 
-	void UpdateWaterParticle(int x, int y);
-
-	void UpdateSandParticle2(int x, int y);
-
-	void UpdateWaterParticle2(int x, int y);
-	void UpdateWaterParticle3(int x, int y);
-
-	void GetWaterMovementDirections(const Cell& cell, int x, int y, int& primaryDir, int& secondaryDir);
-	int GetWaterFlowDirection(const Cell& cell, int x, int y);
-	int CountEmptySpacesBelow(int x, int y);
-	void ApplyWaterCollisionPhysics(Cell& cell, int deltaX, int deltaY);
-	void ApplyWaterStuckPhysics(Cell& cell);
-	//float GetWaterRandom(int x1, int y1, int x2, int y2);
-	//-----help func
 	bool CanMoveTo(int x, int y);
-	void ApplySlidingPhysics(Cell& cell, int slideDirection);
-	void ApplyHorizontalFriction(Cell& cell, int horizontalDirection);
+	bool CanMoveToEmpty(int x, int y);
+	bool LiquidCanMoveTo(int x, int y,float curDensity);
+	bool MSCanMoveTo(int x, int y, float curDensity);
+	void GetMovementDirections(const Cell& cell, int x, int y, int& primaryDir, int& secondaryDir);
 	bool CanMoveHorizontally(int x, int y, const Cell& cell);
 
+	// Chunk访问
+	CellChunk* GetChunk(int chunkX, int chunkY);
+	CellChunk* GetChunkByWorldPos(int worldX, int worldY);
+	bool IsChunkIndexValid(int chunkX, int chunkY) const;
+
+private:
+	void UpdatePhysics();
+	void UpdatePhysicsInChunk();
+	void ResetUpdateFlags();
 	bool HasSupport(int x, int y);
-
-	bool ActOnNeighboringElement(int targetX, int targetY, bool isFinal, bool isFirst,
-		IntVec2& currentLocation, IntVec2& lastValidLocation, int depth);
-
-	void UpdateAccumulatedMovement(int oldX, int oldY, int newX, int newY);
-
 	const char* GetMaterialTypeName(CellMatType type) const;
 
-	void ApplyCollisionPhysics(Cell& cell, int deltaX, int deltaY);
-	int GetDeterministicDirection(int x, int y);
-	void GetMovementDirections(const Cell& cell, int x, int y, int& primaryDir, int& secondaryDir);
-	void ApplyHorizontalMovementPhysics(Cell& cell, int direction);
-	void ApplyStuckPhysics(Cell& cell);
-	int GetHorizontalDirection(const Cell& cell, int x, int y);
-	bool HandleSandCollision(int fromX, int fromY, int toX, int toY, Cell& movingCell, Cell& targetCell);
-	void TransferMomentum(Cell& fromCell, Cell& toCell, float transferRatio);
-	void ActivateSandParticle(Cell& cell, float initialForce);
-	bool TryPushSandParticle(int x, int y, int pushDirX, int pushDirY, float pushForce);
-	void ApplySandCollisionPhysics(Cell& cell, int deltaX, int deltaY, float impactForce);
-	float GetCollisionRandom(int x1, int y1, int x2, int y2);
+	UpdateOrder m_updateOrder = UpdateOrder::ROTATING;
+
+
 public:
 	
 
 private:
+	float m_deltaTime = 0.f;
+
+	// === OLD - 准备删除 ===
 	std::vector<std::vector<Cell>> m_grid;
-	SandboxPlayer* m_player;
+
+	// === NEW - Chunk 管理 ===
+	std::vector<std::vector<CellChunk*>> m_chunks;  // [chunkY][chunkX]
+	IntVec2 m_chunkGridSize;                        // chunk网格的行列数 (例如 8x4 表示8列4行)
+
 	IntVec2 m_mapSize;
 	AABB2 m_mapBound;
 
+	SandboxPlayer* m_player;
+	int m_mouseGridX = 0;
+	int m_mouseGridY = 0;
+
 	std::vector<Vertex_PCU> m_boundVerts;
-
-	float m_curDeltaTime = 0.f;
-
-	//------------
-	std::vector<std::pair<int, int>> m_updateOrder;
-	int m_frameCount = 0;
 
 	//------------------------------------------------------------------
 	int m_totalMaterialsSet = 0;        // 总的材料设置次数
@@ -117,9 +130,18 @@ private:
 	mutable int m_cachedSandCells = 0;
 	mutable int m_cachedWaterCells = 0;
 	mutable int m_cachedStoneCells = 0;
+	//------------------------------------------------------------------
 
-	int m_mouseGridX = 0;
-	int m_mouseGridY = 0;
+	struct DebugVisualizationSettings {
+		// Grid options
+		bool drawChunkGrid = true;
+		bool drawStaticChunks = false;
+		bool drawDynamicChunks = true;
+
+		// Cell coloring mode
+		CellColorMode colorMode = CellColorMode::NORMAL;
+	} m_debugSettings;
+
 };
 
 template<typename PointCallback>

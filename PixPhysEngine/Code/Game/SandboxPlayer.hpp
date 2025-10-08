@@ -2,6 +2,8 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "CellMatDef.hpp"
 #include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Game/SandboxUI.hpp"
 class SandboxMap;
 
 class SandboxPlayer {
@@ -9,7 +11,7 @@ public:
 	SandboxPlayer(IntVec2 const& mapSize);
 
 	void Update(float deltaTime);
-	void Render() const; // render the brush
+	void RenderImgui(); // render the brush
 
 	void InitCamera(IntVec2 const& mapSize);
 
@@ -25,6 +27,16 @@ public:
 	bool IsErasing() const;
 
 	Camera& GetCamera() { return m_camera; }
+
+
+	void SetSelectedMaterial(CellMatType material) {
+		m_selectedMaterial = material;
+	}
+
+	void SetBrushSize(int size) {
+		m_brushSize = GetClamped(size, 1, 20);
+	}
+
 
 private:
 	void HandleCameraControls();
@@ -46,5 +58,6 @@ private:
 	int m_dragCurrentX = 0;
 	int m_dragCurrentY = 0;
 
+	SandBoxUI m_sandBoxUI;
 
 };

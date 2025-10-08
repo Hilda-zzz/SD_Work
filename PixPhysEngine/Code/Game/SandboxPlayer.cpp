@@ -3,12 +3,14 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "SandboxMap.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "SandboxUI.hpp"
 extern Window* g_theWindow;
 extern InputSystem* g_theInput;
 
 SandboxPlayer::SandboxPlayer(IntVec2 const& mapSize)
 {
 	InitCamera(mapSize);
+	m_sandBoxUI = SandBoxUI();
 }
 
 void SandboxPlayer::Update(float deltaTime)
@@ -18,8 +20,9 @@ void SandboxPlayer::Update(float deltaTime)
 
 }
 
-void SandboxPlayer::Render() const
+void SandboxPlayer::RenderImgui()
 {
+	m_sandBoxUI.RenderMaterialBrushUI(this);
 }
 
 void SandboxPlayer::InitCamera(IntVec2 const& mapSize)
@@ -56,32 +59,17 @@ void SandboxPlayer::HandleInput()
 
 		if (m_curMap->IsValidPosition(gridX, gridY))
 		{
-			if (m_isSand)
+			for (int dx = 0; dx <= 4; dx++)
 			{
-				for (int dx = -1; dx <= 1; dx++)
+				for (int dy = 0; dy <= 4; dy++)
 				{
-					for (int dy = -1; dy <= 1; dy++)
+					int targetX = gridX + dx;
+					int targetY = gridY + dy;
+					if (m_curMap->IsValidPosition(targetX, targetY))
 					{
-						int targetX = gridX + dx;
-						int targetY = gridY + dy;
-						if (m_curMap->IsValidPosition(targetX, targetY))
-						{
-							m_curMap->PlaceMaterial(targetX, targetY, CellMatType::MAT_SAND, 1);
-						}
+						m_curMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, 1);
 					}
 				}
-			}
-			else
-			{
-				m_curMap->PlaceMaterial(gridX, gridY, CellMatType::MAT_WATER, 1);
-				if (m_curMap->IsValidPosition(gridX + 1, gridY))
-					m_curMap->PlaceMaterial(gridX + 1, gridY, CellMatType::MAT_WATER, 1);
-				if (m_curMap->IsValidPosition(gridX - 1, gridY))
-					m_curMap->PlaceMaterial(gridX - 1, gridY, CellMatType::MAT_WATER, 1);
-				if (m_curMap->IsValidPosition(gridX, gridY + 1))
-					m_curMap->PlaceMaterial(gridX, gridY + 1, CellMatType::MAT_WATER, 1);
-				if (m_curMap->IsValidPosition(gridX, gridY - 1))
-					m_curMap->PlaceMaterial(gridX, gridY - 1, CellMatType::MAT_WATER, 1);
 			}
 		}
 	}
@@ -128,7 +116,7 @@ void SandboxPlayer::HandleInput()
 			{
 				if (m_curMap->IsValidPosition(x, y))
 				{
-					m_curMap->PlaceMaterial(x, y, CellMatType::MAT_STONE, 1);
+					m_curMap->PlaceMaterialInChunk(x, y, CellMatType::MAT_STONE, 1);
 				}
 			}
 		}
@@ -149,3 +137,4 @@ bool SandboxPlayer::IsErasing() const
 {
 	return false;
 }
+

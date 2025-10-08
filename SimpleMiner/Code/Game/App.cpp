@@ -14,6 +14,7 @@
 #include "Engine/Core/XmlUtils.hpp"
 #include <chrono>
 #include <thread>
+#include "Engine/JobSystem/JobSystem.hpp"
 //#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
@@ -23,6 +24,7 @@ AudioSystem*	g_theAudio = nullptr;
 Game*			g_theGame = nullptr;
 bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
+JobSystem*		g_theJobSystem = nullptr;
 
 constexpr float TARGET_FPS = 400.0f;
 constexpr float TARGET_FRAME_TIME = (1.0f / TARGET_FPS) * 1000.f;
@@ -70,12 +72,15 @@ void App::Startup()
 	debugRenderConfig.m_fontName = "Data/Fonts/SquirrelFixedFont";
 	debugRenderConfig.m_renderer=g_theRenderer;
 
+	g_theJobSystem = new JobSystem();
+
 	g_theEventSystem->Startup();
 	g_theWindow->Startup();
 	g_theRenderer->Startup();
 	g_theDevConsole->Startup();
 	g_theInput->Startup();
 	g_theAudio->Startup();
+	g_theJobSystem->Startup();
 	DebugRenderSystemStartup(debugRenderConfig);
 
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
@@ -89,12 +94,16 @@ void App::Shutdown()
 	g_theGame = nullptr;
 
 	DebugRenderSystemShutdown();
+	g_theJobSystem->Shutdown();
 	g_theAudio->Shutdown();
 	g_theDevConsole->Shutdown();
 	g_theRenderer->Shutdown();
 	g_theWindow->Shutdown();
 	g_theInput->Shutdown();
 	g_theEventSystem->Shutdown();
+
+	delete g_theJobSystem;
+	g_theJobSystem = nullptr;
 
 	delete g_theAudio;
 	g_theAudio = nullptr;
@@ -159,6 +168,7 @@ void App::BeginFrame()
 	g_theRenderer->BeginFrame();
 	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
+	g_theJobSystem->BeginFrame();
 	DebugRenderBeginFrame();
 	Clock::TickSystemClock();
 }
@@ -204,6 +214,7 @@ void App::Render()  const
 void App::EndFrame()
 {
 	DebugRenderEndFrame();
+	g_theJobSystem->EndFrame();
 	g_theAudio->EndFrame();
 	g_theDevConsole->EndFrame();
 	g_theRenderer->EndFrame();

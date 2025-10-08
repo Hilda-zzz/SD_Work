@@ -125,3 +125,9 @@ void const IntVec2::operator-=(IntVec2 const& vecToSubtract)
 	y -= vecToSubtract.y;
 }
 
+bool IntVec2::operator<(IntVec2 const& other) const {
+	if (x != other.x) {
+		return x < other.x;
+	}
+	return y < other.y; 
+}

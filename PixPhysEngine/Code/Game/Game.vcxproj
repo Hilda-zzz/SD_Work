@@ -25,6 +25,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="CellBehaviorSystem.cpp" />
+    <ClCompile Include="CellBehaviorSystemInChunk.cpp" />
+    <ClCompile Include="CellChunk.cpp" />
     <ClCompile Include="CellMatManager.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
@@ -36,6 +39,8 @@
   <ItemGroup>
     <ClInclude Include="App.hpp" />
     <ClInclude Include="CellBehaviorSystem.hpp" />
+    <ClInclude Include="CellBehaviorSystemInChunk.hpp" />
+    <ClInclude Include="CellChunk.hpp" />
     <ClInclude Include="CellMatDef.hpp" />
     <ClInclude Include="Cell.hpp" />
     <ClInclude Include="CellMatManager.hpp" />

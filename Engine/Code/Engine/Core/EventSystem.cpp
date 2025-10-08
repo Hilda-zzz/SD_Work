@@ -33,21 +33,30 @@ void EventSystem::EndFrame()
 
 void EventSystem::SubscribeEventCallbackFuction(std::string const& eventName, EventCallbackFunction functionPtr,bool isCommand)
 {
-	//automatically add new event in the map if cannot find the key string
-	SubscriptionList& list = m_subscriptionListsByEventName[eventName]; 
-	EventSubscription sub;
-	sub.m_callbackFunction = functionPtr;
-	//sub.m_eventArgs = argsList;
-	list.push_back(sub);
+	{
+		std::scoped_lock lock(m_subscriptionsMutex);
+
+		//automatically add new event in the map if cannot find the key string
+		SubscriptionList& list = m_subscriptionListsByEventName[eventName];
+		EventSubscription sub;
+		sub.m_callbackFunction = functionPtr;
+		//sub.m_eventArgs = argsList;
+		list.push_back(sub);
+
+	}
 
 	if (isCommand)
 	{
+		std::scoped_lock lock(m_commandsMutex);
+
 		m_commandList.push_back(eventName);
 	}
 }
 
 void EventSystem::UnsubscribeEventCallbackFunction(std::string const& eventName, EventCallbackFunction functionPtr)
 {
+	std::scoped_lock lock(m_subscriptionsMutex);
+
 	auto it = m_subscriptionListsByEventName.find(eventName);
 	if (it != m_subscriptionListsByEventName.end()) 
 	{
@@ -74,62 +83,104 @@ void EventSystem::UnsubscribeEventCallbackFunction(std::string const& eventName,
 
 void EventSystem::FireEvent(std::string const& eventName, EventArgs& args)
 {
-	auto it = m_subscriptionListsByEventName.find(eventName);
-	if (it != m_subscriptionListsByEventName.end())
+	//auto it = m_subscriptionListsByEventName.find(eventName);
+	//if (it != m_subscriptionListsByEventName.end())
+	//{
+	//	SubscriptionList& list = it->second;
+	//	for (EventSubscription& callback : list)
+	//	{
+	//		//g_theDevConsole->AddLine(Rgba8::GREEN, "#FireEvent# " + eventName);
+	//		bool isConsume = callback.m_callbackFunction(args);
+	//		if (isConsume)
+	//		{
+	//			break;
+	//		}
+	//	}
+	//}
+	//else
+	//{
+	//	if (g_theDevConsole)
+	//	{
+	//		g_theDevConsole->AddLine(DevConsole::UNKNOWN, "#Unknown Command# " + eventName);
+	//	}
+	//	DebuggerPrintf("No subscribers for event: ");
+	//	DebuggerPrintf(eventName.c_str());
+	//}
+
+	SubscriptionList subscriptionsCopy;  // std::vector<EventSubscription>
+
 	{
-		SubscriptionList& list = it->second;
-		for (EventSubscription& callback : list)
+		std::scoped_lock lock(m_subscriptionsMutex);
+
+		auto iter = m_subscriptionListsByEventName.find(eventName);
+		if (iter != m_subscriptionListsByEventName.end())
 		{
-			//g_theDevConsole->AddLine(Rgba8::GREEN, "#FireEvent# " + eventName);
-			bool isConsume = callback.m_callbackFunction(args);
-			if (isConsume)
-			{
-				break;
-			}
+			subscriptionsCopy = iter->second;  
 		}
-	}
-	else
+	}  
+
+
+	if (subscriptionsCopy.empty())
 	{
 		if (g_theDevConsole)
 		{
 			g_theDevConsole->AddLine(DevConsole::UNKNOWN, "#Unknown Command# " + eventName);
 		}
-		DebuggerPrintf("No subscribers for event: ");
-		DebuggerPrintf(eventName.c_str());
+		DebuggerPrintf("No subscribers for event: %s\n", eventName.c_str());
+		return;
 	}
-}
 
-void EventSystem::FireEvent(std::string const& eventName)
-{
-	auto it = m_subscriptionListsByEventName.find(eventName);
-	if (it != m_subscriptionListsByEventName.end()) 
+	for (EventSubscription const& subscription : subscriptionsCopy)
 	{
-		for (EventSubscription& callback : it->second) 
+		if (subscription.m_callbackFunction)
 		{
-			EventArgs args;
-			args.SetValue("", "");
-			bool isConsume = callback.m_callbackFunction(args);
+			bool isConsume = subscription.m_callbackFunction(args);
 			if (isConsume)
 			{
 				break;
 			}
 		}
 	}
-	else 
-	{
-		g_theDevConsole->AddLine(DevConsole::UNKNOWN, "#Unknown Command# " + eventName);
-		DebuggerPrintf("No subscribers for event: ");
-		DebuggerPrintf(eventName.c_str());
-	}
+}
+
+void EventSystem::FireEvent(std::string const& eventName)
+{
+	//auto it = m_subscriptionListsByEventName.find(eventName);
+	//if (it != m_subscriptionListsByEventName.end()) 
+	//{
+	//	for (EventSubscription& callback : it->second) 
+	//	{
+	//		EventArgs args;
+	//		args.SetValue("", "");
+	//		bool isConsume = callback.m_callbackFunction(args);
+	//		if (isConsume)
+	//		{
+	//			break;
+	//		}
+	//	}
+	//}
+	//else 
+	//{
+	//	g_theDevConsole->AddLine(DevConsole::UNKNOWN, "#Unknown Command# " + eventName);
+	//	DebuggerPrintf("No subscribers for event: ");
+	//	DebuggerPrintf(eventName.c_str());
+	//}
+
+	EventArgs args;
+	FireEvent(eventName, args);
 }
 
 const std::map<std::string, SubscriptionList, cmpCaseInsensitive>& EventSystem::GetAllEventsSubscriptionLists() const
 {
+	std::scoped_lock lock(m_subscriptionsMutex);
+
 	return m_subscriptionListsByEventName;
 }
 
 const std::vector<std::string>& EventSystem::GetCommandList() const
 {
+	std::scoped_lock lock(m_commandsMutex);
+
 	return m_commandList;
 }
 

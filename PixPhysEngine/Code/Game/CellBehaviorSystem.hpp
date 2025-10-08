@@ -6,12 +6,17 @@ class SandboxMap;
 class CellBehaviorSystem
 {
 public:
-	// === 主要更新入口 ===
-	static void UpdateCells(Cell& cell, int x, int y, SandboxMap* map);
+	// === Update Entrance ===
+	static void UpdateCell(Cell& cell, int x, int y, SandboxMap* map);
 
 	// === 移动处理 ===
 	static bool TryMoveCell(Cell& cell, int fromX, int fromY, int toX, int toY, SandboxMap* map);
-	static void HandleMovement(Cell& cell, int& currentX, int& currentY, int targetX, int targetY, SandboxMap* map);
+
+	static void HandleMoveSolideMovement(int& currentX, int& currentY, int targetX, int targetY, SandboxMap* map);
+	static bool HandleMSvsMSCollision(int fromX, int fromY, int toX, int toY,
+		Cell& movingCell, Cell& targetCell); // bool marks if the cell activate another cell
+
+	static void HandleLiquidMovement(int& currentX, int& currentY, int targetX, int targetY, SandboxMap* map);
 
 	// === 碰撞处理 ===
 	static void HandleCollision(Cell& movingCell, Cell& targetCell, int deltaX, int deltaY);
@@ -20,13 +25,15 @@ public:
 	// === 物理效果应用 ===
 	static void ApplyGravity(Cell& cell, float deltaTime);
 	static void ApplyVelocityDamping(Cell& cell);
-	static void ApplyCollisionPhysics(Cell& cell, int deltaX, int deltaY);
+	static void ApplyCollisionPhysics(Cell& cell, int deltaX, int deltaY); //Move Solid
+	static void ApplyLiquidCollisionPhysics(Cell& cell, int deltaX, int deltaY);
 
 	// === 特殊移动逻辑 ===
 	static bool TryVerticalMovement(Cell& cell, int& currentX, int& currentY, SandboxMap* map);
 	static bool TryDiagonalMovement(Cell& cell, int& currentX, int& currentY, SandboxMap* map);
 	static bool TryHorizontalMovement(Cell& cell, int& currentX, int& currentY, SandboxMap* map);
 
+	static void ClampVelocity(Cell& cell, float maxSpeed);
 private:
 	// === 物理类型特化处理 ===
 	static void UpdateMoveSolid(Cell& cell, int x, int y, SandboxMap* map);
@@ -43,6 +50,6 @@ private:
 
 	// === 辅助函数 ===
 	static float CalculateImpactForce(const Cell& cell);
-	static void ClampVelocity(Cell& cell, float maxSpeed);
+	
 	static bool ShouldActivateNeighbor(const Cell& movingCell, const Cell& targetCell, float impactForce);
 };

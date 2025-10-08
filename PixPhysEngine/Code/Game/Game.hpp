@@ -49,7 +49,7 @@ public:
 	static GameState m_nextGameState;
 
 	Clock* m_gameClock = nullptr;
-	RandomNumberGenerator m_rng;
+	static RandomNumberGenerator s_rng;
 
 private:
 	Camera m_screenCamera;

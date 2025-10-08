@@ -27,7 +27,6 @@ public:
 
 	// sub panel
 	void RenderMaterialSelector(SandboxPlayer* player);
-	void RenderBrushControls(SandboxPlayer* player);
 	void RenderMaterialProperties(CellMatType selectedMaterial);
 
 	// help func
@@ -51,5 +50,9 @@ private:
 	bool m_showMaterialProperties = true;
 
 	static std::unordered_map<CellMatType, CellMatUIInfo> s_materialUIInfo;
+
+	// Material selector state
+	PhyType m_selectedCategory = PhyType::PHY_MOVE_SOLID; // Default to Move Solid
+	bool m_showToolsOnly = false;
 
 };

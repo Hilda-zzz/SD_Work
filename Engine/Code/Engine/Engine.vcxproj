@@ -93,7 +93,9 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../Engine/Code/ThirdParty/box2d/include;$(SolutionDir)../Engine/Code/ThirdParty/box2d/src;$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -110,7 +112,8 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../Engine/Code/ThirdParty/box2d/include;$(SolutionDir)../Engine/Code/ThirdParty/box2d/src;$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -127,7 +130,9 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../Engine/Code/ThirdParty/box2d/include;$(SolutionDir)../Engine/Code/ThirdParty/box2d/src;$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -144,7 +149,8 @@
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../Engine/Code/ThirdParty/box2d/include;$(SolutionDir)../Engine/Code/ThirdParty/box2d/src;$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -155,6 +161,40 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\ThirdParty\box2d\src\aabb.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\arena_allocator.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\array.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\bitset.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\body.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\broad_phase.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\constraint_graph.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\contact.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\contact_solver.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\core.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\distance.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\distance_joint.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\dynamic_tree.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\geometry.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\hull.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\id_pool.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\island.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\joint.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\manifold.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\math_functions.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\motor_joint.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\mover.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\physics_world.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\prismatic_joint.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\revolute_joint.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\sensor.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\shape.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\solver.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\solver_set.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\table.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\timer.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\types.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\weld_joint.c" />
+    <ClCompile Include="..\ThirdParty\box2d\src\wheel_joint.c" />
     <ClCompile Include="..\ThirdParty\imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\imgui.cpp" />
@@ -181,7 +221,7 @@
     <ClCompile Include="Core\Rgba8.cpp" />
     <ClCompile Include="Core\StringUtils.cpp" />
     <ClCompile Include="Core\Time.cpp" />
-    <ClCompile Include="Core\Timer.cpp" />
+    <ClCompile Include="Core\GameTimer.cpp" />
     <ClCompile Include="Core\VertexUtils.cpp" />
     <ClCompile Include="Core\Vertex_PCU.cpp" />
     <ClCompile Include="Core\Vertex_PCUTBN.cpp" />
@@ -197,6 +237,9 @@
     <ClCompile Include="Input\InputSystem.cpp" />
     <ClCompile Include="Input\KeyButtonState.cpp" />
     <ClCompile Include="Input\XboxController.cpp" />
+    <ClCompile Include="JobSystem\Job.cpp" />
+    <ClCompile Include="JobSystem\JobSystem.cpp" />
+    <ClCompile Include="JobSystem\JobWorkerThread.cpp" />
     <ClCompile Include="Math\AABB2.cpp" />
     <ClCompile Include="Math\AABB3.cpp" />
     <ClCompile Include="Math\Capsule2.cpp" />
@@ -246,6 +289,34 @@
     <ClCompile Include="Window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\base.h" />
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\box2d.h" />
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\collision.h" />
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\id.h" />
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\math_functions.h" />
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\types.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\aabb.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\arena_allocator.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\array.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\atomic.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\bitset.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\body.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\broad_phase.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\constants.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\constraint_graph.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\contact.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\contact_solver.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\core.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\ctz.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\id_pool.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\island.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\joint.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\physics_world.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\sensor.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\shape.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\solver.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\solver_set.h" />
+    <ClInclude Include="..\ThirdParty\box2d\src\table.h" />
     <ClInclude Include="..\ThirdParty\fmod\fmod.h" />
     <ClInclude Include="..\ThirdParty\fmod\fmod.hpp" />
     <ClInclude Include="..\ThirdParty\fmod\fmod_codec.h" />
@@ -282,7 +353,7 @@
     <ClInclude Include="Core\Rgba8.hpp" />
     <ClInclude Include="Core\StringUtils.hpp" />
     <ClInclude Include="Core\Time.hpp" />
-    <ClInclude Include="Core\Timer.hpp" />
+    <ClInclude Include="Core\GameTimer.hpp" />
     <ClInclude Include="Core\VertexUtils.hpp" />
     <ClInclude Include="Core\Vertex_PCU.hpp" />
     <ClInclude Include="Core\Vertex_PCUTBN.hpp" />
@@ -299,6 +370,9 @@
     <ClInclude Include="Input\KeyButtonState.hpp" />
     <ClInclude Include="Input\XboxButtonID.hpp" />
     <ClInclude Include="Input\XboxController.hpp" />
+    <ClInclude Include="JobSystem\Job.hpp" />
+    <ClInclude Include="JobSystem\JobSystem.hpp" />
+    <ClInclude Include="JobSystem\JobWorkerThread.hpp" />
     <ClInclude Include="Math\AABB2.hpp" />
     <ClInclude Include="Math\Capsule2.hpp" />
     <ClInclude Include="Math\CubicBezierCurve2D.hpp" />
@@ -326,11 +400,14 @@
     <ClInclude Include="Math\ZCylinder.hpp" />
     <ClInclude Include="Network\NetworkSystem.hpp" />
     <ClInclude Include="Renderer\BitmapFont.hpp" />
+    <ClInclude Include="Renderer\BlinnPhongMaterial.hpp" />
     <ClInclude Include="Renderer\Camera.hpp" />
     <ClInclude Include="Renderer\ConstantBuffer.hpp" />
     <ClInclude Include="Renderer\CubeSkyBox.hpp" />
     <ClInclude Include="Renderer\DefaultShader.hpp" />
     <ClInclude Include="Renderer\IndexBuffer.hpp" />
+    <ClInclude Include="Renderer\Material.hpp" />
+    <ClInclude Include="Renderer\PBRMaterial.hpp" />
     <ClInclude Include="Renderer\PointLight.hpp" />
     <ClInclude Include="Renderer\Renderer.hpp" />
     <ClInclude Include="Renderer\Shader.hpp" />
@@ -350,6 +427,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Math\AABB3.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\ThirdParty\box2d\src\box2d.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\ThirdParty\box2d\src\CMakeLists.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

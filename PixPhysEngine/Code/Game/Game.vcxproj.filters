@@ -35,7 +35,16 @@
       <Filter>CellMaterial</Filter>
     </ClCompile>
     <ClCompile Include="SandboxUI.cpp">
-      <Filter>Framework</Filter>
+      <Filter>SandboxMode</Filter>
+    </ClCompile>
+    <ClCompile Include="CellChunk.cpp">
+      <Filter>CellMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="CellBehaviorSystem.cpp">
+      <Filter>CellMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="CellBehaviorSystemInChunk.cpp">
+      <Filter>CellMaterial</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -71,6 +80,12 @@
     </ClInclude>
     <ClInclude Include="SandboxUI.hpp">
       <Filter>SandboxMode</Filter>
+    </ClInclude>
+    <ClInclude Include="CellChunk.hpp">
+      <Filter>CellMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="CellBehaviorSystemInChunk.hpp">
+      <Filter>CellMaterial</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

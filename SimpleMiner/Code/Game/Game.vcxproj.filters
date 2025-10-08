@@ -20,6 +20,9 @@
     <Filter Include="DefFiles">
       <UniqueIdentifier>{da351c4b-7932-402c-98a6-61a4ba85619a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Multi-threading">
+      <UniqueIdentifier>{d0a424a4-32f0-497c-8acc-54c3d56e7d65}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -52,14 +55,23 @@
     <ClCompile Include="World.cpp">
       <Filter>MinerStruct</Filter>
     </ClCompile>
-    <ClCompile Include="TerrainGenerator .cpp">
+    <ClCompile Include="BlockIterator.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
     <ClCompile Include="TerrainGenerator.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="BlockIterator.cpp">
       <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="GenerateChunkJob.cpp">
+      <Filter>Multi-threading</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkFileIO.cpp">
+      <Filter>Multi-threading</Filter>
+    </ClCompile>
+    <ClCompile Include="SaveChunkJob.cpp">
+      <Filter>Multi-threading</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadChunkJob.cpp">
+      <Filter>Multi-threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -101,6 +113,18 @@
     </ClInclude>
     <ClInclude Include="BlockIterator.hpp">
       <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="GenerateChunkJob.hpp">
+      <Filter>Multi-threading</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadChunkJob.hpp">
+      <Filter>Multi-threading</Filter>
+    </ClInclude>
+    <ClInclude Include="SaveChunkJob.hpp">
+      <Filter>Multi-threading</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkFileIO.hpp">
+      <Filter>Multi-threading</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

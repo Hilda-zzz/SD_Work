@@ -13,6 +13,7 @@
 #include "Engine/Core/Image.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Engine/Renderer/Material.hpp"
 //-------------------------------------------------------------
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -1592,6 +1593,26 @@ void Renderer::RenderImguiFrame()
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+void Renderer::BindMaterial(Material* material)
+{
+	material->Bind(this); 
+	ApplyTextureBindings();
+}
+
+void Renderer::SetTextureSlot(int slot, Texture* texture)
+{
+	if (slot >= MAX_TEXTURE_SLOTS) return;
+
+	m_boundTextures[slot] = texture ?
+		texture->m_shaderResourceView :
+		m_defaultTexture->m_shaderResourceView;
+}
+
+void Renderer::ApplyTextureBindings()
+{
+	m_deviceContext->PSSetShaderResources(0, MAX_TEXTURE_SLOTS, m_boundTextures);
 }
 
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)

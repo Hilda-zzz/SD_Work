@@ -20,13 +20,15 @@ extern Window* g_theWindow;
 GameState Game::m_curGameState = GameState::GAME_STATE_ATTRACT;
 GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
 
+RandomNumberGenerator Game::s_rng = RandomNumberGenerator();
+
 Game::Game()
 {
 	m_gameClock = new Clock();
 
 	CellMatManager::InitializeMaterials();
-	m_sandboxPlayer = new SandboxPlayer(IntVec2(500, 250));
-	m_sandboxMap = new SandboxMap(m_sandboxPlayer,IntVec2(500,250));
+	m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
+	m_sandboxMap = new SandboxMap(m_sandboxPlayer,IntVec2(640,320));
 }
 
 Game::~Game()
@@ -100,43 +102,43 @@ void Game::Renderer() const
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 
-// 	static bool showDemoWindow = true; 
-// 	static bool showAnotherWindow = true;
-// 	if (showDemoWindow) {
-// 		ImGui::ShowDemoWindow(&showDemoWindow);
-// 	}
-// 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-// 	{
-// 		static float f = 0.0f;
-// 		static int counter = 0;
-// 
-// 		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-// 
-// 		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-// 		ImGui::Checkbox("Demo Window", &showDemoWindow);      // Edit bools storing our window open/close state
-// 		//ImGui::Checkbox("Another Window", &show_another_window);
-// 
-// 		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-// 		//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-// 
-// 		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-// 			counter++;
-// 		ImGui::SameLine();
-// 		ImGui::Text("counter = %d", counter);
-// 
-// 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / 60.f, 60.f);
-// 		ImGui::End();
-// 	}
-// 
-// 	// 3. Show another simple window.
-// 	if (showAnotherWindow)
-// 	{
-// 		ImGui::Begin("Another Window", &showAnotherWindow);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-// 		ImGui::Text("Hello from another window!");
-// 		if (ImGui::Button("Close Me"))
-// 			showAnotherWindow = false;
-// 		ImGui::End();
-// 	}
+ 	//static bool showDemoWindow = true; 
+ 	//static bool showAnotherWindow = true;
+ 	//if (showDemoWindow) {
+ 	//	ImGui::ShowDemoWindow(&showDemoWindow);
+ 	//}
+ 	//// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+ 	//{
+ 	//	static float f = 0.0f;
+ 	//	static int counter = 0;
+ 
+ 	//	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+ 
+ 	//	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+ 	//	ImGui::Checkbox("Demo Window", &showDemoWindow);      // Edit bools storing our window open/close state
+ 	//	//ImGui::Checkbox("Another Window", &show_another_window);
+ 
+ 	//	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+ 	//	//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+ 
+ 	//	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+ 	//		counter++;
+ 	//	ImGui::SameLine();
+ 	//	ImGui::Text("counter = %d", counter);
+ 
+ 	//	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / 60.f, 60.f);
+ 	//	ImGui::End();
+ 	//}
+ 
+ 	//// 3. Show another simple window.
+ 	//if (showAnotherWindow)
+ 	//{
+ 	//	ImGui::Begin("Another Window", &showAnotherWindow);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+ 	//	ImGui::Text("Hello from another window!");
+ 	//	if (ImGui::Button("Close Me"))
+ 	//		showAnotherWindow = false;
+ 	//	ImGui::End();
+ 	//}
 }
 
 void Game::UpdateAttractMode(float deltaTime)

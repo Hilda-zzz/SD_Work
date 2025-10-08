@@ -205,26 +205,12 @@ void Game::UpdateGameplayMode(float deltaTime)
 	{
 		m_world->ToggleDebugDraw();
 	}
+	if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
+	{
+		m_world->ToggleDebugChunkJobStatInfo();
+	}
 	m_world->Update(deltaTime);
 	
-// 	char timeBuffer[256];
-// 	snprintf(timeBuffer, sizeof(timeBuffer),
-// 		"Time: %.2f  FPS: %.2f",
-// 		g_systemClock->GetTotalSeconds(), 1.f/g_systemClock->GetDeltaSeconds());
-// 
-//  	float textWidth = 490.f;
-//  	float textHeight = 50.f;
-//  	float margin = 10.f;
-//  	Vec2 topRight = Vec2(m_screenSize.x - margin - textWidth, m_screenSize.y - margin - textHeight);
-//  	Vec2 bottomLeft = Vec2(m_screenSize.x - margin, m_screenSize.y - margin);
-// 
-//  	DebugAddScreenText(std::string(timeBuffer),
-//  		AABB2(topRight, bottomLeft),
-//  		20.f,
-//  		Vec2(1.f, 1.f),
-//  		0.f,
-//  		Rgba8::WHITE,
-//  		Rgba8::WHITE);
 	AddDebugText();
 
 	//-----------------------------------------------------------------------------------------

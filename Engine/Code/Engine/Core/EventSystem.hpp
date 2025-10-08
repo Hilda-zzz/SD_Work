@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <mutex>
 
 struct EventSystemConfig
 {
@@ -66,6 +67,9 @@ protected:
 	EventSystemConfig		m_config;
 	std::map<std::string, SubscriptionList,cmpCaseInsensitive> m_subscriptionListsByEventName;
 	std::vector<std::string> m_commandList;
+
+	mutable std::recursive_mutex m_subscriptionsMutex;  
+	mutable std::recursive_mutex m_commandsMutex;       
 };
 
 //-----------------------------------------------------------------------------

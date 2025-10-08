@@ -21,7 +21,7 @@ GameCurve::GameCurve():m_bezierCurve(CubicBezierCurve2D(Vec2::ZERO, Vec2::ZERO, 
 	m_movePointsVerts.reserve(1000);
 	ReRandomObject();
 
-	m_2SecTimer = Timer(2.f, m_gameClock);
+	m_2SecTimer = GameTimer(2.f, m_gameClock);
 	m_2SecTimer.Start();
 }
 

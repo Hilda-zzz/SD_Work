@@ -19,6 +19,7 @@ class IndexBuffer;
 class ConstantBuffer;
 class Image;
 class TextureCube;
+class Material;
 
 struct ID3D11Device;
 struct ID3D11DeviceContext;
@@ -168,6 +169,15 @@ public:
 	void RenderImguiFrame();
 	bool IsImGuiEnabled() { return m_enableImgui; };
 
+	//---------------------New Material System-------------------------------
+	// Use this
+	void BindMaterial(Material* material);
+	// bind material calls these funcs
+	void SetTextureSlot(int slot, Texture* texture); // call by each child material
+	void ApplyTextureBindings();
+
+
+
 public:
 	std::vector<Texture*>		m_loadedTextures;
 	std::vector<TextureCube*>       m_loadedCubeTextures;
@@ -258,4 +268,8 @@ protected:
 	int m_shadowTexSlotIndex = 3;
 
 	bool m_enableImgui = false;
+
+	// -------------New Material System-----------------------
+	static constexpr int MAX_TEXTURE_SLOTS = 16;
+	ID3D11ShaderResourceView* m_boundTextures[16] = { nullptr }; // track bound textures
 };

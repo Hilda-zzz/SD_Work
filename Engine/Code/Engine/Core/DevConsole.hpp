@@ -5,8 +5,9 @@
 #include <string>
 #include "Engine/Core/EventSystem.hpp"
 #include "../Input/IInputConsumer.hpp"
+#include <mutex>
 class BitmapFont;
-class Timer;
+class GameTimer;
 //class EventArgs;
 
 struct DevConsoleConfig
@@ -104,8 +105,9 @@ protected:
 	std::string				m_oriInputSave;
 	int						m_insertionPointPosition = 0;
 	bool					m_insesrtionPointVisible = true;
-	Timer*					m_insertionPointBlinkTimer;
+	GameTimer*					m_insertionPointBlinkTimer;
 	std::vector<std::string> m_commandHistory;
 	int						m_historyIndex = -1;
-	
+private:
+	mutable std::recursive_mutex m_mutex;
 };

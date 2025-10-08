@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <unordered_map>
 #include "Game/CellMatDef.hpp"
+
 class CellMatManager
 {
 public:
@@ -10,43 +11,122 @@ public:
 		// 空气/真空
 		s_materialDefs[CellMatType::MAT_EMPTY] = CellMatDef(PhyType::PHY_STATIC_SOLID);
 		s_materialDefs[CellMatType::MAT_EMPTY].m_density = 0.0f;
+		s_materialDefs[CellMatType::MAT_EMPTY].m_name = "Eraser";
+		s_materialDefs[CellMatType::MAT_EMPTY].m_description = "Tool - Remove material";
 
 		// 沙子 - 标准颗粒物
 		s_materialDefs[CellMatType::MAT_SAND] = CellMatDef(PhyType::PHY_MOVE_SOLID);
 		s_materialDefs[CellMatType::MAT_SAND].m_density = 1.5f;
 		s_materialDefs[CellMatType::MAT_SAND].m_friction = 0.6f;
-		s_materialDefs[CellMatType::MAT_SAND].m_restitution = 0.2f;
-		s_materialDefs[CellMatType::MAT_SAND].m_moveSolid.m_slideAngle = 35.0f;
-		s_materialDefs[CellMatType::MAT_SAND].m_moveSolid.m_collisionMomentumTransfer = 0.15f;
+		s_materialDefs[CellMatType::MAT_SAND].m_restitution = 0.4f;
+		s_materialDefs[CellMatType::MAT_SAND].m_collisionMomentumTransfer = 0.0f;
+		s_materialDefs[CellMatType::MAT_SAND].m_neighborActivationChance = 0.9f;
+		s_materialDefs[CellMatType::MAT_SAND].m_color = Rgba8(245, 164, 96);
+		s_materialDefs[CellMatType::MAT_SAND].m_name = "Sand";
+		s_materialDefs[CellMatType::MAT_SAND].m_description = "Standard granular material";
 
 		// 盐 - 更细小的颗粒，更容易流动
 		s_materialDefs[CellMatType::MAT_SALT] = CellMatDef(PhyType::PHY_MOVE_SOLID);
 		s_materialDefs[CellMatType::MAT_SALT].m_density = 2.2f;
 		s_materialDefs[CellMatType::MAT_SALT].m_friction = 0.4f;
 		s_materialDefs[CellMatType::MAT_SALT].m_restitution = 0.1f;
-		s_materialDefs[CellMatType::MAT_SALT].m_moveSolid.m_slideAngle = 25.0f; // 更小的滑动角
-		s_materialDefs[CellMatType::MAT_SALT].m_moveSolid.m_neighborActivationChance = 0.8f; // 更容易激活邻居
-		s_materialDefs[CellMatType::MAT_SALT].m_interaction.m_isSoluble = true; // 可溶解
+		s_materialDefs[CellMatType::MAT_SALT].m_neighborActivationChance = 0.6f;
+		s_materialDefs[CellMatType::MAT_SALT].m_interaction.m_isSoluble = true;
+		s_materialDefs[CellMatType::MAT_SALT].m_color = Rgba8(248, 248, 255);
+		s_materialDefs[CellMatType::MAT_SALT].m_name = "Salt";
+		s_materialDefs[CellMatType::MAT_SALT].m_description = "Fine granular material - flows easily";
+
+		// 土壤 - 比沙子更粘稠，含有有机物
+		s_materialDefs[CellMatType::MAT_SOIL] = CellMatDef(PhyType::PHY_MOVE_SOLID);
+		s_materialDefs[CellMatType::MAT_SOIL].m_density = 1.3f;
+		s_materialDefs[CellMatType::MAT_SOIL].m_friction = 0.8f;
+		s_materialDefs[CellMatType::MAT_SOIL].m_restitution = 0.1f;
+		s_materialDefs[CellMatType::MAT_SOIL].m_collisionMomentumTransfer = 0.05f;
+		s_materialDefs[CellMatType::MAT_SOIL].m_neighborActivationChance = 0.4f;
+		s_materialDefs[CellMatType::MAT_SOIL].m_airResistance = 0.85f;
+		s_materialDefs[CellMatType::MAT_SOIL].m_color = Rgba8(101, 67, 33);
+		s_materialDefs[CellMatType::MAT_SOIL].m_name = "Soil";
+		s_materialDefs[CellMatType::MAT_SOIL].m_description = "Rich earth material - sticky";
+
+		// 碎石 - 小石子，密度大，流动性好
+		s_materialDefs[CellMatType::MAT_GRAVEL] = CellMatDef(PhyType::PHY_MOVE_SOLID);
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_density = 2.8f;
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_friction = 0.5f;
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_restitution = 0.6f;
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_collisionMomentumTransfer = 0.2f;
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_neighborActivationChance = 0.8f;
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_color = Rgba8(128, 128, 128);
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_name = "Gravel";
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_description = "Small stones - bouncy";
 
 		// 水 - 液体
 		s_materialDefs[CellMatType::MAT_WATER] = CellMatDef(PhyType::PHY_LIQUID);
 		s_materialDefs[CellMatType::MAT_WATER].m_density = 1.0f;
 		s_materialDefs[CellMatType::MAT_WATER].m_friction = 0.1f;
-		s_materialDefs[CellMatType::MAT_WATER].m_viscosity = 0.8f; // 阻力系数
+		s_materialDefs[CellMatType::MAT_WATER].m_viscosity = 0.8f;
 		s_materialDefs[CellMatType::MAT_WATER].m_interaction.m_isPermeable = true;
 		s_materialDefs[CellMatType::MAT_WATER].m_interaction.m_penetrationResistance = 0.8f;
+		s_materialDefs[CellMatType::MAT_WATER].m_color = Rgba8(30, 144, 255);
+		s_materialDefs[CellMatType::MAT_WATER].m_name = "Water";
+		s_materialDefs[CellMatType::MAT_WATER].m_description = "Fluid material - liquid";
+
+		s_materialDefs[CellMatType::MAT_WATER].m_neighborActivationChance = 0.9f;
+		s_materialDefs[CellMatType::MAT_WATER].m_collisionMomentumTransfer = 0.1f;
+		s_materialDefs[CellMatType::MAT_WATER].m_horizontalDamping = 0.9f;
+		s_materialDefs[CellMatType::MAT_WATER].m_verticalDamping = 0.99f;
+		s_materialDefs[CellMatType::MAT_WATER].m_collisionDamping = 0.5f;
+
+		// oil - 液体
+		s_materialDefs[CellMatType::MAT_OIL] = CellMatDef(PhyType::PHY_LIQUID);
+		s_materialDefs[CellMatType::MAT_OIL].m_density = 0.8f;
+		s_materialDefs[CellMatType::MAT_OIL].m_friction = 0.1f;
+		s_materialDefs[CellMatType::MAT_OIL].m_viscosity = 0.9f;
+		s_materialDefs[CellMatType::MAT_OIL].m_interaction.m_isPermeable = true;
+		s_materialDefs[CellMatType::MAT_OIL].m_interaction.m_penetrationResistance = 0.8f;
+		s_materialDefs[CellMatType::MAT_OIL].m_color = Rgba8(144, 144, 10);
+		s_materialDefs[CellMatType::MAT_OIL].m_name = "Oil";
+		s_materialDefs[CellMatType::MAT_OIL].m_description = "Fluid material - liquid";
+
+		s_materialDefs[CellMatType::MAT_OIL].m_neighborActivationChance = 0.9f;
+		s_materialDefs[CellMatType::MAT_OIL].m_collisionMomentumTransfer = 0.1f;
+		s_materialDefs[CellMatType::MAT_OIL].m_horizontalDamping = 0.9f;
+		s_materialDefs[CellMatType::MAT_OIL].m_verticalDamping = 0.9f;
+		s_materialDefs[CellMatType::MAT_OIL].m_collisionDamping = 0.5f;
+
+		// lava 液体
+		s_materialDefs[CellMatType::MAT_LAVA] = CellMatDef(PhyType::PHY_LIQUID);
+		s_materialDefs[CellMatType::MAT_LAVA].m_density = 2.f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_friction = 0.3f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_viscosity = 0.6f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_interaction.m_isPermeable = true;
+		s_materialDefs[CellMatType::MAT_LAVA].m_interaction.m_penetrationResistance = 0.8f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_color = Rgba8(255, 100, 30);
+		s_materialDefs[CellMatType::MAT_LAVA].m_name = "Lava";
+		s_materialDefs[CellMatType::MAT_LAVA].m_description = "Fluid material - liquid";
+
+		s_materialDefs[CellMatType::MAT_LAVA].m_neighborActivationChance = 0.9f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_collisionMomentumTransfer = 0.1f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_horizontalDamping = 0.9f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_verticalDamping = 0.9f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_collisionDamping = 0.5f;
 
 		// 石头 - 静态固体
 		s_materialDefs[CellMatType::MAT_STONE] = CellMatDef(PhyType::PHY_STATIC_SOLID);
 		s_materialDefs[CellMatType::MAT_STONE].m_density = 3.0f;
 		s_materialDefs[CellMatType::MAT_STONE].m_friction = 0.8f;
 		s_materialDefs[CellMatType::MAT_STONE].m_restitution = 0.1f;
+		s_materialDefs[CellMatType::MAT_STONE].m_color = Rgba8(105, 105, 105);
+		s_materialDefs[CellMatType::MAT_STONE].m_name = "Stone";
+		s_materialDefs[CellMatType::MAT_STONE].m_description = "Static obstacle - hard solid";
 
-		// 木头 - 静态固体（可以考虑后续扩展为可破坏）
+		// 木头 - 静态固体
 		s_materialDefs[CellMatType::MAT_WOOD] = CellMatDef(PhyType::PHY_STATIC_SOLID);
 		s_materialDefs[CellMatType::MAT_WOOD].m_density = 0.6f;
 		s_materialDefs[CellMatType::MAT_WOOD].m_friction = 0.7f;
 		s_materialDefs[CellMatType::MAT_WOOD].m_restitution = 0.4f;
+		s_materialDefs[CellMatType::MAT_WOOD].m_color = Rgba8(139, 69, 19);
+		s_materialDefs[CellMatType::MAT_WOOD].m_name = "Wood";
+		s_materialDefs[CellMatType::MAT_WOOD].m_description = "Building material - light solid";
 	}
 
 	static const CellMatDef& GetMaterialDef(CellMatType matType) {
@@ -55,6 +135,11 @@ public:
 
 	static CellMatDef& GetMutableMaterialDef(CellMatType matType) {
 		return s_materialDefs[matType];
+	}
+
+	// 新增：获取所有材质定义的方法，用于UI自动化
+	static const std::unordered_map<CellMatType, CellMatDef>& GetAllMaterialDefs() {
+		return s_materialDefs;
 	}
 
 private:

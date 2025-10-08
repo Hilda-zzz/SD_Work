@@ -16,6 +16,7 @@
 #include "Game/GameCurve.hpp"
 #include "GamePachinko2D.hpp"
 #include "Game/GameSandboxTest.hpp"
+#include "GameBox2DTest.hpp"
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
 Camera*			g_theCamera = nullptr;
@@ -70,7 +71,7 @@ void App::Startup()
 	debugRenderConfig.m_renderer = g_theRenderer;
 	DebugRenderSystemStartup(debugRenderConfig);
 
-	m_theGame = new GameSandboxTest();
+	m_theGame = new GameBox2DTest();
 }
 
 void App::Shutdown()

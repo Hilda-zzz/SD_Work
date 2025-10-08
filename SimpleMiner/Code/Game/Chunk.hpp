@@ -94,6 +94,31 @@ constexpr float DIAMOND_CHANCE = 0.0001f;
 constexpr int OBSIDIAN_Z = 1;
 constexpr int LAVA_Z = 0;
 
+//--------------------------------------------------
+enum class ChunkState
+{
+    MISSING,                        // Optional; Used only in cases where we want to say that a chunk doesn't exist at all
+    ON_DISK,                        // Optional; Used only in cases where we want to say a chunk is missing, but it exists on disk
+    CONSTRUCTING,                   // [set by main thread] Initial chunk::m_state value during early construction
+
+    ACTIVATING_QUEUED_LOAD,         // [set by main thread] Chunk has been added to the loading queue
+    ACTIVATING_LOADING,             // [set by disk thread] Chunk is being loaded & populated by disk i/o thread
+    ACTIVATING_LOAD_COMPLETE,       // [set by disk thread] Chunk is done loading and ready for main thread to claim
+
+    ACTIVATING_QUEUED_GENERATE,     // [set by main thread] Chunk has been added to the generating queue
+    ACTIVATING_GENERATING,          // [set by generator thread] Chunk is being generated & populated by a generator thread
+    ACTIVATING_GENERATE_COMPLETE,   // [set by generator thread] Chunk is done generating and ready for main thread to claim
+
+    ACTIVE,                         // [set by main thread] Chunk is in m_activeChunks; only main thread can touch it. Lighting, mesh building allowed.
+
+    DEACTIVATING_QUEUED_SAVE,       // [set by main thread] Chunk has been deactivated, and is [being] queued for save
+    DEACTIVATING_SAVING,            // [set by disk thread] Chunk is being compressed and saved by disk i/o thread
+    DEACTIVATING_SAVE_COMPLETE,     // [set by disk thread] Chunk has been saved and is ready for main thread to claim
+    DECONSTRUCTING,                 // [set by main thread] Chunk is being destroyed by main thread
+
+    NUM_CHUNK_STATES
+};
+
 struct ChunkFileHeader
 {
 	char m_fourCC[4];        // 4-byte character code "GCHK"
@@ -118,7 +143,7 @@ public:
 	static void SetBlockAtlasTexture(Texture* texture);
 
 	void Initialize();
-	void GenerateBlocks();
+	// void GenerateBlocks();
 	void RebuildMesh();
 	void RebuildMeshWithCulling();
 	void RebuildDebugMesh();
@@ -143,6 +168,8 @@ public:
 	int GetVertsCount() { return m_vertsCount; }
 	int GetIndicesCount() { return m_indicesCount; }
 
+	void CreateGPUResources();
+
 public:
 	// === UTILITY ===
 	int LocalCoordsToIndex(const IntVec3& localCoords) const;
@@ -158,7 +185,7 @@ public:
 
 	static IntVec2 GetChunkCoords(Vec3 const& position);
 	IntVec2 GetChunkCoords(const IntVec3& globalCoords);
-	IntVec2 GetChunkCenter();
+	IntVec2 GetChunkCenter() const;
 	static IntVec2 GetChunkCenter(const IntVec2& chunkCoords);
 	IntVec3 GlobalCoordsToLocalCoords(const IntVec3& globalCoords);
 
@@ -185,6 +212,7 @@ public:
 	static RandomNumberGenerator s_rng;
 	static Texture* s_blockAtlasTexture;
 
+	std::atomic<ChunkState> m_state=ChunkState::CONSTRUCTING;
 	IntVec2 m_chunkCoords;
 	std::vector<Block> m_blocks;        // 32768
 	AABB3 m_worldBounds;
@@ -201,4 +229,9 @@ public:
 
 	int m_vertsCount = 0;
 	int m_indicesCount = 0;
+
+	Chunk* m_neighborEast = nullptr;   // +X
+	Chunk* m_neighborWest = nullptr;   // -X
+	Chunk* m_neighborNorth = nullptr;  // +Y
+	Chunk* m_neighborSouth = nullptr;  // -Y
 };

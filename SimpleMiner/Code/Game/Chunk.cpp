@@ -17,7 +17,12 @@ Chunk::Chunk(IntVec2 const& chunkCoords)
 	:m_chunkCoords(chunkCoords),m_blocks(BLOCKS_PER_CHUNK)
 {
 	CalculateWorldBounds();
-	Initialize();
+	AddVertsForAABB3DWireFrame(m_debugVertexArray, m_worldBounds, 0.05f);
+
+	m_isDirty = true;
+	m_needsSaving = false;
+
+	// Initialize();
 }
 
 Chunk::~Chunk()
@@ -33,98 +38,98 @@ void Chunk::SetBlockAtlasTexture(Texture* texture)
 	s_blockAtlasTexture = texture;
 }
 
-void Chunk::Initialize()
-{
-	m_isDirty = true;
-	m_needsSaving = false;
+//void Chunk::Initialize()
+//{
+//	m_isDirty = true;
+//	m_needsSaving = false;
+//
+//	m_vertexBuffer= g_theRenderer->CreateVertexBuffer(BLOCKS_PER_CHUNK*24, sizeof(Vertex_PCUTBN));
+//	m_indexBuffer = g_theRenderer->CreateIndexBuffer(BLOCKS_PER_CHUNK*36);
+//
+//	//AddVertsForAABB3DWireFrame(m_debugVertexArray, m_worldBounds,0.05f);
+//
+//	// block generation
+//	// if have file
+//	std::string filename = "Saves/Chunk(" + std::to_string(m_chunkCoords.x) + "," + std::to_string(m_chunkCoords.y) + ").chunk";
+//	// Check if chunk file exists
+//	if (FileExists(filename))
+//	{
+//		// Load from file
+//		if (LoadChunkFromFile(filename))
+//		{
+//			// Successfully loaded from file
+//			m_needsSaving = false;  // File is up to date
+//		}
+//		else
+//		{
+//			// File exists but failed to load, generate terrain as fallback
+//			printf("Warning: Failed to load chunk (%d,%d) from file, generating new terrain\n",
+//				m_chunkCoords.x, m_chunkCoords.y);
+//			TerrainGenerator::GenerateBlocksForChunk(this);
+//		}
+//	}
+//	else
+//	{
+//		// else no file
+//		TerrainGenerator::GenerateBlocksForChunk(this);
+//	}
+//
+//	RebuildMeshWithCulling();
+//}
 
-	m_vertexBuffer= g_theRenderer->CreateVertexBuffer(BLOCKS_PER_CHUNK*24, sizeof(Vertex_PCUTBN));
-	m_indexBuffer = g_theRenderer->CreateIndexBuffer(BLOCKS_PER_CHUNK*36);
-
-	AddVertsForAABB3DWireFrame(m_debugVertexArray, m_worldBounds,0.05f);
-
-	// block generation
-	// if have file
-	std::string filename = "Saves/Chunk(" + std::to_string(m_chunkCoords.x) + "," + std::to_string(m_chunkCoords.y) + ").chunk";
-	// Check if chunk file exists
-	if (FileExists(filename))
-	{
-		// Load from file
-		if (LoadChunkFromFile(filename))
-		{
-			// Successfully loaded from file
-			m_needsSaving = false;  // File is up to date
-		}
-		else
-		{
-			// File exists but failed to load, generate terrain as fallback
-			printf("Warning: Failed to load chunk (%d,%d) from file, generating new terrain\n",
-				m_chunkCoords.x, m_chunkCoords.y);
-			TerrainGenerator::GenerateBlocksForChunk(this);
-		}
-	}
-	else
-	{
-		// else no file
-		TerrainGenerator::GenerateBlocksForChunk(this);
-	}
-
-	RebuildMeshWithCulling();
-}
-
-void Chunk::GenerateBlocks()
-{
-	static const Block airBlock = BlockDefinition::s_nameToIndexMap["Air"];
-	static const Block waterBlock = BlockDefinition::s_nameToIndexMap["Water"];
-	static const Block grassBlock = BlockDefinition::s_nameToIndexMap["Grass"];
-	static const Block dirtBlock = BlockDefinition::s_nameToIndexMap["Dirt"];
-
-	for (int i = 0; i < BLOCKS_PER_CHUNK; ++i)
-	{
-		m_blocks[i] = airBlock;
-	}
-
-	for (int y = 0; y < CHUNK_SIZE_Y; ++y)
-	{
-		for (int x = 0; x < CHUNK_SIZE_X; ++x)
-		{
-			int globalX = x + (m_chunkCoords.x << CHUNK_BITS_X);
-			int globalY = y + (m_chunkCoords.y << CHUNK_BITS_Y);
-			int terrainHeight = CalculateTerrainHeight(globalX, globalY);
-
-			int dirtDepth = s_rng.RollRandomIntInRange(3, 4);
-			int dirtStartLevel = terrainHeight - dirtDepth;
-
-			for (int z = 0; z < CHUNK_SIZE_Z; ++z)
-			{
-				Block block;
-
-				if (z > terrainHeight)
-				{
-					block = (z <= WATER_LEVEL) ? waterBlock : airBlock;
-				}
-				else if (z == terrainHeight)
-				{
-					block = grassBlock;
-				}
-				else if (z >= dirtStartLevel)
-				{
-					block = dirtBlock;
-				}
-				else
-				{
-					uint8_t blockType = GetRandomOreType();
-					block = Block(blockType);
-				}
-
-				int blockIndex = (z << (CHUNK_BITS_X + CHUNK_BITS_Y)) |
-					(y << CHUNK_BITS_X) | x;
-				m_blocks[blockIndex] = block;
-			}
-		}
-	}
-	m_isDirty = true;
-}
+//void Chunk::GenerateBlocks()
+//{
+//	static const Block airBlock = BlockDefinition::s_nameToIndexMap["Air"];
+//	static const Block waterBlock = BlockDefinition::s_nameToIndexMap["Water"];
+//	static const Block grassBlock = BlockDefinition::s_nameToIndexMap["Grass"];
+//	static const Block dirtBlock = BlockDefinition::s_nameToIndexMap["Dirt"];
+//
+//	for (int i = 0; i < BLOCKS_PER_CHUNK; ++i)
+//	{
+//		m_blocks[i] = airBlock;
+//	}
+//
+//	for (int y = 0; y < CHUNK_SIZE_Y; ++y)
+//	{
+//		for (int x = 0; x < CHUNK_SIZE_X; ++x)
+//		{
+//			int globalX = x + (m_chunkCoords.x << CHUNK_BITS_X);
+//			int globalY = y + (m_chunkCoords.y << CHUNK_BITS_Y);
+//			int terrainHeight = CalculateTerrainHeight(globalX, globalY);
+//
+//			int dirtDepth = s_rng.RollRandomIntInRange(3, 4);
+//			int dirtStartLevel = terrainHeight - dirtDepth;
+//
+//			for (int z = 0; z < CHUNK_SIZE_Z; ++z)
+//			{
+//				Block block;
+//
+//				if (z > terrainHeight)
+//				{
+//					block = (z <= WATER_LEVEL) ? waterBlock : airBlock;
+//				}
+//				else if (z == terrainHeight)
+//				{
+//					block = grassBlock;
+//				}
+//				else if (z >= dirtStartLevel)
+//				{
+//					block = dirtBlock;
+//				}
+//				else
+//				{
+//					uint8_t blockType = GetRandomOreType();
+//					block = Block(blockType);
+//				}
+//
+//				int blockIndex = (z << (CHUNK_BITS_X + CHUNK_BITS_Y)) |
+//					(y << CHUNK_BITS_X) | x;
+//				m_blocks[blockIndex] = block;
+//			}
+//		}
+//	}
+//	m_isDirty = true;
+//}
 
 void Chunk::RebuildMesh()
 {
@@ -162,6 +167,16 @@ void Chunk::RebuildMeshWithCulling()
 	m_indicesCount = 0;
 	m_vertices.clear();
 	m_indices.clear();
+
+	if (m_vertexBuffer) {
+		delete m_vertexBuffer;
+		m_vertexBuffer = nullptr;
+	}
+	if (m_indexBuffer) {
+		delete m_indexBuffer;
+		m_indexBuffer = nullptr;
+	}
+
 	int estimatedVertices = static_cast<int>(BLOCKS_PER_CHUNK * 6 * 4 * VISIBLE_FACE_RATIO);
 	int estimatedIndices = static_cast<int>(BLOCKS_PER_CHUNK * 6 * 6 * VISIBLE_FACE_RATIO);
 	m_vertices.reserve(estimatedVertices);
@@ -178,12 +193,18 @@ void Chunk::RebuildMeshWithCulling()
 	}
 
 	//-----
-	g_theRenderer->CopyGameVertexBufferToGPU(m_vertices.data(), (int)m_vertices.size(), m_vertexBuffer);
-	g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
-
 	m_isDirty = false;
 	m_indicesCount = (int)m_indices.size();
 	m_vertsCount = (int)m_vertices.size();
+
+	CreateGPUResources();
+	g_theRenderer->CopyGameVertexBufferToGPU(m_vertices.data(), (int)m_vertices.size(), m_vertexBuffer);
+	g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
+
+	m_vertices.clear();
+	m_vertices.shrink_to_fit();
+	m_indices.clear();
+	m_indices.shrink_to_fit();
 }
 
 void Chunk::RebuildDebugMesh()
@@ -196,6 +217,14 @@ void Chunk::Update()
 
 void Chunk::Render() const
 {
+	if (!m_vertexBuffer || !m_indexBuffer) {
+		return;  
+	}
+
+	if (m_indicesCount == 0) {
+		return;  
+	}
+
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
@@ -298,6 +327,12 @@ Vec3 Chunk::LocalCoordsToWorldPos(const IntVec3& localCoords) const
 		static_cast<float>((m_chunkCoords.y << CHUNK_BITS_Y) + localCoords.y),  
 		static_cast<float>(localCoords.z)
 	);
+}
+
+void Chunk::CreateGPUResources()
+{
+	m_vertexBuffer = g_theRenderer->CreateVertexBuffer(m_vertsCount, sizeof(Vertex_PCUTBN));
+	m_indexBuffer = g_theRenderer->CreateIndexBuffer(m_indicesCount);
 }
 
 int Chunk::LocalCoordsToIndex(const IntVec3& localCoords) const
@@ -404,7 +439,7 @@ IntVec2 Chunk::GetChunkCoords(const IntVec3& globalCoords)
 	return IntVec2(chunkX, chunkY);
 }
 
-IntVec2 Chunk::GetChunkCenter()
+IntVec2 Chunk::GetChunkCenter() const
 {
 	int centerX = m_chunkCoords.x * CHUNK_SIZE_X + CHUNK_SIZE_X / 2;
 	int centerY = m_chunkCoords.y * CHUNK_SIZE_Y + CHUNK_SIZE_Y / 2;

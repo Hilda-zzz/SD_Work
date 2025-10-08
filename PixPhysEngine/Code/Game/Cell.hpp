@@ -14,6 +14,8 @@ struct Cell {
 	bool m_isFreeFalling = true;
 	int m_framesWithoutMovement = 0;
 
+	int m_liquidReCollideTimes = 0;
+
 	bool IsEmpty() const { return m_type == CellMatType::MAT_EMPTY; }
 	void SetEmpty() {
 		m_type = CellMatType::MAT_EMPTY;

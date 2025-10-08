@@ -8,6 +8,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "EngineCommon.hpp"
+#include <mutex>
 extern Clock*g_systemClock;
 extern EventSystem* g_theEventSystem;
 static bool s_isDebugRenderMode = true;
@@ -143,6 +144,9 @@ static std::vector<DebugRenderGeometry*> s_debugRenderListWorld;
 static std::vector<DebugRenderGeometry*> s_debugRenderListScreen;
 static std::vector<DebugRenderGeometry*> s_debugRenderListMsg;
 
+static  std::recursive_mutex g_debugRenderMutex;
+
+
 void DebugRenderSystemStartup(const DebugRenderConfig& config)
 {
 	g_theEventSystem->SubscribeEventCallbackFuction("DebugRenderClear", Command_DebugRenderClear, true);
@@ -190,16 +194,22 @@ void DebugRenderSystemShutdown()
 
 void DebugRenderSetVisible()
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	s_isDebugRenderMode = true;
 }
 
 void DebugRenderSetHidden()
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	s_isDebugRenderMode = false;
 }
 
 void DebugRenderClear()
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	for (DebugRenderGeometry* geometry : s_debugRenderListWorld)
 	{
 		delete geometry;
@@ -217,7 +227,6 @@ void DebugRenderClear()
 
 void DebugRenderBeginFrame()
 {
-	
 	for (DebugRenderGeometry* geometry : s_debugRenderListWorld)
 	{
 		geometry->UpdateVerts();
@@ -236,6 +245,8 @@ void DebugRenderBeginFrame()
 
 void DebugRenderWorld(const Camera& camera)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	if (s_isDebugRenderMode)
 	{
 // 		char buffer[256];
@@ -260,6 +271,8 @@ void DebugRenderWorld(const Camera& camera)
 
 void DebugRenderScreen(const Camera& camera)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	if (s_isDebugRenderMode)
 	{
 		std::vector<Vertex_PCU> msgVerts;
@@ -325,6 +338,8 @@ void DebugRenderEndFrame()
 
 void DebugAddWorldPoint(const Vec3& pos, float radius, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	DebugRenderGeometry* newPoint = new DebugRenderGeometry(pos,duration, startColor, endColor, mode);
 	AddVertsForSphere3D(newPoint->m_verts, pos, radius, startColor);
 	s_debugRenderListWorld.push_back(newPoint);
@@ -332,6 +347,8 @@ void DebugAddWorldPoint(const Vec3& pos, float radius, float duration, const Rgb
 
 void DebugAddWorldLine(const Vec3& start, const Vec3& end, float radius, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	DebugRenderGeometry* newLine = new DebugRenderGeometry(Vec3(0.f,0.f,0.f), duration, startColor, endColor, mode);
 	AddVertsForCylinder3D(newLine->m_verts, start, end, radius,startColor);
 	s_debugRenderListWorld.push_back(newLine);
@@ -339,6 +356,8 @@ void DebugAddWorldLine(const Vec3& start, const Vec3& end, float radius, float d
 
 void DebugAddWorldWireCylinder(const Vec3& base, const Vec3& top, float radius, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	DebugRenderGeometry* newCylinder = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, mode);
 	AddVertsForCylinder3D(newCylinder->m_verts, base, top, radius, startColor,AABB2::ZERO_TO_ONE,32);
 	newCylinder->m_isWire = true;
@@ -347,6 +366,8 @@ void DebugAddWorldWireCylinder(const Vec3& base, const Vec3& top, float radius, 
 
 void DebugAddWorldWireSphere(const Vec3& center, float radius, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	DebugRenderGeometry* newSphere = new DebugRenderGeometry(center, duration, startColor, endColor, mode);
 	AddVertsForSphere3D(newSphere->m_verts,center, radius, startColor);
 	newSphere->m_isWire = true;
@@ -355,6 +376,8 @@ void DebugAddWorldWireSphere(const Vec3& center, float radius, float duration, c
 
 void DebugAddWorldArrow(const Vec3& start, const Vec3& end, float radius, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	const float CONE_HEIGHT = 0.15f; 
 
 	Vec3 dir = (end - start).GetNormalized();
@@ -380,6 +403,8 @@ void DebugAddWorldArrow(const Vec3& start, const Vec3& end, float radius, float 
 
 void DebugAddWorldText(const std::string& text, const Mat44& transform, float textHeight, const Vec2& alignment, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	DebugRenderGeometry* newWorldText = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, mode);
 	s_curFont->AddVertsForText3DAtOriginXForward(newWorldText->m_verts, textHeight, text, startColor, 1.f,alignment);
 	newWorldText->m_isText = true;
@@ -389,6 +414,8 @@ void DebugAddWorldText(const std::string& text, const Mat44& transform, float te
 
 void DebugAddWorldBillboardText(const std::string& text, const Vec3& origin, float textHeight, const Vec2& alignment, float duration, const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	DebugRenderGeometry* newWorldText = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, mode);
 	s_curFont->AddVertsForText3DAtOriginXForward(newWorldText->m_verts, textHeight, text, startColor, 1.f, alignment);
 	newWorldText->m_isText = true;
@@ -399,6 +426,8 @@ void DebugAddWorldBillboardText(const std::string& text, const Vec3& origin, flo
 
 void DebugAddWorldBasis(const Mat44& transform, float duration, DebugRenderMode mode, float scale)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	// X-axis (Red)
 	DebugRenderGeometry* xLine = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, Rgba8::RED, Rgba8::RED, mode);
 	AddVertsForCylinder3D(xLine->m_verts, Vec3(0.f, 0.f, 0.f), Vec3(0.6f * scale, 0.f, 0.f), 0.08f * scale, Rgba8::RED);
@@ -440,6 +469,8 @@ void DebugAddScreenText(const std::string& text, const AABB2& textBox,
 	float duration, const Rgba8& startColor,
 	const Rgba8& endColor)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	DebugRenderGeometry* newScreenText = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, DebugRenderMode::USE_DEPTH);
 	s_curFont->AddVertsForTextInBox2D(newScreenText->m_verts, text, textBox, textHeight,startColor,1.f,alignment);
 	newScreenText->m_isText = true;
@@ -448,6 +479,8 @@ void DebugAddScreenText(const std::string& text, const AABB2& textBox,
 
 void DebugAddMessage(const std::string& text, float duration, const Rgba8& startColor, const Rgba8& endColor)
 {
+	std::scoped_lock lock(g_debugRenderMutex);
+
 	DebugRenderGeometry* newScreenMsg = new DebugRenderGeometry(Vec3(0.f, 0.f, 0.f), duration, startColor, endColor, DebugRenderMode::USE_DEPTH);
 	newScreenMsg->m_text = text;
 	s_debugRenderListMsg.push_back(newScreenMsg);

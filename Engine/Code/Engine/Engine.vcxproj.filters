@@ -56,6 +56,24 @@
     <Filter Include="ThirdParty\Noise">
       <UniqueIdentifier>{1401d266-1449-4cfb-aa97-1c8d6b38201c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\box2d">
+      <UniqueIdentifier>{1a8beb1a-555f-485d-981e-90ec73b9b28a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\box2d\src">
+      <UniqueIdentifier>{30c515c5-a9c8-4d2c-bd12-fcd194f4794d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\box2d\include">
+      <UniqueIdentifier>{69c9eb4b-36d0-43b5-b3c3-50c8a9d1cf0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\box2d\include\box2d">
+      <UniqueIdentifier>{0cb0948c-1958-4e92-b260-b00ba7d4fdb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="JobSystem">
+      <UniqueIdentifier>{04b72cad-3941-4668-8123-ed590da20aaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Material">
+      <UniqueIdentifier>{976b5a17-61de-40b3-9e2a-f4235693602e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -208,7 +226,7 @@
     <ClCompile Include="Core\Clock.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Timer.cpp">
+    <ClCompile Include="Core\GameTimer.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\DebugRenderSystem.cpp">
@@ -324,6 +342,117 @@
     </ClCompile>
     <ClCompile Include="..\ThirdParty\Noise\SmoothNoise.cpp">
       <Filter>ThirdParty\Noise</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\aabb.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\arena_allocator.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\array.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\bitset.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\body.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\broad_phase.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\constraint_graph.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\contact.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\contact_solver.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\core.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\distance.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\distance_joint.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\dynamic_tree.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\geometry.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\hull.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\id_pool.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\island.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\joint.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\manifold.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\math_functions.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\motor_joint.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\mover.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\physics_world.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\prismatic_joint.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\revolute_joint.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\sensor.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\shape.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\solver.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\solver_set.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\table.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\types.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\weld_joint.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\wheel_joint.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\box2d\src\timer.c">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClCompile>
+    <ClCompile Include="JobSystem\JobSystem.cpp">
+      <Filter>JobSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="JobSystem\Job.cpp">
+      <Filter>JobSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="JobSystem\JobWorkerThread.cpp">
+      <Filter>JobSystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -507,7 +636,7 @@
     <ClInclude Include="Core\Clock.hpp">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Timer.hpp">
+    <ClInclude Include="Core\GameTimer.hpp">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\DebugRenderSystem.hpp">
@@ -630,10 +759,122 @@
     <ClInclude Include="..\ThirdParty\Noise\SmoothNoise.hpp">
       <Filter>ThirdParty\Noise</Filter>
     </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\aabb.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\arena_allocator.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\array.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\atomic.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\bitset.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\body.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\broad_phase.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\constants.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\constraint_graph.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\contact.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\contact_solver.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\core.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\ctz.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\id_pool.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\island.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\joint.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\physics_world.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\sensor.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\shape.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\solver.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\solver_set.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\src\table.h">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\base.h">
+      <Filter>ThirdParty\box2d\include\box2d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\box2d.h">
+      <Filter>ThirdParty\box2d\include\box2d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\collision.h">
+      <Filter>ThirdParty\box2d\include\box2d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\id.h">
+      <Filter>ThirdParty\box2d\include\box2d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\math_functions.h">
+      <Filter>ThirdParty\box2d\include\box2d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\box2d\include\box2d\types.h">
+      <Filter>ThirdParty\box2d\include\box2d</Filter>
+    </ClInclude>
+    <ClInclude Include="JobSystem\JobSystem.hpp">
+      <Filter>JobSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="JobSystem\Job.hpp">
+      <Filter>JobSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="JobSystem\JobWorkerThread.hpp">
+      <Filter>JobSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\BlinnPhongMaterial.hpp">
+      <Filter>Renderer\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Material.hpp">
+      <Filter>Renderer\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\PBRMaterial.hpp">
+      <Filter>Renderer\Material</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Math\AABB3.hpp">
       <Filter>Math</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\ThirdParty\box2d\src\box2d.natvis">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </Natvis>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\ThirdParty\box2d\src\CMakeLists.txt">
+      <Filter>ThirdParty\box2d\src</Filter>
+    </Text>
   </ItemGroup>
 </Project>

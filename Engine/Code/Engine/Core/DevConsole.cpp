@@ -4,7 +4,8 @@
 #include "ErrorWarningAssert.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include <Engine/Input/InputSystem.hpp>
-#include "Engine/Core/Timer.hpp"
+#include "GameTimer.hpp"
+
 DevConsole* g_theDevConsole = nullptr;
 int DevConsole::m_frameNumber = 0;
 extern Renderer* g_theRenderer;
@@ -23,7 +24,7 @@ const Rgba8 DevConsole::PLAYER_TIP = Rgba8(192, 79, 21, 255);
 
 DevConsole::DevConsole(DevConsoleConfig const& config, int inputPriority):IInputConsumer(inputPriority),m_config(config)
 {
-	m_insertionPointBlinkTimer = new Timer(0.5f);
+	m_insertionPointBlinkTimer = new GameTimer(0.5f);
 }
 
 DevConsole::~DevConsole()
@@ -68,6 +69,8 @@ void DevConsole::EndFrame()
 
 void DevConsole::Execute(std::string const& consoleCommandText, bool echoCommand)
 {
+	std::scoped_lock lock(m_mutex);
+
 	if (echoCommand)
 	{
 		g_theDevConsole->AddLine(DevConsole::HISTORY, consoleCommandText);
@@ -129,6 +132,7 @@ void DevConsole::Execute(std::string const& consoleCommandText, bool echoCommand
 
 void DevConsole::AddLine(Rgba8 const& color, std::string const& text)
 {
+	std::scoped_lock lock(m_mutex);
 	//----------------SplitLine-----------------------------------------
 	std::vector<std::string> eachLine;
 	eachLine = SplitStringOnDelimiter(text, '\n');
@@ -143,23 +147,31 @@ void DevConsole::AddLine(Rgba8 const& color, std::string const& text)
 
 void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride) const
 {
+	std::scoped_lock lock(m_mutex);
+
 	if (m_mode == HIDDEN) return;
 	if (m_mode == OPEN_FULL) Render_OpenFull(bounds,*rendererOverride,*m_font,m_config.m_fontAspect);
 }
 
 DevConsoleMode DevConsole::GetMode() const
 {
+	std::scoped_lock lock(m_mutex);
+
 	return m_mode;
 }
 
 void DevConsole::SetMode(DevConsoleMode mode)
 {
+	std::scoped_lock lock(m_mutex);
+
 	m_mode = mode;
 	ToggleOpen(mode);
 }
 
 void DevConsole::ToggleOpen(DevConsoleMode mode)
 {
+	std::scoped_lock lock(m_mutex);
+
 	if (mode == OPEN_FULL || mode == OPEN_PARTIAL || mode == COMMAND_PROMPT_ONLY)
 	{
 		m_open = true;
@@ -174,6 +186,8 @@ void DevConsole::ToggleOpen(DevConsoleMode mode)
 
 bool DevConsole::IsOpen()
 {
+	std::scoped_lock lock(m_mutex);
+
 	return m_open;
 }
 
@@ -349,6 +363,8 @@ bool DevConsole::Command_Quit(EventArgs& args)
 
 bool DevConsole::ConsumeInput(unsigned char keyCode)
 {
+	std::scoped_lock lock(m_mutex);
+
 	if (g_theDevConsole->IsOpen() && keyCode != KEYCODE_TILDE)
 	{
 		return true;

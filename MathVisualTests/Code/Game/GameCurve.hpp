@@ -3,8 +3,8 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/Triangle2.hpp"
 #include <Engine/Math/CubicBezierCurve2D.hpp>
-#include <Engine/Core/Timer.hpp>
 #include <Engine/Math/CubicHermiteSpline2D.hpp>
+#include "Engine/Core/GameTimer.hpp"
 
 class Clock;
 
@@ -39,7 +39,7 @@ private:
 	size_t m_easingFuncIndex = 0;
 
 	CubicBezierCurve2D m_bezierCurve;
-	Timer m_2SecTimer;
+	GameTimer m_2SecTimer;
 	float m_curBezierLen;
 
 	int accumlationTimes = 1;

@@ -97,6 +97,9 @@
     <ClCompile Include="GameSandboxTest.cpp">
       <Filter>GameMode</Filter>
     </ClCompile>
+    <ClCompile Include="GameBox2DTest.cpp">
+      <Filter>GameMode</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -175,6 +178,9 @@
       <Filter>3DTestShapes</Filter>
     </ClInclude>
     <ClInclude Include="GameSandboxTest.hpp">
+      <Filter>GameMode</Filter>
+    </ClInclude>
+    <ClInclude Include="GameBox2DTest.hpp">
       <Filter>GameMode</Filter>
     </ClInclude>
   </ItemGroup>
