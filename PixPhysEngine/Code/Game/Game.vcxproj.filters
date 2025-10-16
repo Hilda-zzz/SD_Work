@@ -11,6 +11,12 @@
     <Filter Include="CellMaterial">
       <UniqueIdentifier>{59d52b49-9772-4ac0-a1eb-8f745964c73e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RigidBody">
+      <UniqueIdentifier>{9d307c1d-097b-43bf-8e95-4d97a3f4675d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Jobs">
+      <UniqueIdentifier>{04c40fde-e1ac-4394-b98e-5a98010958a3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -45,6 +51,18 @@
     </ClCompile>
     <ClCompile Include="CellBehaviorSystemInChunk.cpp">
       <Filter>CellMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="Box2DShapeBuilder.cpp">
+      <Filter>RigidBody</Filter>
+    </ClCompile>
+    <ClCompile Include="RigidbodyManager.cpp">
+      <Filter>RigidBody</Filter>
+    </ClCompile>
+    <ClCompile Include="RigidBodyObject.cpp">
+      <Filter>RigidBody</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkUpdateJob.cpp">
+      <Filter>Jobs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +104,21 @@
     </ClInclude>
     <ClInclude Include="CellBehaviorSystemInChunk.hpp">
       <Filter>CellMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBodyObject.hpp">
+      <Filter>RigidBody</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidbodyManager.hpp">
+      <Filter>RigidBody</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DShapeBuilder.hpp">
+      <Filter>RigidBody</Filter>
+    </ClInclude>
+    <ClInclude Include="ShapeConnectivityDetector.hpp">
+      <Filter>RigidBody</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkUpdateJob.hpp">
+      <Filter>Jobs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

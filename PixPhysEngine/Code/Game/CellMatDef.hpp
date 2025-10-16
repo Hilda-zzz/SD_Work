@@ -7,7 +7,7 @@ enum class PhyType :uint8_t
 {
 	PHY_STATIC_SOLID,
 	PHY_MOVE_SOLID,
-	PHY_LIQUID
+	PHY_LIQUID,
 };
 
 enum class CellMatType : uint8_t

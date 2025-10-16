@@ -42,6 +42,8 @@ private:
 	static void UpdateMoveSolid(Cell& cell, int worldX, int worldY, SandboxMap* map);
 	static void UpdateLiquid(Cell& cell, int worldX, int worldY, SandboxMap* map);
 
+	static void MarkChunkDirtyWithNeighbors(SandboxMap* map, int worldX, int worldY);
+
 	// === Chunk相关辅助函数 ===
 	//static void MoveCellWithinChunk(
 	//	CellChunk* chunk,

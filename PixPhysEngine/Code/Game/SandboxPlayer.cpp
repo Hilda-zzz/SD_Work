@@ -11,6 +11,7 @@ SandboxPlayer::SandboxPlayer(IntVec2 const& mapSize)
 {
 	InitCamera(mapSize);
 	m_sandBoxUI = SandBoxUI();
+	m_rigidBodyDrawnCells.reserve(2000);
 }
 
 void SandboxPlayer::Update(float deltaTime)
@@ -23,6 +24,7 @@ void SandboxPlayer::Update(float deltaTime)
 void SandboxPlayer::RenderImgui()
 {
 	m_sandBoxUI.RenderMaterialBrushUI(this);
+	m_sandBoxUI.RenderRigidBodyPanel(this);
 }
 
 void SandboxPlayer::InitCamera(IntVec2 const& mapSize)
@@ -46,77 +48,108 @@ void SandboxPlayer::InitCamera(IntVec2 const& mapSize)
 
 void SandboxPlayer::HandleInput()
 {
-	if (g_theInput->WasKeyJustPressed('C'))
+	if (!m_sandBoxUI.IsInRigidBodyDrawMode())
 	{
-		m_isSand = !m_isSand;
-	}
-	if (g_theInput->IsKeyDown(KEYCODE_LEFT_MOUSE))
-	{
-		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
-		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
-		int gridX =static_cast<int> (floor(mousePosInWorld.x));
-		int gridY = static_cast<int> (floor(mousePosInWorld.y));
-
-		if (m_curMap->IsValidPosition(gridX, gridY))
+		if (g_theInput->WasKeyJustPressed('C'))
 		{
-			for (int dx = 0; dx <= 4; dx++)
+			m_isSand = !m_isSand;
+		}
+		if (g_theInput->IsKeyDown(KEYCODE_LEFT_MOUSE))
+		{
+			Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+			Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+			int gridX = static_cast<int> (floor(mousePosInWorld.x));
+			int gridY = static_cast<int> (floor(mousePosInWorld.y));
+
+			if (m_curMap->IsValidPosition(gridX, gridY))
 			{
-				for (int dy = 0; dy <= 4; dy++)
+				for (int dx = 0; dx < m_brushSize; dx++)
 				{
-					int targetX = gridX + dx;
-					int targetY = gridY + dy;
-					if (m_curMap->IsValidPosition(targetX, targetY))
+					for (int dy = 0; dy < m_brushSize; dy++)
 					{
-						m_curMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, 1);
+						int targetX = gridX + dx;
+						int targetY = gridY + dy;
+						if (m_curMap->IsValidPosition(targetX, targetY))
+						{
+							m_curMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, 1);
+						}
+					}
+				}
+			}
+		}
+
+		if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
+		{
+			// Start dragging
+			m_isRightMouseDragging = true;
+			Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+			Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+			m_dragStartX = static_cast<int>(floor(mousePosInWorld.x));
+			m_dragStartY = static_cast<int>(floor(mousePosInWorld.y));
+		}
+
+		if (g_theInput->IsKeyDown(KEYCODE_RIGHT_MOUSE) && m_isRightMouseDragging)
+		{
+			// Update current drag position
+			Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+			Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+			m_dragCurrentX = static_cast<int>(floor(mousePosInWorld.x));
+			m_dragCurrentY = static_cast<int>(floor(mousePosInWorld.y));
+		}
+
+		if (g_theInput->WasKeyJustReleased(KEYCODE_RIGHT_MOUSE) && m_isRightMouseDragging)
+		{
+			// Finish dragging and fill rectangle with stone
+			m_isRightMouseDragging = false;
+
+			Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+			Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+			int endX = static_cast<int>(floor(mousePosInWorld.x));
+			int endY = static_cast<int>(floor(mousePosInWorld.y));
+
+			// Calculate rectangle bounds
+			int minX = (m_dragStartX < endX) ? m_dragStartX : endX;
+			int maxX = (m_dragStartX > endX) ? m_dragStartX : endX;
+			int minY = (m_dragStartY < endY) ? m_dragStartY : endY;
+			int maxY = (m_dragStartY > endY) ? m_dragStartY : endY;
+
+			// Fill rectangle with stone
+			for (int x = minX; x <= maxX; x++)
+			{
+				for (int y = minY; y <= maxY; y++)
+				{
+					if (m_curMap->IsValidPosition(x, y))
+					{
+						m_curMap->PlaceMaterialInChunk(x, y, CellMatType::MAT_STONE, 1);
 					}
 				}
 			}
 		}
 	}
-
-	if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
+	else
 	{
-		// Start dragging
-		m_isRightMouseDragging = true;
-		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
-		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
-		m_dragStartX = static_cast<int>(floor(mousePosInWorld.x));
-		m_dragStartY = static_cast<int>(floor(mousePosInWorld.y));
-	}
-
-	if (g_theInput->IsKeyDown(KEYCODE_RIGHT_MOUSE) && m_isRightMouseDragging)
-	{
-		// Update current drag position
-		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
-		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
-		m_dragCurrentX = static_cast<int>(floor(mousePosInWorld.x));
-		m_dragCurrentY = static_cast<int>(floor(mousePosInWorld.y));
-	}
-
-	if (g_theInput->WasKeyJustReleased(KEYCODE_RIGHT_MOUSE) && m_isRightMouseDragging)
-	{
-		// Finish dragging and fill rectangle with stone
-		m_isRightMouseDragging = false;
-
-		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
-		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
-		int endX = static_cast<int>(floor(mousePosInWorld.x));
-		int endY = static_cast<int>(floor(mousePosInWorld.y));
-
-		// Calculate rectangle bounds
-		int minX = (m_dragStartX < endX) ? m_dragStartX : endX;
-		int maxX = (m_dragStartX > endX) ? m_dragStartX : endX;
-		int minY = (m_dragStartY < endY) ? m_dragStartY : endY;
-		int maxY = (m_dragStartY > endY) ? m_dragStartY : endY;
-
-		// Fill rectangle with stone
-		for (int x = minX; x <= maxX; x++)
+		if (g_theInput->IsKeyDown(KEYCODE_LEFT_MOUSE))
 		{
-			for (int y = minY; y <= maxY; y++)
+			Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+			Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+			int gridX = static_cast<int> (floor(mousePosInWorld.x));
+			int gridY = static_cast<int> (floor(mousePosInWorld.y));
+
+			if (m_curMap->IsValidPosition(gridX, gridY))
 			{
-				if (m_curMap->IsValidPosition(x, y))
+				for (int dx = 0; dx <= 4; dx++)
 				{
-					m_curMap->PlaceMaterialInChunk(x, y, CellMatType::MAT_STONE, 1);
+					for (int dy = 0; dy <= 4; dy++)
+					{
+						int targetX = gridX + dx;
+						int targetY = gridY + dy;
+						if (m_curMap->IsValidPosition(targetX, targetY)&&m_curMap->GetCellInChunk(targetX,targetY).IsEmpty())
+						{
+							m_curMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, 1);
+							CellWithCoords cellWithCoords = CellWithCoords(&m_curMap->GetCellInChunk(targetX, targetY), IntVec2(targetX, targetY));
+							m_rigidBodyDrawnCells.push_back(cellWithCoords);
+						}
+					}
 				}
 			}
 		}
@@ -136,5 +169,10 @@ bool SandboxPlayer::IsPlacing() const
 bool SandboxPlayer::IsErasing() const
 {
 	return false;
+}
+
+void SandboxPlayer::ClearRigidBodyDrawnCells()
+{
+	m_rigidBodyDrawnCells.clear();
 }
 

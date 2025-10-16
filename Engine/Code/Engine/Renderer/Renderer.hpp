@@ -10,6 +10,7 @@
 #include <Engine/Core/Vertex_PCUTBN.hpp>
 #include "Engine/Renderer/PointLight.hpp"
 #include "SpotLight.hpp"
+#include "Engine/Renderer/Material.hpp"
 
 class Shader;
 class Window;
@@ -173,7 +174,7 @@ public:
 	// Use this
 	void BindMaterial(Material* material);
 	// bind material calls these funcs
-	void SetTextureSlot(int slot, Texture* texture); // call by each child material
+	void SetTextureSlot(TextureSlot slot=TextureSlot::SLOT_BASE_COLOR, Texture* texture=nullptr); // call by each child material
 	void ApplyTextureBindings();
 
 

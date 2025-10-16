@@ -1601,11 +1601,11 @@ void Renderer::BindMaterial(Material* material)
 	ApplyTextureBindings();
 }
 
-void Renderer::SetTextureSlot(int slot, Texture* texture)
+void Renderer::SetTextureSlot(TextureSlot slot, Texture* texture)
 {
-	if (slot >= MAX_TEXTURE_SLOTS) return;
+	if (slot >= TextureSlot::Count) return;
 
-	m_boundTextures[slot] = texture ?
+	m_boundTextures[static_cast<int>(slot)] = texture ?
 		texture->m_shaderResourceView :
 		m_defaultTexture->m_shaderResourceView;
 }

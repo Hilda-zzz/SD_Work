@@ -4,7 +4,9 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Game/SandboxUI.hpp"
+#include "Cell.hpp"
 class SandboxMap;
+
 
 class SandboxPlayer {
 public:
@@ -21,6 +23,7 @@ public:
 	CellMatType GetSelectedMaterial() const { return m_selectedMaterial; }
 	int GetBrushSize() const { return m_brushSize; }
 
+	SandboxMap* GetCurMap() { return m_curMap; }
 	void SetCurMap(SandboxMap* curMap) { m_curMap = curMap; }
 	
 	bool IsPlacing() const;
@@ -37,7 +40,10 @@ public:
 		m_brushSize = GetClamped(size, 1, 20);
 	}
 
-
+	// --------------RB---------------------
+	void ClearRigidBodyDrawnCells();
+	std::vector<CellWithCoords> const& GetRigidBodyDrawnCells() { return m_rigidBodyDrawnCells; };
+	int GetRigidBodyDrawnCellsCount() { return m_rigidBodyDrawnCells.size(); }
 private:
 	void HandleCameraControls();
 	void HandleMaterialSelection();
@@ -45,6 +51,9 @@ private:
 	
 public:
 	Camera m_camera;
+
+	
+
 private:
 	SandboxMap* m_curMap = nullptr;
 	CellMatType m_selectedMaterial = CellMatType::MAT_SAND;
@@ -59,5 +68,7 @@ private:
 	int m_dragCurrentY = 0;
 
 	SandBoxUI m_sandBoxUI;
+
+	std::vector<CellWithCoords> m_rigidBodyDrawnCells;
 
 };

@@ -11,8 +11,19 @@
 #include "CellMatManager.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "CellBehaviorSystemInChunk.hpp"
+#include "Game/RigidbodyManager.hpp"
+#include "Game/RigidBodyObject.hpp"
+#include "ChunkUpdateJob.hpp"
+#include "Engine/JobSystem/JobSystem.hpp"
+#include <ThirdParty/box2d/include/box2d/box2d.h>
+#include <Engine/Input/InputSystem.hpp>
+#include "ThirdParty/box2d/include/box2d/id.h"
+#include "Engine/Math/OBB2.hpp"
 extern Renderer* g_theRenderer;
 extern Window* g_theWindow;
+extern JobSystem* g_theJobSystem;
+extern InputSystem* g_theInput;
+
 SandboxMap::SandboxMap(SandboxPlayer* playerPtr, IntVec2 const& size)
 	:m_player(playerPtr), m_mapSize(size), m_mapBound(AABB2(0.f,0.f,(float)size.x,(float)size.y))
 {
@@ -34,6 +45,13 @@ SandboxMap::SandboxMap(SandboxPlayer* playerPtr, IntVec2 const& size)
 
 	m_player->SetCurMap(this);
 	Initialize();
+
+
+	//================
+	m_rigidBodyManager = new RigidBodyManager(this);
+	CreateBox2dWorld();
+	CreateTestGround();
+
 }
 
 SandboxMap::~SandboxMap()
@@ -45,12 +63,22 @@ SandboxMap::~SandboxMap()
 		}
 	}
 	m_chunks.clear();
+	delete m_rigidBodyManager;
 }
 
 void SandboxMap::Update(float deltaTime)
 {
 	m_deltaTime = deltaTime;
 	UpdateMouseGridPosition();
+
+	if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE)) {
+		// 在屏幕中心上方生成方块
+		Vec2 spawnPos = Vec2(
+			(float)m_mouseGridX,        // X: 屏幕中心
+			(float)m_mouseGridY        // Y: 屏幕上方3/4处
+		);
+		SpawnTestBox(spawnPos);
+	}
 
 	m_player->Update(deltaTime);
 	//UpdatePhysics();
@@ -70,6 +98,11 @@ void SandboxMap::Update(float deltaTime)
 	m_player->RenderImgui();
 	RenderDebugDrawPanel();
 
+	if (!B2_IS_NULL(m_b2WorldId)) {
+		int subStepCount = 4;
+		b2World_Step(m_b2WorldId, deltaTime, subStepCount);
+	}
+
 }
 
 void SandboxMap::Render() const
@@ -82,7 +115,7 @@ void SandboxMap::Render() const
 	g_theRenderer->DrawVertexArray(m_boundVerts);
 
 	// === Chunk Grid Lines (Gray) ===
-	if (m_debugSettings.drawChunkGrid) {
+	if (m_debugSettings.m_drawChunkGrid) {
 		std::vector<Vertex_PCU> chunkGridVerts;
 
 		// Vertical lines
@@ -107,20 +140,20 @@ void SandboxMap::Render() const
 	}
 
 	// === Static/Dynamic Chunk Borders ===
-	if (m_debugSettings.drawStaticChunks || m_debugSettings.drawDynamicChunks) {
+	if (m_debugSettings.m_drawStaticChunks || m_debugSettings.m_drawDynamicChunks) {
 		std::vector<Vertex_PCU> chunkDebugVerts;
 
 		for (auto& row : m_chunks) {
 			for (auto& chunk : row) {
 				AABB2 chunkBounds = chunk->GetWorldBounds();
 
-				if (chunk->IsDirty() && m_debugSettings.drawDynamicChunks) {
+				if (chunk->IsDirty() && m_debugSettings.m_drawDynamicChunks) {
 					// Green for dynamic (dirty) chunks
 					Rgba8 borderColor(0, 255, 0, 200);
 					float borderThickness = 1.0f;
 					AddVertsForAABBWire2D(chunkDebugVerts, chunkBounds, borderColor, borderThickness,false);
 				}
-				else if (!chunk->IsDirty() && m_debugSettings.drawStaticChunks) {
+				else if (!chunk->IsDirty() && m_debugSettings.m_drawStaticChunks) {
 					// Red for static (non-dirty) chunks
 					Rgba8 borderColor(255, 0, 0, 200);
 					float borderThickness = 1.0f;
@@ -140,6 +173,14 @@ void SandboxMap::Render() const
 		}
 	}
 	//g_theRenderer->DrawVertexArray(cellVerts);
+
+	//============== Draw rb =================
+	RenderPhysicsDebug();
+
+	for (RigidBodyObject* obj : m_rigidBodyManager->m_testRbList)
+	{
+		obj->Render();
+	}
 
 	g_theRenderer->EndCamera(m_player->m_camera);
 
@@ -262,15 +303,15 @@ void SandboxMap::RenderCellInfo() const
 
 void SandboxMap::RenderDebugDrawPanel()
 {
-	CellColorMode m_prevMode = m_debugSettings.colorMode;
+	CellColorMode m_prevMode = m_debugSettings.m_colorMode;
 	if (ImGui::Begin("Debug Visualization"))
 	{
 		// === Grid Visualization Section ===
 		ImGui::SeparatorText("Grid Visualization");
 
-		ImGui::Checkbox("Draw Chunk Grid (Gray)", &m_debugSettings.drawChunkGrid);
-		ImGui::Checkbox("Draw Static Chunks (Red)", &m_debugSettings.drawStaticChunks);
-		ImGui::Checkbox("Draw Dynamic Chunks (Green)", &m_debugSettings.drawDynamicChunks);
+		ImGui::Checkbox("Draw Chunk Grid (Gray)", &m_debugSettings.m_drawChunkGrid);
+		ImGui::Checkbox("Draw Static Chunks (Red)", &m_debugSettings.m_drawStaticChunks);
+		ImGui::Checkbox("Draw Dynamic Chunks (Green)", &m_debugSettings.m_drawDynamicChunks);
 
 		ImGui::Spacing();
 		ImGui::Separator();
@@ -280,8 +321,8 @@ void SandboxMap::RenderDebugDrawPanel()
 		ImGui::SeparatorText("Cell Coloring Mode");
 
 		if (ImGui::RadioButton("Normal Colors",
-			m_debugSettings.colorMode == CellColorMode::NORMAL)) {
-			m_debugSettings.colorMode = CellColorMode::NORMAL;
+			m_debugSettings.m_colorMode == CellColorMode::NORMAL)) {
+			m_debugSettings.m_colorMode = CellColorMode::NORMAL;
 		}
 		ImGui::SameLine();
 		ImGui::TextDisabled("(?)");
@@ -292,8 +333,8 @@ void SandboxMap::RenderDebugDrawPanel()
 		}
 
 		if (ImGui::RadioButton("Static/Dynamic View",
-			m_debugSettings.colorMode == CellColorMode::STATIC_DYNAMIC)) {
-			m_debugSettings.colorMode = CellColorMode::STATIC_DYNAMIC;
+			m_debugSettings.m_colorMode == CellColorMode::STATIC_DYNAMIC)) {
+			m_debugSettings.m_colorMode = CellColorMode::STATIC_DYNAMIC;
 		}
 		ImGui::SameLine();
 		ImGui::TextDisabled("(?)");
@@ -306,8 +347,8 @@ void SandboxMap::RenderDebugDrawPanel()
 		}
 
 		if (ImGui::RadioButton("Movement Heatmap",
-			m_debugSettings.colorMode == CellColorMode::FRAME_COUNT)) {
-			m_debugSettings.colorMode = CellColorMode::FRAME_COUNT;
+			m_debugSettings.m_colorMode == CellColorMode::FRAME_COUNT)) {
+			m_debugSettings.m_colorMode = CellColorMode::FRAME_COUNT;
 		}
 		ImGui::SameLine();
 		ImGui::TextDisabled("(?)");
@@ -323,11 +364,11 @@ void SandboxMap::RenderDebugDrawPanel()
 		ImGui::Spacing();
 
 		// Color legend
-		if (m_debugSettings.colorMode != CellColorMode::NORMAL) {
+		if (m_debugSettings.m_colorMode != CellColorMode::NORMAL) {
 			ImGui::Separator();
 			ImGui::Text("Color Legend:");
 
-			if (m_debugSettings.colorMode == CellColorMode::STATIC_DYNAMIC) {
+			if (m_debugSettings.m_colorMode == CellColorMode::STATIC_DYNAMIC) {
 				ImGui::ColorButton("##red", ImVec4(1, 0, 0, 1),
 					ImGuiColorEditFlags_NoTooltip, ImVec2(20, 20));
 				ImGui::SameLine();
@@ -343,7 +384,7 @@ void SandboxMap::RenderDebugDrawPanel()
 				ImGui::SameLine();
 				ImGui::Text("Static Solids");
 			}
-			else if (m_debugSettings.colorMode == CellColorMode::FRAME_COUNT) {
+			else if (m_debugSettings.m_colorMode == CellColorMode::FRAME_COUNT) {
 				ImGui::ColorButton("##red", ImVec4(1, 0, 0, 1),
 					ImGuiColorEditFlags_NoTooltip, ImVec2(20, 20));
 				ImGui::SameLine();
@@ -365,10 +406,20 @@ void SandboxMap::RenderDebugDrawPanel()
 				ImGui::Text("Static Solids");
 			}
 		}
+		// === rigid body Visualization Section ===
+		ImGui::SeparatorText("RigidBody Generation Visualization");
+
+		ImGui::Checkbox("Marching Squares Outline", &m_debugSettings.m_drawMarchingSquares);
+		ImGui::Checkbox("Douglas-Peucker Result", &m_debugSettings.m_drawDouglas);
+		ImGui::Checkbox("Triangulation (Earclipping)", &m_debugSettings.m_drawTriangleMesh);
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
 	}
 	ImGui::End();
 
-	if (m_debugSettings.colorMode != m_prevMode)
+	if (m_debugSettings.m_colorMode != m_prevMode)
 	{
 		for (auto& row : m_chunks) {
 			for (auto& chunk : row) {
@@ -402,7 +453,7 @@ Rgba8 SandboxMap::GetCellDebugColor(const Cell& cell) const
 {
 	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
 
-	switch (m_debugSettings.colorMode) {
+	switch (m_debugSettings.m_colorMode) {
 	case CellColorMode::NORMAL:
 		return cell.m_color;
 
@@ -542,46 +593,84 @@ void SandboxMap::PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, 
 
 void SandboxMap::UpdateChunksOfPhase(int phaseIndex)
 {
-	// 第一阶段：并行更新（当前串行，为job system预留）
-	for (auto& row : m_chunks) {
-		for (auto& chunk : row) {
-			if (chunk->GetPhaseIndex() == phaseIndex)
+	if (!m_useJobSystem)
+	{
+		for (auto& row : m_chunks)
+		{
+			for (auto& chunk : row) 
 			{
-				if (chunk->IsDirty())
-					UpdateSingleChunk(chunk);
-				else
-					int a = 1;
+				if (chunk->GetPhaseIndex() == phaseIndex)
+				{
+					if (chunk->IsDirty())
+						UpdateSingleChunk(chunk);
+					else
+						int a = 1;
+				}
 			}
 		}
 	}
+	else
+	{
+		std::vector<ChunkUpdateJob*> jobs;
+		for (auto& row : m_chunks) 
+		{
+			for (auto& chunk : row) 
+			{
+				if (chunk->GetPhaseIndex() == phaseIndex && chunk->IsDirty())
+				{
+					ChunkUpdateJob* job = new ChunkUpdateJob(chunk, this);
+					jobs.push_back(job);
+					g_theJobSystem->QueueJob(job);
+				}
+			}
+		}
 
-	// 第二阶段：同步点 - 应用跨chunk移动
-	//for (auto& row : m_chunks) {
-	//	for (auto& chunk : row) {
-	//		chunk->ApplyIncomingCells();
-	//	}
-	//}
+		int completedCount = 0;
+		while (completedCount < (int)jobs.size())
+		{
+			Job* completedJob = g_theJobSystem->RetrieveCompletedJob();
+			if (completedJob != nullptr)
+			{
+				completedCount++;
+				delete completedJob;
+			}
+			else
+			{
+				std::this_thread::yield();
+			}
+		}
+
+		jobs.clear();
+	}
+
 }
 
 void SandboxMap::UpdateSingleChunk(CellChunk* chunk)
 {
 	chunk->ClearDirty();
-
 	IntVec2 chunkIndex = chunk->GetChunkIndex();
 
 	for (int localY = 0; localY < CHUNK_SIZE; ++localY) {
-		for (int localX = 0; localX < CHUNK_SIZE; ++localX) {
-			Cell& cell = chunk->GetLocalCell(localX, localY);
+		// 奇数行从左到右,偶数行从右到左
+		if (localY % 2 == 0) {
+			// 从左到右
+			for (int localX = 0; localX < CHUNK_SIZE; localX++) {
+				Cell& cell = chunk->GetLocalCell(localX, localY);
+				if (cell.IsEmpty()) continue;
 
-			if (cell.IsEmpty()) {
-				continue;
+				IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
+				CellBehaviorSystemInChunk::UpdateCell(cell, worldPos.x, worldPos.y, this);
 			}
+		}
+		else {
+			// 从右到左
+			for (int localX = CHUNK_SIZE - 1; localX >= 0; localX--) {
+				Cell& cell = chunk->GetLocalCell(localX, localY);
+				if (cell.IsEmpty()) continue;
 
-			// 转换为世界坐标
-			IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
-
-			// 调用现有的更新逻辑
-			CellBehaviorSystemInChunk::UpdateCell(cell, worldPos.x, worldPos.y, this);
+				IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
+				CellBehaviorSystemInChunk::UpdateCell(cell, worldPos.x, worldPos.y, this);
+			}
 		}
 	}
 }
@@ -704,6 +793,159 @@ void SandboxMap::UpdateMouseGridPosition()
 float SandboxMap::GetDeltaTime()
 {
 	return m_deltaTime;
+}
+
+void SandboxMap::CreateTestGround()
+{
+	float groundWidthCells = static_cast<float>(m_mapSize.x);    // 地图宽度
+	float groundHeightCells = 32.0f;                          // 高度32 cells = 1 meter
+	float groundYCells = groundHeightCells * 0.5f;            // Y位置（在底部）
+
+	// 转换为物理单位（米）
+	float groundWidthMeters = groundWidthCells * METERS_PER_CELL;
+	float groundHeightMeters = groundHeightCells * METERS_PER_CELL;
+	b2Vec2 groundPositionMeters = {
+		groundWidthCells * 0.5f * METERS_PER_CELL,  // X: 地图中心
+		groundYCells * METERS_PER_CELL               // Y: 底部
+	};
+
+	// 创建body定义
+	b2BodyDef groundBodyDef = b2DefaultBodyDef();
+	groundBodyDef.type = b2_staticBody;                      // 静态body
+	groundBodyDef.position = groundPositionMeters;
+
+	// 创建body
+	m_testGroundBodyId = b2CreateBody(m_b2WorldId, &groundBodyDef);
+
+	if (B2_IS_NULL(m_testGroundBodyId)) {
+		ERROR_AND_DIE("Failed to create test ground body!");
+		return;
+	}
+
+	// 创建box shape
+	b2Polygon groundBox = b2MakeBox(
+		groundWidthMeters * 0.5f,   // 半宽
+		groundHeightMeters * 0.5f   // 半高
+	);
+
+	// 创建shape定义
+	b2ShapeDef groundShapeDef = b2DefaultShapeDef();
+	groundShapeDef.material.friction = 0.6f;
+	groundShapeDef.material.restitution = 0.1f;
+
+	// 附加shape到body
+	b2ShapeId groundShapeId = b2CreatePolygonShape(m_testGroundBodyId, &groundShapeDef, &groundBox);
+
+	if (B2_IS_NULL(groundShapeId)) {
+		ERROR_AND_DIE("Failed to create test ground shape!");
+	}
+}
+
+void SandboxMap::SpawnTestBox(Vec2 const& position)
+{
+	float boxSizeCells = 32.0f;  // 32×32 cells = 1m × 1m
+
+	// 转换为物理单位
+	float boxSizeMeters = boxSizeCells * METERS_PER_CELL;  // 1 meter
+	b2Vec2 boxPositionMeters = {
+		position.x * METERS_PER_CELL,
+		position.y * METERS_PER_CELL
+	};
+
+	// 创建body定义
+	b2BodyDef boxBodyDef = b2DefaultBodyDef();
+	boxBodyDef.type = b2_dynamicBody;           // 动态body
+	boxBodyDef.position = boxPositionMeters;
+	boxBodyDef.linearDamping = 0.1f;
+	boxBodyDef.angularDamping = 0.1f;
+	boxBodyDef.gravityScale = 1.0f;
+
+	// 创建body
+	b2BodyId boxBodyId = b2CreateBody(m_b2WorldId, &boxBodyDef);
+
+	if (B2_IS_NULL(boxBodyId)) {
+		ERROR_AND_DIE("Failed to create test box body!");
+		return;
+	}
+
+	// 创建box shape
+	b2Polygon boxShape = b2MakeBox(
+		boxSizeMeters * 0.5f,  // 半宽 = 0.5 meter
+		boxSizeMeters * 0.5f   // 半高 = 0.5 meter
+	);
+
+	// 创建shape定义
+	b2ShapeDef boxShapeDef = b2DefaultShapeDef();
+	boxShapeDef.density = 1.0f;                  // kg/m²
+	boxShapeDef.material.friction = 0.3f;
+	boxShapeDef.material.restitution = 0.3f;     // 有一些弹性
+
+	// 附加shape到body
+	b2ShapeId boxShapeId = b2CreatePolygonShape(boxBodyId, &boxShapeDef, &boxShape);
+
+	if (B2_IS_NULL(boxShapeId)) {
+		ERROR_AND_DIE("Failed to create test box shape!");
+		return;
+	}
+
+	// 保存body ID
+	m_testBoxBodies.push_back(boxBodyId);
+}
+
+void SandboxMap::RenderPhysicsDebug() const
+{
+	if (B2_IS_NULL(m_b2WorldId)) return;
+
+	std::vector<Vertex_PCU> debugVerts;
+
+	// ========== 渲染地面 ==========
+	if (!B2_IS_NULL(m_testGroundBodyId)) {
+		b2Vec2 groundPosMeters = b2Body_GetPosition(m_testGroundBodyId);
+		Vec2 groundPosCells = PhysicsToCell(groundPosMeters);
+
+		// 地面尺寸（元胞单位）
+		float groundWidthCells = static_cast<float>(m_mapSize.x);
+		float groundHeightCells = 32.0f;
+
+		// 创建AABB2用于渲染
+		Vec2 mins = groundPosCells - Vec2(groundWidthCells * 0.5f, groundHeightCells * 0.5f);
+		Vec2 maxs = groundPosCells + Vec2(groundWidthCells * 0.5f, groundHeightCells * 0.5f);
+		AABB2 groundBox(mins, maxs);
+
+		// 添加矩形顶点（绿色半透明）
+		AddVertsForAABB2D(debugVerts, groundBox, Rgba8(0, 255, 0, 128));
+	}
+
+	// ========== 渲染方块 ==========
+	for (b2BodyId boxBodyId : m_testBoxBodies) {
+		if (B2_IS_NULL(boxBodyId)) continue;
+
+		b2Vec2 boxPosMeters = b2Body_GetPosition(boxBodyId);
+		b2Rot boxRot = b2Body_GetRotation(boxBodyId);
+		Vec2 boxPosCells = PhysicsToCell(boxPosMeters);
+
+		// 方块尺寸
+		float boxSizeCells = 32.0f;
+		Vec2 boxHalfDims(boxSizeCells * 0.5f, boxSizeCells * 0.5f);
+
+		// 计算旋转角度（弧度转角度）
+		float boxAngleDegrees = atan2f(boxRot.s, boxRot.c) * 180.0f / 3.14159f;
+
+		// 创建iBasis（方向向量）
+		Vec2 boxIBasis = Vec2::MakeFromPolarDegrees(boxAngleDegrees);
+
+		// 创建OBB2
+		OBB2 boxOBB(boxPosCells, boxIBasis, boxHalfDims);
+
+		// 添加顶点（黄色半透明）
+		AddVertsForOBB2D(debugVerts, boxOBB, Rgba8(255, 255, 0, 200));
+	}
+
+	// 渲染所有调试顶点
+	if (!debugVerts.empty()) {
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->DrawVertexArray((int)debugVerts.size(), debugVerts.data());
+	}
 }
 
 void SandboxMap::UpdatePhysics()
@@ -986,6 +1228,26 @@ const char* SandboxMap::GetMaterialTypeName(CellMatType type) const
 	case CellMatType::MAT_WATER: return "Water";
 	case CellMatType::MAT_STONE: return "Stone";
 	default: return "Unknown";
+	}
+}
+
+void SandboxMap::CreateBox2dWorld()
+{
+	b2SetLengthUnitsPerMeter(CELLS_PER_METER);
+
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = b2Vec2{ 0.0f, -GRAVITY_METERS };  
+
+	worldDef.enableSleep = true;              // 允许物体休眠
+	worldDef.enableContinuous = true;         // 启用连续碰撞检测
+	worldDef.contactHertz = 30.0f;           // 接触刚度
+	worldDef.contactDampingRatio = 10.0f;    // 接触阻尼
+
+	m_b2WorldId = b2CreateWorld(&worldDef);
+
+	if (B2_IS_NULL(m_b2WorldId))
+	{
+		ERROR_AND_DIE("Failed to create Box2D world!");
 	}
 }
 

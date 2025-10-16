@@ -454,6 +454,9 @@
     <ClCompile Include="JobSystem\JobWorkerThread.cpp">
       <Filter>JobSystem</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\PBRMaterial.cpp">
+      <Filter>Renderer\Material</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">

@@ -12,6 +12,7 @@
 #include "Engine/Core/Clock.hpp"
 #include <chrono>
 #include <thread>
+#include "Engine/JobSystem/JobSystem.hpp"
 //#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
@@ -22,6 +23,7 @@ AudioSystem*	g_theAudio = nullptr;
 Game*			g_theGame = nullptr;
 bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
+JobSystem*		g_theJobSystem = nullptr;
 
 constexpr float TARGET_FPS = 60.0f;
 constexpr float TARGET_FRAME_TIME = (1.0f / TARGET_FPS) * 1000.f;
@@ -65,6 +67,8 @@ void App::Startup()
 
 	AudioSystemConfig audioConfig;
 	g_theAudio = new AudioSystem(audioConfig);
+
+	g_theJobSystem = new JobSystem();
 	
 	g_theEventSystem->Startup();
 	g_theWindow->Startup();
@@ -72,7 +76,7 @@ void App::Startup()
 	g_theDevConsole->Startup();
 	g_theInput->Startup();
 	g_theAudio->Startup();
-
+	g_theJobSystem->Startup();
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
 
 	g_theGame = new Game();
@@ -83,12 +87,16 @@ void App::Shutdown()
 	delete g_theGame;
 	g_theGame = nullptr;
 
+	g_theJobSystem->Shutdown();
 	g_theAudio->Shutdown();
 	g_theDevConsole->Shutdown();
 	g_theRenderer->Shutdown();
 	g_theWindow->Shutdown();
 	g_theInput->Shutdown();
 	g_theEventSystem->Shutdown();
+
+	delete g_theJobSystem;
+	g_theJobSystem = nullptr;
 
 	delete g_theAudio;
 	g_theAudio = nullptr;
@@ -153,6 +161,7 @@ void App::BeginFrame()
 
 	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
+	g_theJobSystem->BeginFrame();
 	Clock::TickSystemClock();
 }
 
@@ -177,6 +186,7 @@ void App::Render()  const
 
 void App::EndFrame()
 {
+	g_theJobSystem->EndFrame();
 	g_theAudio->EndFrame();
 	g_theDevConsole->EndFrame();
 	g_theRenderer->EndFrame();

@@ -34,6 +34,11 @@ public:
 	static const char* GetPhysicsTypeName(PhyType physType);
 	static const char* GetMaterialDescription(CellMatType matType);
 
+	// RB drawing and generation
+	void RenderRigidBodyPanel(SandboxPlayer* player);
+	bool IsInRigidBodyDrawMode() const { return m_rigidBodyDrawMode; }
+	CellMatType GetRigidBodyMaterial() const { return m_rigidBodyMaterial; }
+
 private:
 	// help
 	void InitializeMaterialUIInfo();
@@ -54,5 +59,10 @@ private:
 	// Material selector state
 	PhyType m_selectedCategory = PhyType::PHY_MOVE_SOLID; // Default to Move Solid
 	bool m_showToolsOnly = false;
+
+	// Rigid Body Drawing Mode
+	bool m_rigidBodyDrawMode = false;
+	bool m_showRigidBodyPanel = true;
+	CellMatType m_rigidBodyMaterial = CellMatType::MAT_WOOD; 
 
 };

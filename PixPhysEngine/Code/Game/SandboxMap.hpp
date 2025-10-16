@@ -6,9 +6,13 @@
 #include "Engine/Math/AABB2.hpp"
 #include <utility>
 #include "Game/CellChunk.hpp"
+#include "ThirdParty/box2d/include/box2d/id.h"
+#include <ThirdParty/box2d/include/box2d/math_functions.h>
 class SandboxPlayer;
+class RigidBodyManager;
 
-constexpr float GRAVITY = -98.f;           
+
+constexpr float GRAVITY = -9.8f * 16.f;
 constexpr float TERMINAL_SPEED = 200.0f; 
 constexpr float AIR_RESISTANCE = 0.98f;    
 constexpr float SAND_FRICTION = 0.7f;  
@@ -17,6 +21,15 @@ constexpr float WATER_HORIZONTAL_SPEED = 50.0f;
 constexpr float WATER_FLOW_DAMPING = 0.8f;      
 
 static const float SPEED_THRESHOLD = 5.0f;
+
+// ======== Size btw box2d ========================================
+constexpr float CELLS_PER_METER = 16.0f;  // 32 cell = 1 meter
+constexpr float METERS_PER_CELL = 1.0f / CELLS_PER_METER;
+
+constexpr float GRAVITY_METERS = 9.8f;           // 标准重力加速度
+constexpr float TERMINAL_SPEED_METERS = 20.0f;  // 合理的落体终端速度
+constexpr float WATER_SPEED_METERS = 5.0f;      // 合理的液体流速
+
 
 enum class UpdateOrder {
 	FIXED,       // 固定顺序 0→1→2→3
@@ -82,10 +95,40 @@ public:
 	void GetMovementDirections(const Cell& cell, int x, int y, int& primaryDir, int& secondaryDir);
 	bool CanMoveHorizontally(int x, int y, const Cell& cell);
 
-	// Chunk访问
+	// Chunk 访问
 	CellChunk* GetChunk(int chunkX, int chunkY);
 	CellChunk* GetChunkByWorldPos(int worldX, int worldY);
 	bool IsChunkIndexValid(int chunkX, int chunkY) const;
+
+	// ============================= Box2d ==================================
+	b2WorldId GetPhysicsWorldId() { return m_b2WorldId; }
+	RigidBodyManager* GetRigidBodyManager() { return m_rigidBodyManager; }
+
+	b2Vec2 CellToPhysics(Vec2 const& cellPos) const {
+		return b2Vec2{ cellPos.x * METERS_PER_CELL, cellPos.y * METERS_PER_CELL };
+	}
+
+	b2Vec2 CellToPhysics(float x, float y) const {
+		return b2Vec2{ x * METERS_PER_CELL, y * METERS_PER_CELL };
+	}
+
+	Vec2 PhysicsToCell(b2Vec2 const& physicsPos) const {
+		return Vec2{ physicsPos.x * CELLS_PER_METER, physicsPos.y * CELLS_PER_METER };
+	}
+
+	b2Vec2 CellVelocityToPhysics(Vec2 const& cellVel) const {
+		return b2Vec2{ cellVel.x * METERS_PER_CELL, cellVel.y * METERS_PER_CELL };
+	}
+
+	Vec2 PhysicsVelocityToCell(b2Vec2 const& physicsVel) const {
+		return Vec2{ physicsVel.x * CELLS_PER_METER, physicsVel.y * CELLS_PER_METER };
+	}
+
+	// ==============================RB TEST========================================
+	void CreateTestGround();
+	void SpawnTestBox(Vec2 const& position);
+	void RenderPhysicsDebug() const;
+
 
 private:
 	void UpdatePhysics();
@@ -94,11 +137,27 @@ private:
 	bool HasSupport(int x, int y);
 	const char* GetMaterialTypeName(CellMatType type) const;
 
+	void CreateBox2dWorld();
+
 	UpdateOrder m_updateOrder = UpdateOrder::ROTATING;
 
 
 public:
-	
+	struct DebugVisualizationSettings {
+		// Grid options
+		bool m_drawChunkGrid = true;
+		bool m_drawStaticChunks = false;
+		bool m_drawDynamicChunks = true;
+
+		// Cell coloring mode
+		CellColorMode m_colorMode = CellColorMode::NORMAL;
+
+		// Rigid Body 2d
+		bool m_drawMarchingSquares = false;
+		bool m_drawDouglas = false;
+		bool m_drawTriangleMesh = false;
+
+	} m_debugSettings;
 
 private:
 	float m_deltaTime = 0.f;
@@ -132,15 +191,18 @@ private:
 	mutable int m_cachedStoneCells = 0;
 	//------------------------------------------------------------------
 
-	struct DebugVisualizationSettings {
-		// Grid options
-		bool drawChunkGrid = true;
-		bool drawStaticChunks = false;
-		bool drawDynamicChunks = true;
 
-		// Cell coloring mode
-		CellColorMode colorMode = CellColorMode::NORMAL;
-	} m_debugSettings;
+
+	//-----------------Box 2d ----------------------------------------
+	b2WorldId m_b2WorldId;
+	RigidBodyManager* m_rigidBodyManager;
+
+	// test ground and box
+	b2BodyId m_testGroundBodyId;
+	std::vector<b2BodyId> m_testBoxBodies;
+
+	// ==== multi thread =====
+	bool m_useJobSystem = true;
 
 };
 

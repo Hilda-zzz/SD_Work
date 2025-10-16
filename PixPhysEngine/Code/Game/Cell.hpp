@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "CellMatDef.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/IntVec2.hpp"
 
 struct Cell {
 	CellMatType m_type = CellMatType::MAT_EMPTY;
@@ -23,4 +24,13 @@ struct Cell {
 		m_velocityX = 0;
 		m_updatedThisFrame = false;
 	}
+};
+
+struct CellWithCoords
+{
+	Cell* m_cell;
+	IntVec2 m_worldCoords;
+
+	CellWithCoords(Cell* cell, IntVec2 coords)
+		: m_cell(cell), m_worldCoords(coords) {}
 };

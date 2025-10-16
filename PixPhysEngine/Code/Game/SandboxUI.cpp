@@ -1,7 +1,13 @@
 ﻿#include "SandboxUI.hpp"
 #include "SandboxPlayer.hpp"
 #include "CellMatManager.hpp"
+#include "Game/SandboxMap.hpp"
 #include <algorithm>
+#include "Game/RigidbodyManager.hpp"
+#include "Box2DShapeBuilder.hpp"
+#include "Game/RigidBodyObject.hpp"
+#include "Engine/Core/Vertex_PCU.hpp"
+#include <Engine/Core/VertexUtils.hpp>
 
 std::unordered_map<CellMatType, CellMatUIInfo> SandBoxUI::s_materialUIInfo;
 
@@ -284,6 +290,163 @@ const char* SandBoxUI::GetMaterialDescription(CellMatType matType)
 		return it->second.m_description.c_str();
 	}
 	return "Unknown Material";
+}
+
+void SandBoxUI::RenderRigidBodyPanel(SandboxPlayer* player)
+{
+	if (!m_showRigidBodyPanel) return;
+
+	ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(20, 600), ImGuiCond_FirstUseEver);
+
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
+
+	if (ImGui::Begin("Rigid Body Creator", &m_showRigidBodyPanel, window_flags)) {
+
+		// === Mode Toggle Button ===
+		if (!m_rigidBodyDrawMode) {
+			// 未进入模式 - 显示进入按钮
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
+
+			if (ImGui::Button("Start Drawing Rigid Body", ImVec2(-1, 50))) {
+				m_rigidBodyDrawMode = true;
+				player->ClearRigidBodyDrawnCells();
+				player->SetSelectedMaterial(m_rigidBodyMaterial);
+				m_showMaterialSelector = false;
+			}
+
+			ImGui::PopStyleColor(3);
+
+			ImGui::Separator();
+			ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+				"Click button to start drawing");
+		}
+		else {
+			// 已进入模式 - 显示当前状态和控制按钮
+			ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f),
+				"RIGID BODY DRAW MODE ACTIVE");
+
+			ImGui::Text("Cells Drawn: %d", player->GetRigidBodyDrawnCellsCount());
+
+			ImGui::Separator();
+
+			// === Material Selection for Rigid Body ===
+			ImGui::Text("Draw Material:");
+
+			// 显示几个常用材质供选择
+			const std::vector<CellMatType> rbMaterials = {
+				CellMatType::MAT_WOOD,
+				CellMatType::MAT_STONE
+			};
+
+			float buttonSize = 40.0f;
+			for (size_t i = 0; i < rbMaterials.size(); ++i) {
+				if (i > 0) ImGui::SameLine();
+
+				CellMatType matType = rbMaterials[i];
+				const CellMatUIInfo& info = s_materialUIInfo[matType];
+				bool isSelected = (m_rigidBodyMaterial == matType);
+
+				ImGui::PushID((int)matType);
+
+				// 设置按钮颜色
+				ImGui::PushStyleColor(ImGuiCol_Button, info.m_color);
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+					ImVec4(info.m_color.x * 1.3f, info.m_color.y * 1.3f,
+						info.m_color.z * 1.3f, info.m_color.w));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+					ImVec4(info.m_color.x * 0.8f, info.m_color.y * 0.8f,
+						info.m_color.z * 0.8f, info.m_color.w));
+
+				if (isSelected) {
+					ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+					ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 3.0f);
+				}
+
+				if (ImGui::Button(info.m_name.c_str(), ImVec2(buttonSize * 1.5f, buttonSize))) {
+					m_rigidBodyMaterial = matType;
+					player->SetSelectedMaterial(matType);
+				}
+
+				if (isSelected) {
+					ImGui::PopStyleVar();
+					ImGui::PopStyleColor();
+				}
+
+				ImGui::PopStyleColor(3);
+				ImGui::PopID();
+
+				// Tooltip
+				if (ImGui::IsItemHovered()) {
+					ImGui::BeginTooltip();
+					ImGui::Text("%s", info.m_name.c_str());
+					ImGui::EndTooltip();
+				}
+			}
+
+			ImGui::Separator();
+
+			// === Action Buttons ===
+			// Confirm Button - 生成刚体
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 1.0f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.7f, 1.0f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.5f, 0.9f, 1.0f));
+
+			bool canConfirm = player->GetRigidBodyDrawnCellsCount() >= 3; // 至少需要3个cells
+			if (!canConfirm) {
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5f);
+			}
+
+			if (ImGui::Button("Confirm - Create Rigid Body", ImVec2(-1, 40))) {
+				if (canConfirm) 
+				{
+					RigidBodyObject* newObj = new RigidBodyObject(player->GetCurMap()->GetRigidBodyManager()->GetNextId(),
+						player->GetCurMap()->GetPhysicsWorldId(),
+						player->GetCurMap()->GetRigidBodyManager());
+					player->GetCurMap()->GetRigidBodyManager()->m_testRbList.push_back(newObj);
+					newObj->Initialize(player->GetRigidBodyDrawnCells(), b2_staticBody);
+					
+					//================================================
+
+					m_rigidBodyDrawMode = false;
+					m_showMaterialSelector = true;
+					player->ClearRigidBodyDrawnCells();
+				}
+			}
+
+			if (!canConfirm) {
+				ImGui::PopStyleVar();
+				if (ImGui::IsItemHovered()) {
+					ImGui::BeginTooltip();
+					ImGui::Text("Need at least 3 cells to create rigid body");
+					ImGui::EndTooltip();
+				}
+			}
+
+			ImGui::PopStyleColor(3);
+
+			// Cancel Button - 取消退出
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.4f, 0.4f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.2f, 0.2f, 1.0f));
+
+			if (ImGui::Button("Cancel", ImVec2(-1, 30))) {
+				m_rigidBodyDrawMode = false;
+				player->ClearRigidBodyDrawnCells();
+				// recover the material selector
+				m_showMaterialSelector = true;
+			}
+
+			ImGui::PopStyleColor(3);
+
+			ImGui::Separator();
+			ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+				"Draw on canvas to create shape");
+		}
+	}
+	ImGui::End();
 }
 
 void SandBoxUI::InitializeMaterialUIInfo()
