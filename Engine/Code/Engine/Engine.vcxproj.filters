@@ -74,6 +74,15 @@
     <Filter Include="Renderer\Material">
       <UniqueIdentifier>{976b5a17-61de-40b3-9e2a-f4235693602e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\poly2tri">
+      <UniqueIdentifier>{17af25b7-02e4-41c6-800d-e8246af0cfdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\poly2tri\common">
+      <UniqueIdentifier>{79450393-8d4d-4a9e-b1fa-5c208a859c66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\poly2tri\sweep">
+      <UniqueIdentifier>{97551342-881f-4464-a1ff-a61a5f0c2bf1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -456,6 +465,21 @@
     </ClCompile>
     <ClCompile Include="Renderer\PBRMaterial.cpp">
       <Filter>Renderer\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\poly2tri\common\shapes.cc">
+      <Filter>ThirdParty\poly2tri\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\poly2tri\sweep\advancing_front.cc">
+      <Filter>ThirdParty\poly2tri\sweep</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\poly2tri\sweep\cdt.cc">
+      <Filter>ThirdParty\poly2tri\sweep</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\poly2tri\sweep\sweep.cc">
+      <Filter>ThirdParty\poly2tri\sweep</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\poly2tri\sweep\sweep_context.cc">
+      <Filter>ThirdParty\poly2tri\sweep</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -863,6 +887,30 @@
     </ClInclude>
     <ClInclude Include="Renderer\PBRMaterial.hpp">
       <Filter>Renderer\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\poly2tri\poly2tri.h">
+      <Filter>ThirdParty\poly2tri</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\poly2tri\common\dll_symbol.h">
+      <Filter>ThirdParty\poly2tri\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\poly2tri\common\shapes.h">
+      <Filter>ThirdParty\poly2tri\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\poly2tri\common\utils.h">
+      <Filter>ThirdParty\poly2tri\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\poly2tri\sweep\advancing_front.h">
+      <Filter>ThirdParty\poly2tri\sweep</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\poly2tri\sweep\cdt.h">
+      <Filter>ThirdParty\poly2tri\sweep</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\poly2tri\sweep\sweep.h">
+      <Filter>ThirdParty\poly2tri\sweep</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\poly2tri\sweep\sweep_context.h">
+      <Filter>ThirdParty\poly2tri\sweep</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

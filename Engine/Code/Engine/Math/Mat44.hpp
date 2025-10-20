@@ -24,6 +24,7 @@ public:
 	static Mat44 const MakeNonUniformScale2D(Vec2 const& nonUniformScaleXY);
 	static Mat44 const MakeNonUniformScale3D(Vec3 const& nonUniformScaleXYZ);
 
+	static Mat44 const MakeZRotationRadians(float rotationRadiansAboutZ);
 	static Mat44 const MakeZRotationDegrees(float rotationDegreesAboutZ);
 	static Mat44 const MakeYRotationDegrees(float rotationDegreesAboutY);
 	static Mat44 const MakeXRotationDegrees(float rotationDegreesAboutX);

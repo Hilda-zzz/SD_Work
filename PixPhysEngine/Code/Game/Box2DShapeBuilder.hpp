@@ -24,14 +24,12 @@ struct TriangulationOutput
 class Box2DShapeBuilder
 {
 public:
-	static void CreateFixturesForBody(
-		b2Body* body,
-		const std::vector<Cell*>& cells,
-		Vec2 centroid,
-		float density = 1.0f,
-		float friction = 0.3f,
-		float restitution = 0.2f
-	);
+	static std::vector<std::vector<CellWithCoords>> SeparateConnectedComponents(
+		const std::vector<CellWithCoords>& cells);
+
+	static bool IfDiscardComponent(const std::vector<CellWithCoords>& cells);
+
+	static std::vector<IntVec2> FillHoles(const std::vector<CellWithCoords>& cells);
 
 	static Vec2 CalculateCentroid(std::vector<Cell*> const& cells);
 
@@ -39,6 +37,7 @@ public:
 	static Vec2 CalculateCentroid(const std::vector<Vec2>& points);
 
 	static TriangulationOutput EarClipping(const std::vector<Vec2>& inputVertices);
+	static TriangulationOutput CDTTriangulation(std::vector<Vec2> const& points);
 
 private:
 	static int GetMarchingSquaresConfig(int gridX, int gridY,

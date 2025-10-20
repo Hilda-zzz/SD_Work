@@ -17,6 +17,8 @@ struct Cell {
 
 	int m_liquidReCollideTimes = 0;
 
+	bool m_isBelongRb = false;
+
 	bool IsEmpty() const { return m_type == CellMatType::MAT_EMPTY; }
 	void SetEmpty() {
 		m_type = CellMatType::MAT_EMPTY;
@@ -28,9 +30,10 @@ struct Cell {
 
 struct CellWithCoords
 {
-	Cell* m_cell;
-	IntVec2 m_worldCoords;
+	Cell* m_cell = nullptr;
+	IntVec2 m_worldCoords=IntVec2::ZERO;
 
+	CellWithCoords() {}
 	CellWithCoords(Cell* cell, IntVec2 coords)
 		: m_cell(cell), m_worldCoords(coords) {}
 };

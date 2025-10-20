@@ -18,6 +18,7 @@ public:
 
 	void Initialize(std::vector<CellWithCoords> const& cells, b2BodyType type);
 	void Update();
+	void SyncFromBox2D();
 	void Render() const;
 
 	// === Manage Cells ===
@@ -46,7 +47,7 @@ public:
 	void RebuildFixtures();
 
 private:
-	void CreateBox2DBody();
+	void CreateBox2DBody(std::vector<CellWithCoords> const& cells, b2BodyType type);
 	void UpdateCellWorldPositions();
 	void RecalculateCenterOfMass();
 	void RebuildBox2DFixtures();
@@ -66,6 +67,9 @@ public:
 	std::unordered_map<Cell*, Vec2> m_localCoords;
 
 	// === States ===
+	Vec2 m_position = Vec2::ZERO;
+	float m_rotation = 0.f;
+
 	Vec2 m_lastPosition = Vec2::ZERO;
 	float m_lastAngle = 0.f;
 	float m_positionAccumulator = 0.f;

@@ -17,36 +17,44 @@
 #include "GameCommon.hpp"
 #include "Engine/Window/Window.hpp"
 #include "Engine/Renderer/CubeSkyBox.hpp"
+#include "Engine/Renderer/Shader.hpp"
 
 extern bool g_isDebugDraw;
 extern Renderer* g_theRenderer;
 extern Clock* g_systemClock;
 
+
+
 Game::Game()
 {
+	m_pbrShader=g_theRenderer->CreateShaderFromFile("Data/Shaders/PBRLighting", VertexType::VERTEX_PCUTBN);
 	m_gridTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
 
 	m_gameClock = new Clock();
 
-	m_cube = new Prop(this);
+	/*m_cube = new Prop(this);
 	m_cube2 = new Prop(this);
 	m_cube->m_position = Vec3(2.f, 2.f, 0.f);
 	m_cube2->m_position = Vec3(-2.f, -2.f, 0.f);
-	m_cube2->m_color = Rgba8(100,100,100,255);
+	m_cube2->m_color = Rgba8(100,100,100,255);*/
 	m_player = new Player(this);
 	m_groundGrid = new Prop(this);
 
-	m_sphere = new Prop(this);
+	/*m_sphere = new Prop(this);
 	m_sphere->m_position = Vec3(10.f, -5.f, 1.f);
 	m_sphere->m_texture = m_gridTex;
-	AddVertsForSphere3D(m_sphere->m_vertexs, m_sphere->m_position, 1.f, Rgba8::WHITE);
+	AddVertsForSphere3D_WithTBN(m_sphere->m_vertexs, m_sphere->m_indices,Vec3(0.f,0.f,0.f), 1.f, Rgba8::WHITE);
+	m_sphere->m_pbrMat.m_normalTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/wall3_n.png");*/
 
-	AddEntityToList(*m_cube, m_allEntities);
-	AddEntityToList(*m_cube2, m_allEntities);
-	AddEntityToList(*m_sphere, m_allEntities);
+	//AddEntityToList(*m_cube, m_allEntities);
+	//AddEntityToList(*m_cube2, m_allEntities);
+	//AddEntityToList(*m_sphere, m_allEntities);
 
 	AddVertsForGroundGrid();
-	AddVertsForCubes();
+	//AddVertsForCubes();
+
+	// PBR Material
+	InitializeMaterialMatrix();
 
 	IntVec2 clientDimensions = g_theWindow->GetClientDimensions();
 	AABB2 viewport = AABB2(Vec2(0.f, 0.f), Vec2((float)clientDimensions.x, (float)clientDimensions.y));
@@ -86,17 +94,22 @@ Game::Game()
 
 Game::~Game()
 {
-	delete m_cube;
-	m_cube = nullptr;
+	//delete m_cube;
+	//m_cube = nullptr;
 
-	delete m_cube2;
-	m_cube2 = nullptr;
+	//delete m_cube2;
+	//m_cube2 = nullptr;
 
 	delete m_player;
 	m_player = nullptr;
 
-	delete m_sphere;
-	m_sphere = nullptr;
+	//delete m_sphere;
+	//m_sphere = nullptr;
+
+	for (Entity* sphere : m_allEntities)
+	{
+		delete sphere;
+	}
 
 	delete m_groundGrid;
 	m_groundGrid = nullptr;
@@ -144,14 +157,21 @@ void Game::Renderer() const
 	}
 	g_theRenderer->BeginCamera(m_player->m_playerCam);
 
+	g_theRenderer->ClearTextureSlots();
 	m_cubeSkybox->Render();
 
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+	Vec3 normalSunDirection = m_sunDirection.GetNormalized();
+	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
 
-	m_cube->Render();
-	m_cube2->Render();
+	//m_cube->Render();
+	//m_cube2->Render();
+	//m_sphere->Render();
 
-	m_sphere->Render();
+	for (Entity* sphere : m_allEntities)
+	{
+		sphere->Render();
+	}
 
 	m_groundGrid->Render();
 
@@ -182,16 +202,16 @@ void Game::UpdateGameplayMode(float deltaTime)
 {
 	UNUSED(deltaTime);
 	m_player->Update((float)g_systemClock->GetDeltaSeconds());
-	//-----------------------------------------------------------------------------------------
-	float cube2Color = CosDegrees(50.f * (float)m_gameClock->GetTotalSeconds());
-	cube2Color =RangeMapClamped(cube2Color, -1.f, 1.f, 0.f, 1.f);
-	m_cube2->m_color = Rgba8((unsigned char)(cube2Color*255.f), (unsigned char)(cube2Color * 255.f), (unsigned char)(cube2Color * 255.f), 255);
-	//-----------------------------------------------------------------------------------------
-	m_cube->m_orientation.m_rollDegrees += 30.f * deltaTime;
-	m_cube->m_orientation.m_pitchDegrees += 30.f * deltaTime;
-	//-----------------------------------------------------------------------------------------
-	m_sphere->m_orientation.m_yawDegrees += 45.f * deltaTime;
-	//-----------------------------------------------------------------------------------------
+	////-----------------------------------------------------------------------------------------
+	//float cube2Color = CosDegrees(50.f * (float)m_gameClock->GetTotalSeconds());
+	//cube2Color =RangeMapClamped(cube2Color, -1.f, 1.f, 0.f, 1.f);
+	//m_cube2->m_color = Rgba8((unsigned char)(cube2Color*255.f), (unsigned char)(cube2Color * 255.f), (unsigned char)(cube2Color * 255.f), 255);
+	////-----------------------------------------------------------------------------------------
+	//m_cube->m_orientation.m_rollDegrees += 30.f * deltaTime;
+	//m_cube->m_orientation.m_pitchDegrees += 30.f * deltaTime;
+	////-----------------------------------------------------------------------------------------
+	//m_sphere->m_orientation.m_yawDegrees += 45.f * deltaTime;
+	////-----------------------------------------------------------------------------------------
 	if (g_theInput->WasKeyJustPressed('1'))
 	{
 		Vec3 dir = m_player->m_playerCam.GetOrientation().GetForward_IFwd().GetNormalized();
@@ -330,60 +350,61 @@ void Game::AddVertsForGroundGrid()
 		{
 			Vec3 yBl = Vec3(-50.f + (i - 1) - 0.03f, -50.f, -0.03f);
 			Vec3 yTr = yBl + Vec3(0.06f, 100.f, 0.06f);
-			AddVertsForAABB3D(m_groundGrid->m_vertexs, AABB3(yBl, yTr), Rgba8::GREEN);
+			AddVertsForAABB3D_WithTBN(m_groundGrid->m_vertexs,m_groundGrid->m_indices, yBl,yTr, Rgba8::GREEN,AABB2::ZERO_TO_ONE);
 
 			Vec3 xBl = Vec3(-50.f, -50.f + (i - 1) - 0.03f, -0.03f);
 			Vec3 xTr = xBl + Vec3(100.f, 0.06f, 0.06f);
-			AddVertsForAABB3D(m_groundGrid->m_vertexs, AABB3(xBl, xTr), Rgba8::RED);
+			AddVertsForAABB3D_WithTBN(m_groundGrid->m_vertexs, m_groundGrid->m_indices, xBl, xTr, Rgba8::RED, AABB2::ZERO_TO_ONE);
 		}
 
 		else
 		{
 			Vec3 yBl = Vec3(-50.f + (i - 1) - 0.01f, -50.f, -0.01f);
 			Vec3 yTr = yBl + Vec3(0.02f, 100.f, 0.02f);
-			AddVertsForAABB3D(m_groundGrid->m_vertexs, AABB3(yBl, yTr), Rgba8(180, 180, 180, 255));
+			AddVertsForAABB3D_WithTBN(m_groundGrid->m_vertexs, m_groundGrid->m_indices, yBl, yTr, Rgba8(180, 180, 180, 255), AABB2::ZERO_TO_ONE);
 
 			Vec3 xBl = Vec3(-50.f, -50.f + (i - 1) - 0.01f, -0.01f);
 			Vec3 xTr = xBl + Vec3(100.f, 0.02f, 0.02f);
-			AddVertsForAABB3D(m_groundGrid->m_vertexs, AABB3(xBl, xTr), Rgba8(180, 180, 180, 255));
+
+			AddVertsForAABB3D_WithTBN(m_groundGrid->m_vertexs, m_groundGrid->m_indices, xBl, xTr, Rgba8(180, 180, 180, 255), AABB2::ZERO_TO_ONE);
 		}
 
 	}
 }
 
-void Game::AddVertsForCubes()
-{
-	//add cube vertexs to m_cube
-	//X
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED);
-	//-X
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN);
-	//Y
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN);
-	//-Y
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA);
-	//Z
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE);
-	//-Z
-	AddVertsForQuad3D(m_cube->m_vertexs, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW);
-
-
-	//X
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED);
-	//-X
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN);
-	//Y
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN);
-	//-Y
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA);
-	//Z
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE);
-	//-Z
-	AddVertsForQuad3D(m_cube2->m_vertexs, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW);
-
-
-
-}
+//void Game::AddVertsForCubes()
+//{
+//	//add cube vertexs to m_cube
+//	//X
+//	AddVertsForQuad3D_WithTBN(m_cube->m_vertexs, m_cube->m_indices, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED, AABB2::ZERO_TO_ONE);
+//	//-X
+//	AddVertsForQuad3D_WithTBN(m_cube->m_vertexs, m_cube->m_indices, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN, AABB2::ZERO_TO_ONE);
+//	//Y
+//	AddVertsForQuad3D_WithTBN(m_cube->m_vertexs, m_cube->m_indices, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN, AABB2::ZERO_TO_ONE);
+//	//-Y
+//	AddVertsForQuad3D_WithTBN(m_cube->m_vertexs, m_cube->m_indices, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA, AABB2::ZERO_TO_ONE);
+//	//Z
+//	AddVertsForQuad3D_WithTBN(m_cube->m_vertexs, m_cube->m_indices, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE, AABB2::ZERO_TO_ONE);
+//	//-Z
+//	AddVertsForQuad3D_WithTBN(m_cube->m_vertexs, m_cube->m_indices, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW, AABB2::ZERO_TO_ONE);
+//
+//
+//	//X
+//	AddVertsForQuad3D_WithTBN(m_cube2->m_vertexs,m_cube2->m_indices, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::RED, AABB2::ZERO_TO_ONE);
+//	//-X
+//	AddVertsForQuad3D_WithTBN(m_cube2->m_vertexs, m_cube2->m_indices, Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Rgba8::CYAN, AABB2::ZERO_TO_ONE);
+//	//Y
+//	AddVertsForQuad3D_WithTBN(m_cube2->m_vertexs, m_cube2->m_indices, Vec3(0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Rgba8::GREEN, AABB2::ZERO_TO_ONE);
+//	//-Y
+//	AddVertsForQuad3D_WithTBN(m_cube2->m_vertexs, m_cube2->m_indices, Vec3(0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, -0.5f, -0.5f), Rgba8::MAGNETA, AABB2::ZERO_TO_ONE);
+//	//Z
+//	AddVertsForQuad3D_WithTBN(m_cube2->m_vertexs, m_cube2->m_indices, Vec3(0.5f, -0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), Vec3(-0.5f, 0.5f, 0.5f), Vec3(-0.5f, -0.5f, 0.5f), Rgba8::BLUE, AABB2::ZERO_TO_ONE);
+//	//-Z
+//	AddVertsForQuad3D_WithTBN(m_cube2->m_vertexs, m_cube2->m_indices, Vec3(0.5f, -0.5f, -0.5f), Vec3(-0.5f, -0.5f, -0.5f), Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.5f, 0.5f, -0.5f), Rgba8::YELLOW, AABB2::ZERO_TO_ONE);
+//
+//
+//
+//}
 
 void Game::AddEntityToList(Entity& thisEntity, EntityList& list)
 {
@@ -396,6 +417,40 @@ void Game::AddEntityToList(Entity& thisEntity, EntityList& list)
 		}
 	}
 	list.push_back(&thisEntity);
+}
+
+void Game::InitializeMaterialMatrix()
+{
+	for (int row = 0; row < MATERIAL_MATRIX_ROWS; row++)
+	{
+		for (int col = 0; col < MATERIAL_MATRIX_COLS; col++)
+		{
+			Prop* sphere = new Prop(this);
+
+			float xOffset = col * SPHERE_SPACING;
+			float zOffset = row * SPHERE_SPACING+0.5f;
+			sphere->m_position = Vec3(xOffset, 1.f, zOffset);
+			sphere->m_pbrMat.m_normalTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/wall3_n.png");
+			AddVertsForSphere3D_WithTBN(sphere->m_vertexs, sphere->m_indices,
+				Vec3(0.f, 0.f, 0.f), 0.8f, Rgba8::WHITE);
+
+			float metallic = col / (float)(MATERIAL_MATRIX_COLS - 1);  // 0.0 到 1.0
+			float roughness = row / (float)(MATERIAL_MATRIX_ROWS - 1); // 0.0 到 1.0
+
+			Vec3 albedo = Vec3(1.f, 0.f, 0.f);
+			sphere->m_pbrMat.SetParameters(metallic, roughness, albedo);
+
+			// 如果有纹理，可以设置
+			// sphere->m_pbrMat.m_albedoTexture = m_gridTex;
+			// sphere->m_pbrMat.m_normalTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/normal.png");
+
+			// 添加到列表
+			m_materialSpheres.push_back(sphere);
+			AddEntityToList(*sphere, m_allEntities);
+		}
+	}
+
+	// 可选：添加标签文字说明
 }
 
 

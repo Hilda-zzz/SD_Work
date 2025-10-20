@@ -117,6 +117,20 @@ struct PerFrameConstants
 };
 static const int k_perFrameConstantsSlot = 7;
 
+struct PBRConstants
+{
+	float c_albedo[3];
+	float c_metallic;
+
+	float c_roughness;
+	float c_ao;
+	float c_padding1[2];
+
+	float c_emissive[3];
+	float c_emissiveStrength;
+};
+static const int k_pbrConstantsSlot = 8;
+
 //-------------------------------------------------------------
 BitmapFont* g_testFont = nullptr;
 
@@ -294,6 +308,7 @@ void Renderer::Startup()
 	m_spotLightCBO= CreateConstantBuffer(sizeof(SpotLightConstants));
 	m_shadowCBO = CreateConstantBuffer(sizeof(ShadowConstants));
 	m_perFrameCBO = CreateConstantBuffer(sizeof(PerFrameConstants));
+	m_pbrCBO = CreateConstantBuffer(sizeof(PBRConstants));
 	//---------------------------------------------------------
 	// OPAQUE
 	D3D11_BLEND_DESC blendDesc = {};
@@ -513,6 +528,9 @@ void Renderer::Shutdown()
 
 	delete m_perFrameCBO;
 	m_perFrameCBO = nullptr;
+
+	delete m_pbrCBO;
+	m_pbrCBO = nullptr;
 
 	for (int i = 0; i < (int)BlendMode::COUNT; i++)
 	{
@@ -1615,6 +1633,14 @@ void Renderer::ApplyTextureBindings()
 	m_deviceContext->PSSetShaderResources(0, MAX_TEXTURE_SLOTS, m_boundTextures);
 }
 
+void Renderer::ClearTextureSlots()
+{
+	for (int i = 0; i < MAX_TEXTURE_SLOTS; i++)
+	{
+		m_boundTextures[i] = nullptr;
+	}
+}
+
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)
 {
 	SetStateIfChanged();
@@ -1767,6 +1793,26 @@ void Renderer::SetPerFrameConstants(float time, int debugInt, float debugFloat)
 	perFrameConstants.c_debugFloat = debugFloat;
 	CopyCPUToGPU(&perFrameConstants, sizeof(perFrameConstants), m_perFrameCBO);
 	BindConstantBuffer(k_perFrameConstantsSlot, m_perFrameCBO);
+}
+
+void Renderer::SetPBRConstants(Vec3 const& albedo, float metallic, float roughness, float ao, Rgba8 emissiveColor, float emissiveStrength)
+{
+	PBRConstants pbrConstants;
+	pbrConstants.c_albedo[0] = albedo.x;
+	pbrConstants.c_albedo[1] = albedo.y;
+	pbrConstants.c_albedo[2] = albedo.z;
+
+	pbrConstants.c_metallic = metallic;
+	pbrConstants.c_roughness = roughness;
+	pbrConstants.c_ao = ao;
+
+	pbrConstants.c_emissive[0] = emissiveColor.r;
+	pbrConstants.c_emissive[1] = emissiveColor.g;
+	pbrConstants.c_emissive[2] = emissiveColor.b;
+	pbrConstants.c_emissiveStrength = emissiveStrength;
+
+	CopyCPUToGPU(&pbrConstants, sizeof(pbrConstants), m_pbrCBO);
+	BindConstantBuffer(k_pbrConstantsSlot, m_pbrCBO);
 }
 
 

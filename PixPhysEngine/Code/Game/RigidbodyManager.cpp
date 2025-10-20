@@ -1,15 +1,49 @@
 ﻿#include "RigidbodyManager.hpp"
 #include "RigidBodyObject.hpp"
+#include "Box2DShapeBuilder.hpp"
+#include "SandboxMap.hpp"
+#include "Game/Cell.hpp"
+#include "SandboxPlayer.hpp"
+#include <ThirdParty/box2d/include/box2d/box2d.h>
+#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/Renderer.hpp"
 
+extern Renderer* g_theRenderer;
 
 RigidBodyManager::RigidBodyManager(SandboxMap* ownerMap)
 	:m_ownerMap(ownerMap)
 {
+	// 1. 使用默认初始化
+	m_debugDraw = b2DefaultDebugDraw();
+
+	// 2. 设置回调（注意 Fcn 后缀）
+	m_debugDraw.DrawSolidPolygonFcn = DrawSolidPolygon;
+	m_debugDraw.context = this;
+
+	// 3. 配置绘制选项
+	m_debugDraw.drawShapes = true;
+	m_debugDraw.drawJoints = false;
+	m_debugDraw.drawBounds = false;
+	m_debugDraw.drawMass = false;
+	m_debugDraw.drawContacts = false;
 }
 
-RigidBodyManager::RigidBodyManager(SandboxMap* ownerMap, b2World* physicsWorld) 
-	:m_ownerMap(ownerMap),m_physicsWorld(physicsWorld)
+RigidBodyManager::RigidBodyManager(SandboxMap* ownerMap, b2WorldId physicsWorldId)
+	:m_ownerMap(ownerMap), m_b2WorldId(physicsWorldId)
 {
+	// 1. 使用默认初始化
+	m_debugDraw = b2DefaultDebugDraw();
+
+	// 2. 设置回调（注意 Fcn 后缀）
+	m_debugDraw.DrawSolidPolygonFcn = DrawSolidPolygon;
+	m_debugDraw.context = this;
+
+	// 3. 配置绘制选项
+	m_debugDraw.drawShapes = true;
+	m_debugDraw.drawJoints = false;
+	m_debugDraw.drawBounds = false;
+	m_debugDraw.drawMass = false;
+	m_debugDraw.drawContacts = false;
 }
 
 RigidBodyManager::~RigidBodyManager()
@@ -21,76 +55,73 @@ RigidBodyManager::~RigidBodyManager()
 	}
 }
 
-//RigidBodyObject* RigidBodyManager::CreateRigidBody(std::vector<Cell*> const& cells, b2BodyType type)
-//{
-//	// ========== 步骤1: 验证输入 ==========
-//	// 需要: 最小cell数量阈值
-//	//if (!ValidateInput(cells)) {
-//	//	return nullptr;
-//	//}
-//
-//	// ========== 步骤2: 计算质心 ==========
-//	// 需要: cells 的世界坐标
-//	// 输出: 质心的世界坐标(格子单位)
-//	Vec2 centroid = CalculateCentroid(cells);
-//
-//	// ========== 步骤3: 创建RigidBodyObject ==========
-//	// 需要: 下一个可用的ID
-//	RigidBodyObject* obj = new RigidBodyObject(m_nextId++, this);
-//
-//	// ========== 步骤4: 创建Box2D body ==========
-//	// 需要: 
-//	// - 质心坐标(格子) → 转换为Box2D坐标(米)
-//	// - body类型
-//	b2Body* body = CreateBox2DBody(centroid, type);
-//
-//	// ========== 步骤5: 计算每个cell的本地坐标 ==========
-//	// 需要: 
-//	// - 每个cell的世界坐标
-//	// - 质心坐标
-//	// 输出: cell → 本地坐标的映射
-//	std::unordered_map<Cell*, Vec2> localCoords =
-//		CalculateLocalCoordinates(cells, centroid);
-//
-//	// ========== 步骤6: 生成Box2D fixtures(碰撞体) ==========
-//	// 需要:
-//	// - cells集合
-//	// - 质心坐标
-//	// - 物理材质参数(密度、摩擦力、弹性)
-//	CreateFixturesForBody(body, cells, centroid);
-//
-//	// ========== 步骤7: 初始化RigidBodyObject ==========
-//	// 设置: body, cells, localCoords
-//	obj->Initialize(body, cells, localCoords, centroid);
-//
-//	// ========== 步骤8: 建立映射关系 ==========
-//	// 需要: 两个map
-//	// - rigidBodies: id → RigidBodyObject
-//	// - cellToRigidBody: Cell → RigidBodyObject
-//
-//	//RegisterRigidBody(obj, cells);
-//
-//	// ========== 步骤9: 标记cells属于刚体 ==========
-//	// 需要: 在Cell上设置标志位
-//
-//	// MarkCellsAsRigidBody(cells, obj);
-//
-//	// ========== 步骤10: 返回创建的刚体 ==========
-//	return obj;
-//
-//
-//	{
-//		b2BodyDef groundBodyDef = b2DefaultBodyDef();
-//		groundBodyDef.type = b2_staticBody;
-//		groundBodyDef.position = { SCREEN_SIZE_X * 0.5f * METERS_PER_PIXEL,
-//								   2.0f * METERS_PER_PIXEL };
-//		m_groundBodyId = b2CreateBody(m_worldId, &groundBodyDef);
-//
-//		b2Polygon groundBox = b2MakeBox(SCREEN_SIZE_X * 0.5f * METERS_PER_PIXEL, 2.0f);
-//
-//		b2ShapeDef groundShapeDef = b2DefaultShapeDef();
-//		groundShapeDef.material.friction = 0.5f;
-//		groundShapeDef.material.restitution = 0.3f;
-//		b2CreatePolygonShape(m_groundBodyId, &groundShapeDef, &groundBox);
-//	}
-//}
+void RigidBodyManager::Update(float deltaTime)
+{
+	int subStepCount = 4;
+	b2World_Step(m_b2WorldId, deltaTime, subStepCount);
+
+	for (RigidBodyObject* object : m_testRbList)
+	{
+		object->Update();
+	}
+}
+
+void RigidBodyManager::RenderDebug()
+{
+	g_theRenderer->SetModelConstants();
+	b2World_Draw(m_b2WorldId, &m_debugDraw);
+}
+
+void RigidBodyManager::CreateRigidBodies(std::vector<CellWithCoords>& cells, b2BodyType type)
+{
+	// first sepearte the cells
+	auto components = Box2DShapeBuilder::SeparateConnectedComponents(cells);
+
+	// generate each rb and initialize it
+	for (auto comp : components)
+	{
+		CreateRigidBody(comp, type);
+	}
+}
+
+void RigidBodyManager::CreateRigidBody(std::vector<CellWithCoords>& cells, b2BodyType type)
+{
+	// discard the small one
+	if (Box2DShapeBuilder::IfDiscardComponent(cells))
+		return;
+
+	// then filled the hole
+	std::vector<IntVec2> needFilledCellsCoords = Box2DShapeBuilder::FillHoles(cells);
+	for (auto coord : needFilledCellsCoords)
+	{
+		m_ownerMap->PlaceMaterialInChunk(coord.x, coord.y, CellMatType::MAT_STATIC_FILL);
+		CellWithCoords  filledCell = CellWithCoords(
+			&m_ownerMap->GetCellInChunk(coord.x, coord.y),
+			IntVec2(coord.x, coord.y)
+		);
+		m_ownerMap->GetCurPlayer()->m_rigidBodyDrawnCells.push_back(filledCell);
+		cells.push_back(filledCell);
+	}
+
+	RigidBodyObject* newObj = new RigidBodyObject(m_ownerMap->GetRigidBodyManager()->GetNextId(),
+		m_ownerMap->GetPhysicsWorldId(),
+		m_ownerMap->GetRigidBodyManager());
+	m_ownerMap->GetRigidBodyManager()->m_testRbList.push_back(newObj);
+	newObj->Initialize(cells, type);
+}
+
+void RigidBodyManager::DrawSolidPolygon(b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color, void* context)
+{
+	for (int i = 0; i < vertexCount; ++i)
+	{
+		b2Vec2 p1 = b2TransformPoint(transform, vertices[i]);
+		b2Vec2 p2 = b2TransformPoint(transform, vertices[(i + 1) % vertexCount]);
+
+		Vec2 v1(p1.x / METERS_PER_CELL, p1.y / METERS_PER_CELL);
+		Vec2 v2(p2.x / METERS_PER_CELL, p2.y / METERS_PER_CELL);
+
+		std::vector<Vertex_PCU> verts;
+		AddVertsForLinSegment2D(verts, v1, v2, 0.2f, Rgba8::GREEN);
+		g_theRenderer->DrawVertexArray(verts);
+	}
+}

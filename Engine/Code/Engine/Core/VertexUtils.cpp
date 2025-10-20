@@ -968,13 +968,18 @@ void AddVertsForSphere3D_WithTBN(std::vector<Vertex_PCUTBN>& verts, std::vector<
 	//east
 	for (int curSlice = 0; curSlice < numSlices; curSlice++)
 	{
-		int tl = 1 + curSlice;
-		int tr = 1 + (curSlice + 1);
+		int bl = 1 + curSlice;
+		int br = 1 + ((curSlice + 1) % numSlices);  // ✅ 使用模运算避免越界
 
-		Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, eachUVHeight);
-		Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, eachUVHeight);
+		// UV坐标：底部第一行
+		Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, 0.f);
+		Vec2 brUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, 0.f);
+		Vec2 topUV = UVs.m_mins + Vec2((curSlice + 0.5f) * eachUVWidth, eachUVHeight);
 
-		AddVertsForSphereQuad3D_WithTBN(verts, indexes, sphereVerts[0], sphereVerts[0], sphereVerts[tr], sphereVerts[tl], center,color, AABB2(blUV, trUV));
+		// 南极点，左下，右下 -> 形成三角形
+		AddVertsForSphereQuad3D_WithTBN(verts, indexes,
+			sphereVerts[0], sphereVerts[0], sphereVerts[br], sphereVerts[bl],
+			center, color, AABB2(blUV, brUV));
 	}
 	//mid
 	for (int curStack = 0; curStack < numStacks - 2; curStack++)

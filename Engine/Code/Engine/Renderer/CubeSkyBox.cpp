@@ -25,7 +25,7 @@
  	m_pRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
  	m_pRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
  	m_pRenderer->BindShader(m_shader);
- 	m_pRenderer->BindTextureCube(m_texture);
+ 	m_pRenderer->BindTextureCube(m_texture,5);
  	m_pRenderer->DrawVertexArray(m_verts);
  }
 

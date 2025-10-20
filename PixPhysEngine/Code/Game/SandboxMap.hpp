@@ -23,12 +23,16 @@ constexpr float WATER_FLOW_DAMPING = 0.8f;
 static const float SPEED_THRESHOLD = 5.0f;
 
 // ======== Size btw box2d ========================================
-constexpr float CELLS_PER_METER = 16.0f;  // 32 cell = 1 meter
+constexpr float CELLS_PER_METER = 16.0f;  // 16 cell = 1 meter
 constexpr float METERS_PER_CELL = 1.0f / CELLS_PER_METER;
 
 constexpr float GRAVITY_METERS = 9.8f;           // 标准重力加速度
 constexpr float TERMINAL_SPEED_METERS = 20.0f;  // 合理的落体终端速度
 constexpr float WATER_SPEED_METERS = 5.0f;      // 合理的液体流速
+
+// tip
+//constexpr float GRAVITY_METERS = 9.8f;           // 物理世界：9.8 m/s²
+//constexpr float GRAVITY = -9.8f * 16.f;          // 游戏世界：-156.8 格子/s²
 
 
 enum class UpdateOrder {
@@ -67,10 +71,12 @@ public:
 	bool IsValidPosition(int x, int y) const;
 
 	void SetUpdateOrder(UpdateOrder order) { m_updateOrder = order; }
+
+	SandboxPlayer* GetCurPlayer() { return m_player; }
 	//=======Chunk Base New ===============
 	Cell& GetCellInChunk(int worldX, int worldY);
 	bool IsInBounds_Chunk(int worldX, int worldY) const;
-	void PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, int brushSize = 1);
+	void PlaceMaterialInChunk(int worldX, int worldY, CellMatType type,bool isRb=false);
 	void UpdateChunksOfPhase(int phaseIndex);
 	void UpdateSingleChunk(CellChunk* chunk);
 	bool MSCanMoveToInChunk(int x, int y, float curDensity);
@@ -132,7 +138,7 @@ public:
 
 private:
 	void UpdatePhysics();
-	void UpdatePhysicsInChunk();
+	void UpdateCellsInChunk();
 	void ResetUpdateFlags();
 	bool HasSupport(int x, int y);
 	const char* GetMaterialTypeName(CellMatType type) const;

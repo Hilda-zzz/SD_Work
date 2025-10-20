@@ -142,6 +142,16 @@ Mat44 const Mat44::MakeNonUniformScale3D(Vec3 const& nonUniformScaleXYZ)
 	return mat;
 }
 
+Mat44 const Mat44::MakeZRotationRadians(float rotationRadiansAboutZ)
+{
+	Mat44 mat = Mat44();
+	mat.m_values[Ix] = std::cos(rotationRadiansAboutZ);
+	mat.m_values[Iy] = std::sin(rotationRadiansAboutZ);
+	mat.m_values[Jx] = -std::sin(rotationRadiansAboutZ);
+	mat.m_values[Jy] = std::cos(rotationRadiansAboutZ);
+	return mat;
+}
+
 Mat44 const Mat44::MakeZRotationDegrees(float rotationDegreesAboutZ)
 {
 	Mat44 mat = Mat44();

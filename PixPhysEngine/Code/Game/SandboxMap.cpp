@@ -48,10 +48,11 @@ SandboxMap::SandboxMap(SandboxPlayer* playerPtr, IntVec2 const& size)
 
 
 	//================
-	m_rigidBodyManager = new RigidBodyManager(this);
 	CreateBox2dWorld();
-	CreateTestGround();
+	
+	m_rigidBodyManager = new RigidBodyManager(this,m_b2WorldId);
 
+	CreateTestGround();
 }
 
 SandboxMap::~SandboxMap()
@@ -91,7 +92,7 @@ void SandboxMap::Update(float deltaTime)
 		}
 	}
 
-	UpdatePhysicsInChunk();
+	UpdateCellsInChunk();
 
 	UpdateStatistics();
 
@@ -99,8 +100,7 @@ void SandboxMap::Update(float deltaTime)
 	RenderDebugDrawPanel();
 
 	if (!B2_IS_NULL(m_b2WorldId)) {
-		int subStepCount = 4;
-		b2World_Step(m_b2WorldId, deltaTime, subStepCount);
+		m_rigidBodyManager->Update(deltaTime);
 	}
 
 }
@@ -182,6 +182,7 @@ void SandboxMap::Render() const
 		obj->Render();
 	}
 
+	m_rigidBodyManager->RenderDebug();
 	g_theRenderer->EndCamera(m_player->m_camera);
 
 	RenderImGuiStats();
@@ -557,9 +558,8 @@ bool SandboxMap::IsInBounds_Chunk(int worldX, int worldY) const
 		worldY >= 0 && worldY < m_mapSize.y;
 }
 
-void SandboxMap::PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, int brushSize)
+void SandboxMap::PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, bool isRb)
 {
-	UNUSED(brushSize);
 	if (!IsInBounds_Chunk(worldX, worldY)) return;
 	Cell& cell = GetCellInChunk(worldX, worldY);
 
@@ -568,7 +568,7 @@ void SandboxMap::PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, 
 	if (cell.m_type == CellMatType::MAT_EMPTY)
 	{
 		m_totalMaterialsSet++;
-
+		cell.m_isBelongRb = isRb;
 		cell.m_type = type;
 		cell.m_color = CellMatManager::GetMaterialDef(type).m_color;
 		if (type == CellMatType::MAT_SAND)
@@ -944,6 +944,7 @@ void SandboxMap::RenderPhysicsDebug() const
 	// 渲染所有调试顶点
 	if (!debugVerts.empty()) {
 		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetModelConstants();
 		g_theRenderer->DrawVertexArray((int)debugVerts.size(), debugVerts.data());
 	}
 }
@@ -969,7 +970,7 @@ void SandboxMap::UpdatePhysics()
 
 }
 
-void SandboxMap::UpdatePhysicsInChunk()
+void SandboxMap::UpdateCellsInChunk()
 {
 	//============NEW VERSION============
 	for (auto& row : m_chunks) {

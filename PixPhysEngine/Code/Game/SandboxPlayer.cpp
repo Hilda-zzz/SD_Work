@@ -18,7 +18,6 @@ void SandboxPlayer::Update(float deltaTime)
 {
 	UNUSED(deltaTime);
 	HandleInput();
-
 }
 
 void SandboxPlayer::RenderImgui()
@@ -145,7 +144,7 @@ void SandboxPlayer::HandleInput()
 						int targetY = gridY + dy;
 						if (m_curMap->IsValidPosition(targetX, targetY)&&m_curMap->GetCellInChunk(targetX,targetY).IsEmpty())
 						{
-							m_curMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, 1);
+							m_curMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, true);
 							CellWithCoords cellWithCoords = CellWithCoords(&m_curMap->GetCellInChunk(targetX, targetY), IntVec2(targetX, targetY));
 							m_rigidBodyDrawnCells.push_back(cellWithCoords);
 						}

@@ -20,8 +20,69 @@ RigidBodyObject::~RigidBodyObject()
 
 void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2BodyType type)
 {
+	CreateBox2DBody(cells, type);
+}
+
+void RigidBodyObject::Update()
+{
+	SyncFromBox2D();
+}
+
+void RigidBodyObject::SyncFromBox2D()
+{
+	// 1. 从 Box2D 获取物理坐标（米制单位）
+	b2Vec2 b2Position = b2Body_GetPosition(m_b2BodyId);
+	b2Rot b2Rotation = b2Body_GetRotation(m_b2BodyId);
+
+	// 2. 转换到游戏坐标系
+	// Box2D 使用米制单位，需要转换回 cell 单位
+	m_position.x = b2Position.x / METERS_PER_CELL;
+	m_position.y = b2Position.y / METERS_PER_CELL;
+
+	// 从 Box2D 的 rotation (cos, sin) 计算角度
+	float angleRadians = b2Rot_GetAngle(b2Rotation);
+	m_rotation = angleRadians * (180.0f / 3.14159265359f);
+
+	// 3. 检查是否发生了显著移动
+	bool hasMoved = false;
+
+	float positionDelta = (m_position - m_lastPosition).GetLengthSquared();
+	float angleDelta = fabsf(m_rotation - m_lastAngle);
+
+	if (positionDelta > m_updateThreshold * m_updateThreshold ||
+		angleDelta > 0.01f)  // ~0.57度
+	{
+		hasMoved = true;
+		m_lastPosition = m_position;
+		m_lastAngle = m_rotation;
+
+		// 4. 更新依赖于刚体位置的内容
+		// UpdateCellWorldPositions();
+	}
+}
+
+void RigidBodyObject::Render() const
+{
+	Mat44 modelMatrix = Mat44::MakeTranslation2D(m_position);  
+	modelMatrix.Append(Mat44::MakeZRotationDegrees(m_rotation));
+	g_theRenderer->SetModelConstants(modelMatrix);
+
+	if(m_manager->GetOwnerMap()->m_debugSettings.m_drawMarchingSquares)
+		g_theRenderer->DrawVertexArray(m_marchingSquaresVerts);
+	if (m_manager->GetOwnerMap()->m_debugSettings.m_drawDouglas)
+		g_theRenderer->DrawVertexArray(m_douglasVerts);
+	if(m_manager->GetOwnerMap()->m_debugSettings.m_drawTriangleMesh)
+		g_theRenderer->DrawVertexArray(m_triangleMeshVerts);
+}
+
+void RigidBodyObject::CreateBox2DBody(std::vector<CellWithCoords> const& cells, b2BodyType type)
+{
 	std::vector<Vec2>  marchingSquarePoints;
 	std::vector<Vec2>  outlinePoints = Box2DShapeBuilder::ExtractOutlineFromCells(cells, marchingSquarePoints);
+
+	Vec2 centroid_Cell = Box2DShapeBuilder::CalculateCentroid(outlinePoints);
+	m_position = centroid_Cell;
+
 	m_douglasVerts.clear();
 	if (outlinePoints.size() >= 2)
 	{
@@ -38,7 +99,7 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 			Vec2 currentPoint = outlinePoints[i];
 			Vec2 nextPoint = outlinePoints[(i + 1) % outlinePoints.size()];
 			//AddVertsForDisc2D(newObj->m_marchingSquaresVerts, currentPoint, 0.1f, lineColor);
-			AddVertsForLinSegment2D(m_douglasVerts, currentPoint, nextPoint, 0.4f, lineColor);
+			AddVertsForLinSegment2D(m_douglasVerts, currentPoint - centroid_Cell, nextPoint - centroid_Cell, 0.4f, lineColor);
 		}
 	}
 
@@ -57,11 +118,12 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 			Vec2 currentPoint = marchingSquarePoints[i];
 			Vec2 nextPoint = marchingSquarePoints[(i + 1) % marchingSquarePoints.size()];
 			//AddVertsForDisc2D(newObj->m_marchingSquaresVerts, currentPoint, 0.1f, lineColor);
-			AddVertsForLinSegment2D(m_marchingSquaresVerts, currentPoint, nextPoint, 0.4f, lineColor);
+			AddVertsForLinSegment2D(m_marchingSquaresVerts, currentPoint - centroid_Cell, nextPoint - centroid_Cell, 0.4f, lineColor);
 		}
 	}
 	// ================== Test triangulation result ====================
-	TriangulationOutput triangulationResult = Box2DShapeBuilder::EarClipping(outlinePoints);
+	//TriangulationOutput triangulationResult = Box2DShapeBuilder::EarClipping(outlinePoints);
+	TriangulationOutput triangulationResult = Box2DShapeBuilder::CDTTriangulation(outlinePoints);
 	int triangleCount = triangulationResult.indices.size() / 3;
 	if (!triangulationResult.indices.empty())
 	{
@@ -85,18 +147,20 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 				Rgba8(100, 255, 255, 180)   // 青色
 			};
 			Rgba8 triangleColor = colors[i % 6];
+			Vec3 centroidVec3 = Vec3(centroid_Cell.x, centroid_Cell.y, 0.f);
+			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v0.x, v0.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
 
-			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v2.x, v2.y, 0.f), triangleColor, Vec2::ZERO));
-			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v1.x, v1.y, 0.f), triangleColor, Vec2::ZERO));
-			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v0.x, v0.y, 0.f), triangleColor, Vec2::ZERO));
+			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v1.x, v1.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
+
+			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v2.x, v2.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
+
 		}
 	}
 
 	//===================== Create rigidbody ===========================
 	b2BodyDef bodyDef = b2DefaultBodyDef();
-	bodyDef.type = type; 
+	bodyDef.type = type;
 
-	Vec2 centroid_Cell = Box2DShapeBuilder::CalculateCentroid(outlinePoints);
 	bodyDef.position = b2Vec2{
 		centroid_Cell.x * METERS_PER_CELL,
 		centroid_Cell.y * METERS_PER_CELL
@@ -111,7 +175,7 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 	//}
 
 	m_b2BodyId = b2CreateBody(m_b2WorldId, &bodyDef);
-	if (B2_IS_NULL(m_b2BodyId)) 
+	if (B2_IS_NULL(m_b2BodyId))
 	{
 		ERROR_AND_DIE("Failed to create Box2D body!");
 		return;
@@ -125,6 +189,7 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 	shapeDef.material.friction = 0.3f;		// 摩擦系数
 	shapeDef.material.restitution = 0.2f;	// 弹性系数
 
+	// generate triangle collider mesh shape
 	for (int i = 0; i < triangleCount; ++i)
 	{
 		unsigned int idx0 = triangulationResult.indices[i * 3 + 0];
@@ -138,16 +203,16 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 		// 将顶点转换为相对于body位置的局部坐标
 
 		b2Vec2 localV0 = {
-			(v0.x - centroid_Cell.x)* METERS_PER_CELL,
-			(v0.y - centroid_Cell.y)* METERS_PER_CELL
+			(v0.x - centroid_Cell.x) * METERS_PER_CELL,
+			(v0.y - centroid_Cell.y) * METERS_PER_CELL
 		};
 		b2Vec2 localV1 = {
 			(v1.x - centroid_Cell.x) * METERS_PER_CELL,
 			(v1.y - centroid_Cell.y) * METERS_PER_CELL
 		};
 		b2Vec2 localV2 = {
-			(v2.x - centroid_Cell.x)* METERS_PER_CELL,
-			(v2.y - centroid_Cell.y)* METERS_PER_CELL
+			(v2.x - centroid_Cell.x) * METERS_PER_CELL,
+			(v2.y - centroid_Cell.y) * METERS_PER_CELL
 		};
 
 		// 创建hull（convex hull）用于构建polygon
@@ -168,14 +233,4 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 			}
 		}
 	}
-}
-
-void RigidBodyObject::Render() const
-{
-	if(m_manager->GetOwnerMap()->m_debugSettings.m_drawMarchingSquares)
-		g_theRenderer->DrawVertexArray(m_marchingSquaresVerts);
-	if (m_manager->GetOwnerMap()->m_debugSettings.m_drawDouglas)
-		g_theRenderer->DrawVertexArray(m_douglasVerts);
-	if(m_manager->GetOwnerMap()->m_debugSettings.m_drawTriangleMesh)
-		g_theRenderer->DrawVertexArray(m_triangleMeshVerts);
 }

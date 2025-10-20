@@ -1,5 +1,12 @@
 ﻿#include "Box2DShapeBuilder.hpp"
 #include <Engine/Math/MathUtils.hpp>
+#include "ThirdParty/poly2tri/sweep/sweep_context.h"
+#include "ThirdParty/poly2tri/common/shapes.h"
+#include "ThirdParty/poly2tri/sweep/cdt.h"
+#include <unordered_map>
+#include <Engine/Core/ErrorWarningAssert.hpp>
+#include <queue>
+#include <map>
 
 // 配置索引计算：
 //   d(0,1) --- c(1,1)
@@ -123,10 +130,174 @@ std::vector<Vec2> Box2DShapeBuilder::ExtractOutlineFromCells(std::vector<CellWit
 
 		// ================ Douglas-Peucker =================== 
 		outline = ReorderOutlineForDouglasPeucker(outline);
-		outline = DouglasPeucker(outline, 1.3f);
+		outline = DouglasPeucker(outline, 2.f);
+		outline.pop_back();
 	}
 
 	return outline;
+}
+
+std::vector<std::vector<CellWithCoords>> Box2DShapeBuilder::SeparateConnectedComponents(const std::vector<CellWithCoords>& cells)
+{
+	std::map<std::pair<int, int>, int> coordToIndex;
+	for (int i = 0; i < cells.size(); i++) 
+	{
+		coordToIndex[{cells[i].m_worldCoords.x, cells[i].m_worldCoords.y}] = i;
+	}
+
+	std::vector<bool> visited(cells.size(), false);
+	std::vector<std::vector<CellWithCoords>> components;
+
+	// BFS
+	for (int i = 0; i < cells.size(); i++) 
+	{
+		if (visited[i]) continue;
+
+		std::vector<CellWithCoords> component;
+		std::queue<int> queue;
+		queue.push(i);
+		visited[i] = true;
+
+		while (!queue.empty()) 
+		{
+			int idx = queue.front();
+			queue.pop();
+			component.push_back(cells[idx]);
+
+			// check each neighbor cell
+			int dx[] = { 0, 0, 1, -1 };
+			int dy[] = { 1, -1, 0, 0 };
+
+			for (int d = 0; d < 4; d++) 
+			{
+				int nx = cells[idx].m_worldCoords.x + dx[d];
+				int ny = cells[idx].m_worldCoords.y + dy[d];
+
+				auto it = coordToIndex.find({ nx, ny });
+				if (it != coordToIndex.end()) 
+				{
+					int neighborIdx = it->second;
+					if (!visited[neighborIdx]) 
+					{
+						visited[neighborIdx] = true;
+						queue.push(neighborIdx);
+					}
+				}
+			}
+		}
+		components.push_back(component);
+	}
+	return components;
+}
+
+bool Box2DShapeBuilder::IfDiscardComponent(const std::vector<CellWithCoords>& cells)
+{
+	const int MIN_CELLS = 40; 
+	if (cells.size() < MIN_CELLS) 
+	{
+		return true;
+	}
+	return false;
+}
+
+std::vector<IntVec2> Box2DShapeBuilder::FillHoles(const std::vector<CellWithCoords>& cells)
+{
+	std::vector<IntVec2> result;
+	if (cells.empty()) return result;
+
+	// 1. 构建坐标到cell的映射
+	std::map<std::pair<int, int>, CellWithCoords> cellMap;
+	int minX = INT_MAX, maxX = INT_MIN;
+	int minY = INT_MAX, maxY = INT_MIN;
+
+	for (const auto& cell : cells) 
+	{
+		cellMap[{cell.m_worldCoords.x, cell.m_worldCoords.y}] = cell;
+		minX = std::min(minX, cell.m_worldCoords.x);
+		maxX = std::max(maxX, cell.m_worldCoords.x);
+		minY = std::min(minY, cell.m_worldCoords.y);
+		maxY = std::max(maxY, cell.m_worldCoords.y);
+	}
+
+	int width = maxX - minX + 1;
+	int height = maxY - minY + 1;
+	std::vector<std::vector<bool>> visited(
+		height, std::vector<bool>(width, false));
+
+	// 3. 从边界开始洪水填充,标记外部区域
+	std::queue<std::pair<int, int>> queue;
+
+	// 标记边界上的空白格子为外部
+	auto markExternal = [&](int x, int y) 
+	{
+		if (x < minX || x > maxX || y < minY || y > maxY) return;
+		int localX = x - minX;
+		int localY = y - minY;
+
+		if (!visited[localY][localX] &&
+			cellMap.find({ x, y }) == cellMap.end()) 
+		{
+			visited[localY][localX] = true;
+			queue.push({ x, y });
+		}
+	};
+
+	// 从四条边开始
+	for (int x = minX; x <= maxX; x++) 
+	{
+		markExternal(x, minY);
+		markExternal(x, maxY);
+	}
+	for (int y = minY; y <= maxY; y++) 
+	{
+		markExternal(minX, y);
+		markExternal(maxX, y);
+	}
+
+	// 4. BFS标记所有外部空格
+	const int dx[] = { 0, 0, 1, -1 };
+	const int dy[] = { 1, -1, 0, 0 };
+
+	while (!queue.empty()) {
+		auto [x, y] = queue.front();
+		queue.pop();
+
+		for (int i = 0; i < 4; i++) {
+			int nx = x + dx[i];
+			int ny = y + dy[i];
+
+			if (nx < minX || nx > maxX || ny < minY || ny > maxY)
+				continue;
+
+			int localX = nx - minX;
+			int localY = ny - minY;
+
+			if (!visited[localY][localX] &&
+				cellMap.find({ nx, ny }) == cellMap.end()) {
+				visited[localY][localX] = true;
+				queue.push({ nx, ny });
+			}
+		}
+	}
+
+	// 5. 未访问的空格就是内部空洞,需要填充
+	for (int y = minY; y <= maxY; y++) 
+	{
+		for (int x = minX; x <= maxX; x++) 
+		{
+			int localX = x - minX;
+			int localY = y - minY;
+
+			// 如果是空格且未被访问(即内部空洞)
+			if (cellMap.find({ x, y }) == cellMap.end() &&
+				!visited[localY][localX]) 
+			{
+				result.push_back(IntVec2(x,y));
+			}
+		}
+	}
+
+	return result;
 }
 
 Vec2 Box2DShapeBuilder::CalculateCentroid(const std::vector<Vec2>& points)
@@ -223,7 +394,7 @@ std::vector<Vec2> Box2DShapeBuilder::ReorderOutlineForDouglasPeucker(const std::
 	{
 		reordered.push_back(closedLoop[(splitIndex + i) % closedLoop.size()]);
 	}
-	reordered.push_back(reordered.front()); // make the loop close
+	//reordered.push_back(reordered.front()); // make the loop close
 
 	return reordered;
 }
@@ -247,9 +418,9 @@ std::vector<Vec2> Box2DShapeBuilder::DouglasPeucker(const std::vector<Vec2>& poi
 			maxIndex = i;
 		}
 	}
-	epsilon *= epsilon;
+	float e2 = epsilon * epsilon;
 	// if maxDistance > epsilon -> dp
-	if (maxDistanceSq > epsilon) 
+	if (maxDistanceSq > e2)
 	{
 		// 分成两段递归处理
 		std::vector<Vec2> left(points.begin(), points.begin() + maxIndex + 1);
@@ -382,6 +553,94 @@ TriangulationOutput Box2DShapeBuilder::EarClipping(const std::vector<Vec2>& inpu
 		result.indices.push_back(indices[2]);
 	}
 	return result;
+}
+
+TriangulationOutput Box2DShapeBuilder::CDTTriangulation(std::vector<Vec2> const& points)
+{
+	TriangulationOutput output;
+
+	if (points.size() < 3)
+	{
+		return output;
+	}
+
+	std::vector<Vec2> ccwPoints = points;
+	if (IsClockwise(ccwPoints))
+	{
+		//std::reverse(ccwPoints.begin(), ccwPoints.end());
+	}
+
+	// 2. 转换为 poly2tri 格式
+	std::vector<p2t::Point*> polyline;
+	for (const auto& v : ccwPoints)
+	{
+		polyline.push_back(new p2t::Point(v.x, v.y));
+	}
+
+	// 3. 执行三角化
+	try
+	{
+		p2t::CDT cdt(polyline);
+		cdt.Triangulate();
+
+		// 4. 获取三角形结果
+		std::vector<p2t::Triangle*> triangles = cdt.GetTriangles();
+
+		// 5. 构建索引映射（poly2tri 的顶点指针 -> 我们的顶点索引）
+		std::unordered_map<p2t::Point*, unsigned int> pointToIndex;
+		for (size_t i = 0; i < polyline.size(); ++i)
+		{
+			pointToIndex[polyline[i]] = static_cast<unsigned int>(i);
+		}
+
+		// 6. 填充输出
+		output.vertices = ccwPoints;
+		output.indices.reserve(triangles.size() * 3);
+
+		for (auto* tri : triangles)
+		{
+			// poly2tri 返回的三角形可能包含内部点，我们只使用原始顶点
+			for (int i = 0; i < 3; ++i)
+			{
+				p2t::Point* pt = tri->GetPoint(i);
+
+				// 查找对应的原始顶点索引
+				auto it = pointToIndex.find(pt);
+				if (it != pointToIndex.end())
+				{
+					output.indices.push_back(it->second);
+				}
+				else
+				{
+					// 这是 CDT 生成的内部点（Steiner point）
+					// 需要添加到顶点列表
+					unsigned int newIndex = static_cast<unsigned int>(output.vertices.size());
+					output.vertices.push_back(Vec2(pt->x, pt->y));
+					output.indices.push_back(newIndex);
+					pointToIndex[pt] = newIndex;
+				}
+			}
+		}
+	}
+	catch (const std::exception& e)
+	{
+		//ERROR_RECOVERABLE(Stringf("CDT 三角化失败: %s", e.what()));
+		DebuggerPrintf("CDT 三角化失败: %s\n", e.what());
+		// 清理内存
+		for (auto* p : polyline)
+		{
+			delete p;
+		}
+		return output;
+	}
+
+	// 7. 清理内存
+	for (auto* p : polyline)
+	{
+		delete p;
+	}
+
+	return output;
 }
 
 float Box2DShapeBuilder::GetOrientation(const Vec2& a, const Vec2& b, const Vec2& c)

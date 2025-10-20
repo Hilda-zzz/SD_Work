@@ -14,6 +14,13 @@ public:
 		s_materialDefs[CellMatType::MAT_EMPTY].m_name = "Eraser";
 		s_materialDefs[CellMatType::MAT_EMPTY].m_description = "Tool - Remove material";
 
+		// 静态刚体填充
+		s_materialDefs[CellMatType::MAT_STATIC_FILL] = CellMatDef(PhyType::PHY_STATIC_SOLID);
+		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_density = 0.0f;
+		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_name = "MAT_STATIC_FILL";
+		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_description = "Tool - Remove material";
+		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_color = Rgba8::HILDA;
+
 		// 沙子 - 标准颗粒物
 		s_materialDefs[CellMatType::MAT_SAND] = CellMatDef(PhyType::PHY_MOVE_SOLID);
 		s_materialDefs[CellMatType::MAT_SAND].m_density = 1.5f;

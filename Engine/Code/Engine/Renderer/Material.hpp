@@ -26,6 +26,5 @@ class Material {
 public:
 	virtual ~Material() = default;
 	virtual MaterialType GetType() const = 0;
-	virtual void Bind(Renderer* renderer) = 0;  
-	virtual Shader* GetShader() const = 0;
+	virtual void Bind(Renderer* renderer) const = 0;  
 };

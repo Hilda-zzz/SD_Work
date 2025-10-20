@@ -12,16 +12,17 @@ enum class PhyType :uint8_t
 
 enum class CellMatType : uint8_t
 {
-	MAT_EMPTY=0,
-	MAT_SAND=1,
-	MAT_WATER=2,
-	MAT_SALT=3,
-	MAT_STONE=4,
-	MAT_WOOD=5,
-	MAT_SOIL=6,
-	MAT_GRAVEL=7,
-	MAT_OIL = 8,
-	MAT_LAVA = 9
+	MAT_EMPTY,
+	MAT_STATIC_FILL,
+	MAT_SAND,
+	MAT_WATER,
+	MAT_SALT,
+	MAT_STONE,
+	MAT_WOOD,
+	MAT_SOIL,
+	MAT_GRAVEL,
+	MAT_OIL,
+	MAT_LAVA
 };
 
 class CellMatDef

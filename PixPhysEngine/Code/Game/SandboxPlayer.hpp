@@ -42,7 +42,7 @@ public:
 
 	// --------------RB---------------------
 	void ClearRigidBodyDrawnCells();
-	std::vector<CellWithCoords> const& GetRigidBodyDrawnCells() { return m_rigidBodyDrawnCells; };
+	std::vector<CellWithCoords>& GetRigidBodyDrawnCells() { return m_rigidBodyDrawnCells; };
 	int GetRigidBodyDrawnCellsCount() { return m_rigidBodyDrawnCells.size(); }
 private:
 	void HandleCameraControls();
@@ -52,7 +52,7 @@ private:
 public:
 	Camera m_camera;
 
-	
+	std::vector<CellWithCoords> m_rigidBodyDrawnCells;
 
 private:
 	SandboxMap* m_curMap = nullptr;
@@ -69,6 +69,6 @@ private:
 
 	SandBoxUI m_sandBoxUI;
 
-	std::vector<CellWithCoords> m_rigidBodyDrawnCells;
+	
 
 };

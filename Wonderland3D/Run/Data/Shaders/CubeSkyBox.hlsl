@@ -24,7 +24,7 @@ cbuffer ModelConstants : register(b3)
     float4 ModelColor;
 };
 
-TextureCube skyboxTexture : register(t0);
+TextureCube skyboxTexture : register(t5);
 SamplerState samplerState : register(s0);
 
 v2p_t VertexMain(vs_input_t input)

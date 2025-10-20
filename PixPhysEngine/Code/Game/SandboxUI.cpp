@@ -402,13 +402,7 @@ void SandBoxUI::RenderRigidBodyPanel(SandboxPlayer* player)
 			if (ImGui::Button("Confirm - Create Rigid Body", ImVec2(-1, 40))) {
 				if (canConfirm) 
 				{
-					RigidBodyObject* newObj = new RigidBodyObject(player->GetCurMap()->GetRigidBodyManager()->GetNextId(),
-						player->GetCurMap()->GetPhysicsWorldId(),
-						player->GetCurMap()->GetRigidBodyManager());
-					player->GetCurMap()->GetRigidBodyManager()->m_testRbList.push_back(newObj);
-					newObj->Initialize(player->GetRigidBodyDrawnCells(), b2_staticBody);
-					
-					//================================================
+					player->GetCurMap()->GetRigidBodyManager()->CreateRigidBodies(player->GetRigidBodyDrawnCells(), b2_dynamicBody);
 
 					m_rigidBodyDrawMode = false;
 					m_showMaterialSelector = true;

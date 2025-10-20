@@ -71,5 +71,8 @@
     <FxCompile Include="..\..\Run\Data\Shaders\ShadowMap.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\CubeSkyBox.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

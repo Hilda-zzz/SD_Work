@@ -140,6 +140,8 @@ public:
 	void SetSpotLightsConstants(const std::vector<SpotLight>& lights);
 	void SetShadowConstants(Mat44 const& lightViewProjectionMat);
 	void SetPerFrameConstants(float time,int debugInt,float debugFloat);
+	void SetPBRConstants(Vec3 const& albedo, float metallic, float roughness, float ao,
+		Rgba8 emissiveColor, float emissiveStrength);
 
 	//-----------------------Shader-------------------------------------------------------------------
 	Shader* CreateShaderFromFile(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
@@ -176,6 +178,7 @@ public:
 	// bind material calls these funcs
 	void SetTextureSlot(TextureSlot slot=TextureSlot::SLOT_BASE_COLOR, Texture* texture=nullptr); // call by each child material
 	void ApplyTextureBindings();
+	void ClearTextureSlots();
 
 
 
@@ -209,6 +212,7 @@ protected:
 	ConstantBuffer*			m_spotLightCBO = nullptr;
 	ConstantBuffer*			m_shadowCBO = nullptr;
 	ConstantBuffer*			m_perFrameCBO = nullptr;
+	ConstantBuffer*			m_pbrCBO = nullptr;
 
 	const Texture*			m_defaultTexture = nullptr;
 

@@ -204,6 +204,11 @@
     <ClCompile Include="..\ThirdParty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\ThirdParty\Noise\RawNoise.cpp" />
     <ClCompile Include="..\ThirdParty\Noise\SmoothNoise.cpp" />
+    <ClCompile Include="..\ThirdParty\poly2tri\common\shapes.cc" />
+    <ClCompile Include="..\ThirdParty\poly2tri\sweep\advancing_front.cc" />
+    <ClCompile Include="..\ThirdParty\poly2tri\sweep\cdt.cc" />
+    <ClCompile Include="..\ThirdParty\poly2tri\sweep\sweep.cc" />
+    <ClCompile Include="..\ThirdParty\poly2tri\sweep\sweep_context.cc" />
     <ClCompile Include="..\ThirdParty\TinyXML2\tinyxml2.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\Clock.cpp" />
@@ -336,6 +341,14 @@
     <ClInclude Include="..\ThirdParty\imgui\imstb_truetype.h" />
     <ClInclude Include="..\ThirdParty\Noise\RawNoise.hpp" />
     <ClInclude Include="..\ThirdParty\Noise\SmoothNoise.hpp" />
+    <ClInclude Include="..\ThirdParty\poly2tri\common\dll_symbol.h" />
+    <ClInclude Include="..\ThirdParty\poly2tri\common\shapes.h" />
+    <ClInclude Include="..\ThirdParty\poly2tri\common\utils.h" />
+    <ClInclude Include="..\ThirdParty\poly2tri\poly2tri.h" />
+    <ClInclude Include="..\ThirdParty\poly2tri\sweep\advancing_front.h" />
+    <ClInclude Include="..\ThirdParty\poly2tri\sweep\cdt.h" />
+    <ClInclude Include="..\ThirdParty\poly2tri\sweep\sweep.h" />
+    <ClInclude Include="..\ThirdParty\poly2tri\sweep\sweep_context.h" />
     <ClInclude Include="..\ThirdParty\stb\stb_image.h" />
     <ClInclude Include="..\ThirdParty\TinyXML2\tinyxml2.h" />
     <ClInclude Include="Audio\AudioSystem.hpp" />

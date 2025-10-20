@@ -8,7 +8,11 @@ class Texture;
 
 class PBRMaterial : public Material {
 public:
+	PBRMaterial();
 	PBRMaterial(Texture* baseTex, Texture* normTex, Texture* mrTex,Texture* aoTex,Texture* emissiveTex);
+
+	void SetParameters(float metallic, float roughness, Vec3 const& albedo);
+
 	Texture* m_albedoTexture = nullptr;
 	Texture* m_normalTexture = nullptr;
 	Texture* m_metallicRoughnessTexture = nullptr;
@@ -16,14 +20,12 @@ public:
 	Texture* m_emissiveTexture = nullptr;
 
 	Vec3 m_albedo = Vec3(1.0f, 1.0f, 1.0f);
-	float m_metallic = 0.0f;
-	float m_roughness = 0.5f;
+	float m_metallic = 0.5f;
+	float m_roughness = 0.3f;
+	float m_ao = 1.f;
 
 	MaterialType GetType() const override { return MaterialType::PBR_METALLIC_ROUGHNESS; }
 
-	void Bind(Renderer* renderer) override;
-
-
-	Shader* GetShader() const override;
+	void Bind(Renderer* renderer) const override;
 
 };

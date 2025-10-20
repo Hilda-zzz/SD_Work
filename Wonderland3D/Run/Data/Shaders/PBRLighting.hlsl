@@ -1,4 +1,9 @@
 
+#define PI 3.14159265359
+#define TWO_PI 6.28318530718
+#define EPSILON 0.0001
+#define MIN_ROUGHNESS 0.045
+
 struct VertexInput
 {
 	float3 a_modelPosition : POSITION;
@@ -23,7 +28,7 @@ struct VertexOutPixelIn
  	float4 v_modelBitangent : MODEL_BITANGENT;  
  	float4 v_modelNormal : MODEL_NORMAL;     
 
-	float4 v_lightSpacePos : LIGHT_SPACE;   
+	//float4 v_lightSpacePos : LIGHT_SPACE;   
 };
 
 cbuffer LightConstants : register(b1)
@@ -114,7 +119,75 @@ float3 GetCameraWorldPosition(float4x4 viewMatrix)
 }
 //======================================================================
 
+float DistributionGGX(float3 N, float3 H, float a)
+{
+	float alpha = max(a * a, MIN_ROUGHNESS);
+	float a2=alpha*alpha;
+	float NdotH=max(dot(N,H),0.0f);
+	float NdotH2=NdotH*NdotH;
 
+	float nom=a2;
+	float denom=(NdotH2*(a2-1.f)+1.f);
+	denom=PI * denom * denom;
+
+	denom = max(denom, EPSILON);
+
+	return nom/denom;
+}
+
+float GeometrySchlickGGX(float NdotV,float k)
+{
+	float nom=NdotV;
+	float denom=NdotV*(1.f-k)+k;
+	return nom/denom;
+}
+
+float GeometrySmith(float3 N, float3 V, float3 L, float k)
+{
+	float NdotV=max(dot(N, V), 0.0);
+	float NdotL = max(dot(N, L), 0.0);
+
+	float ggx1 = GeometrySchlickGGX(NdotV, k);
+    float ggx2 = GeometrySchlickGGX(NdotL, k);
+    return ggx1 * ggx2;
+}
+
+float3 FresnelSchlick(float cosTheta, float3 F0)
+{
+	return F0+(1.f-F0)*pow(1.0-cosTheta,5.0);
+}
+
+float3 CalculatePBR(float3 N, float3 V, float3 L, 
+                    float3 albedo, float metallic, float roughness)
+{
+	float3 H = normalize(V + L);
+
+	float3 F0 = float3(0.04, 0.04, 0.04);
+	F0 = lerp(F0, albedo, metallic);
+
+    // Cook-Torrance BRDF
+    float NDF = DistributionGGX(N, H, roughness);
+
+	float r = roughness + 1.0;
+	float k = (r * r) / 8.0;
+    float G = GeometrySmith(N, V, L, k);
+    float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    float3 numerator    = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    float3 specular     = numerator / denominator;  
+
+	float3 kS = F;
+	float3 kD = float3(1.0, 1.0, 1.0) - kS;
+	kD *= 1.0 - metallic;
+
+	float NdotL = max(dot(N, L), 0.0); 
+	float3 diffuse = kD * albedo / PI;
+
+	return (diffuse + specular) * NdotL * c_sunIntensity;
+}
+
+//======================================================================
 VertexOutPixelIn VertexMain(VertexInput input)
 {
 	float4 modelPosition = float4(input.a_modelPosition, 1);
@@ -127,7 +200,7 @@ VertexOutPixelIn VertexMain(VertexInput input)
  	float4 worldBitangent = mul(c_modelToWorldTransform, float4(input.a_modelBitangent, 0.0f)); 
  	float4 worldNormal = mul(c_modelToWorldTransform, float4(input.a_modelNormal, 0.0f));       
 
-	float4 lightSpacePos=mul(LightViewProjection,worldPosition);
+	//float4 lightSpacePos=mul(LightViewProjection,worldPosition);
 
 	VertexOutPixelIn v2p;
 	v2p.v_clipPosition = clipPosition;
@@ -142,7 +215,7 @@ VertexOutPixelIn VertexMain(VertexInput input)
 	v2p.v_modelBitangent = float4(input.a_modelBitangent, 0.0f);  
 	v2p.v_modelNormal = float4(input.a_modelNormal, 0.0f);      
 
-	v2p.v_lightSpacePos=lightSpacePos;
+	//v2p.v_lightSpacePos=lightSpacePos;
 
 	return v2p;
 }
@@ -156,7 +229,7 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	float3 texEmissive=t_EmissiveTexture.Sample(s_samplerState, input.v_uv).rgb;
 
 	// === Apply parameters ===
-    float3 albedo = texAlbedo * c_albedo * c_modelColor.rgb;
+    float3 albedo = texAlbedo * c_albedo  * c_modelColor.rgb * input.v_color.rgb;
     float metallic = texMR.r * c_metallic;
     float roughness = texMR.g * c_roughness;
     float ao = texAO * c_ao;
@@ -175,7 +248,27 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	float3 surfaceBitangentModelSpace	= normalize( input.v_modelBitangent.xyz );
 	float3 surfaceNormalModelSpace		= normalize( input.v_modelNormal.xyz );
 
+	// directional light
+	float3 sunDir=-normalize(c_sunDirection.xyz);
+
+	float3 cameraWorldPos = GetCameraWorldPosition(c_worldToCameraTransform);
+	float3 viewDir = normalize(cameraWorldPos - input.v_worldPosition.xyz);
+    float3 halfVector = normalize(sunDir + viewDir);
+
 	// combine pixel normal with world normal
 	float3x3 tbnToWorldMat = float3x3(surfaceTangentWorldSpace, surfaceBitangentWorldSpace, surfaceNormalWorldSpace);
 	float3 pixelNormalWorldSpace = mul(pixelNormalTBNSpace, tbnToWorldMat);
+
+	// ambient
+	float3 ambient=albedo*c_ambientIntensity*ao;
+
+	float3 directLightColor = CalculatePBR(surfaceNormalWorldSpace, viewDir, sunDir,
+										 albedo, metallic, roughness);
+
+	float4 finalColor=float4(directLightColor+ambient,1.f);
+
+	//========================================
+
+ 	clip(finalColor.a - 0.01f);
+ 	return finalColor;
 }
