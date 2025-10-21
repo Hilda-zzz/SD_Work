@@ -10,6 +10,14 @@
 class RigidBodyManager;
 struct Cell;
 
+struct CellMoveInfo {
+	Cell* oldPtr;           // 旧位置指针
+	IntVec2 oldCoords;      // 旧世界坐标
+	IntVec2 newCoords;      // 新世界坐标
+	Cell cellData;          // cell数据快照
+	Vec2 localPos;          // 局部坐标
+};
+
 class RigidBodyObject
 {
 public:
@@ -17,16 +25,21 @@ public:
 	~RigidBodyObject();
 
 	void Initialize(std::vector<CellWithCoords> const& cells, b2BodyType type);
+
 	void Update();
+	void ValidateAndCollectCells();
+	void PlaceCellsToNewPositions();
 	void SyncFromBox2D();
+	void SyncCellsToPhysics();
+
 	void Render() const;
 
 	// === Manage Cells ===
-	void AddCell(Cell* cell);
+	void AddCell(Cell* cell, IntVec2 worldCoords);
 	void RemoveCell(Cell* cell);
 
-	int GetCellCount() const { return m_cells.size(); }
-	const std::vector<Cell*>& GetCells() const { return m_cells; }
+	//int GetCellCount() const { return m_cells.size(); }
+	//const std::vector<Cell*>& GetCells() const { return m_cells; }
 
 	// === Apply physics ===
 	void ApplyForce(Vec2 force);
@@ -64,7 +77,10 @@ public:
 
 	// === Cell data ====
 	std::vector<Cell*> m_cells;
-	std::unordered_map<Cell*, Vec2> m_localCoords;
+	std::unordered_map<Cell*, Vec2> m_cellToLocal;
+	std::unordered_map<Cell*, IntVec2> m_cellToWorld;
+	//std::vector< Vec2> m_cellLocalCoords; // 每个cell的局部坐标（固定不变）
+	//std::unordered_map<Vec2, Cell> m_localToCell;
 
 	// === States ===
 	Vec2 m_position = Vec2::ZERO;
@@ -77,10 +93,11 @@ public:
 
 	// === Settings ===
 	float m_updateThreshold = 0.2f;
-	float m_minCellCount = 3; // destroy rb object if less than this count
+	float m_minCellCount = 30; // destroy rb object if less than this count
 
 	// ============== Debug Draw verts ====================
 	std::vector<Vertex_PCU> m_marchingSquaresVerts;
 	std::vector<Vertex_PCU> m_douglasVerts;
 	std::vector<Vertex_PCU> m_triangleMeshVerts;
+	std::vector<Vertex_PCU> m_positionVerts;
 };

@@ -657,7 +657,7 @@ void SandboxMap::UpdateSingleChunk(CellChunk* chunk)
 			for (int localX = 0; localX < CHUNK_SIZE; localX++) {
 				Cell& cell = chunk->GetLocalCell(localX, localY);
 				if (cell.IsEmpty()) continue;
-
+				//if (cell.m_isBelongRb) continue;
 				IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
 				CellBehaviorSystemInChunk::UpdateCell(cell, worldPos.x, worldPos.y, this);
 			}
@@ -667,7 +667,7 @@ void SandboxMap::UpdateSingleChunk(CellChunk* chunk)
 			for (int localX = CHUNK_SIZE - 1; localX >= 0; localX--) {
 				Cell& cell = chunk->GetLocalCell(localX, localY);
 				if (cell.IsEmpty()) continue;
-
+				//if (cell.m_isBelongRb) continue;
 				IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
 				CellBehaviorSystemInChunk::UpdateCell(cell, worldPos.x, worldPos.y, this);
 			}

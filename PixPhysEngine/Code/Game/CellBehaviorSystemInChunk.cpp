@@ -502,13 +502,15 @@ void CellBehaviorSystemInChunk::UpdateLiquid(Cell& cell, int worldX, int worldY,
 		bool hasEmptyNeighbor = false;
 
 		// 定义8个方向的偏移量
-		int offsets[8][2] = {
+		int offsets[10][2] = {
 			{-1, 1}, {0, -1}, {1, 1},  // 上方三个
 			{-1,  0},          {1,  0},  // 左右两个  
-			{-1,  -1}, {0,  1}, {1,  -1}   // 下方三个
+			{-1,  -1}, {0,  1}, {1,  -1},   // 下方三个
+			{0,  2},
+			{0,  3}
 		};
 
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 10; ++i) {
 			int neighborX = worldX + offsets[i][0];
 			int neighborY = worldY + offsets[i][1];
 			if (map->IsInBounds(neighborX, neighborY))
@@ -747,13 +749,15 @@ void CellBehaviorSystemInChunk::UpdateAccumulatedMovementLiquid(int oldX, int ol
 		bool allNeighborsNonEmpty = true;
 
 		// 定义8个方向的偏移量
-		int offsets[8][2] = {
-			{-1, -1}, {0, -1}, {1, -1},  // 上方三个
+		int offsets[10][2] = {
+			{-1, -1}, {0, -1}, {1, -1},  // 下方三个
 			{-1,  0},          {1,  0},  // 左右两个  
-			{-1,  1}, {0,  1}, {1,  1}   // 下方三个
+			{-1,  1}, {0,  1}, {1,  1} ,  // 上方三个
+			{0,  2},
+			{0,  3}
 		};
 
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 10; ++i) {
 			int neighborX = oldX + offsets[i][0];
 			int neighborY = oldY + offsets[i][1];
 

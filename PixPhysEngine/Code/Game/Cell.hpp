@@ -18,6 +18,7 @@ struct Cell {
 	int m_liquidReCollideTimes = 0;
 
 	bool m_isBelongRb = false;
+	int m_rigidBodyId = -1;
 
 	bool IsEmpty() const { return m_type == CellMatType::MAT_EMPTY; }
 	void SetEmpty() {
@@ -25,6 +26,9 @@ struct Cell {
 		m_velocityY = 0;
 		m_velocityX = 0;
 		m_updatedThisFrame = false;
+		m_rigidBodyId = -1;
+		m_isBelongRb = false;
+		m_color = Rgba8::WHITE;
 	}
 };
 
