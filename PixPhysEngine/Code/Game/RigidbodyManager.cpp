@@ -59,7 +59,7 @@ void RigidBodyManager::Update(float deltaTime)
 {
 	for (RigidBodyObject* object : m_testRbList)
 	{
-		object->ValidateAndCollectCells();
+		// object->ValidateAndCollectCells();
 	}
 
 	int subStepCount = 4;

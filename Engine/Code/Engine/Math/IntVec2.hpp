@@ -1,4 +1,5 @@
-#pragma once
+﻿#pragma once
+#include <functional>
 struct Vec2;
 
 struct IntVec2
@@ -35,4 +36,11 @@ public:
 	void const	operator+=(IntVec2 const& vecToAdd);
 	void const	operator-=(IntVec2 const& vecToSubtract);
 	
+};
+
+struct IntVec2Hash
+{
+	size_t operator()(const IntVec2& vec) const {
+		return std::hash<int>()(vec.x) ^ (std::hash<int>()(vec.y) << 1);
+	}
 };

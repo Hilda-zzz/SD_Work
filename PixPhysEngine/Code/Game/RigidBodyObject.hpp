@@ -6,16 +6,18 @@
 #include <Engine/Core/Vertex_PCU.hpp>
 #include "Game/Cell.hpp"
 #include "ThirdParty/box2d/include/box2d/id.h"
+#include "Engine/Math/AABB2.hpp"
 
 class RigidBodyManager;
 struct Cell;
 
 struct CellMoveInfo {
-	Cell* oldPtr;           // 旧位置指针
-	IntVec2 oldCoords;      // 旧世界坐标
-	IntVec2 newCoords;      // 新世界坐标
-	Cell cellData;          // cell数据快照
-	Vec2 localPos;          // 局部坐标
+	Cell* oldPtr;
+	IntVec2 oldCoords;
+	IntVec2 newCoords;
+	Cell cellData;
+	Vec2 localPos;
+	bool needsMove;
 };
 
 class RigidBodyObject
@@ -30,7 +32,8 @@ public:
 	void ValidateAndCollectCells();
 	void PlaceCellsToNewPositions();
 	void SyncFromBox2D();
-	void SyncCellsToPhysics();
+	AABB2 CalculateRotatedCellCoverage() const;
+
 
 	void Render() const;
 
@@ -77,8 +80,10 @@ public:
 
 	// === Cell data ====
 	std::vector<Cell*> m_cells;
-	std::unordered_map<Cell*, Vec2> m_cellToLocal;
-	std::unordered_map<Cell*, IntVec2> m_cellToWorld;
+	//std::unordered_map<Cell*, Vec2> m_cellToLocal;
+	std::unordered_map<Cell*, IntVec2> m_cellToWorldCoords;
+
+	std::unordered_map<IntVec2, Cell, IntVec2Hash> m_cellBlueprint;
 	//std::vector< Vec2> m_cellLocalCoords; // 每个cell的局部坐标（固定不变）
 	//std::unordered_map<Vec2, Cell> m_localToCell;
 

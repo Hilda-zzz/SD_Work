@@ -29,6 +29,7 @@ struct Cell {
 		m_rigidBodyId = -1;
 		m_isBelongRb = false;
 		m_color = Rgba8::WHITE;
+		m_isFreeFalling = true;
 	}
 };
 

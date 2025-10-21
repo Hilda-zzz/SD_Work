@@ -25,32 +25,53 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 
 	// add all cells to management
 	SandboxMap* map = m_manager->GetOwnerMap();
-	for (const CellWithCoords& cellData : cells) 
+	//for (const CellWithCoords& cellData : cells) 
+	//{
+	//	m_cells.push_back(cellData.m_cell);
+	//	Vec2 cellWorldPos = Vec2((float)cellData.m_worldCoords.x, (float)cellData.m_worldCoords.y)+Vec2(0.5f,0.5f);
+	//	Vec2 localPos = WorldToLocal(cellWorldPos);
+	//	m_cellToLocal[cellData.m_cell] = localPos;
+	//	m_cellToWorldCoords[cellData.m_cell] = cellData.m_worldCoords;
+
+	//	cellData.m_cell->m_isBelongRb = true;
+	//	cellData.m_cell->m_rigidBodyId = m_rbID;
+	//}
+
+	m_cellBlueprint.clear();
+	m_cells.clear();
+	//m_cellToWorldCoords.clear();
+
+	for (const CellWithCoords& cellData : cells)
 	{
 		m_cells.push_back(cellData.m_cell);
-		Vec2 cellWorldPos = Vec2((float)cellData.m_worldCoords.x, (float)cellData.m_worldCoords.y);
+		Vec2 cellWorldPos = Vec2((float)cellData.m_worldCoords.x, (float)cellData.m_worldCoords.y) + Vec2(0.5f, 0.5f);
+		//m_cellToWorldCoords[cellData.m_cell] = cellData.m_worldCoords;
+
 		Vec2 localPos = WorldToLocal(cellWorldPos);
-		m_cellToLocal[cellData.m_cell] = localPos;
-		m_cellToWorld[cellData.m_cell] = cellData.m_worldCoords;
+		IntVec2 localKey((int)floorf(localPos.x), (int)floorf(localPos.y));
+		//m_cellToLocal[cellData.m_cell] = localPos;
+		// ⭐ 保存到蓝图（这张图永远不变！）
+		m_cellBlueprint[localKey] = *cellData.m_cell;
 
 		cellData.m_cell->m_isBelongRb = true;
 		cellData.m_cell->m_rigidBodyId = m_rbID;
 	}
+
 }
 
 void RigidBodyObject::Update()
 {
 	SyncFromBox2D();
-	PlaceCellsToNewPositions();
 
 	m_positionVerts.clear();
-	AddVertsForDisc2D(m_positionVerts, m_position, 2.f, Rgba8::CYAN);
+	PlaceCellsToNewPositions();
+	//AddVertsForDisc2D(m_positionVerts, m_position, 2.f, Rgba8::CYAN);
 }
 
 void RigidBodyObject::ValidateAndCollectCells()
 {
 	std::vector<Cell*> validCells;
-	std::unordered_map<Cell*, Vec2> validMapping;
+	//std::unordered_map<Cell*, Vec2> validMapping;
 
 	// 遍历所有cell指针
 	for (Cell* cellPtr : m_cells) 
@@ -60,7 +81,7 @@ void RigidBodyObject::ValidateAndCollectCells()
 		{
 			// ✅ 有效：备份cell数据
 			validCells.push_back(cellPtr);
-			validMapping[cellPtr] = m_cellToLocal[cellPtr];
+			//validMapping[cellPtr] = m_cellToLocal[cellPtr];
 
 			// 清空旧位置（准备移动）
 			//cellPtr->SetEmpty();
@@ -68,10 +89,10 @@ void RigidBodyObject::ValidateAndCollectCells()
 	}
 
 	// 2. 更新列表（只保留有效的）
-	m_cellToLocal.clear();
+	//m_cellToLocal.clear();
 	m_cells.clear();
 	m_cells = validCells;
-	m_cellToLocal = validMapping;
+	//m_cellToLocal = validMapping;
 
 	// 3. 检查是否需要销毁刚体
 	//if (m_cells.size() < m_minCellCount) {
@@ -84,120 +105,119 @@ void RigidBodyObject::PlaceCellsToNewPositions()
 	SandboxMap* map = m_manager->GetOwnerMap();
 	if (!map) return;
 
-	struct CellMoveInfo {
-		Cell* oldPtr;
-		IntVec2 oldCoords;
-		IntVec2 newCoords;
-		Cell cellData;
-		Vec2 localPos;
-		bool needsMove;
-	};
+	// 计算覆盖范围
+	AABB2 coverageBounds = CalculateRotatedCellCoverage();
+	int minX = (int)floorf(coverageBounds.m_mins.x);
+	int minY = (int)floorf(coverageBounds.m_mins.y);
+	int maxX = (int)ceilf(coverageBounds.m_maxs.x);
+	int maxY = (int)ceilf(coverageBounds.m_maxs.y);
+	AddVertsForAABB2D(m_positionVerts, coverageBounds, Rgba8(255,0,0,100));
 
-	std::vector<CellMoveInfo> moveList;
+	// ==========================================
+	// 阶段1：构建 local 坐标到 cell 数据的查找表
+	// ==========================================
+	//std::unordered_map<IntVec2, Cell, IntVec2Hash> localCellLookup;
+	//for (Cell* oldCellPtr : m_cells) 
+	//{
+	//	auto it_local = m_cellToLocal.find(oldCellPtr);
+	//	auto it_world = m_cellToWorldCoords.find(oldCellPtr);
 
-	// === 阶段1：收集所有移动信息 ===
+	//	if (it_local == m_cellToLocal.end() || it_world == m_cellToWorldCoords.end()) {
+	//		continue;
+	//	}
+
+	//	Vec2 localPos = it_local->second;
+	//	IntVec2 localKey((int)floorf(localPos.x), (int)floorf(localPos.y));
+	//	IntVec2 oldWorldCoords = it_world->second;
+
+	//	// 保存cell数据快照和旧世界坐标
+	//	localCellLookup[localKey] = *oldCellPtr;
+	//}
+
+	std::vector<Cell*> validCells;
+	//std::unordered_map<Cell*, Vec2> validMapping;
+	std::unordered_map<Cell*, IntVec2> validCellToWorldCoords;
+	std::unordered_map<IntVec2, Cell, IntVec2Hash> newWorldToOldCellData;  // 新世界坐标 -> 旧cell数据
+	std::unordered_map<Cell*, Cell> newCellPtrToOldCellData;
+
+
+	// === 遍历框中应该被填充的cell
+	for (int worldY = minY; worldY <= maxY; worldY++) 
+	{
+		for (int worldX = minX; worldX <= maxX; worldX++)
+		{
+			// 边界检查
+			if (!map->IsInBounds(worldX, worldY)) 
+			{
+				continue;
+			}
+
+			// === 逆向变换：世界坐标 → local 坐标 ===
+			Vec2 worldPos((float)worldX+0.5f, (float)worldY + 0.5f);
+			Vec2 localPos = WorldToLocal(worldPos);
+
+			IntVec2 localKey(
+				(int)floorf(localPos.x),
+				(int)floorf(localPos.y)
+			);
+
+			// 检查该 local 坐标是否有 cell
+			//auto it_cellData = localCellLookup.find(localKey);
+			//if (it_cellData == localCellLookup.end()) {
+			//	continue;  // 该位置没有 cell，跳过
+			//}
+			auto it_cellData2 = m_cellBlueprint.find(localKey);
+			if (it_cellData2 == m_cellBlueprint.end()) {
+				continue;  // 该位置没有 cell，跳过
+			}
+
+			// 找到了
+			//AddVertsForDisc2D(m_positionVerts, Vec2((float)worldX, (float)worldY) + Vec2(0.5f, 0.5f), 0.5f,Rgba8::CYAN);
+			Cell& newCell = map->GetCellInChunk(worldX, worldY);
+
+			validCells.push_back(&newCell);
+			//validMapping[&newCell]= localPos;
+			validCellToWorldCoords[&newCell] = IntVec2(worldX,worldY);
+
+			//newWorldToOldCellData[IntVec2(worldX, worldY)] = it_cellData->second;
+			newCellPtrToOldCellData[&newCell] = it_cellData2->second;
+
+			map->GetChunkByWorldPos(worldX, worldY)->MarkDirty();
+		}
+	}
+
+	for (Cell* cellPtr : validCells) 
+	{
+		auto it_world = validCellToWorldCoords.find(cellPtr);
+		if (it_world != validCellToWorldCoords.end()) 
+		{
+			IntVec2 worldCoords = it_world->second;
+			Vec2 worldPos((float)worldCoords.x + 0.5f, (float)worldCoords.y + 0.5f);
+
+			// 画黄色方框（略大于cell，便于区分）
+			AABB2 cellBounds(
+				Vec2((float)worldCoords.x + 0.1f, (float)worldCoords.y + 0.1f),
+				Vec2((float)worldCoords.x + 0.9f, (float)worldCoords.y + 0.9f)
+			);
+			Cell cellData = newCellPtrToOldCellData[cellPtr];
+			//AddVertsForAABB2D(m_positionVerts, cellBounds, cellData.m_color);
+		}
+	}
+
+	//// 清空旧的位置
 	for (Cell* oldCellPtr : m_cells)
 	{
-		// 验证有效性
-		if (oldCellPtr->m_rigidBodyId != m_rbID || oldCellPtr->IsEmpty()) {
-			continue;
-		}
-
-		// 获取局部坐标
-		auto it_local = m_cellToLocal.find(oldCellPtr);
-		if (it_local == m_cellToLocal.end()) {
-			ERROR_AND_DIE("Cell not found in local mapping!");
-		}
-		Vec2 localPos = it_local->second;
-
-		// ⭐ 从映射中获取旧世界坐标
-		auto it_world = m_cellToWorld.find(oldCellPtr);
-		if (it_world == m_cellToWorld.end()) {
-			ERROR_AND_DIE("Cell not found in world mapping!");
-		}
-		IntVec2 oldCoords = it_world->second;
-
-		// 计算新位置
-		Vec2 newWorldPos = LocalToWorld(localPos);
-		int newWorldX = (int)roundf(newWorldPos.x);
-		int newWorldY = (int)roundf(newWorldPos.y);
-
-		// 边界检查
-		if (!map->IsInBounds(newWorldX, newWorldY)) {
-			continue;
-		}
-
-		IntVec2 newCoords = IntVec2(newWorldX, newWorldY);
-
-		// 检查目标位置
-		if (newCoords != oldCoords) {
-			Cell& targetCell = map->GetCellInChunk(newWorldX, newWorldY);
-			if (!targetCell.IsEmpty() && targetCell.m_rigidBodyId != m_rbID) {
-				// 被其他东西占用，保留原位
-				newCoords = oldCoords;
-			}
-		}
-
-		// 保存移动信息
-		CellMoveInfo info;
-		info.oldPtr = oldCellPtr;
-		info.oldCoords = oldCoords;
-		info.newCoords = newCoords;
-		info.cellData = *oldCellPtr;  // 快照
-		info.localPos = localPos;
-		info.needsMove = (oldCoords != newCoords);
-
-		moveList.push_back(info);
+		oldCellPtr->SetEmpty();
 	}
 
-	// === 阶段2：清空所有旧位置 ===
-	for (const CellMoveInfo& info : moveList) {
-		if (info.needsMove) {
-			Cell& oldCell = map->GetCellInChunk(info.oldCoords.x, info.oldCoords.y);
-			oldCell.SetEmpty();
-		}
+	m_cells.clear();
+	m_cells = validCells;
+	//////// 赋值新的位置
+	for (Cell* newCellPtr : m_cells)
+	{
+		*newCellPtr = newCellPtrToOldCellData[newCellPtr];
 	}
-
-	// === 阶段3：写入所有新位置并更新映射 ===
-	std::vector<Cell*> newCells;
-	std::unordered_map<Cell*, Vec2> newLocalMapping;
-	std::unordered_map<Cell*, IntVec2> newWorldMapping;  // ⭐ 新的世界坐标映射
-
-	for (const CellMoveInfo& info : moveList) {
-		Cell& newCellRef = map->GetCellInChunk(info.newCoords.x, info.newCoords.y);
-
-		if (info.needsMove) {
-			if (!newCellRef.IsEmpty()) {
-				continue;  // 冲突，跳过
-			}
-			// 写入数据
-			newCellRef = info.cellData;
-		}
-
-		// 更新指针和映射
-		Cell* newCellPtr = &newCellRef;
-		newCells.push_back(newCellPtr);
-		newLocalMapping[newCellPtr] = info.localPos;
-		newWorldMapping[newCellPtr] = info.newCoords;  // ⭐ 更新世界坐标
-
-		// 标记dirty
-		CellChunk* newChunk = map->GetChunkByWorldPos(info.newCoords.x, info.newCoords.y);
-		if (newChunk) newChunk->MarkDirty();
-
-		if (info.needsMove) {
-			CellChunk* oldChunk = map->GetChunkByWorldPos(info.oldCoords.x, info.oldCoords.y);
-			if (oldChunk) oldChunk->MarkDirty();
-		}
-	}
-
-	// === 阶段4：更新成员变量 ===
-	m_cells = newCells;
-	m_cellToLocal = newLocalMapping;
-	m_cellToWorld = newWorldMapping;  // ⭐ 更新世界坐标映射
-
-	if (m_cells.size() < m_minCellCount) {
-		m_manager->DestoryRigidBody(this);
-	}
+	
 }
 
 void RigidBodyObject::SyncFromBox2D()
@@ -233,6 +253,69 @@ void RigidBodyObject::SyncFromBox2D()
 	}
 }
 
+AABB2 RigidBodyObject::CalculateRotatedCellCoverage() const
+{
+	//if (m_cells.empty()) 
+	//{
+	//	return AABB2(m_position, m_position);
+	//}
+
+	//float minX = FLT_MAX;
+	//float minY = FLT_MAX;
+	//float maxX = -FLT_MAX;
+	//float maxY = -FLT_MAX;
+
+	//for (const auto& pair : m_cellToLocal) 
+	//{
+	//	Vec2 localPos = pair.second;
+	//	Vec2 worldPos = LocalToWorld(localPos);
+
+	//	minX = std::min(minX, worldPos.x);
+	//	minY = std::min(minY, worldPos.y);
+	//	maxX = std::max(maxX, worldPos.x);
+	//	maxY = std::max(maxY, worldPos.y);
+	//}
+
+	//// 向外扩展半个cell,确保覆盖边界情况
+	//return AABB2(
+	//	Vec2(minX - 0.5f, minY - 0.5f),
+	//	Vec2(maxX + 0.5f, maxY + 0.5f)
+	//);
+
+	if (m_cellBlueprint.empty())
+	{
+		return AABB2(m_position, m_position);
+	}
+
+	float minX = FLT_MAX;
+	float minY = FLT_MAX;
+	float maxX = -FLT_MAX;
+	float maxY = -FLT_MAX;
+
+	// ⭐ 遍历蓝图，计算每个cell在当前旋转下的世界位置
+	for (const auto& pair : m_cellBlueprint)
+	{
+		IntVec2 localKey = pair.first;
+
+		// 将localKey转换回浮点local坐标（中心位置）
+		Vec2 localPos((float)localKey.x + 0.5f, (float)localKey.y + 0.5f);
+
+		// 转换到世界坐标
+		Vec2 worldPos = LocalToWorld(localPos);
+
+		minX = std::min(minX, worldPos.x);
+		minY = std::min(minY, worldPos.y);
+		maxX = std::max(maxX, worldPos.x);
+		maxY = std::max(maxY, worldPos.y);
+	}
+
+	// 向外扩展半个cell，确保覆盖边界情况
+	return AABB2(
+		Vec2(minX - 0.5f, minY - 0.5f),
+		Vec2(maxX + 0.5f, maxY + 0.5f)
+	);
+}
+
 void RigidBodyObject::Render() const
 {
 	Mat44 modelMatrix = Mat44::MakeTranslation2D(m_position);  
@@ -265,7 +348,7 @@ void RigidBodyObject::AddCell(Cell* cell, IntVec2 worldCoords)
 	// 计算并存储局部坐标
 	Vec2 cellWorldPos = Vec2((float)worldCoords.x, (float)worldCoords.y);
 	Vec2 localPos = WorldToLocal(cellWorldPos);
-	m_cellToLocal[cell] = localPos;
+	//m_cellToLocal[cell] = localPos;
 
 	// 标记cell属于此刚体
 	cell->m_isBelongRb = true;
@@ -282,7 +365,7 @@ void RigidBodyObject::RemoveCell(Cell* cell)
 		m_cells.erase(it);
 	}
 
-	m_cellToLocal.erase(cell);
+	//m_cellToLocal.erase(cell);
 
 	cell->m_rigidBodyId = -1;
 	cell->m_isBelongRb = false;

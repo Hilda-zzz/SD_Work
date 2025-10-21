@@ -87,7 +87,7 @@ void SandboxMap::Update(float deltaTime)
 	// #TODO: notice the sequence of update()
 	for (auto& row : m_chunks) {
 		for (auto& chunk : row) {
-			if (chunk->IsDirty())
+			//if (chunk->IsDirty())
 				chunk->RebuildVertex();
 		}
 	}
