@@ -5,31 +5,32 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Game/SandboxUI.hpp"
 #include "Cell.hpp"
-class SandboxMap;
+#include "BasePlayer.hpp"
+class BaseMap;
 
-
-class SandboxPlayer {
+class SandboxPlayer : public BasePlayer
+{
 public:
 	SandboxPlayer(IntVec2 const& mapSize);
 
-	void Update(float deltaTime);
-	void RenderImgui(); // render the brush
+	void Update(float deltaTime) override;
+	void RenderImgui() override; // render the brush
 
-	void InitCamera(IntVec2 const& mapSize);
+	void InitCamera(IntVec2 const& mapSize) override;
 
-	void HandleInput();
+	void HandleInput() override;
 
-	Vec2 GetMouseWorldPosition() const;
+	Vec2 GetMouseWorldPosition() const override;
 	CellMatType GetSelectedMaterial() const { return m_selectedMaterial; }
 	int GetBrushSize() const { return m_brushSize; }
 
-	SandboxMap* GetCurMap() { return m_curMap; }
-	void SetCurMap(SandboxMap* curMap) { m_curMap = curMap; }
+	//BaseMap* GetCurMap() { return m_curMap; }
+	//void SetCurMap(BaseMap* curMap) { m_curMap = curMap; }
 	
-	bool IsPlacing() const;
-	bool IsErasing() const;
+	//bool IsPlacing() const;
+	//bool IsErasing() const;
 
-	Camera& GetCamera() { return m_camera; }
+	//Camera& GetCamera() { return m_camera; }
 
 
 	void SetSelectedMaterial(CellMatType material) {
@@ -50,12 +51,12 @@ private:
 	void HandleBrushControls();
 	
 public:
-	Camera m_camera;
+	//Camera m_camera;
 
 	std::vector<CellWithCoords> m_rigidBodyDrawnCells;
 
 private:
-	SandboxMap* m_curMap = nullptr;
+	//BaseMap* m_curMap = nullptr;
 	CellMatType m_selectedMaterial = CellMatType::MAT_SAND;
 	int m_brushSize = 1;
 	IntVec2 m_lastPlacedPos = IntVec2(-1, -1);
@@ -68,7 +69,5 @@ private:
 	int m_dragCurrentY = 0;
 
 	SandBoxUI m_sandBoxUI;
-
-	
 
 };

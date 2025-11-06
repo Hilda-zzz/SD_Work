@@ -8,9 +8,9 @@
 #include "Game/CellChunk.hpp"
 #include "ThirdParty/box2d/include/box2d/id.h"
 #include <ThirdParty/box2d/include/box2d/math_functions.h>
+#include "BaseMap.hpp"
 class SandboxPlayer;
 class RigidBodyManager;
-
 
 constexpr float GRAVITY = -9.8f * 16.f;
 constexpr float TERMINAL_SPEED = 200.0f; 
@@ -30,11 +30,6 @@ constexpr float GRAVITY_METERS = 9.8f;           // 标准重力加速度
 constexpr float TERMINAL_SPEED_METERS = 20.0f;  // 合理的落体终端速度
 constexpr float WATER_SPEED_METERS = 5.0f;      // 合理的液体流速
 
-// tip
-//constexpr float GRAVITY_METERS = 9.8f;           // 物理世界：9.8 m/s²
-//constexpr float GRAVITY = -9.8f * 16.f;          // 游戏世界：-156.8 格子/s²
-
-
 enum class UpdateOrder {
 	FIXED,       // 固定顺序 0→1→2→3
 	ROTATING,    // 轮换顺序
@@ -47,62 +42,50 @@ enum class CellColorMode {
 	FRAME_COUNT = 2       // Red->Green gradient by frame count, White=static solid
 };
 
-class SandboxMap {
+class SandboxMap : public BaseMap
+{
 public:
 	SandboxMap(SandboxPlayer* playerPtr,IntVec2 const& size=IntVec2(1920,1080));
-	~SandboxMap();
+	~SandboxMap() override;
 
-	void Update(float deltaTime);
-	void Render() const;
+	void Initialize() override;
+
+	void Update(float deltaTime) override;
+
+	void Render() const override;
 	void RenderImGuiStats() const;
 	void RenderCellInfo() const;
 	void RenderDebugDrawPanel();
-
-	void ChunkAddVerts(CellChunk* chunk, std::vector<Vertex_PCU>& outVerts) const;
-
-	Rgba8 GetCellDebugColor(const Cell& cell) const;
-
-	void Initialize();
-
-	void PlaceMaterial(int x, int y, CellMatType type, int brushSize = 1);
-	void ClearArea(int x, int y, int radius);
-
-	Cell& GetCell(int x, int y);
+	
+	// Help Funcs
+	Rgba8 GetCellDebugColor(const Cell& cell, IntVec2 const& worldCoords) const override;
 	bool IsValidPosition(int x, int y) const;
-
-	void SetUpdateOrder(UpdateOrder order) { m_updateOrder = order; }
-
 	SandboxPlayer* GetCurPlayer() { return m_player; }
+
 	//=======Chunk Base New ===============
-	Cell& GetCellInChunk(int worldX, int worldY);
+	Cell& GetCell(int worldX, int worldY) override;
+	Cell const& GetCell(int worldX, int worldY) const override;
+
 	bool IsInBounds_Chunk(int worldX, int worldY) const;
 	void PlaceMaterialInChunk(int worldX, int worldY, CellMatType type,bool isRb=false);
+
 	void UpdateChunksOfPhase(int phaseIndex);
 	void UpdateSingleChunk(CellChunk* chunk);
-	bool MSCanMoveToInChunk(int x, int y, float curDensity);
-	bool LiquidCanMoveToInChunk(int x, int y, float curDensity);
-	bool CanMoveHorizontallyInChunk(int x, int y, const Cell& cell);
-	bool HasSupportInChunk(int x, int y);
+
+	// should be moved from here 
+	bool MSCanMoveTo(int x, int y, float curDensity) const override;
+	bool LiquidCanMoveTo(int x, int y, float curDensity) const override;
+	bool CanMoveHorizontally(int x, int y, const Cell& cell) const override;
+	bool HasSupport(int x, int y) const override;
 	//=====================================
 
-	void UpdateStatistics();
-	void UpdateMouseGridPosition();
-
-	//=============== useful in refractor code ===========================
 	float GetDeltaTime();
 	bool IsInBounds(int x, int y) const;
-	void UpdateAccumulatedMovement(int oldX, int oldY, int newX, int newY); 
-	void UpdateAccumulatedMovementLiquid(int oldX, int oldY, int newX, int newY);
-
-	bool CanMoveTo(int x, int y);
-	bool CanMoveToEmpty(int x, int y);
-	bool LiquidCanMoveTo(int x, int y,float curDensity);
-	bool MSCanMoveTo(int x, int y, float curDensity);
-	void GetMovementDirections(const Cell& cell, int x, int y, int& primaryDir, int& secondaryDir);
-	bool CanMoveHorizontally(int x, int y, const Cell& cell);
 
 	// Chunk 访问
-	CellChunk* GetChunk(int chunkX, int chunkY);
+	CellChunk* GetChunk(int chunkX, int chunkY) override;
+	CellChunk const* GetChunk(int chunkX, int chunkY) const override;
+
 	CellChunk* GetChunkByWorldPos(int worldX, int worldY);
 	bool IsChunkIndexValid(int chunkX, int chunkY) const;
 
@@ -110,6 +93,27 @@ public:
 	b2WorldId GetPhysicsWorldId() { return m_b2WorldId; }
 	RigidBodyManager* GetRigidBodyManager() { return m_rigidBodyManager; }
 
+private:
+
+	void UpdateCellsPhysInChunk();
+	const char* GetMaterialTypeName(CellMatType type) const;
+
+	void UpdateStatistics();
+	void UpdateMouseGridPosition();
+
+	// ================= Chemical Reaction =========================
+	void UpdateCellsChemicalInChunk();
+	void UpdateSingleChunkChemical(CellChunk* chunk);
+
+	// =============== Box 2d ======================================
+	void CreateBox2dWorld();
+
+	// ==============================RB TEST========================================
+	void CreateTestGround();
+	void SpawnTestBox(Vec2 const& position);
+	void RenderPhysicsDebug() const;
+	
+	// Coords trasitions
 	b2Vec2 CellToPhysics(Vec2 const& cellPos) const {
 		return b2Vec2{ cellPos.x * METERS_PER_CELL, cellPos.y * METERS_PER_CELL };
 	}
@@ -130,24 +134,6 @@ public:
 		return Vec2{ physicsVel.x * CELLS_PER_METER, physicsVel.y * CELLS_PER_METER };
 	}
 
-	// ==============================RB TEST========================================
-	void CreateTestGround();
-	void SpawnTestBox(Vec2 const& position);
-	void RenderPhysicsDebug() const;
-
-
-private:
-	void UpdatePhysics();
-	void UpdateCellsInChunk();
-	void ResetUpdateFlags();
-	bool HasSupport(int x, int y);
-	const char* GetMaterialTypeName(CellMatType type) const;
-
-	void CreateBox2dWorld();
-
-	UpdateOrder m_updateOrder = UpdateOrder::ROTATING;
-
-
 public:
 	struct DebugVisualizationSettings {
 		// Grid options
@@ -166,17 +152,14 @@ public:
 	} m_debugSettings;
 
 private:
-	float m_deltaTime = 0.f;
-
-	// === OLD - 准备删除 ===
-	std::vector<std::vector<Cell>> m_grid;
+	//float m_deltaTime = 0.f;
 
 	// === NEW - Chunk 管理 ===
-	std::vector<std::vector<CellChunk*>> m_chunks;  // [chunkY][chunkX]
-	IntVec2 m_chunkGridSize;                        // chunk网格的行列数 (例如 8x4 表示8列4行)
+	//std::vector<std::vector<CellChunk*>> m_chunks;  // [chunkY][chunkX]
+	//IntVec2 m_chunkGridSize;                        // chunk网格的行列数 (例如 8x4 表示8列4行)
 
-	IntVec2 m_mapSize;
-	AABB2 m_mapBound;
+	//IntVec2 m_mapSize;
+	//AABB2 m_mapBound;
 
 	SandboxPlayer* m_player;
 	int m_mouseGridX = 0;
@@ -197,7 +180,7 @@ private:
 	mutable int m_cachedStoneCells = 0;
 	//------------------------------------------------------------------
 
-
+	UpdateOrder m_updateOrder = UpdateOrder::ROTATING;
 
 	//-----------------Box 2d ----------------------------------------
 	b2WorldId m_b2WorldId;
@@ -212,51 +195,5 @@ private:
 
 };
 
-template<typename PointCallback>
-inline void BresenhamLineExcludeStart(int x0, int y0, int x1, int y1, PointCallback&& callback)
-{
-	int dx = abs(x1 - x0);
-	int dy = abs(y1 - y0);
 
-	// 如果起点和终点相同，没有其他点要处理
-	if (dx == 0 && dy == 0) {
-		return;
-	}
-
-	int sx = (x0 < x1) ? 1 : -1;
-	int sy = (y0 < y1) ? 1 : -1;
-	int err = dx - dy;
-
-	int x = x0, y = y0;
-
-	// 跳过起点，直接执行第一步
-	int e2 = err << 1;
-	if (e2 > -dy) {
-		err -= dy;
-		x += sx;
-	}
-	if (e2 < dx) {
-		err += dx;
-		y += sy;
-	}
-
-	// 现在开始处理剩余点（包括终点）
-	while (true) {
-		if (!callback(x, y)) {
-			break;
-		}
-
-		if (x == x1 && y == y1) break;
-
-		e2 = err << 1;
-		if (e2 > -dy) {
-			err -= dy;
-			x += sx;
-		}
-		if (e2 < dx) {
-			err += dx;
-			y += sy;
-		}
-	}
-}
 

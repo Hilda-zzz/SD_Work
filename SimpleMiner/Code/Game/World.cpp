@@ -14,6 +14,8 @@
 #include "LoadChunkJob.hpp"
 #include "Engine/JobSystem/JobSystem.hpp"
 #include "SaveChunkJob.hpp"
+#include "TerrainGenerator.hpp"
+#include "TerrainConfig.hpp"
 
 extern Game* g_theGame;
 extern JobSystem* g_theJobSystem;
@@ -22,18 +24,31 @@ World::World(Player* player):m_player(player)
 {
 	//InitializeChunks();
 	m_player->SetCurWorld(this);
+
+	//*****************************************************************************************************
+	//for (int i = -1; i < 1; i++)
+	//{
+	//	for (int j = -1; j < 1; j++)
+	//	{
+	//		Chunk* newChunk = new Chunk(IntVec2(i, j));
+	//		m_chunkUpdateList.push_back(newChunk);
+	//		TerrainGenerator::GenerateBlocksForChunk_New(newChunk);
+	//		newChunk->RebuildMeshWithCulling();
+	//		newChunk->m_needsSaving = false;
+	//	}
+	//}
+	//Chunk * newChunk = new Chunk(IntVec2(0, 0));
+	//m_chunkUpdateList.push_back(newChunk);
+	//TerrainGenerator::GenerateBlocksForChunk_New(newChunk);
+	//newChunk->RebuildMeshWithCulling();
+	//newChunk->m_needsSaving = false;
 }
 
 World::~World()
 {
+	Shutdown();
+
 	m_player = nullptr;
-	for (Chunk* chunk : m_chunkUpdateList)
-	{
-		if (chunk && chunk->m_needsSaving)
-		{
-			chunk->SaveChunkToFile("Saves");
-		}
-	}
 
 	for (Chunk* chunk : m_chunkUpdateList)
 	{
@@ -42,12 +57,111 @@ World::~World()
 
 	m_chunkUpdateList.clear();
 	m_activeChunks.clear();
+
+	for (GenerateChunkJob* job : m_generateJobsQueued) delete job;
+	for (LoadChunkJob* job : m_loadJobsQueued) delete job;
+	for (SaveChunkJob* job : m_saveJobsQueued) delete job;
+
+	m_generateJobsQueued.clear();
+	m_loadJobsQueued.clear();
+	m_saveJobsQueued.clear();
+}
+
+void World::Shutdown()
+{
+	// ========== Step 1: 取消所有未提交的jobs ==========
+	CancelPendingJobs();
+
+	// ========== Step 2: 将所有active chunks加入保存队列 ==========
+	for (auto& pair : m_activeChunks)
+	{
+		Chunk* chunk = pair.second;
+		if (!chunk) continue;
+
+		// 跳过已经在保存的chunk
+		if (m_chunksSaving.find(chunk) != m_chunksSaving.end()) {
+			continue;
+		}
+
+		// 只保存需要保存的chunk
+		if (chunk->m_needsSaving)
+		{
+			std::string filename = Stringf("Chunk(%d,%d).chunk",
+				chunk->m_chunkCoords.x, chunk->m_chunkCoords.y);
+
+			SaveChunkJob* job = new SaveChunkJob(this, chunk, filename);
+			m_saveJobsQueued.push_back(job);
+		}
+	}
+
+	// ========== Step 3: 提交所有保存jobs（忽略并发限制） ==========
+	while (!m_saveJobsQueued.empty())
+	{
+		SaveChunkJob* job = m_saveJobsQueued.front();
+		m_saveJobsQueued.pop_front();
+
+		g_theJobSystem->QueueJob(job);
+		m_chunksSaving.insert(job->GetChunk());
+	}
+
+	// ========== Step 4: 等待所有保存jobs完成 ==========
+	int frameCount = 0;
+	const int MAX_WAIT_FRAMES = 300; // 5秒超时 (60fps)
+
+	while (!m_chunksSaving.empty())
+	{
+		// 处理完成的jobs
+		std::vector<Job*> completedJobs;
+		g_theJobSystem->RetrieveCompletedJobs(completedJobs);
+
+		for (Job* job : completedJobs)
+		{
+			if (SaveChunkJob* saveJob = dynamic_cast<SaveChunkJob*>(job))
+			{
+				Chunk* chunk = saveJob->GetChunk();
+				m_chunksSaving.erase(chunk);
+			}
+
+			delete job;
+		}
+
+		frameCount++;
+
+		// 短暂休眠以避免忙等待
+		if (!m_chunksSaving.empty()) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60fps
+		}
+	}
+
+	//// ========== Step 5: 检查是否超时 ==========
+	//if (!m_chunksSaving.empty())
+	//{
+	//	printf("WARNING: %zu chunks failed to save within timeout!\n",
+	//		m_chunksSaving.size());
+
+	//	// 超时后同步保存剩余的chunks
+	//	for (Chunk* chunk : m_chunksSaving)
+	//	{
+	//		if (chunk && chunk->m_needsSaving)
+	//		{
+	//			printf("Force-saving chunk (%d,%d)...\n",
+	//				chunk->m_chunkCoords.x, chunk->m_chunkCoords.y);
+
+	//			std::string filename = Stringf("Saves/Chunk(%d,%d).chunk",
+	//				chunk->m_chunkCoords.x, chunk->m_chunkCoords.y);
+	//			ChunkFileIO::SaveChunk("Saves/", filename, chunk);
+	//		}
+	//	}
+	//}
+
+	//printf("=== World Shutdown Complete: All chunks saved ===\n");
 }
 
 void World::Update(float deltaTime)
 {
 	m_player->Update(deltaTime);
 
+	//*****************************************************************************************************
 	// ========== debug draw basis ==========
 	Vec3 basisPos = m_player->m_position + m_player->m_orientation.GetForward_IFwd() * 50.f;
 	Mat44 basisTransform = Mat44::MakeTranslation3D(basisPos);
@@ -76,7 +190,14 @@ void World::Update(float deltaTime)
 	for (Chunk* chunk : m_chunkUpdateList)
 	{
 		chunk->Update();
+		if (chunk->m_chunkCoords.x == 0 && chunk->m_chunkCoords.y == 0)
+		{
+			int a = 0;
+		}
 	}
+
+
+	//*****************************************************************************************************
 
 	//---------------------------------------------------------------------------------
 	// rebuild nearest dirty mesh chunk
@@ -111,6 +232,18 @@ void World::Render() const
 	{
 		chunk->Render();
 	}
+
+	// === Render Noise Debug Visualization ===
+	TerrainConfig& config = TerrainConfig::GetInstance();
+	if (config.m_debug.m_showNoiseDebug &&
+		config.m_debug.m_activeDebugMode != NoiseDebugMode::NONE)
+	{
+		for (Chunk* chunk : m_chunkUpdateList)
+		{
+			chunk->RenderNoiseDebug();
+		}
+	}
+
 	if (m_isDebugDraw)
 	{
 		int totalChunkCount = (int)m_chunkUpdateList.size();
@@ -707,6 +840,24 @@ void World::RebuildChunkMeshes()
 	}
 }
 
+void World::CancelPendingJobs()
+{
+	for (GenerateChunkJob* job : m_generateJobsQueued)
+	{
+		delete job;
+	}
+	m_generateJobsQueued.clear();
+	m_chunksGenerating.clear();
+
+	for (LoadChunkJob* job : m_loadJobsQueued)
+	{
+		delete job;
+	}
+	m_loadJobsQueued.clear();
+	m_chunksLoading.clear();
+
+}
+
 //void World::InitializeChunks()
 //{
 //
@@ -895,6 +1046,7 @@ void World::GetJobCounts(int& generateJobsQueued, int& generateJobsInFlight, int
 
 void World::DigBlock(Vec3 const& playerPos)
 {
+	if (playerPos.z >= 127.999f) return;
 	IntVec2 chunkCoords = Chunk::GetChunkCoords(playerPos);
 	auto it = m_activeChunks.find(chunkCoords);
 	Chunk* curChunk = nullptr;
@@ -922,6 +1074,7 @@ void World::DigBlock(Vec3 const& playerPos)
 
 void World::PlaceBlock(std::string const& typeName, Vec3 const& playerPos)
 {
+	if (playerPos.z >= 127.999f) return;
 	IntVec2 chunkCoords = Chunk::GetChunkCoords(playerPos);
 	auto it = m_activeChunks.find(chunkCoords);
 	Chunk* curChunk = nullptr;

@@ -10,3 +10,4 @@ namespace ChunkFileIO
 	bool SaveChunk(std::string const& saveFolder, std::string const& filename, Chunk const* chunk);
 
 }
+

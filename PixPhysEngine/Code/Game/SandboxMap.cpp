@@ -19,14 +19,17 @@
 #include <Engine/Input/InputSystem.hpp>
 #include "ThirdParty/box2d/include/box2d/id.h"
 #include "Engine/Math/OBB2.hpp"
+#include "Game.hpp"
+#include "Engine/Math/IntRange.hpp"
 extern Renderer* g_theRenderer;
 extern Window* g_theWindow;
 extern JobSystem* g_theJobSystem;
 extern InputSystem* g_theInput;
 
-SandboxMap::SandboxMap(SandboxPlayer* playerPtr, IntVec2 const& size)
-	:m_player(playerPtr), m_mapSize(size), m_mapBound(AABB2(0.f,0.f,(float)size.x,(float)size.y))
+SandboxMap::SandboxMap(SandboxPlayer* playerPtr, IntVec2 const& size) : BaseMap(size, 64)
 {
+	m_player = playerPtr;
+	m_mapBounds = AABB2(0.f, 0.f, (float)size.x, (float)size.y);
 	// === NEW: 计算需要多少个chunk ===
 	m_chunkGridSize.x = (m_mapSize.x + CHUNK_SIZE - 1) / CHUNK_SIZE;  // 向上取整
 	m_chunkGridSize.y = (m_mapSize.y + CHUNK_SIZE - 1) / CHUNK_SIZE;
@@ -41,7 +44,7 @@ SandboxMap::SandboxMap(SandboxPlayer* playerPtr, IntVec2 const& size)
 	}
 
 	// === OLD: 保留用于对比测试 ===
-	 m_grid = std::vector(size.y, std::vector(size.x, Cell()));
+	// m_grid = std::vector(size.y, std::vector(size.x, Cell()));
 
 	m_player->SetCurMap(this);
 	Initialize();
@@ -85,16 +88,20 @@ void SandboxMap::Update(float deltaTime)
 	//UpdatePhysics();
 
 	// #TODO: notice the sequence of update()
+	// 暂时对于点，全部重新添加
 	for (auto& row : m_chunks) {
 		for (auto& chunk : row) {
-			//if (chunk->IsDirty())
+			if (chunk->IsDirty())
 				chunk->RebuildVertex();
 		}
 	}
 
-	UpdateCellsInChunk();
+	UpdateCellsPhysInChunk();
 
+	// Used by debug panel
 	UpdateStatistics();
+
+	UpdateCellsChemicalInChunk();
 
 	m_player->RenderImgui();
 	RenderDebugDrawPanel();
@@ -430,27 +437,8 @@ void SandboxMap::RenderDebugDrawPanel()
 	}
 }
 
-void SandboxMap::ChunkAddVerts(CellChunk* chunk, std::vector<Vertex_PCU>& outVerts) const
-{
-	for (int localY = 0; localY < CHUNK_SIZE; ++localY) {
-		for (int localX = 0; localX < CHUNK_SIZE; ++localX) {
-			const Cell& cell = chunk->GetLocalCell(localX, localY);
-			if (cell.m_type != CellMatType::MAT_EMPTY) {
-				IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
 
-				// Get color based on debug mode
-				Rgba8 cellColor = GetCellDebugColor(cell);
-
-				AddVertsForAABB2D(outVerts,
-					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
-						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
-					cellColor);
-			}
-		}
-	}
-}
-
-Rgba8 SandboxMap::GetCellDebugColor(const Cell& cell) const
+Rgba8 SandboxMap::GetCellDebugColor(const Cell& cell, IntVec2 const& worldCoords) const
 {
 	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
 
@@ -493,47 +481,9 @@ Rgba8 SandboxMap::GetCellDebugColor(const Cell& cell) const
 
 void SandboxMap::Initialize()
 {
-	AddVertsForAABBWire2D(m_boundVerts, m_mapBound, Rgba8::WHITE, m_mapSize.x / 100.f, true);
+	AddVertsForAABBWire2D(m_boundVerts, m_mapBounds, Rgba8::WHITE, m_mapSize.x / 100.f, true);
 }
 
-void SandboxMap::PlaceMaterial(int x, int y, CellMatType type, int brushSize)
-{
-	UNUSED(brushSize);
-
-	
-
-	if (m_grid[y][x].m_type == CellMatType::MAT_EMPTY)
-	{
-		m_totalMaterialsSet++;
-
-		m_grid[y][x].m_type = type;
-		m_grid[y][x].m_color = CellMatManager::GetMaterialDef(type).m_color;
-		if (type == CellMatType::MAT_SAND)
-		{
-			m_sandSet++;
-		}
-		if (type == CellMatType::MAT_SALT)
-		{
-			m_sandSet++;
-		}
-		else if (type == CellMatType::MAT_WATER)
-		{
-			m_waterSet++;
-		}
-		else if (type == CellMatType::MAT_STONE)
-		{
-			m_grid[y][x].m_isFreeFalling = false;
-			m_stoneSet++;
-		}
-	}
-
-}
-
-Cell& SandboxMap::GetCell(int x, int y)
-{
-	return m_grid[y][x];
-	// TODO: insert return statement here
-}
 
 bool SandboxMap::IsValidPosition(int x, int y) const
 {
@@ -541,12 +491,23 @@ bool SandboxMap::IsValidPosition(int x, int y) const
 	return false;
 }
 
-Cell& SandboxMap::GetCellInChunk(int worldX, int worldY)
+Cell& SandboxMap::GetCell(int worldX, int worldY)
 {
 	IntVec2 chunkIndex = CellChunk::WorldToChunkIndex(worldX, worldY);
 	IntVec2 localCoord = CellChunk::WorldToLocal(worldX, worldY);
 
 	CellChunk* chunk = GetChunk(chunkIndex.x, chunkIndex.y);
+	GUARANTEE_OR_DIE(chunk != nullptr, "Invalid world position");
+
+	return chunk->GetLocalCell(localCoord.x, localCoord.y);
+}
+
+Cell const& SandboxMap::GetCell(int worldX, int worldY) const
+{
+	IntVec2 chunkIndex = CellChunk::WorldToChunkIndex(worldX, worldY);
+	IntVec2 localCoord = CellChunk::WorldToLocal(worldX, worldY);
+
+	CellChunk const* chunk = GetChunk(chunkIndex.x, chunkIndex.y);
 	GUARANTEE_OR_DIE(chunk != nullptr, "Invalid world position");
 
 	return chunk->GetLocalCell(localCoord.x, localCoord.y);
@@ -561,16 +522,25 @@ bool SandboxMap::IsInBounds_Chunk(int worldX, int worldY) const
 void SandboxMap::PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, bool isRb)
 {
 	if (!IsInBounds_Chunk(worldX, worldY)) return;
-	Cell& cell = GetCellInChunk(worldX, worldY);
+	Cell& cell = GetCell(worldX, worldY);
 
 	GetChunkByWorldPos(worldX, worldY)->MarkDirty();
 
 	if (cell.m_type == CellMatType::MAT_EMPTY)
 	{
+		CellMatDef const& curDef = CellMatManager::GetMaterialDef(type);
+		if (type == CellMatType::MAT_DYSOLID_FIRE)
+		{
+			int a = 0;
+		}
 		m_totalMaterialsSet++;
 		cell.m_isBelongRb = isRb;
 		cell.m_type = type;
-		cell.m_color = CellMatManager::GetMaterialDef(type).m_color;
+		cell.m_color = curDef.m_color;
+		cell.m_lifeCountDown = curDef.m_lifeCountDown.GetRandomInRange(&Game::s_rng);
+		cell.m_flameCountDown = curDef.m_flameCountDown.GetRandomInRange(&Game::s_rng);
+		cell.m_dissolveCountDown = curDef.m_dissolveCountDowm.GetRandomInRange(&Game::s_rng);
+		cell.m_corrosionCountDown = curDef.m_corrosionCountDown.GetRandomInRange(&Game::s_rng);
 		if (type == CellMatType::MAT_SAND)
 		{
 			m_sandSet++;
@@ -657,7 +627,7 @@ void SandboxMap::UpdateSingleChunk(CellChunk* chunk)
 			for (int localX = 0; localX < CHUNK_SIZE; localX++) {
 				Cell& cell = chunk->GetLocalCell(localX, localY);
 				if (cell.IsEmpty()) continue;
-				//if (cell.m_isBelongRb) continue;
+				if (cell.m_isBelongRb) continue;
 				IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
 				CellBehaviorSystemInChunk::UpdateCell(cell, worldPos.x, worldPos.y, this);
 			}
@@ -667,7 +637,7 @@ void SandboxMap::UpdateSingleChunk(CellChunk* chunk)
 			for (int localX = CHUNK_SIZE - 1; localX >= 0; localX--) {
 				Cell& cell = chunk->GetLocalCell(localX, localY);
 				if (cell.IsEmpty()) continue;
-				//if (cell.m_isBelongRb) continue;
+				if (cell.m_isBelongRb) continue;
 				IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
 				CellBehaviorSystemInChunk::UpdateCell(cell, worldPos.x, worldPos.y, this);
 			}
@@ -675,14 +645,14 @@ void SandboxMap::UpdateSingleChunk(CellChunk* chunk)
 	}
 }
 
-bool SandboxMap::MSCanMoveToInChunk(int x, int y, float curDensity)
+bool SandboxMap::MSCanMoveTo(int x, int y, float curDensity) const
 {
 	if (!IsInBounds(x, y)) {
 		return false;
 	}
 
 	// ✅ 使用 GetCellInChunk 而不是 m_grid
-	Cell& targetCell = GetCellInChunk(x, y);
+	Cell const& targetCell = GetCell(x, y);
 
 	// 获取目标cell的密度和物理类型
 	const CellMatDef& targetMatDef = CellMatManager::GetMaterialDef(targetCell.m_type);
@@ -696,32 +666,32 @@ bool SandboxMap::MSCanMoveToInChunk(int x, int y, float curDensity)
 			targetMatDef.m_physicsType == PhyType::PHY_LIQUID);
 }
 
-bool SandboxMap::LiquidCanMoveToInChunk(int x, int y, float curDensity)
+bool SandboxMap::LiquidCanMoveTo(int x, int y, float curDensity) const
 {
 	if (!IsInBounds(x, y)) {
 		return false;
 	}
 
-	Cell& targetCell = GetCellInChunk(x, y);
+	Cell const& targetCell = GetCell(x, y);
 	float targetDensity = CellMatManager::GetMaterialDef(targetCell.m_type).m_density;
 	return curDensity > targetDensity;
 }
 
-bool SandboxMap::CanMoveHorizontallyInChunk(int x, int y, const Cell& cell)
+bool SandboxMap::CanMoveHorizontally(int x, int y, const Cell& cell) const
 {
 	// 需要有足够的速度 且 有支撑才能水平移动
 	return (std::abs(cell.m_velocityX) > 1.0f || std::abs(cell.m_velocityY) > 80.0f) &&
-		HasSupportInChunk(x, y);
+		HasSupport(x, y);
 }
 
-bool SandboxMap::HasSupportInChunk(int x, int y)
+bool SandboxMap::HasSupport(int x, int y) const
 {
 	if (y == 0) {
 		return true;
 	}
 
 	// ✅ 使用 GetCellInChunk 检查下方是否有非空格子
-	return !GetCellInChunk(x, y - 1).IsEmpty();
+	return !GetCell(x, y - 1).IsEmpty();
 }
 
 void SandboxMap::UpdateStatistics()
@@ -949,28 +919,7 @@ void SandboxMap::RenderPhysicsDebug() const
 	}
 }
 
-void SandboxMap::UpdatePhysics()
-{
-	//=====OLD VERSION=======
-	ResetUpdateFlags();
-
-	// bot to top, left to right
-	for (int y = 0; y < m_mapSize.y; y++)
-	{
-		for (int x = 0; x < m_mapSize.x; x++)
-		{
-			if (!m_grid[y][x].m_updatedThisFrame && m_grid[y][x].m_type != CellMatType::MAT_EMPTY)
-			{
-				//UpdateCell(x, y);
-				CellBehaviorSystem::UpdateCell(m_grid[y][x], x, y, this);
-			}
-		}
-	}
-
-
-}
-
-void SandboxMap::UpdateCellsInChunk()
+void SandboxMap::UpdateCellsPhysInChunk()
 {
 	//============NEW VERSION============
 	for (auto& row : m_chunks) {
@@ -978,12 +927,6 @@ void SandboxMap::UpdateCellsInChunk()
 			chunk->ResetUpdateFlags();
 		}
 	}
-
-	//for (auto& row : m_chunks) {
-	//	for (auto& chunk : row) {
-	//		UpdateSingleChunk(chunk);
-	//	}
-	//}
 
 	int phases[4] = { 0, 1, 2, 3 };
 
@@ -1019,16 +962,6 @@ void SandboxMap::UpdateCellsInChunk()
 	}
 }
 
-void SandboxMap::ResetUpdateFlags()
-{
-	for (int y = 0; y < m_mapSize.y; y++)
-	{
-		for (int x = 0; x < m_mapSize.x; x++)
-		{
-			m_grid[y][x].m_updatedThisFrame = false;
-		}
-	}
-}
 
 bool SandboxMap::IsInBounds(int x, int y) const
 {
@@ -1037,187 +970,6 @@ bool SandboxMap::IsInBounds(int x, int y) const
 		return true;
 	}
 	return false;
-}
-
-
-bool SandboxMap::CanMoveTo(int x, int y)
-{
-	if (!IsInBounds(x, y)) {
-		return false;
-	}
-
-	Cell& targetCell = m_grid[y][x];
-	return targetCell.IsEmpty() || targetCell.m_type == CellMatType::MAT_WATER;
-}
-
-bool SandboxMap::CanMoveToEmpty(int x, int y)
-{
-	if (!IsInBounds(x, y)) {
-		return false;
-	}
-
-	Cell& targetCell = m_grid[y][x];
-	return targetCell.IsEmpty();
-}
-
-bool SandboxMap::LiquidCanMoveTo(int x, int y, float curDensity)
-{
-	if (!IsInBounds(x, y)) {
-		return false;
-	}
-
-	Cell& targetCell = m_grid[y][x];
-	float targetDensity=CellMatManager::GetMaterialDef(targetCell.m_type).m_density;
-	return curDensity > targetDensity;
-}
-
-bool SandboxMap::MSCanMoveTo(int x, int y, float curDensity)
-{
-	if (!IsInBounds(x, y)) {
-		return false;
-	}
-
-	Cell& targetCell = m_grid[y][x];
-	float targetDensity = CellMatManager::GetMaterialDef(targetCell.m_type).m_density;
-	return targetCell.IsEmpty()|| ((curDensity > targetDensity)&& CellMatManager::GetMaterialDef(targetCell.m_type).m_physicsType==PhyType::PHY_LIQUID);
-}
-
-
-bool SandboxMap::CanMoveHorizontally(int x, int y, const Cell& cell)
-{
-	return (std::abs(cell.m_velocityX) > 1.0f || std::abs(cell.m_velocityY) > 80.0f) &&
-		HasSupport(x, y); // 需要有支撑才能水平移动
-}
-
-bool SandboxMap::HasSupport(int x, int y)
-{
-	// 在底边界就算有支撑
-	if (y == 0) {
-		return true;
-	}
-
-	// 检查下方是否有非空格子
-	return !m_grid[y - 1][x].IsEmpty();
-}
-
-void SandboxMap::UpdateAccumulatedMovement(int oldX, int oldY, int newX, int newY)
-{
-	Cell& finalCell = m_grid[newY][newX];
-
-	int actualMoveX = newX - oldX;
-	int actualMoveY = newY - oldY;
-
-  	if (actualMoveX == 0 && actualMoveY == 0) {
-  		finalCell.m_framesWithoutMovement++;
-   		if (finalCell.m_framesWithoutMovement >= 80) {
-   			finalCell.m_isFreeFalling = false;
-   			finalCell.m_velocityY = 0.0f;
-   			finalCell.m_velocityX = 0.0f;
-   			finalCell.m_accumulMoveY = 0.0f;
-   			finalCell.m_accumulMoveX = 0.0f;
-   		}
-  		return;
-  	}
-
-	float originalAccumX = finalCell.m_accumulMoveX;
-	float originalAccumY = finalCell.m_accumulMoveY;
-
-	finalCell.m_accumulMoveX -= static_cast<float>(actualMoveX);
-	finalCell.m_accumulMoveY -= static_cast<float>(actualMoveY);
-
-	// 符号保护
-  	if ((originalAccumX >= 0 && finalCell.m_accumulMoveX < 0) ||
-  		(originalAccumX <= 0 && finalCell.m_accumulMoveX > 0)) {
-  		finalCell.m_accumulMoveX = 0.0f;
-  	}
- 
- 	if ((originalAccumY >= 0 && finalCell.m_accumulMoveY < 0) ||
- 		(originalAccumY <= 0 && finalCell.m_accumulMoveY > 0)) {
- 		finalCell.m_accumulMoveY = 0.0f;
- 	}
- 
- 	if (std::abs(finalCell.m_accumulMoveX) < 0.1f) finalCell.m_accumulMoveX = 0.0f;
- 	if (std::abs(finalCell.m_accumulMoveY) < 0.1f) finalCell.m_accumulMoveY = 0.0f;
-}
-
-void SandboxMap::UpdateAccumulatedMovementLiquid(int oldX, int oldY, int newX, int newY)
-{
-	Cell& finalCell = m_grid[newY][newX];
-
-	int actualMoveX = newX - oldX;
-	int actualMoveY = newY - oldY;
-
-	if (actualMoveX == 0 && actualMoveY == 0) {
-		// 检查周围8个格子是否都不为空
-		bool allNeighborsNonEmpty = true;
-
-		// 定义8个方向的偏移量
-		int offsets[8][2] = {
-			{-1, -1}, {0, -1}, {1, -1},  // 上方三个
-			{-1,  0},          {1,  0},  // 左右两个  
-			{-1,  1}, {0,  1}, {1,  1}   // 下方三个
-		};
-
-		for (int i = 0; i < 8; ++i) {
-			int neighborX = oldX + offsets[i][0];
-			int neighborY = oldY + offsets[i][1];
-
-			if (IsInBounds(neighborX, neighborY)) 
-			{
-				Cell const& neighborCell = GetCell(neighborX, neighborY);
-				const CellMatDef& neighborMatDef = CellMatManager::GetMaterialDef(neighborCell.m_type);
-				const CellMatDef& curMatDef = CellMatManager::GetMaterialDef(finalCell.m_type);
-
-				if (GetCell(neighborX, neighborY).IsEmpty()||neighborMatDef.m_density < curMatDef.m_density) 
-				{
-					allNeighborsNonEmpty = false;
-					break; // 找到一个空格子就足够了
-				}
-			}
-			else {
-				// 边界外视为空，所以不是所有邻居都非空
-				allNeighborsNonEmpty = false;
-				break;
-			}
-		}
-
-		// 只有在周围都不为空的情况下才增加无移动帧数
-		if (allNeighborsNonEmpty) {
-			finalCell.m_framesWithoutMovement++;
-			if (finalCell.m_framesWithoutMovement >= 200) {
-				finalCell.m_isFreeFalling = false;
-				finalCell.m_velocityY = 0.0f;
-				finalCell.m_velocityX = 0.0f;
-				finalCell.m_accumulMoveY = 0.0f;
-				finalCell.m_accumulMoveX = 0.0f;
-				finalCell.m_framesWithoutMovement = 200;
-			}
-		}
-		else {
-			// 如果周围有空格子，重置无移动帧数，保持流动状态
-			finalCell.m_framesWithoutMovement = 0;
-		}
-	}
-
-	float originalAccumX = finalCell.m_accumulMoveX;
-	float originalAccumY = finalCell.m_accumulMoveY;
-
-	finalCell.m_accumulMoveX -= static_cast<float>(actualMoveX);
-	finalCell.m_accumulMoveY -= static_cast<float>(actualMoveY);
-
-	// 符号保护
-	if ((originalAccumX >= 0 && finalCell.m_accumulMoveX < 0) ||
-		(originalAccumX <= 0 && finalCell.m_accumulMoveX > 0)) {
-		finalCell.m_accumulMoveX = 0.0f;
-	}
-
-	if ((originalAccumY >= 0 && finalCell.m_accumulMoveY < 0) ||
-		(originalAccumY <= 0 && finalCell.m_accumulMoveY > 0)) {
-		finalCell.m_accumulMoveY = 0.0f;
-	}
-
-	if (std::abs(finalCell.m_accumulMoveX) < 0.1f) finalCell.m_accumulMoveX = 0.0f;
-	if (std::abs(finalCell.m_accumulMoveY) < 0.1f) finalCell.m_accumulMoveY = 0.0f;
 }
 
 const char* SandboxMap::GetMaterialTypeName(CellMatType type) const
@@ -1229,6 +981,126 @@ const char* SandboxMap::GetMaterialTypeName(CellMatType type) const
 	case CellMatType::MAT_WATER: return "Water";
 	case CellMatType::MAT_STONE: return "Stone";
 	default: return "Unknown";
+	}
+}
+
+void SandboxMap::UpdateCellsChemicalInChunk()
+{
+	for (auto& row : m_chunks) {
+		for (auto& chunk : row) {
+			UpdateSingleChunkChemical(chunk);
+		}
+	}
+}
+
+void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
+{
+	for (int localY = 0; localY < CHUNK_SIZE; ++localY)
+	{
+		for (int localX = 0; localX < CHUNK_SIZE; localX++) 
+		{
+			Cell& cell = chunk->GetLocalCell(localX, localY);
+			if (cell.IsEmpty()) continue;
+
+			IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
+			CellMatDef curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+
+			// High Temperature
+			if (curCellDef.m_isHighTemp) 
+				chunk->MarkDirty();
+
+			// Life Countdown
+			if (cell.m_lifeCountDown == 0)
+			{
+				cell.SetToType(curCellDef.m_lifeEndMatType);
+				curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+			}
+			else if (cell.m_lifeCountDown > 0)
+			{
+				cell.m_lifeCountDown--;
+			}
+			
+
+			// Flammable
+			IntVec2 directions[8] = { IntVec2(1,0),IntVec2(-1,0),IntVec2(0,1),IntVec2(0,-1),
+			IntVec2(1,1),IntVec2(-1,1),IntVec2(1,1),IntVec2(-1,-1) };
+			if (curCellDef.m_isFlammable)
+			{
+				if (cell.m_flameCountDown <= 0)
+				{
+					cell.SetToType(curCellDef.m_flammableType);
+					chunk->MarkDirty();
+					curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+				}
+				else
+				{
+					for (int i = 0; i < 8; i++)
+					{
+						IntVec2 neighborWorldPos = worldPos + directions[i];
+						if (IsInBounds(neighborWorldPos.x, neighborWorldPos.y))
+						{
+							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type);
+							if (neighborCellDef.m_isHighTemp)
+							{
+								cell.m_flameCountDown--;
+							}
+						}
+					}
+				}
+			}
+			
+			// Dissolve
+			if (curCellDef.m_isDissolve)
+			{
+				if (cell.m_dissolveCountDown <= 0)
+				{
+					cell.SetToType(curCellDef.m_dissolveType);
+					chunk->MarkDirty();
+					curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+				}
+				else
+				{
+					for (int i = 0; i < 8; i++)
+					{
+						IntVec2 neighborWorldPos = worldPos + directions[i];
+						if (IsInBounds(neighborWorldPos.x, neighborWorldPos.y))
+						{
+							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type);
+							if (neighborCellDef.m_physicsType == PhyType::PHY_LIQUID)
+							{
+								cell.m_dissolveCountDown--;
+							}
+						}
+					}
+				}
+			}
+
+			// Corrosion
+			if (curCellDef.m_isCorroded)
+			{
+				if (cell.m_corrosionCountDown <= 0)
+				{
+					cell.SetToType(curCellDef.m_corrodeType);
+					chunk->MarkDirty();
+					curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+				}
+				else
+				{
+					for (int i = 0; i < 8; i++)
+					{
+						IntVec2 neighborWorldPos = worldPos + directions[i];
+						if (IsInBounds(neighborWorldPos.x, neighborWorldPos.y))
+						{
+							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type);
+							if (neighborCellDef.m_isAcid)
+							{
+								cell.m_corrosionCountDown--;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -1260,6 +1132,14 @@ CellChunk* SandboxMap::GetChunk(int chunkX, int chunkY)
 	return m_chunks[chunkY][chunkX];
 }
 
+CellChunk const* SandboxMap::GetChunk(int chunkX, int chunkY) const
+{
+	if (!IsChunkIndexValid(chunkX, chunkY)) {
+		return nullptr;
+	}
+	return m_chunks[chunkY][chunkX];
+}
+
 CellChunk* SandboxMap::GetChunkByWorldPos(int worldX, int worldY)
 {
 	IntVec2 chunkIndex = CellChunk::WorldToChunkIndex(worldX, worldY);
@@ -1270,20 +1150,5 @@ bool SandboxMap::IsChunkIndexValid(int chunkX, int chunkY) const
 {
 	return chunkX >= 0 && chunkX < m_chunkGridSize.x &&
 		chunkY >= 0 && chunkY < m_chunkGridSize.y;
-}
-
-void SandboxMap::GetMovementDirections(const Cell& cell, int x, int y, int& primaryDir, int& secondaryDir)
-{
-	if (std::abs(cell.m_velocityX) > 0.2f) {
-		// 有明显水平速度，按速度方向优先
-		primaryDir = (cell.m_velocityX > 0) ? 1 : -1;
-		secondaryDir = -primaryDir;
-	}
-	else {
-		// 使用确定性伪随机选择
-		int deterministicChoice = (rand() % 2) == 0 ? 1 : -1;
-		primaryDir = deterministicChoice;
-		secondaryDir = -deterministicChoice;
-	}
 }
 

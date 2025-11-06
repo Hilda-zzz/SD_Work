@@ -1,4 +1,5 @@
 #include "IntRange.hpp"
+#include "RandomNumberGenerator.hpp"
 
 const  IntRange IntRange::ZERO=IntRange(0,0);
 const IntRange IntRange::ONE = IntRange(1, 1);
@@ -41,6 +42,11 @@ bool IntRange::IsOverlappipngWith(IntRange const& inputIntRange)
 		}
 		return false;
 	}
+}
+
+int IntRange::GetRandomInRange(RandomNumberGenerator* rng) const
+{
+	return rng->RollRandomIntInRange(m_min, m_max);
 }
 
 void IntRange::operator=(IntRange const& copyFrom)

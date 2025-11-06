@@ -1,12 +1,13 @@
-#include "ChunkFileIO.hpp"
+﻿#include "ChunkFileIO.hpp"
 #include <vector>
 #include <Engine/Core/FileUtils.hpp>
 #include "Chunk.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 
 bool ChunkFileIO::LoadChunk(std::string const& saveFolder, std::string const& filename, Chunk* chunk)
 {
 	std::vector<uint8_t> fileBuffer;
-	int bytesRead = FileReadToBuffer(fileBuffer, saveFolder+filename);
+	int bytesRead = FileReadToBuffer(fileBuffer, saveFolder + filename);
 
 	if (bytesRead == -1)
 	{
@@ -51,16 +52,16 @@ bool ChunkFileIO::LoadChunk(std::string const& saveFolder, std::string const& fi
 		return false;
 	}
 
-	if (header.m_chunkBitsX != 4 || header.m_chunkBitsY != 4 || header.m_chunkBitsZ != 7)
+	if (header.m_chunkBitsX != CHUNK_BITS_X || header.m_chunkBitsY != CHUNK_BITS_Y || header.m_chunkBitsZ != CHUNK_BITS_Z)
 	{
-		printf("Chunk dimensions mismatch in file %s (got %d,%d,%d, expected 4,4,7)\n",
-			filename.c_str(), header.m_chunkBitsX, header.m_chunkBitsY, header.m_chunkBitsZ);
+		printf("Chunk dimensions mismatch in file %s (got %d,%d,%d, expected %d,%d,%d)\n",
+			filename.c_str(), header.m_chunkBitsX, header.m_chunkBitsY, header.m_chunkBitsZ,
+			CHUNK_BITS_X, CHUNK_BITS_Y, CHUNK_BITS_Z);
 		return false;
 	}
 
 	// Decode RLE data
 	int blockIndex = 0;
-	//size_t totalRuns = (fileBuffer.size() - sizeof(ChunkFileHeader)) / sizeof(ChunkFileRun);
 
 	while (offset < fileBuffer.size() && blockIndex < BLOCKS_PER_CHUNK)
 	{
@@ -141,60 +142,57 @@ bool ChunkFileIO::SaveChunk(std::string const& saveFolder, std::string const& fi
 	byteBuffer.push_back(header.m_chunkBitsY);
 	byteBuffer.push_back(header.m_chunkBitsZ);
 
+	// Validate chunk block count
+	if (chunk->m_blocks.size() != BLOCKS_PER_CHUNK)
+	{
+		printf("Error: Chunk has wrong number of blocks (%zu, expected %d)\n",
+			chunk->m_blocks.size(), BLOCKS_PER_CHUNK);
+		return false;
+	}
+
+	// RLE encoding - Start with first block
 	ChunkFileRun currentRun;
 	currentRun.blockType = chunk->m_blocks[0].GetTypeIndex();
-	currentRun.runLength = 0;
+	currentRun.runLength = 1;
 
-	// Loop over each block in the chunk
-	for (int blockIndex = 0; blockIndex < BLOCKS_PER_CHUNK; blockIndex++)
+	// Loop over each block in the chunk (starting from second block)
+	for (int blockIndex = 1; blockIndex < BLOCKS_PER_CHUNK; blockIndex++)
 	{
 		uint8_t currentBlockType = chunk->m_blocks[blockIndex].GetTypeIndex();
 
-		// Check if run is complete
-		bool runComplete = false;
-
-		if (currentBlockType != currentRun.blockType)
+		// 检查是否需要完成当前 run
+		if (currentBlockType != currentRun.blockType || currentRun.runLength == 255)
 		{
-			// Current block type is not equal to the block type of the run
-			runComplete = true;
-		}
-		else if (blockIndex == BLOCKS_PER_CHUNK - 1)
-		{
-			// We are at the end of the chunk
-			currentRun.runLength++;  // Increment for the current block
-			runComplete = true;
-		}
-		else if (currentRun.runLength >= 255)
-		{
-			// The run length is at the max of 255
-			runComplete = true;
-		}
-		else
-		{
-			// Increment the length of the run
-			currentRun.runLength++;
-		}
-
-		// When the run is complete, push back its member variables into the byte buffer vector
-		if (runComplete)
-		{
+			// 完成当前 run
 			byteBuffer.push_back(currentRun.blockType);
 			byteBuffer.push_back(currentRun.runLength);
 
-			// Start a new run by setting the type to the current block type and zeroing out the length
-			if (blockIndex < BLOCKS_PER_CHUNK - 1)  // Don't start new run if we're at the end
-			{
-				currentRun.blockType = currentBlockType;
-				currentRun.runLength = 1;  // Start with 1 for the current block
-			}
+			// 开始新 run
+			currentRun.blockType = currentBlockType;
+			currentRun.runLength = 1;
+		}
+		else
+		{
+			// 继续当前 run
+			currentRun.runLength++;
 		}
 	}
 
-	// Generate filename: "Chunk(x,y).chunk"
-	//std::string filename = saveFolder + "/Chunk(" + std::to_string(chunk->m_chunkCoords.x) + "," + std::to_string(chunk->m_chunkCoords.y) + ").chunk";
+	// Write final run
+	byteBuffer.push_back(currentRun.blockType);
+	byteBuffer.push_back(currentRun.runLength);
 
-	// Call FileWriteFromBuffer with the byte buffer vector
-	return FileWriteFromBuffer(byteBuffer, saveFolder+filename);
+	// Write to file
+	bool success = FileWriteFromBuffer(byteBuffer, saveFolder + filename);
 
-	return 0;
+	if (success)
+	{
+		printf("Successfully saved chunk to file: %s\n", filename.c_str());
+	}
+	else
+	{
+		printf("Failed to save chunk to file: %s\n", filename.c_str());
+	}
+
+	return success;
 }

@@ -17,6 +17,9 @@
     <Filter Include="Jobs">
       <UniqueIdentifier>{04c40fde-e1ac-4394-b98e-5a98010958a3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="WangTileMapMode">
+      <UniqueIdentifier>{0bbbf371-aa67-4bc0-a90e-89bd72f77c74}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -46,9 +49,6 @@
     <ClCompile Include="CellChunk.cpp">
       <Filter>CellMaterial</Filter>
     </ClCompile>
-    <ClCompile Include="CellBehaviorSystem.cpp">
-      <Filter>CellMaterial</Filter>
-    </ClCompile>
     <ClCompile Include="CellBehaviorSystemInChunk.cpp">
       <Filter>CellMaterial</Filter>
     </ClCompile>
@@ -63,6 +63,18 @@
     </ClCompile>
     <ClCompile Include="ChunkUpdateJob.cpp">
       <Filter>Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="WangTileMap.cpp">
+      <Filter>WangTileMapMode</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseMap.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="CellBehaviorSystem.cpp">
+      <Filter>CellMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="BasePlayer.cpp">
+      <Filter>Framework</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -119,6 +131,15 @@
     </ClInclude>
     <ClInclude Include="ChunkUpdateJob.hpp">
       <Filter>Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="WangTileMap.hpp">
+      <Filter>WangTileMapMode</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseMap.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="BasePlayer.hpp">
+      <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

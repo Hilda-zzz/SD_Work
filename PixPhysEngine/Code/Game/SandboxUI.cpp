@@ -402,7 +402,8 @@ void SandBoxUI::RenderRigidBodyPanel(SandboxPlayer* player)
 			if (ImGui::Button("Confirm - Create Rigid Body", ImVec2(-1, 40))) {
 				if (canConfirm) 
 				{
-					player->GetCurMap()->GetRigidBodyManager()->CreateRigidBodies(player->GetRigidBodyDrawnCells(), b2_dynamicBody);
+					BaseMap* curMap = player->GetCurMap();
+					dynamic_cast<SandboxMap*>(curMap)->GetRigidBodyManager()->CreateRigidBodies(player->GetRigidBodyDrawnCells(), b2_dynamicBody);
 
 					m_rigidBodyDrawMode = false;
 					m_showMaterialSelector = true;

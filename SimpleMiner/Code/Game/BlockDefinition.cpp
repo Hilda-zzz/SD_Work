@@ -42,7 +42,7 @@ BlockDefinition::~BlockDefinition()
 
 void BlockDefinition::InitializeBlockDefinitionsFromFile()
 {
-	Texture* blockTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/BlockSpriteSheet_Dokucraft_32px.png");
+	Texture* blockTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/SpriteSheet_Dokucraft_High_32px.png",5);
 	s_blockSheet = new SpriteSheet(*blockTexture, IntVec2(8, 8));
 
 	XmlDocument blockDefsXml;

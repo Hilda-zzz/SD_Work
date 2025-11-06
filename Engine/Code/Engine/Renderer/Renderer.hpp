@@ -109,9 +109,9 @@ public:
 	
 	//-----------------------Texture2D/ Image------------------------------------------------------------
 	Image*		CreateImageFromFile(char const* imagePath);
-	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath);
+	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath, unsigned int mipLevels=1);
 	Texture*	GetTextureFromFileName(char const* imageFilePath);
-	Texture*	CreateTextureFromImage(const Image& image);
+	Texture*	CreateTextureFromImage(const Image& image, unsigned int mipLevels = 1);
 	void		BindTexture(Texture* texture, Texture* normalTexture=nullptr,Texture* sgeTexture=nullptr);
 	//void		BindTextureWithNormal(Texture* diffuseTexture,Texture* normalTexture);
 

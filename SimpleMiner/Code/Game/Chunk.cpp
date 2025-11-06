@@ -1,4 +1,4 @@
-#include "Chunk.hpp"
+﻿#include "Chunk.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "BlockDefinition.hpp"
 #include "Engine/Core/VertexUtils.hpp"
@@ -7,6 +7,7 @@
 #include "TerrainGenerator.hpp"
 #include "BlockIterator.hpp"
 #include "Engine/Core/FileUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 RandomNumberGenerator Chunk::s_rng;
 Texture* Chunk::s_blockAtlasTexture = nullptr;
@@ -131,33 +132,33 @@ void Chunk::SetBlockAtlasTexture(Texture* texture)
 //	m_isDirty = true;
 //}
 
-void Chunk::RebuildMesh()
-{
-	if (!m_isDirty) return;
-
-	m_vertsCount = 0;
-	m_indicesCount = 0;
-	m_vertices.clear();
-	m_indices.clear();
-	m_vertices.reserve(BLOCKS_PER_CHUNK * 24); 
-	m_indices.reserve(BLOCKS_PER_CHUNK * 36);
-
-	for (int i = 0; i < BLOCKS_PER_CHUNK; i++)
-	{
-		IntVec3 blockCoords = IndexToLocalCoords(i);
-		Block block = m_blocks[i];
-		if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
-			AddBlockVerts(blockCoords, block);
-		}
-	}
-
- 	g_theRenderer->CopyGameVertexBufferToGPU(m_vertices.data(), (int)m_vertices.size(),m_vertexBuffer);
-	g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
-
-	m_isDirty = false;
-	m_indicesCount = (int)m_indices.size();
-	m_vertsCount = (int)m_vertices.size();
-}
+//void Chunk::RebuildMesh()
+//{
+//	if (!m_isDirty) return;
+//
+//	m_vertsCount = 0;
+//	m_indicesCount = 0;
+//	m_vertices.clear();
+//	m_indices.clear();
+//	m_vertices.reserve(BLOCKS_PER_CHUNK * 24); 
+//	m_indices.reserve(BLOCKS_PER_CHUNK * 36);
+//
+//	for (int i = 0; i < BLOCKS_PER_CHUNK; i++)
+//	{
+//		IntVec3 blockCoords = IndexToLocalCoords(i);
+//		Block block = m_blocks[i];
+//		if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
+//			AddBlockVerts(blockCoords, block);
+//		}
+//	}
+//
+// 	g_theRenderer->CopyGameVertexBufferToGPU(m_vertices.data(), (int)m_vertices.size(),m_vertexBuffer);
+//	g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
+//
+//	m_isDirty = false;
+//	m_indicesCount = (int)m_indices.size();
+//	m_vertsCount = (int)m_vertices.size();
+//}
 
 void Chunk::RebuildMeshWithCulling()
 {
@@ -246,6 +247,261 @@ void Chunk::RenderDebug() const
 	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(m_debugVertexArray);
 }
+
+// Add to Chunk.cpp
+
+#include "TerrainConfig.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Core/Rgba8.hpp"
+#include "Engine/Core/VertexUtils.hpp"
+
+void Chunk::RenderNoiseDebug() const
+{
+	TerrainConfig& config = TerrainConfig::GetInstance();
+
+	// Only render if debug mode is active
+	if (!config.m_debug.m_showNoiseDebug ||
+		config.m_debug.m_activeDebugMode == NoiseDebugMode::NONE)
+	{
+		return;
+	}
+
+	// Get the top surface Z coordinate (chunk bound top)
+	float topZ = m_worldBounds.m_maxs.z;
+
+	std::vector<Vertex_PCU> debugVerts;
+	debugVerts.reserve(CHUNK_SIZE_X * CHUNK_SIZE_Y * 6); // 2 triangles per quad
+
+	// ========================================
+	// Determine data source and visualization parameters
+	// ========================================
+	const float* dataSource = nullptr;
+	float minValue = 0.0f;
+	float maxValue = 1.0f;
+	Rgba8 colorLow = Rgba8::BLACK;
+	Rgba8 colorHigh = Rgba8::WHITE;
+
+	switch (config.m_debug.m_activeDebugMode)
+	{
+		// ========================================
+		// Raw Noise Values
+		// ========================================
+	case NoiseDebugMode::CONTINENT_RAW:
+		dataSource = m_continentNoiseRaw;
+		minValue = -1.0f;
+		maxValue = 1.0f;
+		break;
+
+	case NoiseDebugMode::EROSION_RAW:
+		dataSource = m_erosionNoiseRaw;
+		minValue = -1.0f;
+		maxValue = 1.0f;
+		break;
+
+	case NoiseDebugMode::PEAKS_VALLEYS_RAW:
+		dataSource = m_pvNoiseRaw;
+		minValue = -1.0f;
+		maxValue = 1.0f;
+		break;
+
+	case NoiseDebugMode::TEMPERATURE_RAW:
+		dataSource = m_temperatureNoiseRaw;
+		minValue = -1.0f;
+		maxValue = 1.0f;
+		break;
+
+	case NoiseDebugMode::HUMIDITY_RAW:
+		dataSource = m_humidityNoiseRaw;
+		minValue = -1.0f;
+		maxValue = 1.0f;
+		break;
+
+		// ========================================
+		// Spline-Mapped Values
+		// ========================================
+	case NoiseDebugMode::CONTINENT_OFFSET_MAPPED:
+		dataSource = m_continentOffsetMapped;
+		minValue = -1.0f;
+		maxValue = 1.0f;
+		break;
+
+	case NoiseDebugMode::EROSION_OFFSET_MAPPED:
+		dataSource = m_erosionOffsetMapped;
+		minValue = -1.0f;
+		maxValue = 1.0f;
+		break;
+
+	case NoiseDebugMode::PV_OFFSET_MAPPED:
+		dataSource = m_pvOffsetMapped;
+		minValue = -1.0f;
+		maxValue = 1.0f;
+		break;
+
+	case NoiseDebugMode::CONTINENT_AMPLITUDE_MAPPED:
+		dataSource = m_continentAmplitudeMapped;
+		minValue = -1.f;
+		maxValue = 1.f;
+		break;
+
+	case NoiseDebugMode::EROSION_AMPLITUDE_MAPPED:
+		dataSource = m_erosionAmplitudeMapped;
+		minValue = -1.f;
+		maxValue = 1.f;
+		break;
+
+	// ========================================
+	// NEW: Biome Level Visualization
+	// ========================================
+	case NoiseDebugMode::CONTINENT_LEVEL:
+	{
+		// 不使用 dataSource，直接在循环中处理
+		dataSource = nullptr;
+		break;
+	}
+
+	case NoiseDebugMode::EROSION_LEVEL:
+	{
+		dataSource = nullptr;
+		break;
+	}
+
+	case NoiseDebugMode::PV_LEVEL:
+	{
+		dataSource = nullptr;
+		break;
+	}
+
+	case NoiseDebugMode::TEMPERATURE_LEVEL:
+	{
+		dataSource = nullptr;
+		break;
+	}
+
+	case NoiseDebugMode::HUMIDITY_LEVEL:
+	{
+		dataSource = nullptr;
+		break;
+	}
+
+	case NoiseDebugMode::BIOME_TYPE:
+	{
+		dataSource = nullptr;
+		break;
+	}
+
+	default:
+		return; // Unknown mode, don't render
+	}
+
+	for (int y = 0; y < CHUNK_SIZE_Y; ++y)
+	{
+		for (int x = 0; x < CHUNK_SIZE_X; ++x)
+		{
+			// 转换到扩展噪声坐标
+			int noiseExtX = x + MAX_TREE_RADIUS;
+			int noiseExtY = y + MAX_TREE_RADIUS;
+			int noiseIdx = NoiseExtendedCoordsToIndex(noiseExtX, noiseExtY);
+
+			Rgba8 color;
+
+			// ========================================
+			// Determine color for this (x, y) position
+			// ========================================
+			if (dataSource != nullptr)
+			{
+				// Use new color-coded visualization
+				float value = dataSource[noiseIdx];  // 使用扩展数组索引
+				// Normalize to [0, 1] range
+				float t = (value - minValue) / (maxValue - minValue);
+				t = GetClamped(t, 0.0f, 1.0f);
+				// Interpolate between low and high color
+				color = Interpolate(colorLow, colorHigh, t);
+			}
+			else
+			{
+				switch (config.m_debug.m_activeDebugMode)
+				{
+				case NoiseDebugMode::CONTINENT_LEVEL:
+				{
+					int level = static_cast<int>(m_continentLevel[noiseIdx]);
+					color = GetLevelColor(level, 7); // 7 levels
+					break;
+				}
+				case NoiseDebugMode::EROSION_LEVEL:
+				{
+					int level = static_cast<int>(m_erosionLevel[noiseIdx]);
+					color = GetLevelColor(level, 7); // 7 levels
+					break;
+				}
+				case NoiseDebugMode::PV_LEVEL:
+				{
+					int level = static_cast<int>(m_pvLevel[noiseIdx]);
+					color = GetLevelColor(level, 5); // 5 levels
+					break;
+				}
+				case NoiseDebugMode::TEMPERATURE_LEVEL:
+				{
+					int level = static_cast<int>(m_temperatureLevel[noiseIdx]);
+					color = GetLevelColor(level, 5); // 5 levels
+					break;
+				}
+				case NoiseDebugMode::HUMIDITY_LEVEL:
+				{
+					int level = static_cast<int>(m_humidityLevel[noiseIdx]);
+					color = GetLevelColor(level, 5); // 5 levels
+					break;
+				}
+				case NoiseDebugMode::BIOME_TYPE:
+				{
+					color = GetBiomeColor(m_biomeType[noiseIdx]);
+					break;
+				}
+				default:
+					color = Rgba8::CYAN; // fallback
+					break;
+				}
+			}
+
+			// ========================================
+			// Create quad geometry
+			// ========================================
+			Vec3 worldMin = m_worldBounds.m_mins;
+			float worldX = worldMin.x + static_cast<float>(x);
+			float worldY = worldMin.y + static_cast<float>(y);
+
+			// Create quad vertices (top face)
+			Vec3 bl(worldX, worldY, topZ);
+			Vec3 br(worldX + 1.0f, worldY, topZ);
+			Vec3 tr(worldX + 1.0f, worldY + 1.0f, topZ);
+			Vec3 tl(worldX, worldY + 1.0f, topZ);
+
+			// Add two triangles to form quad
+			// Triangle 1: bl, br, tr
+			debugVerts.push_back(Vertex_PCU(bl, color, Vec2(0.0f, 0.0f)));
+			debugVerts.push_back(Vertex_PCU(br, color, Vec2(1.0f, 0.0f)));
+			debugVerts.push_back(Vertex_PCU(tr, color, Vec2(1.0f, 1.0f)));
+
+			// Triangle 2: bl, tr, tl
+			debugVerts.push_back(Vertex_PCU(bl, color, Vec2(0.0f, 0.0f)));
+			debugVerts.push_back(Vertex_PCU(tr, color, Vec2(1.0f, 1.0f)));
+			debugVerts.push_back(Vertex_PCU(tl, color, Vec2(0.0f, 1.0f)));
+		}
+	}
+
+	// ========================================
+	// Render the debug visualization
+	// ========================================
+	if (!debugVerts.empty())
+	{
+		g_theRenderer->SetModelConstants();
+		g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+		g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+		g_theRenderer->BindTexture(nullptr); // No texture, just colors
+		g_theRenderer->DrawVertexArray((int)debugVerts.size(), debugVerts.data());
+	}
+}
+
 
 Block Chunk::GetBlock(const IntVec3& localCoords) const
 {
@@ -502,90 +758,90 @@ IntVec3 Chunk::GetGlobalCoords(const Vec3& position)
 	return IntVec3(globalX, globalY, globalZ);
 }
 
-int Chunk::CalculateTerrainHeight(int globalX, int globalY) const
-{
-	int baseHeight = 50;
-	int xContribution = globalX / 3;
-	int yContribution = globalY / 5;
-	int randomVariation = s_rng.RollRandomIntInRange(0, 1);
-	return baseHeight + xContribution + yContribution + randomVariation;
-}
-
-uint8_t Chunk::GetRandomOreType() const
-{
-	float roll = s_rng.RollRandomFloatZeroToOne();
-
-	if (roll < 0.001f) { // 0.1%
-		return BlockDefinition::s_nameToIndexMap["Diamond"]; // Diamond
-	}
-	else if (roll < 0.006f) { // 0.5%
-		return BlockDefinition::s_nameToIndexMap["Gold"]; // Gold
-	}
-	else if (roll < 0.026f) { // 2%
-		return BlockDefinition::s_nameToIndexMap["Iron"];  // Iron
-	}
-	else if (roll < 0.076f) { // 5%
-		return BlockDefinition::s_nameToIndexMap["Coal"]; // Coal
-	}
-	else {
-		return BlockDefinition::s_nameToIndexMap["Stone"];  // Stone
-	}
-}
-
-void Chunk::AddBlockVerts(const IntVec3& localCoords, Block const& block)
-{
-	const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
-
-	Vec3 blockBL = LocalCoordsToWorldPos(localCoords);
-
-	// +X (EAST)
-	Vec3 bl = blockBL + Vec3(1.0f, 0.0f, 0.0f);
-	Vec3 br = blockBL + Vec3(1.0f, 1.0f, 0.0f);
-	Vec3 tr = blockBL + Vec3(1.0f, 1.0f, 1.0f);
-	Vec3 tl = blockBL + Vec3(1.0f, 0.0f, 1.0f);
-	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-		Rgba8(230, 230, 230), def.m_sideUVs);
-
-	// -X (WEST)
-	bl = blockBL + Vec3(0.0f, 1.0f, 0.0f);
-	br = blockBL + Vec3(0.0f, 0.0f, 0.0f);
-	tr = blockBL + Vec3(0.0f, 0.0f, 1.0f);
-	tl = blockBL + Vec3(0.0f, 1.0f, 1.0f);
-	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-		Rgba8(230, 230, 230), def.m_sideUVs);
-
-	// +Y (NORTH)
-	bl = blockBL + Vec3(1.0f, 1.0f, 0.0f);
-	br = blockBL + Vec3(0.0f, 1.0f, 0.0f);
-	tr = blockBL + Vec3(0.0f, 1.0f, 1.0f);
-	tl = blockBL + Vec3(1.0f, 1.0f, 1.0f);
-	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-		Rgba8(200, 200, 200), def.m_sideUVs);
-
-	// -Y (SOUTH)
-	bl = blockBL + Vec3(0.0f, 0.0f, 0.0f);
-	br = blockBL + Vec3(1.0f, 0.0f, 0.0f);
-	tr = blockBL + Vec3(1.0f, 0.0f, 1.0f);
-	tl = blockBL + Vec3(0.0f, 0.0f, 1.0f);
-	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-		Rgba8(200, 200, 200), def.m_sideUVs);
-
-	// +Z (TOP)
-	bl = blockBL + Vec3(0.0f, 0.0f, 1.0f);
-	br = blockBL + Vec3(1.0f, 0.0f, 1.0f);
-	tr = blockBL + Vec3(1.0f, 1.0f, 1.0f);
-	tl = blockBL + Vec3(0.0f, 1.0f, 1.0f);
-	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-		Rgba8(255, 255, 255), def.m_topUVs);
-
-	// -Z (BOTTOM)
-	bl = blockBL + Vec3(0.0f, 1.0f, 0.0f);
-	br = blockBL + Vec3(1.0f, 1.0f, 0.0f);
-	tr = blockBL + Vec3(1.0f, 0.0f, 0.0f);
-	tl = blockBL + Vec3(0.0f, 0.0f, 0.0f);
-	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-		Rgba8(255, 255, 255), def.m_bottomUVs);
-}
+//int Chunk::CalculateTerrainHeight(int globalX, int globalY) const
+//{
+//	int baseHeight = 50;
+//	int xContribution = globalX / 3;
+//	int yContribution = globalY / 5;
+//	int randomVariation = s_rng.RollRandomIntInRange(0, 1);
+//	return baseHeight + xContribution + yContribution + randomVariation;
+//}
+//
+//uint8_t Chunk::GetRandomOreType() const
+//{
+//	float roll = s_rng.RollRandomFloatZeroToOne();
+//
+//	if (roll < 0.001f) { // 0.1%
+//		return BlockDefinition::s_nameToIndexMap["Diamond"]; // Diamond
+//	}
+//	else if (roll < 0.006f) { // 0.5%
+//		return BlockDefinition::s_nameToIndexMap["Gold"]; // Gold
+//	}
+//	else if (roll < 0.026f) { // 2%
+//		return BlockDefinition::s_nameToIndexMap["Iron"];  // Iron
+//	}
+//	else if (roll < 0.076f) { // 5%
+//		return BlockDefinition::s_nameToIndexMap["Coal"]; // Coal
+//	}
+//	else {
+//		return BlockDefinition::s_nameToIndexMap["Stone"];  // Stone
+//	}
+//}
+//
+//void Chunk::AddBlockVerts(const IntVec3& localCoords, Block const& block)
+//{
+//	const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
+//
+//	Vec3 blockBL = LocalCoordsToWorldPos(localCoords);
+//
+//	// +X (EAST)
+//	Vec3 bl = blockBL + Vec3(1.0f, 0.0f, 0.0f);
+//	Vec3 br = blockBL + Vec3(1.0f, 1.0f, 0.0f);
+//	Vec3 tr = blockBL + Vec3(1.0f, 1.0f, 1.0f);
+//	Vec3 tl = blockBL + Vec3(1.0f, 0.0f, 1.0f);
+//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//		Rgba8(230, 230, 230), def.m_sideUVs);
+//
+//	// -X (WEST)
+//	bl = blockBL + Vec3(0.0f, 1.0f, 0.0f);
+//	br = blockBL + Vec3(0.0f, 0.0f, 0.0f);
+//	tr = blockBL + Vec3(0.0f, 0.0f, 1.0f);
+//	tl = blockBL + Vec3(0.0f, 1.0f, 1.0f);
+//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//		Rgba8(230, 230, 230), def.m_sideUVs);
+//
+//	// +Y (NORTH)
+//	bl = blockBL + Vec3(1.0f, 1.0f, 0.0f);
+//	br = blockBL + Vec3(0.0f, 1.0f, 0.0f);
+//	tr = blockBL + Vec3(0.0f, 1.0f, 1.0f);
+//	tl = blockBL + Vec3(1.0f, 1.0f, 1.0f);
+//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//		Rgba8(200, 200, 200), def.m_sideUVs);
+//
+//	// -Y (SOUTH)
+//	bl = blockBL + Vec3(0.0f, 0.0f, 0.0f);
+//	br = blockBL + Vec3(1.0f, 0.0f, 0.0f);
+//	tr = blockBL + Vec3(1.0f, 0.0f, 1.0f);
+//	tl = blockBL + Vec3(0.0f, 0.0f, 1.0f);
+//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//		Rgba8(200, 200, 200), def.m_sideUVs);
+//
+//	// +Z (TOP)
+//	bl = blockBL + Vec3(0.0f, 0.0f, 1.0f);
+//	br = blockBL + Vec3(1.0f, 0.0f, 1.0f);
+//	tr = blockBL + Vec3(1.0f, 1.0f, 1.0f);
+//	tl = blockBL + Vec3(0.0f, 1.0f, 1.0f);
+//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//		Rgba8(255, 255, 255), def.m_topUVs);
+//
+//	// -Z (BOTTOM)
+//	bl = blockBL + Vec3(0.0f, 1.0f, 0.0f);
+//	br = blockBL + Vec3(1.0f, 1.0f, 0.0f);
+//	tr = blockBL + Vec3(1.0f, 0.0f, 0.0f);
+//	tl = blockBL + Vec3(0.0f, 0.0f, 0.0f);
+//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//		Rgba8(255, 255, 255), def.m_bottomUVs);
+//}
 
 void Chunk::AddBlockVertsWithCulling(int blockIndex,Block const& block)
 {
@@ -671,198 +927,198 @@ void Chunk::CalculateWorldBounds()
 	m_worldBounds = AABB3(minBound, maxBound);
 }
 
-int Chunk::SaveChunkToFile(std::string const& saveFolder)
-{
-	std::vector<uint8_t> byteBuffer;
-
-	//== header ==
-	ChunkFileHeader header;
-	header.m_fourCC[0] = 'G';
-	header.m_fourCC[1] = 'C';
-	header.m_fourCC[2] = 'H';
-	header.m_fourCC[3] = 'K';
-	header.m_version = 1;
-	header.m_chunkBitsX = CHUNK_BITS_X;
-	header.m_chunkBitsY = CHUNK_BITS_Y;
-	header.m_chunkBitsZ = CHUNK_BITS_Z;
-
-	byteBuffer.push_back(header.m_fourCC[0]);
-	byteBuffer.push_back(header.m_fourCC[1]);
-	byteBuffer.push_back(header.m_fourCC[2]);
-	byteBuffer.push_back(header.m_fourCC[3]);
-	byteBuffer.push_back(header.m_version);
-	byteBuffer.push_back(header.m_chunkBitsX);
-	byteBuffer.push_back(header.m_chunkBitsY);
-	byteBuffer.push_back(header.m_chunkBitsZ);
-
-	ChunkFileRun currentRun;
-	currentRun.blockType = m_blocks[0].GetTypeIndex();
-	currentRun.runLength = 0;
-
-	// Loop over each block in the chunk
-	for (int blockIndex = 0; blockIndex < BLOCKS_PER_CHUNK; blockIndex++)
-	{
-		uint8_t currentBlockType = m_blocks[blockIndex].GetTypeIndex();
-
-		// Check if run is complete
-		bool runComplete = false;
-
-		if (currentBlockType != currentRun.blockType)
-		{
-			// Current block type is not equal to the block type of the run
-			runComplete = true;
-		}
-		else if (blockIndex == BLOCKS_PER_CHUNK - 1)
-		{
-			// We are at the end of the chunk
-			currentRun.runLength++;  // Increment for the current block
-			runComplete = true;
-		}
-		else if (currentRun.runLength >= 255)
-		{
-			// The run length is at the max of 255
-			runComplete = true;
-		}
-		else
-		{
-			// Increment the length of the run
-			currentRun.runLength++;
-		}
-
-		// When the run is complete, push back its member variables into the byte buffer vector
-		if (runComplete)
-		{
-			byteBuffer.push_back(currentRun.blockType);
-			byteBuffer.push_back(currentRun.runLength);
-
-			// Start a new run by setting the type to the current block type and zeroing out the length
-			if (blockIndex < BLOCKS_PER_CHUNK - 1)  // Don't start new run if we're at the end
-			{
-				currentRun.blockType = currentBlockType;
-				currentRun.runLength = 1;  // Start with 1 for the current block
-			}
-		}
-	}
-
-	// Generate filename: "Chunk(x,y).chunk"
-	std::string filename = saveFolder + "/Chunk(" + std::to_string(m_chunkCoords.x) + "," + std::to_string(m_chunkCoords.y) + ").chunk";
-
-	// Call FileWriteFromBuffer with the byte buffer vector
-	return FileWriteFromBuffer(byteBuffer, filename);
-
-	return 0;
-}
-
-bool Chunk::LoadChunkFromFile(std::string const& filename)
-{
-	std::vector<uint8_t> fileBuffer;
-	int bytesRead = FileReadToBuffer(fileBuffer, filename);
-
-	if (bytesRead == -1)
-	{
-		printf("Failed to read chunk file: %s\n", filename.c_str());
-		return false;
-	}
-
-	// Check minimum file size
-	if (fileBuffer.size() < sizeof(ChunkFileHeader))
-	{
-		printf("Chunk file too small: %s (size: %zu, minimum: %zu)\n",
-			filename.c_str(), fileBuffer.size(), sizeof(ChunkFileHeader));
-		return false;
-	}
-
-	// Read and validate header
-	ChunkFileHeader header;
-	size_t offset = 0;
-
-	// Copy header data from buffer
-	header.m_fourCC[0] = fileBuffer[offset++];
-	header.m_fourCC[1] = fileBuffer[offset++];
-	header.m_fourCC[2] = fileBuffer[offset++];
-	header.m_fourCC[3] = fileBuffer[offset++];
-	header.m_version = fileBuffer[offset++];
-	header.m_chunkBitsX = fileBuffer[offset++];
-	header.m_chunkBitsY = fileBuffer[offset++];
-	header.m_chunkBitsZ = fileBuffer[offset++];
-
-	// Validate header
-	if (header.m_fourCC[0] != 'G' || header.m_fourCC[1] != 'C' ||
-		header.m_fourCC[2] != 'H' || header.m_fourCC[3] != 'K')
-	{
-		printf("Invalid chunk file header (bad fourCC): %s\n", filename.c_str());
-		return false;
-	}
-
-	if (header.m_version != 1)
-	{
-		printf("Unsupported chunk file version: %d in file %s\n",
-			header.m_version, filename.c_str());
-		return false;
-	}
-
-	if (header.m_chunkBitsX != 4 || header.m_chunkBitsY != 4 || header.m_chunkBitsZ != 7)
-	{
-		printf("Chunk dimensions mismatch in file %s (got %d,%d,%d, expected 4,4,7)\n",
-			filename.c_str(), header.m_chunkBitsX, header.m_chunkBitsY, header.m_chunkBitsZ);
-		return false;
-	}
-
-	// Decode RLE data
-	int blockIndex = 0;
-	//size_t totalRuns = (fileBuffer.size() - sizeof(ChunkFileHeader)) / sizeof(ChunkFileRun);
-
-	while (offset < fileBuffer.size() && blockIndex < BLOCKS_PER_CHUNK)
-	{
-		// Check if we have enough bytes for a complete run
-		if (offset + 1 >= fileBuffer.size())
-		{
-			printf("Incomplete run data in chunk file: %s\n", filename.c_str());
-			return false;
-		}
-
-		// Read run data
-		ChunkFileRun currentRun;
-		currentRun.blockType = fileBuffer[offset++];
-		currentRun.runLength = fileBuffer[offset++];
-
-		// Validate run length
-		if (currentRun.runLength == 0)
-		{
-			printf("Invalid run length (0) in chunk file: %s\n", filename.c_str());
-			return false;
-		}
-
-		// Check if run would exceed chunk bounds
-		if (blockIndex + currentRun.runLength > BLOCKS_PER_CHUNK)
-		{
-			printf("Run extends beyond chunk bounds in file %s (index: %d, length: %d, max: %d)\n",
-				filename.c_str(), blockIndex, currentRun.runLength, BLOCKS_PER_CHUNK);
-			return false;
-		}
-
-		// Apply run to blocks
-		for (int i = 0; i < currentRun.runLength; i++)
-		{
-			Block curBlock = Block(currentRun.blockType);
-			SetBlock(blockIndex, curBlock);
-			blockIndex++;
-		}
-	}
-
-	if (blockIndex != BLOCKS_PER_CHUNK)
-	{
-		printf("Block count mismatch in chunk file %s (got %d blocks, expected %d)\n",
-			filename.c_str(), blockIndex, BLOCKS_PER_CHUNK);
-		return false;
-	}
-
-	if (offset < fileBuffer.size())
-	{
-		printf("Warning: Extra data at end of chunk file: %s (%zu extra bytes)\n",
-			filename.c_str(), fileBuffer.size() - offset);
-	}
-
-	printf("Successfully loaded chunk from file: %s\n", filename.c_str());
-	return true;
-}
+//int Chunk::SaveChunkToFile(std::string const& saveFolder)
+//{
+//	std::vector<uint8_t> byteBuffer;
+//
+//	//== header ==
+//	ChunkFileHeader header;
+//	header.m_fourCC[0] = 'G';
+//	header.m_fourCC[1] = 'C';
+//	header.m_fourCC[2] = 'H';
+//	header.m_fourCC[3] = 'K';
+//	header.m_version = 1;
+//	header.m_chunkBitsX = CHUNK_BITS_X;
+//	header.m_chunkBitsY = CHUNK_BITS_Y;
+//	header.m_chunkBitsZ = CHUNK_BITS_Z;
+//
+//	byteBuffer.push_back(header.m_fourCC[0]);
+//	byteBuffer.push_back(header.m_fourCC[1]);
+//	byteBuffer.push_back(header.m_fourCC[2]);
+//	byteBuffer.push_back(header.m_fourCC[3]);
+//	byteBuffer.push_back(header.m_version);
+//	byteBuffer.push_back(header.m_chunkBitsX);
+//	byteBuffer.push_back(header.m_chunkBitsY);
+//	byteBuffer.push_back(header.m_chunkBitsZ);
+//
+//	ChunkFileRun currentRun;
+//	currentRun.blockType = m_blocks[0].GetTypeIndex();
+//	currentRun.runLength = 0;
+//
+//	// Loop over each block in the chunk
+//	for (int blockIndex = 0; blockIndex < BLOCKS_PER_CHUNK; blockIndex++)
+//	{
+//		uint8_t currentBlockType = m_blocks[blockIndex].GetTypeIndex();
+//
+//		// Check if run is complete
+//		bool runComplete = false;
+//
+//		if (currentBlockType != currentRun.blockType)
+//		{
+//			// Current block type is not equal to the block type of the run
+//			runComplete = true;
+//		}
+//		else if (blockIndex == BLOCKS_PER_CHUNK - 1)
+//		{
+//			// We are at the end of the chunk
+//			currentRun.runLength++;  // Increment for the current block
+//			runComplete = true;
+//		}
+//		else if (currentRun.runLength >= BLOCKS_PER_LAYER-1)
+//		{
+//			// The run length is at the max of 255
+//			runComplete = true;
+//		}
+//		else
+//		{
+//			// Increment the length of the run
+//			currentRun.runLength++;
+//		}
+//
+//		// When the run is complete, push back its member variables into the byte buffer vector
+//		if (runComplete)
+//		{
+//			byteBuffer.push_back(currentRun.blockType);
+//			byteBuffer.push_back(currentRun.runLength);
+//
+//			// Start a new run by setting the type to the current block type and zeroing out the length
+//			if (blockIndex < BLOCKS_PER_CHUNK - 1)  // Don't start new run if we're at the end
+//			{
+//				currentRun.blockType = currentBlockType;
+//				currentRun.runLength = 1;  // Start with 1 for the current block
+//			}
+//		}
+//	}
+//
+//	// Generate filename: "Chunk(x,y).chunk"
+//	std::string filename = saveFolder + "/Chunk(" + std::to_string(m_chunkCoords.x) + "," + std::to_string(m_chunkCoords.y) + ").chunk";
+//
+//	// Call FileWriteFromBuffer with the byte buffer vector
+//	return FileWriteFromBuffer(byteBuffer, filename);
+//
+//	return 0;
+//}
+//
+//bool Chunk::LoadChunkFromFile(std::string const& filename)
+//{
+//	std::vector<uint8_t> fileBuffer;
+//	int bytesRead = FileReadToBuffer(fileBuffer, filename);
+//
+//	if (bytesRead == -1)
+//	{
+//		printf("Failed to read chunk file: %s\n", filename.c_str());
+//		return false;
+//	}
+//
+//	// Check minimum file size
+//	if (fileBuffer.size() < sizeof(ChunkFileHeader))
+//	{
+//		printf("Chunk file too small: %s (size: %zu, minimum: %zu)\n",
+//			filename.c_str(), fileBuffer.size(), sizeof(ChunkFileHeader));
+//		return false;
+//	}
+//
+//	// Read and validate header
+//	ChunkFileHeader header;
+//	size_t offset = 0;
+//
+//	// Copy header data from buffer
+//	header.m_fourCC[0] = fileBuffer[offset++];
+//	header.m_fourCC[1] = fileBuffer[offset++];
+//	header.m_fourCC[2] = fileBuffer[offset++];
+//	header.m_fourCC[3] = fileBuffer[offset++];
+//	header.m_version = fileBuffer[offset++];
+//	header.m_chunkBitsX = fileBuffer[offset++];
+//	header.m_chunkBitsY = fileBuffer[offset++];
+//	header.m_chunkBitsZ = fileBuffer[offset++];
+//
+//	// Validate header
+//	if (header.m_fourCC[0] != 'G' || header.m_fourCC[1] != 'C' ||
+//		header.m_fourCC[2] != 'H' || header.m_fourCC[3] != 'K')
+//	{
+//		printf("Invalid chunk file header (bad fourCC): %s\n", filename.c_str());
+//		return false;
+//	}
+//
+//	if (header.m_version != 1)
+//	{
+//		printf("Unsupported chunk file version: %d in file %s\n",
+//			header.m_version, filename.c_str());
+//		return false;
+//	}
+//
+//	if (header.m_chunkBitsX != 4 || header.m_chunkBitsY != 4 || header.m_chunkBitsZ != 7)
+//	{
+//		printf("Chunk dimensions mismatch in file %s (got %d,%d,%d, expected 4,4,7)\n",
+//			filename.c_str(), header.m_chunkBitsX, header.m_chunkBitsY, header.m_chunkBitsZ);
+//		return false;
+//	}
+//
+//	// Decode RLE data
+//	int blockIndex = 0;
+//	//size_t totalRuns = (fileBuffer.size() - sizeof(ChunkFileHeader)) / sizeof(ChunkFileRun);
+//
+//	while (offset < fileBuffer.size() && blockIndex < BLOCKS_PER_CHUNK)
+//	{
+//		// Check if we have enough bytes for a complete run
+//		if (offset + 1 >= fileBuffer.size())
+//		{
+//			printf("Incomplete run data in chunk file: %s\n", filename.c_str());
+//			return false;
+//		}
+//
+//		// Read run data
+//		ChunkFileRun currentRun;
+//		currentRun.blockType = fileBuffer[offset++];
+//		currentRun.runLength = fileBuffer[offset++];
+//
+//		// Validate run length
+//		if (currentRun.runLength == 0)
+//		{
+//			printf("Invalid run length (0) in chunk file: %s\n", filename.c_str());
+//			return false;
+//		}
+//
+//		// Check if run would exceed chunk bounds
+//		if (blockIndex + currentRun.runLength > BLOCKS_PER_CHUNK)
+//		{
+//			printf("Run extends beyond chunk bounds in file %s (index: %d, length: %d, max: %d)\n",
+//				filename.c_str(), blockIndex, currentRun.runLength, BLOCKS_PER_CHUNK);
+//			return false;
+//		}
+//
+//		// Apply run to blocks
+//		for (int i = 0; i < currentRun.runLength; i++)
+//		{
+//			Block curBlock = Block(currentRun.blockType);
+//			SetBlock(blockIndex, curBlock);
+//			blockIndex++;
+//		}
+//	}
+//
+//	if (blockIndex != BLOCKS_PER_CHUNK)
+//	{
+//		printf("Block count mismatch in chunk file %s (got %d blocks, expected %d)\n",
+//			filename.c_str(), blockIndex, BLOCKS_PER_CHUNK);
+//		return false;
+//	}
+//
+//	if (offset < fileBuffer.size())
+//	{
+//		printf("Warning: Extra data at end of chunk file: %s (%zu extra bytes)\n",
+//			filename.c_str(), fileBuffer.size() - offset);
+//	}
+//
+//	printf("Successfully loaded chunk from file: %s\n", filename.c_str());
+//	return true;
+//}

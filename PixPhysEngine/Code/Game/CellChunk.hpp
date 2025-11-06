@@ -6,7 +6,7 @@
 #include <mutex>
 #include "Engine/Core/Vertex_PCU.hpp"
 
-class SandboxMap;
+class BaseMap;
 
 constexpr int CHUNK_SIZE = 64;
 
@@ -21,7 +21,7 @@ struct PendingCellMove {
 
 class CellChunk {
 public:
-	CellChunk(IntVec2 const& chunkIndex,SandboxMap* map);
+	CellChunk(IntVec2 const& chunkIndex, BaseMap* map);
 	~CellChunk();
 
 	void RebuildVertex();
@@ -29,7 +29,7 @@ public:
 
 	// === Core Data Access ===
 	Cell& GetLocalCell(int localX, int localY);
-	const Cell& GetLocalCell(int localX, int localY) const;
+	Cell const& GetLocalCell(int localX, int localY) const;
 
 	// === Chunk Info ===
 	IntVec2 GetChunkIndex() const { return m_chunkCoords; }
@@ -47,10 +47,9 @@ public:
 
 	// === Cross-Chunk Movement ===
 	// Thread-safe: called by worker threads
-	void QueueIncomingCell(int localX, int localY, const Cell& cell, IntVec2 sourceChunk = IntVec2(-1, -1));
-
+	//void QueueIncomingCell(int localX, int localY, const Cell& cell, IntVec2 sourceChunk = IntVec2(-1, -1));
 	// Single-threaded: called at sync point
-	void ApplyIncomingCells();
+	//void ApplyIncomingCells();
 
 	// === Coordinate Conversion ===
 	IntVec2 LocalToWorld(int localX, int localY) const;
@@ -69,7 +68,7 @@ private:
 	void CalculateUpdatePhaseIndex();
 
 private:
-	SandboxMap* m_map = nullptr;
+	BaseMap* m_map = nullptr;
 	// === Core Data ===
 	std::vector<std::vector<Cell>> m_cells;           // [y][x] - 64x64 grid
 	IntVec2 m_chunkCoords;                             // Chunk position in chunk grid

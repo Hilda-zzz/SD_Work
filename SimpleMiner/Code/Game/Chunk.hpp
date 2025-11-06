@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Math/IntVec2.hpp"
 #include <vector>
 #include "Block.hpp"
@@ -7,14 +7,15 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/IntVec3.hpp"
+#include "BiomeTypes.hpp"
 
 class VertexBuffer;
 class IndexBuffer;
 class Texture;
 
 // === Basic Info ===
-constexpr int CHUNK_BITS_X = 4;  //2^4=16
-constexpr int CHUNK_BITS_Y = 4;
+constexpr int CHUNK_BITS_X = 5;  //2^4=16
+constexpr int CHUNK_BITS_Y = 5;
 constexpr int CHUNK_BITS_Z = 7;  //2^7=128
 constexpr int CHUNK_SIZE_X = 1 << CHUNK_BITS_X;
 constexpr int CHUNK_SIZE_Y = 1 << CHUNK_BITS_Y;
@@ -29,12 +30,13 @@ constexpr int CHUNK_MASK_Y = CHUNK_MAX_Y << CHUNK_BITS_X;
 constexpr int CHUNK_MASK_Z = CHUNK_MAX_Z << (CHUNK_BITS_X + CHUNK_BITS_Y);
 
 constexpr int BLOCKS_PER_CHUNK = CHUNK_SIZE_X*CHUNK_SIZE_Y*CHUNK_SIZE_Z;
+constexpr int BLOCKS_PER_LAYER = CHUNK_SIZE_X * CHUNK_SIZE_Y;
 constexpr int WATER_LEVEL = CHUNK_SIZE_Z / 2;
 
 constexpr int MAP_SIZE = CHUNK_SIZE_X * CHUNK_SIZE_Y;
 
 // === Chunk Management ===
-constexpr int CHUNK_ACTIVATION_RANGE = 320;
+constexpr int CHUNK_ACTIVATION_RANGE = 480;  // original 320
 constexpr int CHUNK_DEACTIVATION_RANGE = CHUNK_ACTIVATION_RANGE + CHUNK_SIZE_X + CHUNK_SIZE_Y;
 
 constexpr int CHUNK_ACTIVATION_RADIUS_X = 1 + (CHUNK_ACTIVATION_RANGE / CHUNK_SIZE_X);
@@ -77,7 +79,7 @@ constexpr float MIN_SAND_HUMIDITY = 0.4f;
 constexpr float MAX_SAND_HUMIDITY = 0.7f;
 constexpr int SEA_LEVEL_Z = CHUNK_SIZE_Z / 2;
 
-constexpr float ICE_TEMPERATURE_MAX = 0.37f;
+constexpr float ICE_TEMPERATURE_MAX = 0.37f;  
 constexpr float ICE_TEMPERATURE_MIN = 0.0f;
 constexpr float ICE_DEPTH_MIN = 0.0f;
 constexpr float ICE_DEPTH_MAX = 8.0f;
@@ -93,6 +95,13 @@ constexpr float GOLD_CHANCE = 0.005f;
 constexpr float DIAMOND_CHANCE = 0.0001f;
 constexpr int OBSIDIAN_Z = 1;
 constexpr int LAVA_Z = 0;
+
+constexpr int MAX_TREE_RADIUS = 6;
+constexpr int TREE_CHECK_PADDING = 1;
+constexpr int NOISE_EXTENDED_SIZE = CHUNK_SIZE_X + 2 * MAX_TREE_RADIUS;  // 24
+constexpr int TREE_EXTENDED_SIZE = NOISE_EXTENDED_SIZE + 2 * TREE_CHECK_PADDING;  // 26
+constexpr int NOISE_MAP_SIZE = NOISE_EXTENDED_SIZE * NOISE_EXTENDED_SIZE;  // 576
+constexpr int TREE_MAP_SIZE = TREE_EXTENDED_SIZE * TREE_EXTENDED_SIZE;
 
 //--------------------------------------------------
 enum class ChunkState
@@ -131,7 +140,7 @@ struct ChunkFileHeader
 struct ChunkFileRun
 {
 	uint8_t blockType;     // Block type [0-255], where 0 = AIR
-	uint8_t runLength;     // Number of consecutive blocks [1-255]
+	uint8_t runLength=1;     // Number of consecutive blocks [1-255]
 };
 
 class Chunk
@@ -142,15 +151,16 @@ public:
 
 	static void SetBlockAtlasTexture(Texture* texture);
 
-	void Initialize();
+	// void Initialize();
 	// void GenerateBlocks();
-	void RebuildMesh();
+	// void RebuildMesh();
 	void RebuildMeshWithCulling();
 	void RebuildDebugMesh();
 
 	void Update();
 	void Render() const;
 	void RenderDebug() const;
+	void RenderNoiseDebug() const;
 
 	//=== GET AND SET ===
 	Block GetBlock(const IntVec3& localCoords) const;
@@ -199,14 +209,14 @@ public:
 	Vec3 LocalCoordsToWorldPos(const IntVec3& localCoords) const; //bl pos
 	
 	
-	int CalculateTerrainHeight(int globalX, int globalY) const;
-	uint8_t GetRandomOreType() const;
-	void AddBlockVerts(const IntVec3& localCoords, Block const& block);
+	//int CalculateTerrainHeight(int globalX, int globalY) const;
+	//uint8_t GetRandomOreType() const;
+	//void AddBlockVerts(const IntVec3& localCoords, Block const& block);
 	void AddBlockVertsWithCulling(int blockIndex, Block const& block);
 	void CalculateWorldBounds();
 
-	int SaveChunkToFile(std::string const& saveFolder);
-	bool LoadChunkFromFile(std::string const& filename);
+	//int SaveChunkToFile(std::string const& saveFolder);
+	//bool LoadChunkFromFile(std::string const& filename);
 
 public:
 	static RandomNumberGenerator s_rng;
@@ -234,4 +244,51 @@ public:
 	Chunk* m_neighborWest = nullptr;   // -X
 	Chunk* m_neighborNorth = nullptr;  // +Y
 	Chunk* m_neighborSouth = nullptr;  // -Y
+
+	// === 2D Noise Storage (per X, Y column) ===
+		// Raw noise values (未经曲线映射的原始值) - 24x24
+	float m_continentNoiseRaw[NOISE_MAP_SIZE];      // Raw continent noise [-1, 1]
+	float m_erosionNoiseRaw[NOISE_MAP_SIZE];        // Raw erosion noise [-1, 1]
+	float m_pvNoiseRaw[NOISE_MAP_SIZE];             // Raw PV noise [-1, 1]
+	float m_temperatureNoiseRaw[NOISE_MAP_SIZE];    // Raw temperature noise [0, 1]
+	float m_humidityNoiseRaw[NOISE_MAP_SIZE];       // Raw humidity noise [0, 1]
+
+	// Tree noise - 26x26 (需要额外padding)
+	float m_treeNoiseRaw[TREE_MAP_SIZE];            // Raw tree noise [-1, 1]
+
+	// Spline-mapped values (经过曲线映射后的值) - 24x24
+	float m_continentOffsetMapped[NOISE_MAP_SIZE];     // Mapped to height offset
+	float m_erosionOffsetMapped[NOISE_MAP_SIZE];       // Mapped to height offset
+	float m_pvOffsetMapped[NOISE_MAP_SIZE];            // Mapped to height offset
+	float m_continentAmplitudeMapped[NOISE_MAP_SIZE];  // Mapped to 3D amplitude
+	float m_erosionAmplitudeMapped[NOISE_MAP_SIZE];    // Mapped to 3D amplitude
+
+	// === Biome Level Storage (per X, Y column) === - 24x24
+	ContinentalnessLevel m_continentLevel[NOISE_MAP_SIZE];
+	ErosionLevel m_erosionLevel[NOISE_MAP_SIZE];
+	PeaksValleysLevel m_pvLevel[NOISE_MAP_SIZE];
+	TemperatureLevel m_temperatureLevel[NOISE_MAP_SIZE];
+	HumidityLevel m_humidityLevel[NOISE_MAP_SIZE];
+
+	// === Biome Type Storage === - 24x24
+	BiomeType m_biomeType[NOISE_MAP_SIZE];
+
+	// === Surface Heights === - 24x24
+	int m_surfaceHeights[NOISE_MAP_SIZE];
+
+	// ==================================================================
+	int NoiseExtendedCoordsToIndex(int noiseExtX, int noiseExtY) const {
+		return noiseExtY * NOISE_EXTENDED_SIZE + noiseExtX;
+	}
+
+	// 树噪声坐标转索引 (26x26)
+	int TreeExtendedCoordsToIndex(int treeExtX, int treeExtY) const {
+		return treeExtY * TREE_EXTENDED_SIZE + treeExtX;
+	}
+
+	// 树噪声坐标 → 一般噪声坐标
+	IntVec2 TreeCoordsToNoiseCoords(int treeExtX, int treeExtY) const {
+		return IntVec2(treeExtX - TREE_CHECK_PADDING, treeExtY - TREE_CHECK_PADDING);
+	}
+
 };

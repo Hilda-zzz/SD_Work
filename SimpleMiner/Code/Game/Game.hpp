@@ -3,6 +3,7 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
+#include "ThirdParty/imgui/imgui.h"
 
 class Clock;
 class Prop;
@@ -11,6 +12,7 @@ class Texture;
 class Entity;
 class CubeSkyBox;
 class World;
+class PiecewiseCurve1D;
 
 typedef std::vector<Entity*> EntityList;
 
@@ -44,6 +46,12 @@ private:
 
 	void RenderUI() const;
 	void RenderDebugMode() const;
+	void RenderTerrainEditor();
+
+	void RenderSplineEditor(const char* label, PiecewiseCurve1D* spline,
+		float inputMin, float inputMax,
+		float outputMin, float outputMax,
+		ImVec2 graphSize = ImVec2(300, 150));
 
 	//------Process Control------
 	void EnterState(GameState state);
@@ -56,7 +64,6 @@ private:
 
 	//---------------------------
 	void AddVertsForGroundGrid();
-	void AddVertsForCubes();
 	void AddEntityToList(Entity& thisEntity, EntityList& list);
 
 	void AddDebugText();
@@ -80,18 +87,14 @@ private:
 	bool m_pauseAfterUpdate = false;
 
 	World* m_world = nullptr;
-//	EntityList  m_allEntities;
 	Player* m_player = nullptr;
-// 	Prop* m_cube = nullptr;
-// 	Prop* m_cube2 = nullptr;
-// 	Prop* m_sphere = nullptr;
 	Prop* m_groundGrid = nullptr;
-
-//	Texture* m_gridTex = nullptr;
 
 	float m_previousTimeScale = 1.f;
 
 	CubeSkyBox* m_cubeSkybox = nullptr;
 
 	Vec2 m_screenSize = Vec2(1600.f, 800.f);
+
+	bool m_showTerrainEditor = true;
 };

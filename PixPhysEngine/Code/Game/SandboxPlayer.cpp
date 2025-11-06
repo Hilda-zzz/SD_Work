@@ -4,10 +4,11 @@
 #include "SandboxMap.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "SandboxUI.hpp"
+#include <memory>
 extern Window* g_theWindow;
 extern InputSystem* g_theInput;
 
-SandboxPlayer::SandboxPlayer(IntVec2 const& mapSize)
+SandboxPlayer::SandboxPlayer(IntVec2 const& mapSize) : BasePlayer(mapSize)
 {
 	InitCamera(mapSize);
 	m_sandBoxUI = SandBoxUI();
@@ -60,7 +61,7 @@ void SandboxPlayer::HandleInput()
 			int gridX = static_cast<int> (floor(mousePosInWorld.x));
 			int gridY = static_cast<int> (floor(mousePosInWorld.y));
 
-			if (m_curMap->IsValidPosition(gridX, gridY))
+			if (m_curMap->IsInBounds(gridX, gridY))
 			{
 				for (int dx = 0; dx < m_brushSize; dx++)
 				{
@@ -68,9 +69,9 @@ void SandboxPlayer::HandleInput()
 					{
 						int targetX = gridX + dx;
 						int targetY = gridY + dy;
-						if (m_curMap->IsValidPosition(targetX, targetY))
+						if (m_curMap->IsInBounds(targetX, targetY))
 						{
-							m_curMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, 1);
+							dynamic_cast<SandboxMap*>(m_curMap)->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, false);
 						}
 					}
 				}
@@ -117,9 +118,9 @@ void SandboxPlayer::HandleInput()
 			{
 				for (int y = minY; y <= maxY; y++)
 				{
-					if (m_curMap->IsValidPosition(x, y))
+					if (m_curMap->IsInBounds(x, y))
 					{
-						m_curMap->PlaceMaterialInChunk(x, y, CellMatType::MAT_STONE, 1);
+						dynamic_cast<SandboxMap*>(m_curMap)->PlaceMaterialInChunk(x, y, CellMatType::MAT_STONE, false);
 					}
 				}
 			}
@@ -134,7 +135,7 @@ void SandboxPlayer::HandleInput()
 			int gridX = static_cast<int> (floor(mousePosInWorld.x));
 			int gridY = static_cast<int> (floor(mousePosInWorld.y));
 
-			if (m_curMap->IsValidPosition(gridX, gridY))
+			if (m_curMap->IsInBounds(gridX, gridY))
 			{
 				for (int dx = 0; dx <= 4; dx++)
 				{
@@ -142,10 +143,10 @@ void SandboxPlayer::HandleInput()
 					{
 						int targetX = gridX + dx;
 						int targetY = gridY + dy;
-						if (m_curMap->IsValidPosition(targetX, targetY)&&m_curMap->GetCellInChunk(targetX,targetY).IsEmpty())
+						if (m_curMap->IsInBounds(targetX, targetY)&&m_curMap->GetCell(targetX,targetY).IsEmpty())
 						{
-							m_curMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, true);
-							CellWithCoords cellWithCoords = CellWithCoords(&m_curMap->GetCellInChunk(targetX, targetY), IntVec2(targetX, targetY));
+							dynamic_cast<SandboxMap*>(m_curMap)->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, true);
+							CellWithCoords cellWithCoords = CellWithCoords(&m_curMap->GetCell(targetX, targetY), IntVec2(targetX, targetY));
 							m_rigidBodyDrawnCells.push_back(cellWithCoords);
 						}
 					}
@@ -160,15 +161,15 @@ Vec2 SandboxPlayer::GetMouseWorldPosition() const
 	return Vec2();
 }
 
-bool SandboxPlayer::IsPlacing() const
-{
-	return false;
-}
-
-bool SandboxPlayer::IsErasing() const
-{
-	return false;
-}
+//bool SandboxPlayer::IsPlacing() const
+//{
+//	return false;
+//}
+//
+//bool SandboxPlayer::IsErasing() const
+//{
+//	return false;
+//}
 
 void SandboxPlayer::ClearRigidBodyDrawnCells()
 {

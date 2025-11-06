@@ -1,4 +1,7 @@
 #include "FileUtils.hpp"
+#include <filesystem>
+#include "ErrorWarningAssert.hpp"
+#include "StringUtils.hpp"
 
 int FileReadToBuffer(std::vector<uint8_t>& outBuffer, const std::string& filename)
 {
@@ -55,4 +58,19 @@ int FileWriteFromBuffer(std::vector<uint8_t>& inBuffer, const std::string& filen
 	fclose(fp);
 
 	return (int)bytesWritten;
+}
+
+bool FolderExists(std::string const& folderName)
+{
+	return std::filesystem::is_directory(folderName);
+}
+
+bool CreateFolder(std::string const& folderName)
+{
+	if (!std::filesystem::create_directory(folderName))
+	{
+		ERROR_AND_DIE(Stringf("Could not create folder: \"%s\"", folderName.c_str()));
+		return false;
+	}
+	return true;
 }

@@ -21,6 +21,7 @@ public:
 protected:
 	std::string			m_name;
 	IntVec2				m_dimensions;
+	unsigned int        m_mipLevels = 1;
 
 	ID3D11Texture2D*			m_texture = nullptr;
 	ID3D11ShaderResourceView*	m_shaderResourceView = nullptr;

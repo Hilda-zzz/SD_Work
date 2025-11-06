@@ -2,6 +2,8 @@
 #include "CellMatDef.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/IntVec2.hpp"
+#include "Game/Game.hpp"
+#include "Game/CellMatManager.hpp"
 
 struct Cell {
 	CellMatType m_type = CellMatType::MAT_EMPTY;
@@ -20,16 +22,44 @@ struct Cell {
 	bool m_isBelongRb = false;
 	int m_rigidBodyId = -1;
 
+	// Chemical
+	int m_lifeCountDown = -1;
+	int m_flameCountDown = -1;
+	int m_dissolveCountDown = -1;
+	int m_corrosionCountDown = -1;
+
 	bool IsEmpty() const { return m_type == CellMatType::MAT_EMPTY; }
 	void SetEmpty() {
 		m_type = CellMatType::MAT_EMPTY;
 		m_velocityY = 0;
 		m_velocityX = 0;
+		m_accumulMoveX = 0;
+		m_accumulMoveY = 0;
 		m_updatedThisFrame = false;
+		m_isFreeFalling = true;
+		m_framesWithoutMovement = 0;
+		m_liquidReCollideTimes = 0;
+
 		m_rigidBodyId = -1;
 		m_isBelongRb = false;
+
 		m_color = Rgba8::WHITE;
-		m_isFreeFalling = true;
+
+		m_lifeCountDown = -1;
+		m_flameCountDown = -1;
+		m_dissolveCountDown = -1;
+		m_corrosionCountDown = -1;
+	}
+
+	void SetToType(CellMatType toType)
+	{
+		CellMatDef cellDef = CellMatManager::GetMaterialDef(toType);
+		m_type = toType;
+		m_lifeCountDown = cellDef.m_lifeCountDown.GetRandomInRange(&Game::s_rng);
+		m_flameCountDown = cellDef.m_flameCountDown.GetRandomInRange(&Game::s_rng);
+		m_dissolveCountDown = cellDef.m_dissolveCountDowm.GetRandomInRange(&Game::s_rng);
+		m_corrosionCountDown = cellDef.m_corrosionCountDown.GetRandomInRange(&Game::s_rng);
+		m_color = cellDef.m_color;
 	}
 };
 

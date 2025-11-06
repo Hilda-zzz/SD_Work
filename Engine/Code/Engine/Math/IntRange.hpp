@@ -1,5 +1,5 @@
 #pragma once
-
+class RandomNumberGenerator;
 class IntRange
 {
 public:
@@ -15,6 +15,7 @@ public:
 
 	bool IsOnRange(int inputInt);
 	bool IsOverlappipngWith(IntRange const& inputIntRange);
+	int GetRandomInRange(RandomNumberGenerator* rng) const;
 
 	void operator=(IntRange const& copyFrom);
 	bool operator==(IntRange const& copyFrom);

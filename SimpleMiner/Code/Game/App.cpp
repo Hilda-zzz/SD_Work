@@ -59,6 +59,7 @@ void App::Startup()
 	
 	RendererConfig rendererConfig;
 	rendererConfig.m_window = g_theWindow;
+	rendererConfig.m_imguiInitialized = true;
 	g_theRenderer = new Renderer(rendererConfig);
 	
 	g_systemClock = new Clock();
@@ -166,6 +167,9 @@ void App::BeginFrame()
 	g_theInput->BeginFrame();
 	g_theWindow->BeginFrame();
 	g_theRenderer->BeginFrame();
+
+	g_theRenderer->BeginImguiFrame();
+
 	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
 	g_theJobSystem->BeginFrame();
@@ -209,6 +213,8 @@ void App::Render()  const
 {
 	g_theRenderer->ClearScreen(Rgba8(100,100,100,255));
 	g_theGame->Renderer();
+
+	g_theRenderer->RenderImguiFrame();
 }
 
 void App::EndFrame()

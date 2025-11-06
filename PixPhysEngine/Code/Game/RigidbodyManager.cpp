@@ -59,7 +59,7 @@ void RigidBodyManager::Update(float deltaTime)
 {
 	for (RigidBodyObject* object : m_testRbList)
 	{
-		// object->ValidateAndCollectCells();
+		object->ValidateAndCollectCells();
 	}
 
 	int subStepCount = 4;
@@ -101,7 +101,7 @@ void RigidBodyManager::CreateRigidBody(std::vector<CellWithCoords>& cells, b2Bod
 	{
 		m_ownerMap->PlaceMaterialInChunk(coord.x, coord.y, CellMatType::MAT_STATIC_FILL);
 		CellWithCoords  filledCell = CellWithCoords(
-			&m_ownerMap->GetCellInChunk(coord.x, coord.y),
+			&m_ownerMap->GetCell(coord.x, coord.y),
 			IntVec2(coord.x, coord.y)
 		);
 		m_ownerMap->GetCurPlayer()->m_rigidBodyDrawnCells.push_back(filledCell);

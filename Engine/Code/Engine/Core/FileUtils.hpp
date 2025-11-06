@@ -7,3 +7,6 @@ int FileReadToString(std::string& outString, const std::string& filename);
 
 bool FileExists(std::string const& filename);
 int FileWriteFromBuffer(std::vector<uint8_t>& inBuffer, const std::string& filename);
+
+bool FolderExists(std::string const& folderName);
+bool CreateFolder(std::string const& folderName);

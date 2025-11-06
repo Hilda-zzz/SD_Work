@@ -16,7 +16,7 @@ public:
 
 		// 静态刚体填充
 		s_materialDefs[CellMatType::MAT_STATIC_FILL] = CellMatDef(PhyType::PHY_STATIC_SOLID);
-		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_density = 0.0f;
+		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_density = 1.5f;
 		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_name = "MAT_STATIC_FILL";
 		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_description = "Tool - Remove material";
 		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_color = Rgba8::HILDA;
@@ -43,6 +43,10 @@ public:
 		s_materialDefs[CellMatType::MAT_SALT].m_name = "Salt";
 		s_materialDefs[CellMatType::MAT_SALT].m_description = "Fine granular material - flows easily";
 
+		s_materialDefs[CellMatType::MAT_SALT].m_isDissolve = true;
+		s_materialDefs[CellMatType::MAT_SALT].m_dissolveCountDowm = IntRange(30, 180);
+		s_materialDefs[CellMatType::MAT_SALT].m_dissolveType = CellMatType::MAT_EMPTY;
+
 		// 土壤 - 比沙子更粘稠，含有有机物
 		s_materialDefs[CellMatType::MAT_SOIL] = CellMatDef(PhyType::PHY_MOVE_SOLID);
 		s_materialDefs[CellMatType::MAT_SOIL].m_density = 1.3f;
@@ -65,6 +69,22 @@ public:
 		s_materialDefs[CellMatType::MAT_GRAVEL].m_color = Rgba8(128, 128, 128);
 		s_materialDefs[CellMatType::MAT_GRAVEL].m_name = "Gravel";
 		s_materialDefs[CellMatType::MAT_GRAVEL].m_description = "Small stones - bouncy";
+
+		// 颗粒火
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE] = CellMatDef(PhyType::PHY_MOVE_SOLID);
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_density = 1.5f;
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_friction = 0.5f;
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_restitution = 0.6f;
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_collisionMomentumTransfer = 0.2f;
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_neighborActivationChance = 0.8f;
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_color = Rgba8(180, 20, 20);
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_name = "MAT_DYSOLID_FIRE";
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_description = "Fire transited from dynamic solid material";
+
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_isHighTemp = true;
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_lifeCountDown =IntRange(120,360);
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_EMPTY;
 
 		// 水 - 液体
 		s_materialDefs[CellMatType::MAT_WATER] = CellMatDef(PhyType::PHY_LIQUID);
@@ -102,7 +122,7 @@ public:
 
 		// lava 液体
 		s_materialDefs[CellMatType::MAT_LAVA] = CellMatDef(PhyType::PHY_LIQUID);
-		s_materialDefs[CellMatType::MAT_LAVA].m_density = 2.f;
+		s_materialDefs[CellMatType::MAT_LAVA].m_density = 1.5f;
 		s_materialDefs[CellMatType::MAT_LAVA].m_friction = 0.3f;
 		s_materialDefs[CellMatType::MAT_LAVA].m_viscosity = 0.6f;
 		s_materialDefs[CellMatType::MAT_LAVA].m_interaction.m_isPermeable = true;
@@ -117,6 +137,26 @@ public:
 		s_materialDefs[CellMatType::MAT_LAVA].m_verticalDamping = 0.9f;
 		s_materialDefs[CellMatType::MAT_LAVA].m_collisionDamping = 0.5f;
 
+		// Acid
+		s_materialDefs[CellMatType::MAT_ACID] = CellMatDef(PhyType::PHY_LIQUID);
+		s_materialDefs[CellMatType::MAT_ACID].m_density = 1.5f;
+		s_materialDefs[CellMatType::MAT_ACID].m_friction = 0.3f;
+		s_materialDefs[CellMatType::MAT_ACID].m_viscosity = 0.6f;
+		s_materialDefs[CellMatType::MAT_ACID].m_interaction.m_isPermeable = true;
+		s_materialDefs[CellMatType::MAT_ACID].m_interaction.m_penetrationResistance = 0.8f;
+		s_materialDefs[CellMatType::MAT_ACID].m_color = Rgba8(30, 200, 30);
+		s_materialDefs[CellMatType::MAT_ACID].m_name = "Acid";
+		s_materialDefs[CellMatType::MAT_ACID].m_description = "Fluid material - liquid";
+										
+		s_materialDefs[CellMatType::MAT_ACID].m_neighborActivationChance = 0.9f;
+		s_materialDefs[CellMatType::MAT_ACID].m_collisionMomentumTransfer = 0.1f;
+		s_materialDefs[CellMatType::MAT_ACID].m_horizontalDamping = 0.9f;
+		s_materialDefs[CellMatType::MAT_ACID].m_verticalDamping = 0.9f;
+		s_materialDefs[CellMatType::MAT_ACID].m_collisionDamping = 0.5f;
+
+		s_materialDefs[CellMatType::MAT_ACID].m_isAcid = true;
+
+
 		// 石头 - 静态固体
 		s_materialDefs[CellMatType::MAT_STONE] = CellMatDef(PhyType::PHY_STATIC_SOLID);
 		s_materialDefs[CellMatType::MAT_STONE].m_density = 3.0f;
@@ -126,14 +166,40 @@ public:
 		s_materialDefs[CellMatType::MAT_STONE].m_name = "Stone";
 		s_materialDefs[CellMatType::MAT_STONE].m_description = "Static obstacle - hard solid";
 
+		s_materialDefs[CellMatType::MAT_STONE].m_isCorroded = true;
+		s_materialDefs[CellMatType::MAT_STONE].m_corrosionCountDown = IntRange(60, 120);
+		s_materialDefs[CellMatType::MAT_STONE].m_corrodeType = CellMatType::MAT_EMPTY;
+
 		// 木头 - 静态固体
 		s_materialDefs[CellMatType::MAT_WOOD] = CellMatDef(PhyType::PHY_STATIC_SOLID);
-		s_materialDefs[CellMatType::MAT_WOOD].m_density = 0.6f;
+		s_materialDefs[CellMatType::MAT_WOOD].m_density = 1.8f;
 		s_materialDefs[CellMatType::MAT_WOOD].m_friction = 0.7f;
 		s_materialDefs[CellMatType::MAT_WOOD].m_restitution = 0.4f;
 		s_materialDefs[CellMatType::MAT_WOOD].m_color = Rgba8(139, 69, 19);
 		s_materialDefs[CellMatType::MAT_WOOD].m_name = "Wood";
 		s_materialDefs[CellMatType::MAT_WOOD].m_description = "Building material - light solid";
+		
+		s_materialDefs[CellMatType::MAT_WOOD].m_isFlammable = true;
+		s_materialDefs[CellMatType::MAT_WOOD].m_flameCountDown = IntRange(20, 120);
+		s_materialDefs[CellMatType::MAT_WOOD].m_flammableType = CellMatType::MAT_STSOLID_FIRE;
+
+		s_materialDefs[CellMatType::MAT_WOOD].m_isCorroded = true;
+		s_materialDefs[CellMatType::MAT_WOOD].m_corrosionCountDown = IntRange(20, 120);
+		s_materialDefs[CellMatType::MAT_WOOD].m_corrodeType = CellMatType::MAT_EMPTY;
+
+		// 静态固体 - 火焰
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE] = CellMatDef(PhyType::PHY_STATIC_SOLID);
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_density = 1.8f;
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_friction = 0.1f;
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_restitution = 0.1f;
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_color = Rgba8::MAGNETA;
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_name = "STATIC_SOLID_FIRE";
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_description = "Fire transited from static solid material";
+
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_isHighTemp = true;
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeCountDown = IntRange(240, 360);
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_EMPTY;
 	}
 
 	static const CellMatDef& GetMaterialDef(CellMatType matType) {

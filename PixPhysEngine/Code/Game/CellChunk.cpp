@@ -1,13 +1,14 @@
 #include "CellChunk.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Game/SandboxMap.hpp"
+//#include "Game/SandboxMap.hpp"
+#include "Game/BaseMap.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 
 extern Renderer* g_theRenderer;
 
-CellChunk::CellChunk(IntVec2 const& chunkCoords, SandboxMap* map)
+CellChunk::CellChunk(IntVec2 const& chunkCoords, BaseMap* map)
 	: m_chunkCoords(chunkCoords)
 	, m_updatePhaseIndex(0)
 	, m_isDirty(true)  // Start dirty to ensure first update
@@ -40,7 +41,7 @@ void CellChunk::RebuildVertex()
 				IntVec2 worldPos = LocalToWorld(localX, localY);
 
 				// Get color based on debug mode
-				Rgba8 cellColor = m_map->GetCellDebugColor(cell);
+				Rgba8 cellColor = m_map->GetCellDebugColor(cell,worldPos);
 
 				AddVertsForAABB2D(m_vertex,
 					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
@@ -50,6 +51,7 @@ void CellChunk::RebuildVertex()
 		}
 	}
 }
+
 
 void CellChunk::RenderChunk() const
 {
@@ -65,12 +67,13 @@ Cell& CellChunk::GetLocalCell(int localX, int localY)
 	return m_cells[localY][localX];
 }
 
-//Cell const& CellChunk::GetLocalCell(int localX, int localY) const
-//{
-//	GUARANTEE_OR_DIE(IsLocalPosValid(localX, localY),
-//		Stringf("Invalid local position (%d, %d)", localX, localY));
-//	return m_cells[localY][localX];
-//}
+Cell const& CellChunk::GetLocalCell(int localX, int localY) const
+{
+	GUARANTEE_OR_DIE(IsLocalPosValid(localX, localY),
+		Stringf("Invalid local position (%d, %d)", localX, localY));
+	return m_cells[localY][localX];
+}
+
 
 // ==================== Cell Operations ====================
 
@@ -91,51 +94,51 @@ bool CellChunk::IsLocalPosValid(int localX, int localY) const
 
 // ==================== Cross-Chunk Movement ====================
 
-void CellChunk::QueueIncomingCell(int localX, int localY, const Cell& cell, IntVec2 sourceChunk)
-{
-	GUARANTEE_OR_DIE(IsLocalPosValid(localX, localY),
-		Stringf("Invalid incoming position (%d, %d)", localX, localY));
+//void CellChunk::QueueIncomingCell(int localX, int localY, const Cell& cell, IntVec2 sourceChunk)
+//{
+//	GUARANTEE_OR_DIE(IsLocalPosValid(localX, localY),
+//		Stringf("Invalid incoming position (%d, %d)", localX, localY));
+//
+//	// Thread-safe: lock only the incoming queue
+//	std::lock_guard<std::mutex> lock(m_incomingMutex);
+//
+//	PendingCellMove move;
+//	move.m_localX = localX;
+//	move.m_localY = localY;
+//	move.m_cell = cell;
+//	move.m_sourceChunkIndex = sourceChunk;
+//
+//	m_incomingCells.push_back(move);
+//}
 
-	// Thread-safe: lock only the incoming queue
-	std::lock_guard<std::mutex> lock(m_incomingMutex);
-
-	PendingCellMove move;
-	move.m_localX = localX;
-	move.m_localY = localY;
-	move.m_cell = cell;
-	move.m_sourceChunkIndex = sourceChunk;
-
-	m_incomingCells.push_back(move);
-}
-
-void CellChunk::ApplyIncomingCells()
-{
-	// No lock needed - called at sync point (single-threaded)
-
-	for (const auto& move : m_incomingCells) {
-		Cell& targetCell = m_cells[move.m_localY][move.m_localX];
-
-		if (targetCell.IsEmpty()) {
-			// Normal case: empty slot
-			targetCell = move.m_cell;
-			// targetCell.m_updatedThisFrame = true;  // #TODO: added by myself
-		}
-		//else {
-		//	// Conflict! This should never happen with 32-cell limit
-		//	ERROR_AND_DIE(Stringf(
-		//		"Chunk cell collision at chunk(%d,%d) local(%d,%d) from chunk(%d,%d)",
-		//		m_chunkCoords.x, m_chunkCoords.y,
-		//		move.m_localX, move.m_localY,
-		//		move.m_sourceChunkIndex.x, move.m_sourceChunkIndex.y
-		//	));
-		//}
-	}
-
-	if (!m_incomingCells.empty()) {
-		m_isDirty = true;
-		m_incomingCells.clear();
-	}
-}
+//void CellChunk::ApplyIncomingCells()
+//{
+//	// No lock needed - called at sync point (single-threaded)
+//
+//	for (const auto& move : m_incomingCells) {
+//		Cell& targetCell = m_cells[move.m_localY][move.m_localX];
+//
+//		if (targetCell.IsEmpty()) {
+//			// Normal case: empty slot
+//			targetCell = move.m_cell;
+//			// targetCell.m_updatedThisFrame = true;  // #TODO: added by myself
+//		}
+//		//else {
+//		//	// Conflict! This should never happen with 32-cell limit
+//		//	ERROR_AND_DIE(Stringf(
+//		//		"Chunk cell collision at chunk(%d,%d) local(%d,%d) from chunk(%d,%d)",
+//		//		m_chunkCoords.x, m_chunkCoords.y,
+//		//		move.m_localX, move.m_localY,
+//		//		move.m_sourceChunkIndex.x, move.m_sourceChunkIndex.y
+//		//	));
+//		//}
+//	}
+//
+//	if (!m_incomingCells.empty()) {
+//		m_isDirty = true;
+//		m_incomingCells.clear();
+//	}
+//}
 
 // ==================== Coordinate Conversion ====================
 

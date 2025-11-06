@@ -8,12 +8,6 @@
 struct Cell;
 class b2Body;
 
-//struct IntVec2Hash
-//{
-//	size_t operator()(const IntVec2& vec) const {
-//		return std::hash<int>()(vec.x) ^ (std::hash<int>()(vec.y) << 1);
-//	}
-//};
 
 struct TriangulationOutput 
 {

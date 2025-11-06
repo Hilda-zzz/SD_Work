@@ -34,15 +34,11 @@ public:
 	void SyncFromBox2D();
 	AABB2 CalculateRotatedCellCoverage() const;
 
-
 	void Render() const;
 
-	// === Manage Cells ===
+	// === Manage Cells ===  // #TODO: need to complete, now is wrong and useless version
 	void AddCell(Cell* cell, IntVec2 worldCoords);
 	void RemoveCell(Cell* cell);
-
-	//int GetCellCount() const { return m_cells.size(); }
-	//const std::vector<Cell*>& GetCells() const { return m_cells; }
 
 	// === Apply physics ===
 	void ApplyForce(Vec2 force);
@@ -57,14 +53,15 @@ public:
 	// === Help funcs ===
 	Vec2 GetWorldPosition() const;
 	float GetRotation() const;
+
+	// Position trans
 	Vec2 LocalToWorld(Vec2 localPos) const;
 	Vec2 WorldToLocal(Vec2 worldPos) const;
 
-	void RebuildFixtures();
 
 private:
 	void CreateBox2DBody(std::vector<CellWithCoords> const& cells, b2BodyType type);
-	void UpdateCellWorldPositions();
+
 	void RecalculateCenterOfMass();
 	void RebuildBox2DFixtures();
 	bool ShouldUpdate() const;
@@ -80,12 +77,8 @@ public:
 
 	// === Cell data ====
 	std::vector<Cell*> m_cells;
-	//std::unordered_map<Cell*, Vec2> m_cellToLocal;
 	std::unordered_map<Cell*, IntVec2> m_cellToWorldCoords;
-
 	std::unordered_map<IntVec2, Cell, IntVec2Hash> m_cellBlueprint;
-	//std::vector< Vec2> m_cellLocalCoords; // 每个cell的局部坐标（固定不变）
-	//std::unordered_map<Vec2, Cell> m_localToCell;
 
 	// === States ===
 	Vec2 m_position = Vec2::ZERO;
@@ -104,5 +97,5 @@ public:
 	std::vector<Vertex_PCU> m_marchingSquaresVerts;
 	std::vector<Vertex_PCU> m_douglasVerts;
 	std::vector<Vertex_PCU> m_triangleMeshVerts;
-	std::vector<Vertex_PCU> m_positionVerts;
+	std::vector<Vertex_PCU> m_positionDebugDrawVerts;
 };

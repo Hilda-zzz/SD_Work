@@ -44,27 +44,6 @@ private:
 
 	static void MarkChunkDirtyWithNeighbors(SandboxMap* map, int worldX, int worldY);
 
-	// === Chunk相关辅助函数 ===
-	//static void MoveCellWithinChunk(
-	//	CellChunk* chunk,
-	//	int fromLocalX, int fromLocalY,
-	//	int toLocalX, int toLocalY
-	//);
-
-	//static void MoveCellAcrossChunk(
-	//	SandboxMap* map,
-	//	int fromWorldX, int fromWorldY,
-	//	int toWorldX, int toWorldY,
-	//	Cell& movingCell
-	//);
-
-	//static bool TryMoveCell(
-	//	SandboxMap* map,
-	//	int& currentX, int& currentY,
-	//	int targetX, int targetY,
-	//	Cell& cell
-	//);
-
 	static void UpdateAccumulatedMovement(
 		int oldX, int oldY,
 		int newX, int newY,
@@ -72,4 +51,54 @@ private:
 	);
 
 	static void UpdateAccumulatedMovementLiquid(int oldX, int oldY, int newX, int newY, SandboxMap* map);
+
+	static void GetMovementDirections(const Cell& cell, int x, int y, int& primaryDir, int& secondaryDir);
 };
+
+template<typename PointCallback>
+inline void BresenhamLineExcludeStart(int x0, int y0, int x1, int y1, PointCallback&& callback)
+{
+	int dx = abs(x1 - x0);
+	int dy = abs(y1 - y0);
+
+	// 如果起点和终点相同，没有其他点要处理
+	if (dx == 0 && dy == 0) {
+		return;
+	}
+
+	int sx = (x0 < x1) ? 1 : -1;
+	int sy = (y0 < y1) ? 1 : -1;
+	int err = dx - dy;
+
+	int x = x0, y = y0;
+
+	// 跳过起点，直接执行第一步
+	int e2 = err << 1;
+	if (e2 > -dy) {
+		err -= dy;
+		x += sx;
+	}
+	if (e2 < dx) {
+		err += dx;
+		y += sy;
+	}
+
+	// 现在开始处理剩余点（包括终点）
+	while (true) {
+		if (!callback(x, y)) {
+			break;
+		}
+
+		if (x == x1 && y == y1) break;
+
+		e2 = err << 1;
+		if (e2 > -dy) {
+			err -= dy;
+			x += sx;
+		}
+		if (e2 < dx) {
+			err += dx;
+			y += sy;
+		}
+	}
+}

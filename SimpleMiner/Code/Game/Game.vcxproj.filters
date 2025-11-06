@@ -23,6 +23,9 @@
     <Filter Include="Multi-threading">
       <UniqueIdentifier>{d0a424a4-32f0-497c-8acc-54c3d56e7d65}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PCG">
+      <UniqueIdentifier>{b91d38fc-4ce7-423e-91f8-e73337e68527}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -58,9 +61,6 @@
     <ClCompile Include="BlockIterator.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="TerrainGenerator.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
     <ClCompile Include="GenerateChunkJob.cpp">
       <Filter>Multi-threading</Filter>
     </ClCompile>
@@ -72,6 +72,21 @@
     </ClCompile>
     <ClCompile Include="LoadChunkJob.cpp">
       <Filter>Multi-threading</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainGenerator.cpp">
+      <Filter>PCG</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainConfig.cpp">
+      <Filter>PCG</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainSpline.cpp">
+      <Filter>PCG</Filter>
+    </ClCompile>
+    <ClCompile Include="Curve1D.cpp">
+      <Filter>PCG</Filter>
+    </ClCompile>
+    <ClCompile Include="BiomeTypes.cpp">
+      <Filter>PCG</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -108,9 +123,6 @@
     <ClInclude Include="World.hpp">
       <Filter>MinerStruct</Filter>
     </ClInclude>
-    <ClInclude Include="TerrainGenerator.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
     <ClInclude Include="BlockIterator.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
@@ -125,6 +137,27 @@
     </ClInclude>
     <ClInclude Include="ChunkFileIO.hpp">
       <Filter>Multi-threading</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainConfig.hpp">
+      <Filter>PCG</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainGenerator.hpp">
+      <Filter>PCG</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainSpline.hpp">
+      <Filter>PCG</Filter>
+    </ClInclude>
+    <ClInclude Include="Curve1D.hpp">
+      <Filter>PCG</Filter>
+    </ClInclude>
+    <ClInclude Include="BiomeTypes.hpp">
+      <Filter>PCG</Filter>
+    </ClInclude>
+    <ClInclude Include="BiomeRangeTables.hpp">
+      <Filter>PCG</Filter>
+    </ClInclude>
+    <ClInclude Include="TreeGenerator.hpp">
+      <Filter>PCG</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -25,6 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="BaseMap.cpp" />
     <ClCompile Include="Box2DShapeBuilder.cpp" />
     <ClCompile Include="CellBehaviorSystem.cpp" />
     <ClCompile Include="CellBehaviorSystemInChunk.cpp" />
@@ -34,14 +35,17 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
     <ClCompile Include="Main_Windows.cpp" />
+    <ClCompile Include="BasePlayer.cpp" />
     <ClCompile Include="RigidbodyManager.cpp" />
     <ClCompile Include="RigidBodyObject.cpp" />
     <ClCompile Include="SandboxMap.cpp" />
     <ClCompile Include="SandboxPlayer.cpp" />
     <ClCompile Include="SandboxUI.cpp" />
+    <ClCompile Include="WangTileMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
+    <ClInclude Include="BaseMap.hpp" />
     <ClInclude Include="Box2DShapeBuilder.hpp" />
     <ClInclude Include="CellBehaviorSystem.hpp" />
     <ClInclude Include="CellBehaviorSystemInChunk.hpp" />
@@ -53,12 +57,14 @@
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
+    <ClInclude Include="BasePlayer.hpp" />
     <ClInclude Include="RigidbodyManager.hpp" />
     <ClInclude Include="RigidBodyObject.hpp" />
     <ClInclude Include="SandboxMap.hpp" />
     <ClInclude Include="SandboxPlayer.hpp" />
     <ClInclude Include="SandboxUI.hpp" />
     <ClInclude Include="ShapeConnectivityDetector.hpp" />
+    <ClInclude Include="WangTileMap.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

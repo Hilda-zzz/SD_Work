@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string>
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/IntRange.hpp"
 
 enum class PhyType :uint8_t
 {
@@ -22,7 +23,10 @@ enum class CellMatType : uint8_t
 	MAT_SOIL,
 	MAT_GRAVEL,
 	MAT_OIL,
-	MAT_LAVA
+	MAT_LAVA,
+	MAT_ACID,
+	MAT_STSOLID_FIRE,
+	MAT_DYSOLID_FIRE
 };
 
 class CellMatDef
@@ -130,6 +134,26 @@ public:
 	float m_randomDirectionChance;    // 随机方向概率 (无水平速度时)
 
 	Rgba8 m_color=Rgba8::HILDA;
+
+	// Chemical Params
+	bool m_isHighTemp = false;
+	bool m_isPersist = true;
+	IntRange m_lifeCountDown = IntRange(-1,-1);
+	CellMatType m_lifeEndMatType = CellMatType::MAT_EMPTY;
+
+	bool m_isFlammable = false;
+	IntRange m_flameCountDown = IntRange(-1, -1);
+	CellMatType m_flammableType = CellMatType::MAT_EMPTY;
+
+	bool m_isDissolve = false;
+	IntRange m_dissolveCountDowm = IntRange(-1, -1);
+	CellMatType m_dissolveType = CellMatType::MAT_EMPTY;
+
+	bool m_isAcid = false;
+	bool m_isCorroded = false;
+	IntRange m_corrosionCountDown = IntRange(-1, -1);
+	CellMatType m_corrodeType = CellMatType::MAT_EMPTY;
+
 
 	// === 移动固体专用参数 ===
 	struct MoveSolidParams {

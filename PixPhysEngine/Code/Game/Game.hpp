@@ -5,6 +5,7 @@
 class Clock;
 class SandboxMap;
 class SandboxPlayer;
+class WangTileMap;
 
 enum class GameState
 {
@@ -61,6 +62,8 @@ private:
 	SandboxMap* m_sandboxMap = nullptr;
 	SandboxPlayer* m_sandboxPlayer = nullptr;
 
-	float m_curDeltaTime;
+	WangTileMap* m_wangTileMap = nullptr;
+
+	float m_curDeltaTime = 0.f;
 
 };

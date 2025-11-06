@@ -360,6 +360,7 @@ void Renderer::Startup()
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samplerDesc.MinLOD = 0.0f;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[(int)SamplerMode::POINT_CLAMP]);
 	if (!SUCCEEDED(hr))
@@ -715,7 +716,7 @@ Image* Renderer::CreateImageFromFile(char const* imagePath)
 	return newImage;
 }
 
-Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
+Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath, unsigned int mipLevels)
 {
 	// See if we already have this texture previously loaded
 	Texture* existingTexture = GetTextureFromFileName(imageFilePath); // You need to write this
@@ -727,11 +728,11 @@ Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
 	Image curTexImg = Image(imageFilePath);
 	// Never seen this texture before!  Let's load it.
 	//Texture* newTexture = CreateTextureFromFile(imageFilePath);
-	Texture* newTexture = CreateTextureFromImage(imageFilePath);
+	Texture* newTexture = CreateTextureFromImage(imageFilePath, mipLevels);
 	return newTexture;
 }
 
-Texture* Renderer::CreateTextureFromImage(const Image& image)
+Texture* Renderer::CreateTextureFromImage(const Image& image, unsigned int mipLevels)
 {
 	// Check if the load was successful
 	GUARANTEE_OR_DIE(image.GetRawData(), Stringf("CreateTextureFromImage failed for \"%s\" - texelData was null!", image.GetImageFilePath().c_str()));
@@ -741,33 +742,51 @@ Texture* Renderer::CreateTextureFromImage(const Image& image)
 	Texture* newTexture = new Texture();
 	newTexture->m_name = image.GetImageFilePath();
 	newTexture->m_dimensions = image.GetDimensions();
+	newTexture->m_mipLevels = mipLevels;
 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width = image.GetDimensions().x;
 	textureDesc.Height = image.GetDimensions().y;
-	textureDesc.MipLevels = 1;
+	textureDesc.MipLevels = newTexture->m_mipLevels;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	textureDesc.SampleDesc.Count = 1;
-	textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
 	D3D11_SUBRESOURCE_DATA textureData;
 	textureData.pSysMem = image.GetRawData();
 	textureData.SysMemPitch = 4 * image.GetDimensions().x;
 
 	HRESULT hr;
-	hr = m_device->CreateTexture2D(&textureDesc, &textureData, &newTexture->m_texture);
+	hr = m_device->CreateTexture2D(&textureDesc, nullptr, &newTexture->m_texture);
 	if (!SUCCEEDED(hr))
 	{
 		ERROR_AND_DIE(Stringf("CreateTextureFromImage failed for image file \"%s\".", image.GetImageFilePath().c_str()));
 	}
 
-	hr = m_device->CreateShaderResourceView(newTexture->m_texture, NULL, &newTexture->m_shaderResourceView);
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = -1;
+	hr = m_device->CreateShaderResourceView(newTexture->m_texture, &srvDesc, &newTexture->m_shaderResourceView);
 	if (!SUCCEEDED(hr))
 	{
 		ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()));
 	}
+
+	m_deviceContext->UpdateSubresource(
+		newTexture->m_texture,
+		0,                              // Subresource index (mip level 0)
+		nullptr,                        // No box
+		image.GetRawData(),             // Source data
+		4 * image.GetDimensions().x,    // Row pitch
+		0                               // Depth pitch (not used for 2D)
+	);
+
+	m_deviceContext->GenerateMips(newTexture->m_shaderResourceView);
 
 	m_loadedTextures.push_back(newTexture);
 	return newTexture;

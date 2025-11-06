@@ -8,7 +8,7 @@
 extern Window* g_theWindow;
 Player::Player(Game* owner) :Entity(owner)
 {
-	m_position = Vec3(0.f, 0.f, 128.f);
+	m_position = Vec3(0.f, 0.f, 120.f);
 	//m_position = Vec3(0.f, 0.f, 0.f);
 	m_orientation = EulerAngles(-45.f, 30.f, 0.f);
 	m_playerCam = Camera();

@@ -13,18 +13,19 @@ class GenerateChunkJob;
 class LoadChunkJob;
 class SaveChunkJob;
 
-struct IntVec2Hash 
-{
-	size_t operator()(const IntVec2& vec) const {
-		return std::hash<int>()(vec.x) ^ (std::hash<int>()(vec.y) << 1);
-	}
-};
+//struct IntVec2Hash 
+//{
+//	size_t operator()(const IntVec2& vec) const {
+//		return std::hash<int>()(vec.x) ^ (std::hash<int>()(vec.y) << 1);
+//	}
+//};
 
 class World
 {
 public:
 	World(Player* player);
 	~World();
+	void Shutdown();
 
 	void Update(float deltaTime);
 	void Render() const;
@@ -55,6 +56,8 @@ private:
 	void CheckDirtyChunks();
 	void SortMeshRebuildQueueByDistance();
 	void RebuildChunkMeshes();
+
+	void CancelPendingJobs();
 	//=========================
 
 	//void InitializeChunks();
