@@ -13,6 +13,13 @@ enum class GameState
 	GAME_STATE_GAMEPLAY,
 };
 
+enum class GameMode
+{
+	SANDBOX,
+	WANG_TILE_MAP,
+};
+
+
 class Game
 {
 public:
@@ -33,6 +40,7 @@ private:
 	void RenderAttractMode() const;
 	void RenderGameplayMode() const;
 
+	void RenderGameModeSelectionUI() const;
 	void RenderUI() const;
 	void RenderDebugMode() const;
 
@@ -66,4 +74,5 @@ private:
 
 	float m_curDeltaTime = 0.f;
 
+	GameMode m_selectedGameMode = GameMode::SANDBOX;
 };

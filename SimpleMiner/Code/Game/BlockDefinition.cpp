@@ -17,6 +17,7 @@ BlockDefinition::BlockDefinition(XmlElement const* blockDefElement)
 	m_isVisible = ParseXmlAttribute(blockDefElement, "isVisible", false);
 	m_isSolid = ParseXmlAttribute(blockDefElement, "isSolid", false);
 	m_isOpaque = ParseXmlAttribute(blockDefElement, "isOpaque", false); 
+	m_indoorLight= ParseXmlAttribute(blockDefElement, "indoorLighting", 0);
 
 	m_topSpriteCoords = ParseXmlAttribute(blockDefElement, "topSpriteCoords", IntVec2(0, 0));
 	m_bottomSpriteCoords = ParseXmlAttribute(blockDefElement, "bottomSpriteCoords", IntVec2(0, 0));

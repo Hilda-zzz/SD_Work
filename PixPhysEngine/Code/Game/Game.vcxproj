@@ -58,6 +58,7 @@
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="BasePlayer.hpp" />
+    <ClInclude Include="PCGTemplate.hpp" />
     <ClInclude Include="RigidbodyManager.hpp" />
     <ClInclude Include="RigidBodyObject.hpp" />
     <ClInclude Include="SandboxMap.hpp" />

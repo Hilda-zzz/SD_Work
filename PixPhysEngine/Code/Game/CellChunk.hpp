@@ -24,7 +24,8 @@ public:
 	CellChunk(IntVec2 const& chunkIndex, BaseMap* map);
 	~CellChunk();
 
-	void RebuildVertex();
+	void RebuildVertexWithNewColor();
+	void RebuildVertexUseSelfColor();
 	void RenderChunk() const;
 
 	// === Core Data Access ===

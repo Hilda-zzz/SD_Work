@@ -282,7 +282,7 @@ void Game::RenderGameplayMode() const
 {
 	g_theRenderer->BeginCamera(m_player->m_playerCam);
 
-	m_cubeSkybox->Render();
+	// m_cubeSkybox->Render();
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 
 	m_groundGrid->Render();

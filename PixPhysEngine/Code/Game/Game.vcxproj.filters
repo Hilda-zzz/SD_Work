@@ -20,6 +20,9 @@
     <Filter Include="WangTileMapMode">
       <UniqueIdentifier>{0bbbf371-aa67-4bc0-a90e-89bd72f77c74}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PCG">
+      <UniqueIdentifier>{fda71529-c25c-4a9d-87fb-70bf54ab973b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -140,6 +143,9 @@
     </ClInclude>
     <ClInclude Include="BasePlayer.hpp">
       <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="PCGTemplate.hpp">
+      <Filter>PCG</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

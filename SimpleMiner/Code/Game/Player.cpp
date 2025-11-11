@@ -124,11 +124,11 @@ void Player::HandleGameplayKBInput()
 	// Block digging and placing
 	if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
 	{
-		m_curWorld->DigBlock(m_position);
+		m_curWorld->DigBlockByPlayerPos(m_position);
 	}
 	if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
 	{
-		m_curWorld->PlaceBlock(m_curBlockBrushName, m_position);
+		m_curWorld->PlaceBlockByPlayerPos(m_curBlockBrushName, m_position);
 	}
 
 	// Block selection
@@ -221,11 +221,11 @@ void Player::HandleGameplayControllerInput()
 	// Block digging and placing
  	if (controller.WasButtonJustPressed(XboxButtonID::X))
  	{
-		m_curWorld->DigBlock(m_position);
+		m_curWorld->DigBlockByPlayerPos(m_position);
  	}
  	if (controller.WasButtonJustPressed(XboxButtonID::Y))
  	{
-		m_curWorld->PlaceBlock(m_curBlockBrushName, m_position);
+		m_curWorld->PlaceBlockByPlayerPos(m_curBlockBrushName, m_position);
  	}
  
  	// Block selection

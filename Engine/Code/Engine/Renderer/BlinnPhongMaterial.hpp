@@ -15,13 +15,13 @@ public:
 
 	MaterialType GetType() const override { return MaterialType::BLINN_PHONG; }
 
-	void Bind(Renderer* renderer) override 
+	void Bind(Renderer* renderer) const override 
 	{
 		 // renderer->BindShader(renderer->GetBlinnPhongShader());
 		renderer->BindTexture(diffuseTexture, normalTexture, specularGlossinessEmissive);
 	}
 
-	Shader* GetShader() const override 
+	Shader* GetShader() const
 	{
 		// return g_theRenderer->GetBlinnPhongShader();
 	}

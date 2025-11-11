@@ -18,8 +18,10 @@ public:
 
 	bool IsValid() const;   
 	bool IsOpaque() const;
-	Block GetBlock() const;          
+	Block GetBlock() const;    
+	Block* GetBlockPtr();
 	IntVec3 GetLocalCoords() const; 
+	Chunk* GetChunk() const;
 
 private:
 	Chunk* m_chunk = nullptr;

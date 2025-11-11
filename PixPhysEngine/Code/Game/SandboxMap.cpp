@@ -92,7 +92,7 @@ void SandboxMap::Update(float deltaTime)
 	for (auto& row : m_chunks) {
 		for (auto& chunk : row) {
 			if (chunk->IsDirty())
-				chunk->RebuildVertex();
+				chunk->RebuildVertexWithNewColor();
 		}
 	}
 

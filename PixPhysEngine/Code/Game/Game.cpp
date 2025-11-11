@@ -28,22 +28,31 @@ Game::Game()
 	m_gameClock = new Clock();
 
 	CellMatManager::InitializeMaterials();
-	m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
+	/*m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
 	m_sandboxMap = new SandboxMap(m_sandboxPlayer,IntVec2(640,320));
 
-	m_wangTileMap = new WangTileMap(m_sandboxPlayer);
+	m_wangTileMap = new WangTileMap(m_sandboxPlayer);*/
 }
 
 Game::~Game()
 {
-	delete m_sandboxPlayer;
-	m_sandboxPlayer = nullptr;
+	if (m_sandboxPlayer)
+	{
+		delete m_sandboxPlayer;
+		m_sandboxPlayer = nullptr;
+	}
 
-	delete m_sandboxMap;
-	m_sandboxMap = nullptr;
+	if (m_sandboxMap)
+	{
+		delete m_sandboxMap;
+		m_sandboxMap = nullptr;
+	}
 
-	delete m_wangTileMap;
-	m_wangTileMap = nullptr;
+	if (m_wangTileMap)
+	{
+		delete m_wangTileMap;
+		m_wangTileMap = nullptr;
+	}
 
 	delete m_gameClock;
 	m_gameClock = nullptr;
@@ -132,7 +141,18 @@ void Game::UpdateGameplayMode(float deltaTime)
 {
 	UNUSED(deltaTime);
 
-	m_sandboxMap->Update(deltaTime);
+	switch (m_selectedGameMode)
+	{
+	case GameMode::SANDBOX:
+		m_sandboxMap->Update(deltaTime);
+		break;
+	case GameMode::WANG_TILE_MAP:
+		m_wangTileMap->Update(deltaTime);
+		break;
+	default:
+		break;
+	}
+	//m_sandboxMap->Update(deltaTime);
 	//m_wangTileMap->Update(deltaTime);
 
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
@@ -197,13 +217,26 @@ void Game::RenderAttractMode() const
 	DebugDrawRing(4.f, 20.f, Rgba8::WHITE, Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
+
+	RenderGameModeSelectionUI();
 }
 
 void Game::RenderGameplayMode() const
 {
-	m_sandboxMap->Render();
+	//m_sandboxMap->Render();
 
 	//m_wangTileMap->Render();
+	switch (m_selectedGameMode)
+	{
+	case GameMode::SANDBOX:
+		m_sandboxMap->Render();
+		break;
+	case GameMode::WANG_TILE_MAP:
+		m_wangTileMap->Render();
+		break;
+	default:
+		break;
+	}
 
 	g_theRenderer->BeginCamera(m_screenCamera);
 	float framerate = 1.f / m_curDeltaTime;
@@ -222,6 +255,65 @@ void Game::RenderGameplayMode() const
 	g_theRenderer->BindTexture(&font->GetTexture());
 	g_theRenderer->DrawVertexArray(title);
 	g_theRenderer->EndCamera(m_screenCamera);
+}
+
+void Game::RenderGameModeSelectionUI() const
+{
+	// ImGui Game Mode Selection Window
+	ImGui::SetNextWindowPos(ImVec2(SCREEN_SIZE_X * 0.5f - 150.f, SCREEN_SIZE_Y * 0.5f - 100.f), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(300.f, 200.f), ImGuiCond_Always);
+
+	ImGui::SetNextWindowFocus();
+
+	ImGui::Begin("Game Mode Selection", nullptr,
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoCollapse);
+
+	ImGui::Text("Select Game Mode:");
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	// Center the buttons
+	float buttonWidth = 200.f;
+	float buttonHeight = 40.f;
+	float windowWidth = ImGui::GetWindowWidth();
+	float buttonPosX = (windowWidth - buttonWidth) * 0.5f;
+
+	ImGui::SetCursorPosX(buttonPosX);
+	if (ImGui::Button("Sandbox Mode", ImVec2(buttonWidth, buttonHeight)))
+	{
+		const_cast<Game*>(this)->m_selectedGameMode = GameMode::SANDBOX;
+		const_cast<Game*>(this)->m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
+	}
+
+	ImGui::Spacing();
+
+	ImGui::SetCursorPosX(buttonPosX);
+	if (ImGui::Button("Wang Tile Map Mode", ImVec2(buttonWidth, buttonHeight)))
+	{
+		const_cast<Game*>(this)->m_selectedGameMode = GameMode::WANG_TILE_MAP;
+		const_cast<Game*>(this)->m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
+	}
+
+	ImGui::Spacing();
+
+	ImGui::SetCursorPosX(buttonPosX);
+	if (ImGui::Button("Exit", ImVec2(buttonWidth, buttonHeight)))
+	{
+		g_theApp->m_isQuitting = true;
+	}
+
+	ImGui::Spacing();
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	// Display currently selected mode
+	const char* modeName = (m_selectedGameMode == GameMode::SANDBOX) ? "Sandbox" : "Wang Tile Map";
+	ImGui::Text("Current Selection: %s", modeName);
+
+	ImGui::End();
 }
 
 void Game::RenderUI() const
@@ -257,6 +349,18 @@ void Game::EnterAttractMode()
 
 void Game::EnterGameplayMode()
 {
+	m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
+	switch (m_selectedGameMode)
+	{
+	case GameMode::SANDBOX:
+		m_sandboxMap = new SandboxMap(m_sandboxPlayer, IntVec2(640, 320));
+		break;
+	case GameMode::WANG_TILE_MAP:
+		m_wangTileMap = new WangTileMap(m_sandboxPlayer);
+		break;
+	default:
+		break;
+	}
 }
 
 void Game::ExitState(GameState state)

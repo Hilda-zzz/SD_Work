@@ -8,6 +8,7 @@
 #include "BlockIterator.hpp"
 #include "Engine/Core/FileUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/DebugRenderSystem.hpp"
 
 RandomNumberGenerator Chunk::s_rng;
 Texture* Chunk::s_blockAtlasTexture = nullptr;
@@ -231,7 +232,6 @@ void Chunk::Render() const
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-	g_theRenderer->BindShader(nullptr);
 	g_theRenderer->BindTexture(s_blockAtlasTexture);
 	g_theRenderer->DrawGameIndexedVertexBuffer(m_vertexBuffer, m_indexBuffer);
 }
@@ -246,6 +246,8 @@ void Chunk::RenderDebug() const
 	g_theRenderer->BindShader(nullptr);
 	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(m_debugVertexArray);
+
+	DebugRenderLightingAdvanced(true,false,false,0.2f);
 }
 
 // Add to Chunk.cpp
@@ -498,6 +500,7 @@ void Chunk::RenderNoiseDebug() const
 		g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 		g_theRenderer->BindTexture(nullptr); // No texture, just colors
+		g_theRenderer->BindShader(nullptr);
 		g_theRenderer->DrawVertexArray((int)debugVerts.size(), debugVerts.data());
 	}
 }
@@ -514,6 +517,11 @@ Block Chunk::GetBlock(const IntVec3& localCoords) const
 }
 
 Block Chunk::GetBlock(int index) const
+{
+	return m_blocks[index];
+}
+
+Block& Chunk::GetBlockRef(int index)
 {
 	return m_blocks[index];
 }
@@ -843,7 +851,83 @@ IntVec3 Chunk::GetGlobalCoords(const Vec3& position)
 //		Rgba8(255, 255, 255), def.m_bottomUVs);
 //}
 
-void Chunk::AddBlockVertsWithCulling(int blockIndex,Block const& block)
+//void Chunk::AddBlockVertsWithCulling(int blockIndex,Block const& block)
+//{
+//	const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
+//	if (!def.m_isVisible) return;
+//
+//	BlockIterator iter(this, blockIndex);
+//	IntVec3 localCoords = iter.GetLocalCoords();
+//	Vec3 blockWorldPos = LocalCoordsToWorldPos(localCoords);
+//
+//	// +X
+//	BlockIterator fwdX = iter.GetFwdX();
+//	if (!fwdX.IsValid() || !fwdX.IsOpaque()) {
+//		Vec3 bl = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+//		Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+//		Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+//		Vec3 tl = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+//		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//			Rgba8(230, 230, 230), def.m_sideUVs);
+//	}
+//
+//	// -X
+//	BlockIterator negX = iter.GetNegX();
+//	if (!negX.IsValid() || !negX.IsOpaque()) {
+//		Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+//		Vec3 br = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+//		Vec3 tr = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+//		Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+//		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//			Rgba8(230, 230, 230), def.m_sideUVs);
+//	}
+//
+//	// +Y
+//	BlockIterator fwdY = iter.GetFwdY();
+//	if (!fwdY.IsValid() || !fwdY.IsOpaque()) {
+//		Vec3 bl = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+//		Vec3 br = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+//		Vec3 tr = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+//		Vec3 tl = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+//		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//			Rgba8(200, 200, 200), def.m_sideUVs);
+//	}
+//
+//	// -Y
+//	BlockIterator negY = iter.GetNegY();
+//	if (!negY.IsValid() || !negY.IsOpaque()) {
+//		Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+//		Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+//		Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+//		Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+//		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//			Rgba8(200, 200, 200), def.m_sideUVs);
+//	}
+//
+//	// +Z
+//	BlockIterator fwdZ = iter.GetFwdZ();
+//	if (!fwdZ.IsValid() || !fwdZ.IsOpaque()) {
+//		Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+//		Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+//		Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+//		Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+//		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//			Rgba8(255, 255, 255), def.m_topUVs);
+//	}
+//
+//	// -Z
+//	BlockIterator negZ = iter.GetNegZ();
+//	if (!negZ.IsValid() || !negZ.IsOpaque()) {
+//		Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+//		Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+//		Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+//		Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+//		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+//			Rgba8(255, 255, 255), def.m_bottomUVs);
+//	}
+//}
+
+void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 {
 	const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
 	if (!def.m_isVisible) return;
@@ -852,70 +936,143 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex,Block const& block)
 	IntVec3 localCoords = iter.GetLocalCoords();
 	Vec3 blockWorldPos = LocalCoordsToWorldPos(localCoords);
 
-	// +X
+	// +X face
 	BlockIterator fwdX = iter.GetFwdX();
 	if (!fwdX.IsValid() || !fwdX.IsOpaque()) {
+		// Get neighbor block's light influences
+		Block neighborBlock = fwdX.IsValid() ? fwdX.GetBlock() : Block(0);
+		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;  // Normalize [0-15] to [0-1]
+		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;    // Normalize [0-15] to [0-1]
+		uint8_t grayScale = 230;  // Face directional shading
+
+		Rgba8 vertexColor = Rgba8(
+			static_cast<uint8_t>(outdoorLight * 255.0f),  // Red channel: outdoor light
+			static_cast<uint8_t>(indoorLight * 255.0f),   // Green channel: indoor light
+			grayScale,                                     // Blue channel: directional shading
+			255
+		);
+
 		Vec3 bl = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
 		Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
 		Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
 		Vec3 tl = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
 		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-			Rgba8(230, 230, 230), def.m_sideUVs);
+			vertexColor, def.m_sideUVs);
 	}
 
-	// -X
+	// -X face
 	BlockIterator negX = iter.GetNegX();
 	if (!negX.IsValid() || !negX.IsOpaque()) {
+		Block neighborBlock = negX.IsValid() ? negX.GetBlock() : Block(0);
+		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+		uint8_t grayScale = 230;
+
+		Rgba8 vertexColor = Rgba8(
+			static_cast<uint8_t>(outdoorLight * 255.0f),
+			static_cast<uint8_t>(indoorLight * 255.0f),
+			grayScale,
+			255
+		);
+
 		Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
 		Vec3 br = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
 		Vec3 tr = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
 		Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
 		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-			Rgba8(230, 230, 230), def.m_sideUVs);
+			vertexColor, def.m_sideUVs);
 	}
 
-	// +Y
+	// +Y face
 	BlockIterator fwdY = iter.GetFwdY();
 	if (!fwdY.IsValid() || !fwdY.IsOpaque()) {
+		Block neighborBlock = fwdY.IsValid() ? fwdY.GetBlock() : Block(0);
+		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+		uint8_t grayScale = 200;
+
+		Rgba8 vertexColor = Rgba8(
+			static_cast<uint8_t>(outdoorLight * 255.0f),
+			static_cast<uint8_t>(indoorLight * 255.0f),
+			grayScale,
+			255
+		);
+
 		Vec3 bl = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
 		Vec3 br = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
 		Vec3 tr = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
 		Vec3 tl = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
 		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-			Rgba8(200, 200, 200), def.m_sideUVs);
+			vertexColor, def.m_sideUVs);
 	}
 
-	// -Y
+	// -Y face
 	BlockIterator negY = iter.GetNegY();
 	if (!negY.IsValid() || !negY.IsOpaque()) {
+		Block neighborBlock = negY.IsValid() ? negY.GetBlock() : Block(0);
+		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+		uint8_t grayScale = 200;
+
+		Rgba8 vertexColor = Rgba8(
+			static_cast<uint8_t>(outdoorLight * 255.0f),
+			static_cast<uint8_t>(indoorLight * 255.0f),
+			grayScale,
+			255
+		);
+
 		Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
 		Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
 		Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
 		Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
 		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-			Rgba8(200, 200, 200), def.m_sideUVs);
+			vertexColor, def.m_sideUVs);
 	}
 
-	// +Z
+	// +Z face (top)
 	BlockIterator fwdZ = iter.GetFwdZ();
 	if (!fwdZ.IsValid() || !fwdZ.IsOpaque()) {
+		Block neighborBlock = fwdZ.IsValid() ? fwdZ.GetBlock() : Block(0);
+		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+		uint8_t grayScale = 255;
+
+		Rgba8 vertexColor = Rgba8(
+			static_cast<uint8_t>(outdoorLight * 255.0f),
+			static_cast<uint8_t>(indoorLight * 255.0f),
+			grayScale,
+			255
+		);
+
 		Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
 		Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
 		Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
 		Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
 		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-			Rgba8(255, 255, 255), def.m_topUVs);
+			vertexColor, def.m_topUVs);
 	}
 
-	// -Z
+	// -Z face (bottom)
 	BlockIterator negZ = iter.GetNegZ();
 	if (!negZ.IsValid() || !negZ.IsOpaque()) {
+		Block neighborBlock = negZ.IsValid() ? negZ.GetBlock() : Block(0);
+		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+		uint8_t grayScale = 255;
+
+		Rgba8 vertexColor = Rgba8(
+			static_cast<uint8_t>(outdoorLight * 255.0f),
+			static_cast<uint8_t>(indoorLight * 255.0f),
+			grayScale,
+			255
+		);
+
 		Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
 		Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
 		Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
 		Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
 		AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
-			Rgba8(255, 255, 255), def.m_bottomUVs);
+			vertexColor, def.m_bottomUVs);
 	}
 }
 
@@ -925,6 +1082,45 @@ void Chunk::CalculateWorldBounds()
 	Vec3 minBound = Vec3((float)m_chunkCoords.x*(float)CHUNK_SIZE_X, (float)m_chunkCoords.y * (float)CHUNK_SIZE_Y, 0.f);
 	Vec3 maxBound = minBound + Vec3((float)CHUNK_SIZE_X, (float)CHUNK_SIZE_Y, (float)CHUNK_SIZE_Z);
 	m_worldBounds = AABB3(minBound, maxBound);
+}
+
+void Chunk::DebugRenderLightingAdvanced(bool showIndoor, bool showOutdoor, bool showZero, float textSize) const
+{
+	for (int blockIndex = 0; blockIndex < BLOCKS_PER_CHUNK; ++blockIndex)
+	{
+		Block const& block = m_blocks[blockIndex];
+
+		uint8_t indoorLight = block.GetIndoorLightInfluence();
+		uint8_t outdoorLight = block.GetOutdoorLightInfluence();
+
+		// Skip if both are zero and we're not showing zeros
+		if (!showZero && indoorLight == 0 && outdoorLight == 0)
+			continue;
+
+		// Skip if not showing the type we have
+		if (!showIndoor && outdoorLight == 0)
+			continue;
+		if (!showOutdoor && indoorLight == 0)
+			continue;
+
+		IntVec3 localCoords = IndexToLocalCoords(blockIndex);
+		Vec3 blockWorldPos = LocalCoordsToWorldPos(localCoords);
+		Vec3 centerPos = blockWorldPos + Vec3(0.5f, 0.5f, 0.5f);
+
+		char text[16];
+		sprintf_s(text, "%d,%d", indoorLight, outdoorLight);
+
+		// Color based on dominant light source
+		Rgba8 textColor = Rgba8::WHITE;
+		if (indoorLight > outdoorLight)
+			textColor = Rgba8::RED;      // Indoor dominant
+		else if (outdoorLight > indoorLight)
+			textColor = Rgba8::CYAN;     // Outdoor dominant
+		else if (indoorLight > 0)
+			textColor = Rgba8::YELLOW;   // Equal
+
+		DebugAddWorldBillboardText(text, centerPos, 0.2f,Vec2(0.f,0.f),0.f);
+	}
 }
 
 //int Chunk::SaveChunkToFile(std::string const& saveFolder)

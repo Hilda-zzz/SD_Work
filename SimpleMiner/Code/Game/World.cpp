@@ -16,6 +16,8 @@
 #include "SaveChunkJob.hpp"
 #include "TerrainGenerator.hpp"
 #include "TerrainConfig.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Renderer/ConstantBuffer.hpp"
 
 extern Game* g_theGame;
 extern JobSystem* g_theJobSystem;
@@ -24,6 +26,9 @@ World::World(Player* player):m_player(player)
 {
 	//InitializeChunks();
 	m_player->SetCurWorld(this);
+
+	m_worldShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/WorldShader");
+	m_worldConstantBuffer = g_theRenderer->CreateConstantBuffer(sizeof(WorldConstants));
 
 	//*****************************************************************************************************
 	//for (int i = -1; i < 1; i++)
@@ -49,6 +54,12 @@ World::~World()
 	Shutdown();
 
 	m_player = nullptr;
+
+	if (m_worldConstantBuffer)
+	{
+		delete m_worldConstantBuffer;
+		m_worldConstantBuffer = nullptr;
+	}
 
 	for (Chunk* chunk : m_chunkUpdateList)
 	{
@@ -161,6 +172,9 @@ void World::Update(float deltaTime)
 {
 	m_player->Update(deltaTime);
 
+	//--------------------------
+	UpdateWorldRenderConstants();
+
 	//*****************************************************************************************************
 	// ========== debug draw basis ==========
 	Vec3 basisPos = m_player->m_position + m_player->m_orientation.GetForward_IFwd() * 50.f;
@@ -196,7 +210,7 @@ void World::Update(float deltaTime)
 		}
 	}
 
-
+	ProcessDirtyLighting();
 	//*****************************************************************************************************
 
 	//---------------------------------------------------------------------------------
@@ -228,6 +242,10 @@ void World::Update(float deltaTime)
 
 void World::Render() const
 {
+	//---------------------------------
+	SetWorldConstantsToGPU();
+
+	g_theRenderer->BindShader(m_worldShader);
 	for (Chunk* chunk : m_chunkUpdateList)
 	{
 		chunk->Render();
@@ -551,6 +569,8 @@ void World::RequestChunkDeactivation(Chunk* chunk)
 	if (!chunk)
 		return;
 
+	UndirtyAllBlocksInChunk(chunk);
+
 	IntVec2 coords = chunk->GetChunkCoords();
 
 	UnhookChunkNeighbors(chunk);
@@ -612,6 +632,7 @@ void World::ProcessCompletedJobs()
 			m_chunksQueuedForMeshRebuild.push_back(chunk);
 
 			HookUpChunkNeighbors(chunk);
+			InitializeChunkLighting(chunk);
 		}
 		// dealing with finished loading chunk
 		else if (LoadChunkJob* loadJob = dynamic_cast<LoadChunkJob*>(job))
@@ -628,6 +649,7 @@ void World::ProcessCompletedJobs()
 			m_chunksQueuedForMeshRebuild.push_back(chunk);
 
 			HookUpChunkNeighbors(chunk);
+			InitializeChunkLighting(chunk);
 		}
 		// dealing with finished saving chunk
 		else if (SaveChunkJob* saveJob = dynamic_cast<SaveChunkJob*>(job))
@@ -817,7 +839,8 @@ void World::RebuildChunkMeshes()
 	{
 		Chunk* chunk = m_chunksQueuedForMeshRebuild.front();
 		m_chunksQueuedForMeshRebuild.pop_front();
-
+		if (!chunk->m_neighborNorth || !chunk->m_neighborEast || !chunk->m_neighborSouth || !chunk->m_neighborWest)
+			continue;
 		// Too far
 		Vec2 playerPosXY = Vec2(m_player->m_position.x, m_player->m_position.y);
 		IntVec2 chunkCenter = chunk->GetChunkCenter();
@@ -1044,7 +1067,638 @@ void World::GetJobCounts(int& generateJobsQueued, int& generateJobsInFlight, int
 	meshRebuildsQueued = (int)m_chunksQueuedForMeshRebuild.size();
 }
 
-void World::DigBlock(Vec3 const& playerPos)
+void World::InitializeChunkLighting(Chunk* chunk)
+{
+	if (!chunk)
+		return;
+
+	MarkBoundaryBlocksAsDirty(chunk);
+
+	MarkSkyBlocks(chunk);
+
+	SetSkyLightAndMarkNeighbors(chunk);
+
+	MarkLightEmittingBlocksAsDirty(chunk);
+}
+
+void World::MarkBoundaryBlocksAsDirty(Chunk* chunk)
+{
+	if (chunk->m_neighborEast)
+	{
+		for (int z = 0; z < CHUNK_SIZE_Z; ++z)
+		{
+			for (int y = 0; y < CHUNK_SIZE_Y; ++y)
+			{
+				int index = chunk->LocalCoordsToIndex(CHUNK_MAX_X, y, z);
+				BlockIterator blockIter(chunk, index);
+
+				// If non-opaque, mark as dirty to receive light from neighbor
+				if (!blockIter.IsOpaque())
+				{
+					MarkLightingDirty(blockIter);
+				}
+			}
+		}
+	}
+
+	// Check West face (x = 0)
+	if (chunk->m_neighborWest)
+	{
+		for (int z = 0; z < CHUNK_SIZE_Z; ++z)
+		{
+			for (int y = 0; y < CHUNK_SIZE_Y; ++y)
+			{
+				int index = chunk->LocalCoordsToIndex(0, y, z);
+				BlockIterator blockIter(chunk, index);
+
+				if (!blockIter.IsOpaque())
+				{
+					MarkLightingDirty(blockIter);
+				}
+			}
+		}
+	}
+
+	// Check North face (y = CHUNK_MAX_Y)
+	if (chunk->m_neighborNorth)
+	{
+		for (int z = 0; z < CHUNK_SIZE_Z; ++z)
+		{
+			for (int x = 0; x < CHUNK_SIZE_X; ++x)
+			{
+				int index = chunk->LocalCoordsToIndex(x, CHUNK_MAX_Y, z);
+				BlockIterator blockIter(chunk, index);
+
+				if (!blockIter.IsOpaque())
+				{
+					MarkLightingDirty(blockIter);
+				}
+			}
+		}
+	}
+
+	// Check South face (y = 0)
+	if (chunk->m_neighborSouth)
+	{
+		for (int z = 0; z < CHUNK_SIZE_Z; ++z)
+		{
+			for (int x = 0; x < CHUNK_SIZE_X; ++x)
+			{
+				int index = chunk->LocalCoordsToIndex(x, 0, z);
+				BlockIterator blockIter(chunk, index);
+
+				if (!blockIter.IsOpaque())
+				{
+					MarkLightingDirty(blockIter);
+				}
+			}
+		}
+	}
+}
+
+void World::MarkSkyBlocks(Chunk* chunk)
+{
+	for (int y = 0; y < CHUNK_SIZE_Y; ++y)
+	{
+		for (int x = 0; x < CHUNK_SIZE_X; ++x)
+		{
+			// Descend from top (z = CHUNK_MAX_Z) downward
+			for (int z = CHUNK_MAX_Z; z >= 0; --z)
+			{
+				int index = chunk->LocalCoordsToIndex(x, y, z);
+				Block* block = &chunk->m_blocks[index];
+
+				// If this block is opaque, stop descending this column
+				// Everything below is underground
+				if (block->IsFullOpaque())
+				{
+					break;
+				}
+
+				// This is a non-opaque block with no opaque blocks above it
+				// Mark it as SKY
+				block->SetIsSky(true);
+			}
+		}
+	}
+}
+
+void World::SetSkyLightAndMarkNeighbors(Chunk* chunk)
+{
+	for (int y = 0; y < CHUNK_SIZE_Y; ++y)
+	{
+		for (int x = 0; x < CHUNK_SIZE_X; ++x)
+		{
+			// Descend from top until first opaque
+			for (int z = CHUNK_MAX_Z; z >= 0; --z)
+			{
+				int index = chunk->LocalCoordsToIndex(x, y, z);
+				Block* block = &chunk->m_blocks[index];
+				
+				// If opaque, stop descending this column
+				if (block->IsFullOpaque())
+				{
+					break;
+				}
+				
+				// This is a sky block, set outdoor light to maximum
+				block->SetOutdoorLightInfluence(15);
+				
+				// Check the 4 horizontal neighbors and mark non-sky air blocks as dirty
+				BlockIterator centerIter(chunk, index);
+				
+				// East neighbor (+X)
+				BlockIterator eastNeighbor = centerIter.GetFwdX();
+				if (eastNeighbor.IsValid())
+				{
+					Block* eastBlock = eastNeighbor.GetBlockPtr();
+					// If non-opaque and NOT sky, it should receive light from this sky block
+					if (eastBlock && !eastBlock->IsFullOpaque() && !eastBlock->IsSky())
+					{
+						MarkLightingDirty(eastNeighbor);
+					}
+				}
+				
+				// West neighbor (-X)
+				BlockIterator westNeighbor = centerIter.GetNegX();
+				if (westNeighbor.IsValid())
+				{
+					Block* westBlock = westNeighbor.GetBlockPtr();
+					if (westBlock && !westBlock->IsFullOpaque() && !westBlock->IsSky())
+					{
+						MarkLightingDirty(westNeighbor);
+					}
+				}
+				
+				// North neighbor (+Y)
+				BlockIterator northNeighbor = centerIter.GetFwdY();
+				if (northNeighbor.IsValid())
+				{
+					Block* northBlock = northNeighbor.GetBlockPtr();
+					if (northBlock && !northBlock->IsFullOpaque() && !northBlock->IsSky())
+					{
+						MarkLightingDirty(northNeighbor);
+					}
+				}
+				
+				// South neighbor (-Y)
+				BlockIterator southNeighbor = centerIter.GetNegY();
+				if (southNeighbor.IsValid())
+				{
+					Block* southBlock = southNeighbor.GetBlockPtr();
+					if (southBlock && !southBlock->IsFullOpaque() && !southBlock->IsSky())
+					{
+						MarkLightingDirty(southNeighbor);
+					}
+				}
+			}
+		}
+	}
+}
+
+void World::MarkLightEmittingBlocksAsDirty(Chunk* chunk)
+{
+	// Loop through every block in the chunk
+	for (int index = 0; index < BLOCKS_PER_CHUNK; ++index)
+	{
+		Block const& block = chunk->m_blocks[index];
+		uint8_t typeIndex = block.GetTypeIndex();
+
+		// Check if this block type emits light
+		BlockDefinition const& blockDef = BlockDefinition::s_blockDefs[typeIndex];
+
+		if (blockDef.m_indoorLight > 0)
+		{
+			// This block emits light, mark it as dirty so it will be processed
+			BlockIterator blockIter(chunk, index);
+			MarkLightingDirty(blockIter);
+		}
+	}
+}
+
+void World::ProcessDirtyLighting()
+{
+	while (!m_dirtyLightingQueue.empty())
+	{
+		ProcessNextDirtyLightBlock();
+	}
+}
+
+void World::ProcessNextDirtyLightBlock()
+{
+	if (m_dirtyLightingQueue.empty())
+		return;
+
+	// Pop front block from queue
+	BlockIterator blockIter = m_dirtyLightingQueue.front();
+	m_dirtyLightingQueue.pop_front();
+
+	if (!blockIter.IsValid())
+		return;
+
+	Block* block = blockIter.GetBlockPtr();
+
+	// Clear dirty flag
+	block->SetIsLightDirty(false);
+
+	// ===================================================
+	// Step 2: Compute theoretically-correct light influences
+	uint8_t correctIndoorLight = ComputeCorrectIndoorLight(block, blockIter);
+	uint8_t correctOutdoorLight = ComputeCorrectOutdoorLight(block, blockIter);
+
+	// Step 3: Get current light influences
+	uint8_t currentIndoorLight = block->GetIndoorLightInfluence();
+	uint8_t currentOutdoorLight = block->GetOutdoorLightInfluence();
+
+	// Step 4: Compare - if either is incorrect, update
+	if (correctIndoorLight != currentIndoorLight || correctOutdoorLight != currentOutdoorLight)
+	{
+		// Update the light influence values
+		block->SetIndoorLightInfluence(correctIndoorLight);
+		block->SetOutdoorLightInfluence(correctOutdoorLight);
+
+		// Mark this chunk as needing mesh rebuild (vertex colors changed)
+		Chunk* chunk = blockIter.GetChunk();
+		if (chunk && !chunk->IsDirty())
+		{
+			chunk->SetDirty(true);
+		}
+
+		MarkNeighborsAsDirtyIfNotOpaque(blockIter);
+	}
+}
+
+void World::MarkLightingDirty(BlockIterator& blockIter)
+{
+	if (!blockIter.IsValid())
+		return;
+
+	Block* block = blockIter.GetBlockPtr();
+
+	if (block->IsLightDirty())
+		return;
+
+	m_dirtyLightingQueue.push_back(blockIter);
+	block->SetIsLightDirty(true);
+}
+
+void World::UndirtyAllBlocksInChunk(Chunk* chunk)
+{
+	if (!chunk)
+		return;
+
+	// Remove all blocks from this chunk from the dirty queue
+	auto it = m_dirtyLightingQueue.begin();
+	while (it != m_dirtyLightingQueue.end())
+	{
+		if (it->GetChunk() == chunk)
+		{
+			Block* block = it->GetBlockPtr();
+			if (block)
+			{
+				block->SetIsLightDirty(false);
+			}
+			it = m_dirtyLightingQueue.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}
+
+void World::MarkLightingDirtyIfNotOpaque(BlockIterator& blockIter)
+{
+	if (!blockIter.IsValid())
+		return;
+
+	if (!blockIter.IsOpaque())
+	{
+		MarkLightingDirty(blockIter);
+	}
+}
+
+void World::MarkNeighborsAsDirtyIfNotOpaque(BlockIterator& centerIter)
+{
+	BlockIterator neighbors[6] = {
+	centerIter.GetFwdX(),  // East
+	centerIter.GetNegX(),  // West
+	centerIter.GetFwdY(),  // North
+	centerIter.GetNegY(),  // South
+	centerIter.GetFwdZ(),  // Up
+	centerIter.GetNegZ()   // Down
+	};
+
+	for (int i = 0; i < 6; ++i)
+	{
+		if (neighbors[i].IsValid())
+		{
+			MarkLightingDirtyIfNotOpaque(neighbors[i]);
+			neighbors[i].GetChunk()->SetDirty(true);
+		}
+	}
+}
+
+uint8_t World::ComputeCorrectIndoorLight(Block* block, BlockIterator& blockIter)
+{
+	int correctLight = 0;
+
+	// Rule 2: Check if this block type emits indoor light
+	uint8_t typeIndex = block->GetTypeIndex();
+	BlockDefinition const& blockDef = BlockDefinition::s_blockDefs[typeIndex];
+	correctLight = blockDef.m_indoorLight;
+
+	// Rule 3: If non-opaque, get light from neighbors (with falloff)
+	if (!block->IsFullOpaque())
+	{
+		// Check all 6 neighbors
+		BlockIterator neighbors[6] = {
+			blockIter.GetFwdX(),  // East
+			blockIter.GetNegX(),  // West
+			blockIter.GetFwdY(),  // North
+			blockIter.GetNegY(),  // South
+			blockIter.GetFwdZ(),  // Up
+			blockIter.GetNegZ()   // Down
+		};
+
+		for (int i = 0; i < 6; ++i)
+		{
+			if (neighbors[i].IsValid())
+			{
+				Block neighborBlock = neighbors[i].GetBlock();
+				int neighborLight = neighborBlock.GetIndoorLightInfluence();
+				int propagatedLight = neighborLight - 1; // Light falloff
+				if (propagatedLight > correctLight)
+				{
+					correctLight = propagatedLight;
+				}	
+			}
+		}
+	}
+
+	// Clamp to valid range [0, 15]
+	correctLight = GetClamped(correctLight, 0, 15);
+
+	return (uint8_t)correctLight;
+}
+
+uint8_t World::ComputeCorrectOutdoorLight(Block* block, BlockIterator& blockIter)
+{
+	if (block->IsSky())
+	{
+		return 15;
+	}
+
+	int correctLight = 0;
+
+	// Rule 2: Check if this block type emits outdoor light (usually 0)
+	uint8_t typeIndex = block->GetTypeIndex();
+	BlockDefinition const& blockDef = BlockDefinition::s_blockDefs[typeIndex];
+	correctLight = blockDef.m_outdoorLight;
+
+	// Rule 3: If non-opaque, get light from neighbors (with falloff)
+	if (!block->IsFullOpaque())
+	{
+		// Check all 6 neighbors
+		BlockIterator neighbors[6] = {
+			blockIter.GetFwdX(),  // East
+			blockIter.GetNegX(),  // West
+			blockIter.GetFwdY(),  // North
+			blockIter.GetNegY(),  // South
+			blockIter.GetFwdZ(),  // Up
+			blockIter.GetNegZ()   // Down
+		};
+
+		for (int i = 0; i < 6; ++i)
+		{
+			if (neighbors[i].IsValid())
+			{
+				Block neighborBlock = neighbors[i].GetBlock();
+				int neighborLight = neighborBlock.GetOutdoorLightInfluence();
+				int propagatedLight = neighborLight - 1; // Light falloff
+				if (propagatedLight > correctLight)
+				{
+					correctLight = propagatedLight;
+				}
+			}
+		}
+	}
+
+	// Clamp to valid range [0, 15]
+	correctLight = GetClamped(correctLight, 0, 15);
+
+	return (uint8_t)correctLight;
+}
+
+void World::DigBlock(Chunk* chunk, int blockIndex)
+{
+	if (!chunk)
+		return;
+
+	if (blockIndex < 0 || blockIndex >= BLOCKS_PER_CHUNK)
+		return;
+
+	Block* block = &chunk->m_blocks[blockIndex];
+
+	// Step 1: Set new block type to Air
+	uint8_t airTypeIndex = BlockDefinition::s_nameToIndexMap["Air"];
+	block->SetTypeIndex(airTypeIndex);
+
+	// Update block flags based on new type (Air is non-opaque, non-solid, visible)
+	block->SetIsFullOpaque(false);
+	block->SetIsSolid(false);
+	block->SetIsVisible(true);
+
+	// Step 2: Mark this block's light as dirty
+	BlockIterator blockIter(chunk, blockIndex);
+	MarkLightingDirty(blockIter);
+
+	// Step 4: Check if block above is SKY
+	BlockIterator aboveIter = blockIter.GetFwdZ();
+	if (aboveIter.IsValid())
+	{
+		Block aboveBlock = aboveIter.GetBlock();
+		if (aboveBlock.IsSky())
+		{
+			PropagateSkyFlagDownward(blockIter);
+		}
+	}
+
+	if (!chunk->IsDirty())
+	{
+		chunk->SetDirty(true);
+	}
+
+	// Mark this chunk as needing to be saved
+	chunk->m_needsSaving = true;
+}
+
+void World::PlaceBlock(Chunk* chunk, int blockIndex, std::string const& typeName)
+{
+	if (!chunk)
+		return;
+
+	if (blockIndex < 0 || blockIndex >= BLOCKS_PER_CHUNK)
+		return;
+
+	// Check if block type exists
+	auto it = BlockDefinition::s_nameToIndexMap.find(typeName);
+	if (it == BlockDefinition::s_nameToIndexMap.end())
+	{
+		// Block type not found
+		return;
+	}
+
+	Block* block = &chunk->m_blocks[blockIndex];
+
+	// Remember if the block being replaced was SKY
+	bool wasReplacingSkyBlock = block->IsSky();
+
+	// Step 1: Set new block type
+	uint8_t newTypeIndex = it->second;
+	block->SetTypeIndex(newTypeIndex);
+
+	// Update block flags based on new type
+	BlockDefinition const& blockDef = BlockDefinition::s_blockDefs[newTypeIndex];
+	block->SetIsFullOpaque(blockDef.m_isOpaque);
+	block->SetIsSolid(blockDef.m_isSolid);
+	block->SetIsVisible(blockDef.m_isVisible);
+
+	// Step 2: Mark this block's light as dirty
+	BlockIterator blockIter(chunk, blockIndex);
+	MarkLightingDirty(blockIter);
+
+	// Step 4: Check if we replaced a SKY block with an opaque block
+	if (wasReplacingSkyBlock && blockDef.m_isOpaque)
+	{
+		// Clear this block's SKY flag
+		block->SetIsSky(false);
+
+		// Descend downward, clearing all SKY flags and marking as dirty
+		// This cuts off the sunlight beam
+		ClearSkyFlagsDownward(blockIter);
+	}
+
+	// Mark chunk as needing mesh rebuild
+	if (!chunk->IsDirty())
+	{
+		chunk->SetDirty(true);
+	}
+
+	// Mark this chunk as needing to be saved
+	chunk->m_needsSaving = true;
+}
+
+void World::PropagateSkyFlagDownward(BlockIterator startIter)
+{
+	BlockIterator currentIter = startIter;
+
+	while (currentIter.IsValid())
+	{
+		Block* currentBlock = currentIter.GetBlockPtr();
+		if (!currentBlock)
+			break;
+
+		// If we hit an opaque block, stop
+		if (currentBlock->IsFullOpaque())
+		{
+			break;
+		}
+
+		// This is a non-opaque block, mark it as SKY
+		currentBlock->SetIsSky(true);
+
+		// Set its outdoor light influence to maximum (direct sunlight)
+		currentBlock->SetOutdoorLightInfluence(15);
+
+		// Mark it as dirty so lighting propagates to neighbors
+		MarkLightingDirty(currentIter);
+
+		// Move down to next block
+		currentIter = currentIter.GetNegZ();
+	}
+}
+
+void World::ClearSkyFlagsDownward(BlockIterator startIter)
+{
+	BlockIterator currentIter = startIter.GetNegZ();
+
+	while (currentIter.IsValid())
+	{
+		Block* currentBlock = currentIter.GetBlockPtr();
+		if (!currentBlock)
+			break;
+
+		if (!currentBlock->IsSky())
+		{
+			break;
+		}
+
+		// Clear the SKY flag
+		currentBlock->SetIsSky(false);
+
+		// Mark as dirty - lighting will recalculate (should become much darker)
+		MarkLightingDirty(currentIter);
+
+		// If we hit an opaque block, stop
+		if (currentBlock->IsFullOpaque())
+		{
+			break;
+		}
+
+		// Move down to next block
+		currentIter = currentIter.GetNegZ();
+	}
+}
+
+void World::UpdateWorldRenderConstants()
+{
+}
+
+void World::UpdateDayNightCycle()
+{
+}
+
+void World::SetWorldConstantsToGPU() const
+{
+	if (!m_player || !m_worldConstantBuffer)
+		return;
+
+	// ========== 组装常量数据 ==========
+	WorldConstants constants = {};
+
+	Vec3 cameraPos = m_player->m_position;
+	constants.CameraPosition = cameraPos;
+	constants.Padding1 = 0.0f;
+
+	// 室内光颜色（归一化到 0-1）
+	constants.IndoorLightColor[0] = m_indoorLightColor.r / 255.0f;
+	constants.IndoorLightColor[1] = m_indoorLightColor.g / 255.0f;
+	constants.IndoorLightColor[2] = m_indoorLightColor.b / 255.0f;
+	constants.IndoorLightColor[3] = m_indoorLightColor.a / 255.0f;
+
+	// 室外光颜色
+	constants.OutdoorLightColor[0] = m_outdoorLightColor.r / 255.0f;
+	constants.OutdoorLightColor[1] = m_outdoorLightColor.g / 255.0f;
+	constants.OutdoorLightColor[2] = m_outdoorLightColor.b / 255.0f;
+	constants.OutdoorLightColor[3] = m_outdoorLightColor.a / 255.0f;
+
+	// 天空/雾颜色
+	constants.SkyColor[0] = m_skyColor.r / 255.0f;
+	constants.SkyColor[1] = m_skyColor.g / 255.0f;
+	constants.SkyColor[2] = m_skyColor.b / 255.0f;
+	constants.SkyColor[3] = m_skyColor.a / 255.0f;
+
+	// 雾距离
+	constants.FogNearDistance = m_fogNearDistance;
+	constants.FogFarDistance = m_fogFarDistance;
+
+	// ========== 使用 Renderer 的通用接口上传和绑定 ==========
+	g_theRenderer->CopyConstantBufferToGPU(&constants, sizeof(WorldConstants), m_worldConstantBuffer);
+	g_theRenderer->BindConstantBuffer(9, m_worldConstantBuffer);
+}
+
+void World::DigBlockByPlayerPos(Vec3 const& playerPos)
 {
 	if (playerPos.z >= 127.999f) return;
 	IntVec2 chunkCoords = Chunk::GetChunkCoords(playerPos);
@@ -1065,14 +1719,16 @@ void World::DigBlock(Vec3 const& playerPos)
 		int blockIndex = curChunk->LocalCoordsToIndex(IntVec3(localCoords.x, localCoords.y, h));
 		if (curChunk->GetBlock(blockIndex).GetTypeIndex()!=0)
 		{
-			Block block = BlockDefinition::s_nameToIndexMap["Air"];
-			curChunk->SetBlock(blockIndex, block);
+			DigBlock(curChunk, blockIndex);
+			//--------------------------
+			//Block block = BlockDefinition::s_nameToIndexMap["Air"];
+			//curChunk->SetBlock(blockIndex, block);
 			break;
 		}
 	}
 }
 
-void World::PlaceBlock(std::string const& typeName, Vec3 const& playerPos)
+void World::PlaceBlockByPlayerPos(std::string const& typeName, Vec3 const& playerPos)
 {
 	if (playerPos.z >= 127.999f) return;
 	IntVec2 chunkCoords = Chunk::GetChunkCoords(playerPos);
@@ -1089,12 +1745,14 @@ void World::PlaceBlock(std::string const& typeName, Vec3 const& playerPos)
 	IntVec3 globalCoords = curChunk->GetGlobalCoords(playerPos);
 	IntVec3 localCoords = curChunk->GlobalCoordsToLocalCoords(globalCoords);
 	for (int h = 0; h < CHUNK_SIZE_Z; h++)
-	{
+	{   
 		int blockIndex = curChunk->LocalCoordsToIndex(IntVec3(localCoords.x, localCoords.y, h));
 		if (curChunk->GetBlock(blockIndex).GetTypeIndex() == 0)
 		{
-			Block block = BlockDefinition::s_nameToIndexMap[typeName];
-			curChunk->SetBlock(blockIndex, block);
+			PlaceBlock(curChunk, blockIndex, typeName);
+			// ---------------------------
+			//Block block = BlockDefinition::s_nameToIndexMap[typeName];
+			//curChunk->SetBlock(blockIndex, block);
 			break;
 		}
 	}
@@ -1115,24 +1773,28 @@ void World::HookUpChunkNeighbors(Chunk* chunk)
 	if (eastIt != m_activeChunks.end()) {
 		chunk->m_neighborEast = eastIt->second;
 		eastIt->second->m_neighborWest = chunk; 
+		eastIt->second->m_isDirty = true;
 	}
 
 	auto westIt = m_activeChunks.find(westCoords);
 	if (westIt != m_activeChunks.end()) {
 		chunk->m_neighborWest = westIt->second;
 		westIt->second->m_neighborEast = chunk;
+		westIt->second->m_isDirty = true;
 	}
 
 	auto northIt = m_activeChunks.find(northCoords);
 	if (northIt != m_activeChunks.end()) {
 		chunk->m_neighborNorth = northIt->second;
 		northIt->second->m_neighborSouth = chunk;
+		northIt->second->m_isDirty = true;
 	}
 
 	auto southIt = m_activeChunks.find(southCoords);
 	if (southIt != m_activeChunks.end()) {
 		chunk->m_neighborSouth = southIt->second;
 		southIt->second->m_neighborNorth = chunk;
+		southIt->second->m_isDirty = true;
 	}
 }
 

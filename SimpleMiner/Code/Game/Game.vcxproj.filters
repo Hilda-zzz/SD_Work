@@ -88,6 +88,9 @@
     <ClCompile Include="BiomeTypes.cpp">
       <Filter>PCG</Filter>
     </ClCompile>
+    <ClCompile Include="Block.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -165,6 +168,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\..\Run\Data\Shaders\Diffuse.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\WorldShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

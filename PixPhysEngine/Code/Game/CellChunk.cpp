@@ -31,7 +31,7 @@ CellChunk::~CellChunk()
 {
 }
 
-void CellChunk::RebuildVertex()
+void CellChunk::RebuildVertexWithNewColor()
 {
 	m_vertex.clear();
 	for (int localY = 0; localY < CHUNK_SIZE; ++localY) {
@@ -47,6 +47,25 @@ void CellChunk::RebuildVertex()
 					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
 						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
 					cellColor);
+			}
+		}
+	}
+}
+
+void CellChunk::RebuildVertexUseSelfColor()
+{
+	m_vertex.clear();
+	for (int localY = 0; localY < CHUNK_SIZE; ++localY) 
+	{
+		for (int localX = 0; localX < CHUNK_SIZE; ++localX) 
+		{
+			const Cell& cell = GetLocalCell(localX, localY);
+			if (cell.m_type != CellMatType::MAT_EMPTY) {
+				IntVec2 worldPos = LocalToWorld(localX, localY);
+				AddVertsForAABB2D(m_vertex,
+					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
+						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
+					cell.m_color);
 			}
 		}
 	}

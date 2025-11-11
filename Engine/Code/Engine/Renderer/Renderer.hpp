@@ -151,12 +151,15 @@ public:
 	VertexBuffer* CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride);
 	IndexBuffer* CreateIndexBuffer(unsigned int size);
 
-public:
 	void CopyGameVertexBufferToGPU(const void* data, unsigned int verticeCount, VertexBuffer* vbo);
 	void CopyGameIndexBufferToGPU(const void* data, unsigned int count, IndexBuffer* ibo);
 	void DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo);
 	void DrawGameVertexBuffer(VertexBuffer* vbo);
 
+	//---------------------- Constants Buffer -----------------------------------
+	ConstantBuffer* CreateConstantBuffer(const unsigned int size);
+	void			CopyConstantBufferToGPU(const void* data, unsigned int size, ConstantBuffer* cbo);
+	void			BindConstantBuffer(int slot, ConstantBuffer* cbo);
 	//-----------------------Shadow-------------------------------------------------------------------
 	void InitializeShadowMapping();
 	void BeginShadowMapRender(Mat44 const& lightViewProjection);
@@ -232,9 +235,7 @@ protected:
 	void			DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount);
 	void			CopyCPUToGPU(const void* data, unsigned int count, IndexBuffer* ibo);
 	//----------------------------------------------------------------
-	ConstantBuffer* CreateConstantBuffer(const unsigned int size);
 	void			CopyCPUToGPU(const void* data, unsigned int size, ConstantBuffer* cbo);
-	void			BindConstantBuffer(int slot, ConstantBuffer* cbo);
 	
 	//----------------------------------------------------------------
 	

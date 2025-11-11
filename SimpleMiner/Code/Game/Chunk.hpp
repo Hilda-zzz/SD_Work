@@ -165,6 +165,7 @@ public:
 	//=== GET AND SET ===
 	Block GetBlock(const IntVec3& localCoords) const;
 	Block GetBlock(int index) const;
+	Block& GetBlockRef(int index);
 	void SetBlock(const IntVec3& localCoords, const Block& block);
 	void SetBlock(int index, const Block& block);
 // 	Block GetBlockAtGlobalCoords(const IntVec3& globalCoords) const;
@@ -217,6 +218,10 @@ public:
 
 	//int SaveChunkToFile(std::string const& saveFolder);
 	//bool LoadChunkFromFile(std::string const& filename);
+
+private:
+	void DebugRenderLightingAdvanced(bool showIndoor, bool showOutdoor,
+		bool showZero, float textSize) const;
 
 public:
 	static RandomNumberGenerator s_rng;

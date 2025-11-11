@@ -34,4 +34,6 @@ public:
 	AABB2 m_topUVs = AABB2::ZERO_TO_ONE;
 	AABB2 m_sideUVs = AABB2::ZERO_TO_ONE;
 	AABB2 m_bottomUVs = AABB2::ZERO_TO_ONE;
+	int m_indoorLight = 0;
+	int m_outdoorLight = 0;
 };

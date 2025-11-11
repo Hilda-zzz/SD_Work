@@ -489,10 +489,6 @@ void Renderer::EndFrame()
 void Renderer::Shutdown()
 {
 	//DX_SAFE_RELEASE(m_rasterizerState);
-	DX_SAFE_RELEASE(m_renderTargetView);
-	DX_SAFE_RELEASE(m_swapChain);
-	DX_SAFE_RELEASE(m_deviceContext);
-	DX_SAFE_RELEASE(m_device);
 
 	//---------------------------------------------------------
 	for (Shader* shader : m_loadedShaders)
@@ -598,6 +594,12 @@ void Renderer::Shutdown()
 		ShutdownImgui();
 		m_enableImgui = false;
 	}
+
+	DX_SAFE_RELEASE(m_renderTargetView);
+	DX_SAFE_RELEASE(m_swapChain);
+	DX_SAFE_RELEASE(m_deviceContext);
+	DX_SAFE_RELEASE(m_device);
+
 #if defined(ENGINE_DEBUG_RENDER)
 	((IDXGIDebug*)m_dxgiDebug)->ReportLiveObjects(
 		DXGI_DEBUG_ALL,
@@ -1700,6 +1702,11 @@ ConstantBuffer* Renderer::CreateConstantBuffer(const unsigned int size)
 		ERROR_AND_DIE("Could not create constant vertex buffer");
 	}
 	return cbo;
+}
+
+void Renderer::CopyConstantBufferToGPU(const void* data, unsigned int size, ConstantBuffer* cbo)
+{
+	CopyCPUToGPU(data, size, cbo);
 }
 
 void Renderer::CopyCPUToGPU(const void* data, unsigned int size, ConstantBuffer* cbo)
