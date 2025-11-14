@@ -112,3 +112,8 @@ Chunk* BlockIterator::GetChunk() const
 {
 	return m_chunk;
 }
+
+int BlockIterator::GetBlockIndex() const
+{
+	return m_blockIndex;
+}

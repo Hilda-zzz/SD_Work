@@ -18,6 +18,7 @@ public:
 	static const	Rgba8 MAGNETA;
 	static const	Rgba8 HILDA;
 	static const	Rgba8 TRANSP_BLACK;
+	static const    Rgba8 GRAY;
 	~Rgba8() {};
 	Rgba8();
 	explicit Rgba8(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);

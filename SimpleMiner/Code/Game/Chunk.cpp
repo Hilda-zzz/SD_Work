@@ -247,7 +247,7 @@ void Chunk::RenderDebug() const
 	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(m_debugVertexArray);
 
-	DebugRenderLightingAdvanced(true,false,false,0.2f);
+	//DebugRenderLightingAdvanced(true,false,false,0.2f);
 }
 
 // Add to Chunk.cpp
@@ -635,7 +635,7 @@ IntVec3 Chunk::IndexToLocalCoords(int index) const
 	return IntVec3(x, y, z);
 }
 
-int Chunk::GlobalCoordsToIndex(const IntVec3& globalCoords)
+int Chunk::GlobalCoordsToIndex(const IntVec3& globalCoords) const
 {
 	int localX = globalCoords.x & CHUNK_MAX_X;
 	int localY = globalCoords.y & CHUNK_MAX_Y;
@@ -1084,7 +1084,7 @@ void Chunk::CalculateWorldBounds()
 	m_worldBounds = AABB3(minBound, maxBound);
 }
 
-void Chunk::DebugRenderLightingAdvanced(bool showIndoor, bool showOutdoor, bool showZero, float textSize) const
+void Chunk::DebugRenderLightingAdvanced(bool showIndoor, bool showOutdoor, bool showZero) const
 {
 	for (int blockIndex = 0; blockIndex < BLOCKS_PER_CHUNK; ++blockIndex)
 	{

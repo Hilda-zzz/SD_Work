@@ -23,6 +23,9 @@
     <Filter Include="PCG">
       <UniqueIdentifier>{fda71529-c25c-4a9d-87fb-70bf54ab973b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{adae1ccc-0257-4bc8-8fc1-edcfe2891511}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -78,6 +81,9 @@
     </ClCompile>
     <ClCompile Include="BasePlayer.cpp">
       <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="SampleImageUtils.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,6 +152,9 @@
     </ClInclude>
     <ClInclude Include="PCGTemplate.hpp">
       <Filter>PCG</Filter>
+    </ClInclude>
+    <ClInclude Include="SampleImageUtils.hpp">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

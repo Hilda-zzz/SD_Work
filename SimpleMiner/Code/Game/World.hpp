@@ -8,6 +8,7 @@
 #include "BlockIterator.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "GameRaycastResult3D.hpp"
 
 class Chunk;
 class Player;
@@ -49,8 +50,16 @@ public:
 	void DigBlockByPlayerPos(Vec3 const& playerPos);
 	void PlaceBlockByPlayerPos(std::string const& typeName, Vec3 const& playerPos);
 
+	void DigAtRaycast();
+	void PlaceBlockAtRaycast(std::string const& typeName);
+
 	void HookUpChunkNeighbors(Chunk* chunk);
 	void UnhookChunkNeighbors(Chunk* chunk);
+
+	Rgba8 GetSkyLight() const { return m_skyColor; }
+
+	Chunk* GetChunkByWorldPos(Vec3 const& worldPos);
+	Chunk const* GetChunkByWorldPos(Vec3 const& worldPos) const;
 
 private:
 	//=========================
@@ -108,13 +117,29 @@ private:
 
 	void DigBlock(Chunk* chunk, int blockIndex);
 	void PlaceBlock(Chunk* chunk, int blockIndex, std::string const& typeName);
+	void MarkNeighborChunksDirtyIfOnBoundary(BlockIterator const& blockIter);
+
 	void PropagateSkyFlagDownward(BlockIterator startIter);
 	void ClearSkyFlagsDownward(BlockIterator startIter);
 
 	// ========== 世界渲染相关（新增）==========
-	void UpdateWorldRenderConstants();
-	void UpdateDayNightCycle();
+	void UpdateWorldRenderConstants(float deltaTime);
+	void UpdateDayNightCycle(float deltaTime);
 	void SetWorldConstantsToGPU() const;
+	
+	// =========== Raycast ===================
+	GameRaycastResult3D RaycastVsBlocks(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist);
+	void UpdateCameraRaycast();
+
+	void DebugDrawRaycast();
+	void DrawBlockDebugOutline(BlockIterator const& blockIter, int hitFaceIndex);
+	void DrawFaceOutline(Vec3 const& minCorner, Vec3 const& maxCorner,
+		int faceIndex, float thickness, float duration, Rgba8 const& color);
+	void DebugAddWorldWireCube(Vec3 const& minCorner, Vec3 const& maxCorner,
+		float thickness, float duration, Rgba8 const& color);
+
+	BlockIterator GetPlacementIterator() const;
+
 
 private:
 	std::vector<Chunk*> m_chunkUpdateList;
@@ -152,7 +177,16 @@ private:
 	float m_fogNearDistance = 128.0f;
 	float m_fogFarDistance = 256.0f;
 
+	Rgba8 m_baseindoorLightColor = Rgba8(255, 230, 204);
 	Rgba8 m_indoorLightColor = Rgba8(255, 230, 204);   // 暖黄色
 	Rgba8 m_outdoorLightColor = Rgba8(255, 255, 255);  // 白色
 	Rgba8 m_skyColor = Rgba8(135, 206, 235, 180);      // 蓝天
+
+	float m_worldTimeScale = 1.f;
+	float m_worldTimeInDays = 0.f;
+
+	//================== Raycast ===============
+	GameRaycastResult3D m_currentRaycastResult;
+	GameRaycastResult3D m_debugDrawRaycastResult;
+	bool m_isRaycastLock = false;
 };

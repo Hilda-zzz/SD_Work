@@ -280,6 +280,7 @@ void Game::RenderAttractMode() const
 
 void Game::RenderGameplayMode() const
 {
+	g_theRenderer->ClearScreen(m_world->GetSkyLight());
 	g_theRenderer->BeginCamera(m_player->m_playerCam);
 
 	// m_cubeSkybox->Render();

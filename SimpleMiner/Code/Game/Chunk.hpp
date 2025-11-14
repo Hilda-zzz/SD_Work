@@ -191,7 +191,7 @@ public:
 	int IndexToLocalZ(int index);
 	IntVec3 IndexToLocalCoords(int index) const;
 
-	int GlobalCoordsToIndex(const IntVec3& globalCoords);
+	int GlobalCoordsToIndex(const IntVec3& globalCoords) const;
 	int GlobalCoordsToIndex(int x, int y, int z);
 
 	static IntVec2 GetChunkCoords(Vec3 const& position);
@@ -221,7 +221,7 @@ public:
 
 private:
 	void DebugRenderLightingAdvanced(bool showIndoor, bool showOutdoor,
-		bool showZero, float textSize) const;
+		bool showZero) const;
 
 public:
 	static RandomNumberGenerator s_rng;

@@ -772,7 +772,7 @@ Texture* Renderer::CreateTextureFromImage(const Image& image, unsigned int mipLe
 	srvDesc.Format = textureDesc.Format;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = -1;
+	srvDesc.Texture2D.MipLevels = 0xFFFFFFFF;
 	hr = m_device->CreateShaderResourceView(newTexture->m_texture, &srvDesc, &newTexture->m_shaderResourceView);
 	if (!SUCCEEDED(hr))
 	{

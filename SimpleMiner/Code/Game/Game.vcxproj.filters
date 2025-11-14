@@ -162,6 +162,9 @@
     <ClInclude Include="TreeGenerator.hpp">
       <Filter>PCG</Filter>
     </ClInclude>
+    <ClInclude Include="GameRaycastResult3D.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\..\Run\Data\Shaders\CubeSkyBox.hlsl">

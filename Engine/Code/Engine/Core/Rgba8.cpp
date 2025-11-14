@@ -11,6 +11,7 @@ const Rgba8 Rgba8::MAGNETA = Rgba8(255, 0, 255);
 const Rgba8 Rgba8::YELLOW = Rgba8(255, 255, 0);
 const Rgba8 Rgba8::HILDA = Rgba8(152, 161, 242);
 const Rgba8 Rgba8::TRANSP_BLACK = Rgba8(0, 0, 0,120);
+const Rgba8 Rgba8::GRAY = Rgba8(120, 120, 120, 255);
 
 Rgba8::Rgba8():r(255), g(255), b(255), a(255) {}
 

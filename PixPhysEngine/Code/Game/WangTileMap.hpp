@@ -56,7 +56,7 @@ private:
 	// === 新增：主题纹理支持 ===
 	void LoadMaterialTextures();
 	Rgba8 SampleMaterialTexture(CellMatType matType, int worldX, int worldY) const;
-	Rgba8 SampleImage(Image* img, int worldX, int worldY, float tilingMultiplier = 1.0f) const;
+	//Rgba8 SampleImage(Image* img, int worldX, int worldY, float tilingMultiplier = 1.0f) const;
 	// ===============================
 
 	//void LoadGrayscaleTemplate(const std::string& filename);
@@ -88,4 +88,7 @@ private:
 	Image* m_edgeSticker = nullptr;
 	Image* m_sand = nullptr;
 	Image* m_sandEdgeSticker = nullptr;
+
+	Image* m_stickerImageA = nullptr;               // RED区域贴画
+	Image* m_stickerImageB = nullptr;               // CYAN区域贴画
 };

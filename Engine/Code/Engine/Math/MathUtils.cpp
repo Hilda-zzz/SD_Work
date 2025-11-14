@@ -892,6 +892,19 @@ void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const 
 	//posToTransform.x = posToTransform.x * iBasis.x + posToTransform.y * jBasis.x + translation.x;
 	//posToTransform.y = posToTransform.x * iBasis.y + posToTransform.y * jBasis.y + translation.y;
 }
+int GetClamped(int value, int minValue, int maxValue)
+{
+	if (value < minValue)
+	{
+		return minValue;
+	}
+	else if (value > maxValue)
+	{
+		return maxValue;
+	}
+	else
+		return value;
+}
 float GetClamped(float value, float minValue, float maxValue)
 {
 	if (value < minValue)

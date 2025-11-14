@@ -70,7 +70,6 @@ bool CreateFolder(std::string const& folderName)
 	if (!std::filesystem::create_directory(folderName))
 	{
 		ERROR_AND_DIE(Stringf("Could not create folder: \"%s\"", folderName.c_str()));
-		return false;
 	}
 	return true;
 }

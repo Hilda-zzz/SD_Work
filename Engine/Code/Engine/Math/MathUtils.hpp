@@ -31,6 +31,7 @@ enum class BillboardType
 
 
 //Clamp and lerp
+int GetClamped(int value, int minValue, int maxValue);
 float GetClamped(float value, float minValue, float maxValue);
 float GetClampedZeroToOne(float value);
 float Interpolate(float start, float end, float fractionTowardEnd);

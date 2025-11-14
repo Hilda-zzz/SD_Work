@@ -14,6 +14,7 @@
 #include "ThirdParty/imgui/imgui.h"
 #include "CellMatManager.hpp"
 #include "WangTileMap.hpp"
+#include "SampleImageUtils.hpp"
 
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
@@ -28,6 +29,8 @@ Game::Game()
 	m_gameClock = new Clock();
 
 	CellMatManager::InitializeMaterials();
+
+	m_testUtilImg = new Image("Data/Images/edge_earth_rainforest_ver.png");
 	/*m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
 	m_sandboxMap = new SandboxMap(m_sandboxPlayer,IntVec2(640,320));
 
@@ -56,6 +59,9 @@ Game::~Game()
 
 	delete m_gameClock;
 	m_gameClock = nullptr;
+
+	delete m_testUtilImg;
+	m_testUtilImg = nullptr;
 }
 
 
@@ -219,6 +225,50 @@ void Game::RenderAttractMode() const
 	g_theRenderer->EndCamera(m_screenCamera);
 
 	RenderGameModeSelectionUI();
+
+	if (m_testUtilImg)
+	{
+		std::vector<Vertex_PCU> verts;
+
+		// Test parameters - change these to test different transforms
+		Rotation testRotation = Rotation::ROTATE_0;      // Change to: ROTATE_90, ROTATE_180, ROTATE_270
+		Symmetry testSymmetry = Symmetry::FLIP_BOTH;          // Change to: FLIP_X, FLIP_Y, FLIP_BOTH
+
+		// Display settings
+		const int imageSize = 16;      // Source image is 512x512
+		const float displaySize = 21.f; // Display size in screen space
+		const float startX = 544.f;      // Center on screen (1600/2 - 512/2)
+		const float startY = 144.f;      // Center on screen (800/2 - 512/2)
+
+		// Sample and render each pixel
+		for (int py = -42; py < 42; py++)
+		{
+			for (int px = -42; px <42; px++)
+			{
+				// Sample color using SampleImage with transform
+				Rgba8 color = SampleImage(m_testUtilImg, px, py, 1.0f, testRotation, testSymmetry);
+
+				// Calculate pixel position in screen space
+				float pixelSize = 10.f;
+				float x0 = startX + px * pixelSize;
+				float y0 = startY + py * pixelSize;
+				float x1 = x0 + pixelSize;
+				float y1 = y0 + pixelSize;
+
+				// Add quad
+				verts.push_back(Vertex_PCU(Vec3(x0, y0, 0.f), color, Vec2(0.f, 0.f)));
+				verts.push_back(Vertex_PCU(Vec3(x1, y0, 0.f), color, Vec2(1.f, 0.f)));
+				verts.push_back(Vertex_PCU(Vec3(x1, y1, 0.f), color, Vec2(1.f, 1.f)));
+
+				verts.push_back(Vertex_PCU(Vec3(x0, y0, 0.f), color, Vec2(0.f, 0.f)));
+				verts.push_back(Vertex_PCU(Vec3(x1, y1, 0.f), color, Vec2(1.f, 1.f)));
+				verts.push_back(Vertex_PCU(Vec3(x0, y1, 0.f), color, Vec2(0.f, 1.f)));
+			}
+		}
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetModelConstants();
+		g_theRenderer->DrawVertexArray(verts);
+	}
 }
 
 void Game::RenderGameplayMode() const

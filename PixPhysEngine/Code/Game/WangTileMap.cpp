@@ -7,6 +7,7 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "ThirdParty/Noise/SmoothNoise.hpp"
 #include "Engine/Math/FloatRange.hpp"
+#include "SampleImageUtils.hpp"
 
 extern Renderer* g_theRenderer;
 
@@ -24,6 +25,8 @@ WangTileMap::WangTileMap(SandboxPlayer* player)
 	m_edgeSticker = new Image("Data/Images/edge_soil_lush_1.png");
 	m_sand = new Image("Data/Images/moss.png");
 	m_sandEdgeSticker = new Image("Data/Images/edge_soil_dead_1.png");
+
+	m_stickerImageA = new Image("Data/Images/edge_earth_rainforest_ver.png");           // RED区域贴画
 
 	LoadTemplateFromFile("Data/Images/XShapeWithColor.png");
 	GenerateMapFromTemplate();
@@ -44,6 +47,8 @@ WangTileMap::~WangTileMap()
 		delete pair.second;
 	}
 	m_materialTextures.clear();
+
+	delete m_stickerImageA;
 }
 
 void WangTileMap::Initialize()
@@ -68,6 +73,7 @@ void WangTileMap::DetectTemplateEdges()
 	{
 		for (int x = 0; x < m_templateSize.x; ++x)
 		{
+			if (m_templateData[y][x].m_layerType == PixelLayerType::EMPTY) continue;
 			PixelLayerType curType = m_templateData[y][x].m_layerType;
 
 			// 检查上方pixel (x, y+1)
@@ -90,10 +96,18 @@ void WangTileMap::DetectTemplateEdges()
 				}
 			}
 
-			// 检查右上方pixel (x+1, y+1)
-			if (x + 1 < m_templateSize.x && y + 1 < m_templateSize.y)
+			if (y - 1 >= 0)
 			{
-				if (curType != m_templateData[y + 1][x + 1].m_layerType)
+				if (curType != m_templateData[y - 1][x].m_layerType)
+				{
+					m_templateData[y][x].m_isEdge = true;
+					continue;
+				}
+			}
+
+			if (x - 1 >= 0)
+			{
+				if (curType != m_templateData[y][x - 1].m_layerType)
 				{
 					m_templateData[y][x].m_isEdge = true;
 					continue;
@@ -198,30 +212,82 @@ bool WangTileMap::IsGrayscale(const Rgba8& color, float tolerance) const
 	return maxDiff == 0;
 }
 
+//float WangTileMap::CalculateBaseDensity(int cellX, int cellY) const
+//{
+//	float templateX = cellX / static_cast<float>(WANG_CELLS_PER_PIXEL);
+//	float templateY = cellY / static_cast<float>(WANG_CELLS_PER_PIXEL);
+//
+//	int x0 = static_cast<int>(std::floor(templateX));
+//	int y0 = static_cast<int>(std::floor(templateY));
+//	int x1 = std::min(x0 + 1, m_templateSize.x - 1);
+//	int y1 = std::min(y0 + 1, m_templateSize.y - 1);
+//
+//	x0 = std::clamp(x0, 0, m_templateSize.x - 1);
+//	y0 = std::clamp(y0, 0, m_templateSize.y - 1);
+//
+//	float fx = templateX - x0;
+//	float fy = templateY - y0;
+//
+//	TemplatePixel p00 = GetTemplatePixelAt(x0, y0);
+//	TemplatePixel p10 = GetTemplatePixelAt(x1, y0);
+//	TemplatePixel p11 = GetTemplatePixelAt(x1, y1);
+//	TemplatePixel p01 = GetTemplatePixelAt(x0, y1);
+//
+//	auto getDensityForBase = [](const TemplatePixel& p) -> float {
+//		if (p.m_layerType == PixelLayerType::COLORED) {
+//			return 1.0f;  
+//		}
+//		return p.m_density;
+//		};
+//
+//	float v00 = getDensityForBase(p00);
+//	float v10 = getDensityForBase(p10);
+//	float v11 = getDensityForBase(p11);
+//	float v01 = getDensityForBase(p01);
+//
+//	float v0 = v00 * (1.0f - fx) + v10 * fx;
+//	float v1 = v01 * (1.0f - fx) + v11 * fx;
+//	float density = v0 * (1.0f - fy) + v1 * fy;
+//
+//	return density;
+//}
+
 float WangTileMap::CalculateBaseDensity(int cellX, int cellY) const
 {
-	float templateX = cellX / static_cast<float>(WANG_CELLS_PER_PIXEL);
-	float templateY = cellY / static_cast<float>(WANG_CELLS_PER_PIXEL);
+	// 关键修正：让 cell 中心映射到以 pixel 中心为单位的坐标系
+	// 使得每个 pixel 的中心 cell 能够正确采样该 pixel
+	// 计算公式：(cellX - (CELLS_PER_PIXEL - 1) / 2) / CELLS_PER_PIXEL
+	// 这样 cell [7.5] 会映射到 templateX = 0 (Pixel 0 的中心)
 
+	float halfCells = (WANG_CELLS_PER_PIXEL - 1) * 0.5f;  // 对于 16，这是 7.5
+	float templateX = (cellX + 0.5f - halfCells) / static_cast<float>(WANG_CELLS_PER_PIXEL);
+	float templateY = (cellY + 0.5f - halfCells) / static_cast<float>(WANG_CELLS_PER_PIXEL);
+
+	// 找到周围4个像素
 	int x0 = static_cast<int>(std::floor(templateX));
 	int y0 = static_cast<int>(std::floor(templateY));
-	int x1 = std::min(x0 + 1, m_templateSize.x - 1);
-	int y1 = std::min(y0 + 1, m_templateSize.y - 1);
+	int x1 = x0 + 1;
+	int y1 = y0 + 1;
 
+	// 边界检查
 	x0 = std::clamp(x0, 0, m_templateSize.x - 1);
 	y0 = std::clamp(y0, 0, m_templateSize.y - 1);
+	x1 = std::clamp(x1, 0, m_templateSize.x - 1);
+	y1 = std::clamp(y1, 0, m_templateSize.y - 1);
 
-	float fx = templateX - x0;
-	float fy = templateY - y0;
+	float fx = templateX - std::floor(templateX);
+	float fy = templateY - std::floor(templateY);
 
+	// 获取4个像素
 	TemplatePixel p00 = GetTemplatePixelAt(x0, y0);
 	TemplatePixel p10 = GetTemplatePixelAt(x1, y0);
 	TemplatePixel p11 = GetTemplatePixelAt(x1, y1);
 	TemplatePixel p01 = GetTemplatePixelAt(x0, y1);
 
+	// 计算密度（彩色像素视为完全实心 = 1.0）
 	auto getDensityForBase = [](const TemplatePixel& p) -> float {
 		if (p.m_layerType == PixelLayerType::COLORED) {
-			return 1.0f;  
+			return 1.0f;
 		}
 		return p.m_density;
 		};
@@ -231,6 +297,7 @@ float WangTileMap::CalculateBaseDensity(int cellX, int cellY) const
 	float v11 = getDensityForBase(p11);
 	float v01 = getDensityForBase(p01);
 
+	// 双线性插值
 	float v0 = v00 * (1.0f - fx) + v10 * fx;
 	float v1 = v01 * (1.0f - fx) + v11 * fx;
 	float density = v0 * (1.0f - fy) + v1 * fy;
@@ -240,21 +307,29 @@ float WangTileMap::CalculateBaseDensity(int cellX, int cellY) const
 
 float WangTileMap::CalculateColoredDensity(int cellX, int cellY, const Rgba8& targetColor) const
 {
-	// 映射到模板坐标
-	float templateX = cellX / static_cast<float>(WANG_CELLS_PER_PIXEL);
-	float templateY = cellY / static_cast<float>(WANG_CELLS_PER_PIXEL);
+	// 使用与 CalculateBaseDensity 相同的映射逻辑
+	// 让 cell 中心映射到以 pixel 中心为单位的坐标系
+	float halfCells = (WANG_CELLS_PER_PIXEL - 1) * 0.5f;  // 对于 16，这是 7.5
+	float templateX = (cellX + 0.5f - halfCells) / static_cast<float>(WANG_CELLS_PER_PIXEL);
+	float templateY = (cellY + 0.5f - halfCells) / static_cast<float>(WANG_CELLS_PER_PIXEL);
 
+	// 找到周围4个像素
 	int x0 = static_cast<int>(std::floor(templateX));
 	int y0 = static_cast<int>(std::floor(templateY));
-	int x1 = std::min(x0 + 1, m_templateSize.x - 1);
-	int y1 = std::min(y0 + 1, m_templateSize.y - 1);
+	int x1 = x0 + 1;
+	int y1 = y0 + 1;
 
+	// 边界检查
 	x0 = std::clamp(x0, 0, m_templateSize.x - 1);
 	y0 = std::clamp(y0, 0, m_templateSize.y - 1);
+	x1 = std::clamp(x1, 0, m_templateSize.x - 1);
+	y1 = std::clamp(y1, 0, m_templateSize.y - 1);
 
-	float fx = templateX - x0;
-	float fy = templateY - y0;
+	// 计算插值参数
+	float fx = templateX - std::floor(templateX);
+	float fy = templateY - std::floor(templateY);
 
+	// 获取4个像素
 	TemplatePixel p00 = GetTemplatePixelAt(x0, y0);
 	TemplatePixel p10 = GetTemplatePixelAt(x1, y0);
 	TemplatePixel p11 = GetTemplatePixelAt(x1, y1);
@@ -327,19 +402,107 @@ void WangTileMap::GenerateColoredLayers()
 	}
 }
 
+//void WangTileMap::GenerateBaseCellsInChunk(CellChunk* chunk)
+//{
+//	IntVec2 chunkCoords = chunk->GetChunkIndex();
+//
+//	for (int localY = 0; localY < WANG_CHUNK_SIZE; ++localY) 
+//	{
+//		for (int localX = 0; localX < WANG_CHUNK_SIZE; ++localX) 
+//		{
+//			int worldX = chunkCoords.x * WANG_CHUNK_SIZE + localX;
+//			int worldY = chunkCoords.y * WANG_CHUNK_SIZE + localY;
+//
+//			float baseDensity = CalculateBaseDensity(worldX, worldY);
+//			float advancedDensity = baseDensity;
+//			// 添加Perlin噪声
+//			if (baseDensity > 0.0001f && baseDensity < 0.999999f) {
+//				float noise = Compute2dPerlinNoise(
+//					static_cast<float>(worldX),
+//					static_cast<float>(worldY),
+//					64.0f,      // scale
+//					2,          // octaves
+//					DEFAULT_OCTAVE_PERSISTANCE,
+//					DEFAULT_NOISE_OCTAVE_SCALE,
+//					true,
+//					0U
+//				);
+//				advancedDensity -= abs(noise) * 0.3f;
+//				advancedDensity = RangeMapClamped(advancedDensity, FloatRange(-1.f, 1.f), FloatRange(0.f, 1.f));
+//			}
+//
+//			Cell& cell = chunk->GetLocalCell(localX, localY);
+//			// 根据密度阈值设置cell
+//			if (advancedDensity > 0.6f)
+//			{
+//				cell.SetToType(CellMatType::MAT_STONE);
+//				cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
+//				//Decoration noise
+//				float decoNoise = Compute2dPerlinNoise(
+//					static_cast<float>(worldX),
+//					static_cast<float>(worldY),
+//					16.0f,      // scale
+//					2,          // octaves
+//					DEFAULT_OCTAVE_PERSISTANCE,
+//					DEFAULT_NOISE_OCTAVE_SCALE,
+//					true,
+//					0U + 1
+//				);
+//
+//				float densityFactor = 1.0f - baseDensity; // 0.4 到 0.0
+//				decoNoise *= (1.0f + densityFactor * 2.0f);
+//
+//				if (decoNoise > 0.2f)
+//				{
+//					cell.SetToType(CellMatType::MAT_WOOD);
+//					//cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
+//					cell.m_color = Rgba8::CYAN;
+//				}
+//				if (decoNoise > -0.2f && decoNoise < 0.2f)
+//				{
+//					cell.m_color = Rgba8::RED;
+//				}
+//
+//				if (advancedDensity < 0.8f)
+//				{
+//					cell.SetToType(CellMatType::MAT_WOOD);
+//					cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
+//
+//					Rgba8 texColor2 = SampleImage(m_edgeSticker, m_edgeSticker->GetDimensions().x/2, m_edgeSticker->GetDimensions().y / 2, 1.f);
+//					if (texColor2.a != 0)
+//					{
+//						cell.m_color = texColor2;
+//					}
+//
+//					Rgba8 texColor3 = SampleImage(m_edgeSticker, worldX+10, worldY+10, 0.5f);
+//					if (texColor3.a != 0)
+//					{
+//						cell.m_color = texColor3;
+//					}
+//
+//					Rgba8 texColor1= SampleImage(m_edgeSticker, worldX, worldY, 0.5f);
+//					if (texColor1.a!= 0)
+//					{
+//						cell.m_color = texColor1;
+//					}
+//				}
+//			}
+//		}
+//	}
+//}
+
 void WangTileMap::GenerateBaseCellsInChunk(CellChunk* chunk)
 {
 	IntVec2 chunkCoords = chunk->GetChunkIndex();
-
-	for (int localY = 0; localY < WANG_CHUNK_SIZE; ++localY) 
+	for (int localY = 0; localY < WANG_CHUNK_SIZE; ++localY)
 	{
-		for (int localX = 0; localX < WANG_CHUNK_SIZE; ++localX) 
+		for (int localX = 0; localX < WANG_CHUNK_SIZE; ++localX)
 		{
 			int worldX = chunkCoords.x * WANG_CHUNK_SIZE + localX;
 			int worldY = chunkCoords.y * WANG_CHUNK_SIZE + localY;
-
 			float baseDensity = CalculateBaseDensity(worldX, worldY);
 			float advancedDensity = baseDensity;
+
 			// 添加Perlin噪声
 			if (baseDensity > 0.0001f && baseDensity < 0.999999f) {
 				float noise = Compute2dPerlinNoise(
@@ -363,7 +526,8 @@ void WangTileMap::GenerateBaseCellsInChunk(CellChunk* chunk)
 			{
 				cell.SetToType(CellMatType::MAT_STONE);
 				cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
-				//Decoration noise
+
+				// Decoration noise
 				float decoNoise = Compute2dPerlinNoise(
 					static_cast<float>(worldX),
 					static_cast<float>(worldY),
@@ -374,39 +538,99 @@ void WangTileMap::GenerateBaseCellsInChunk(CellChunk* chunk)
 					true,
 					0U + 1
 				);
-
 				float densityFactor = 1.0f - baseDensity; // 0.4 到 0.0
 				decoNoise *= (1.0f + densityFactor * 2.0f);
 
-				if (decoNoise > 0.2f)
+				// RED区域 - 采样imgA作为贴画
+// RED区域 - 采样imgA作为贴画
+				if (decoNoise > -0.2f && decoNoise < 0.2f)
+				{
+					if (m_stickerImageA) {
+						// 第一次采样 - 原始方向
+						Rgba8 stickerColor = SampleImage(
+							m_stickerImageA,
+							worldX,
+							worldY,
+							1.0f,                    // tilingMultiplier
+							Rotation::ROTATE_0,      // 原始方向
+							Symmetry::NONE           // 无对称
+						);
+
+						// 只有alpha不为0才贴上去
+						if (stickerColor.a != 0) {
+							cell.m_color = stickerColor;
+						}
+
+						// 第二次采样 - 旋转90度
+						Rgba8 stickerColor90 = SampleImage(
+							m_stickerImageA,
+							worldX,
+							worldY,
+							1.0f,                    // tilingMultiplier
+							Rotation::ROTATE_90,     // 旋转90度
+							Symmetry::NONE           // 无对称
+						);
+
+						// 只有alpha不为0才贴上去
+						if (stickerColor90.a != 0) {
+							cell.m_color = stickerColor90;
+						}
+					}
+				}
+				// CYAN区域 - 采样imgB作为贴画
+				else if (decoNoise > 0.2f)
 				{
 					cell.SetToType(CellMatType::MAT_WOOD);
 					cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
 				}
+
+				// 边缘过渡区域
 				if (advancedDensity < 0.8f)
 				{
 					cell.SetToType(CellMatType::MAT_WOOD);
 					cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
 
-					Rgba8 texColor2 = SampleImage(m_edgeSticker, m_edgeSticker->GetDimensions().x/2, m_edgeSticker->GetDimensions().y / 2, 1.f);
-					if (texColor2.a != 0)
-					{
-						cell.m_color = texColor2;
+					// 使用m_edgeSticker进行边缘装饰
+					if (m_edgeSticker) {
+						// 中心采样
+						Rgba8 texColor2 = SampleImage(
+							m_edgeSticker,
+							m_edgeSticker->GetDimensions().x / 2,
+							m_edgeSticker->GetDimensions().y / 2,
+							1.f,
+							Rotation::ROTATE_0,
+							Symmetry::NONE
+						);
+						if (texColor2.a != 0) {
+							cell.m_color = texColor2;
+						}
+
+						// 偏移采样
+						Rgba8 texColor3 = SampleImage(
+							m_edgeSticker,
+							worldX + 10,
+							worldY + 10,
+							0.5f,
+							Rotation::ROTATE_0,
+							Symmetry::NONE
+						);
+						if (texColor3.a != 0) {
+							cell.m_color = texColor3;
+						}
+
+						// 世界坐标采样
+						Rgba8 texColor1 = SampleImage(
+							m_edgeSticker,
+							worldX,
+							worldY,
+							0.5f,
+							Rotation::ROTATE_0,
+							Symmetry::NONE
+						);
+						if (texColor1.a != 0) {
+							cell.m_color = texColor1;
+						}
 					}
-
-					Rgba8 texColor3 = SampleImage(m_edgeSticker, worldX+10, worldY+10, 0.5f);
-					if (texColor3.a != 0)
-					{
-						cell.m_color = texColor3;
-					}
-
-					Rgba8 texColor1= SampleImage(m_edgeSticker, worldX, worldY, 0.5f);
-					if (texColor1.a!= 0)
-					{
-						cell.m_color = texColor1;
-					}
-
-
 				}
 			}
 		}
@@ -567,30 +791,30 @@ Rgba8 WangTileMap::SampleMaterialTexture(CellMatType matType, int worldX, int wo
 	return texture->GetTexelColor(IntVec2(texX, texY));
 }
 
-Rgba8 WangTileMap::SampleImage(Image* img, int worldX, int worldY, float tilingMultiplier) const
-{
-	if (!img) return Rgba8::WHITE;
-
-	IntVec2 texDims = img->GetDimensions();
-
-	// 应用tiling系数
-	// tilingMultiplier > 1.0 : 纹理重复更快（缩小）
-	// tilingMultiplier < 1.0 : 纹理重复更慢（放大）
-	// tilingMultiplier = 1.0 : 默认大小
-
-	float scaledX = worldX * tilingMultiplier;
-	float scaledY = worldY * tilingMultiplier;
-
-	// 转换为整数坐标
-	int texX = static_cast<int>(floorf(scaledX)) % texDims.x;
-	int texY = static_cast<int>(floorf(scaledY)) % texDims.y;
-
-	// 处理负坐标
-	if (texX < 0) texX += texDims.x;
-	if (texY < 0) texY += texDims.y;
-
-	return img->GetTexelColor(IntVec2(texX, texY));
-}
+//Rgba8 WangTileMap::SampleImage(Image* img, int worldX, int worldY, float tilingMultiplier) const
+//{
+//	if (!img) return Rgba8::WHITE;
+//
+//	IntVec2 texDims = img->GetDimensions();
+//
+//	// 应用tiling系数
+//	// tilingMultiplier > 1.0 : 纹理重复更快（缩小）
+//	// tilingMultiplier < 1.0 : 纹理重复更慢（放大）
+//	// tilingMultiplier = 1.0 : 默认大小
+//
+//	float scaledX = worldX * tilingMultiplier;
+//	float scaledY = worldY * tilingMultiplier;
+//
+//	// 转换为整数坐标
+//	int texX = static_cast<int>(floorf(scaledX)) % texDims.x;
+//	int texY = static_cast<int>(floorf(scaledY)) % texDims.y;
+//
+//	// 处理负坐标
+//	if (texX < 0) texX += texDims.x;
+//	if (texY < 0) texY += texDims.y;
+//
+//	return img->GetTexelColor(IntVec2(texX, texY));
+//}
 
 void WangTileMap::RenderDebugUI()
 {

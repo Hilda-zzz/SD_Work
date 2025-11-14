@@ -38,6 +38,7 @@
     <ClCompile Include="BasePlayer.cpp" />
     <ClCompile Include="RigidbodyManager.cpp" />
     <ClCompile Include="RigidBodyObject.cpp" />
+    <ClCompile Include="SampleImageUtils.cpp" />
     <ClCompile Include="SandboxMap.cpp" />
     <ClCompile Include="SandboxPlayer.cpp" />
     <ClCompile Include="SandboxUI.cpp" />
@@ -61,6 +62,7 @@
     <ClInclude Include="PCGTemplate.hpp" />
     <ClInclude Include="RigidbodyManager.hpp" />
     <ClInclude Include="RigidBodyObject.hpp" />
+    <ClInclude Include="SampleImageUtils.hpp" />
     <ClInclude Include="SandboxMap.hpp" />
     <ClInclude Include="SandboxPlayer.hpp" />
     <ClInclude Include="SandboxUI.hpp" />

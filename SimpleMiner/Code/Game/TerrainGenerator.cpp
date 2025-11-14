@@ -320,8 +320,8 @@ void TerrainGenerator::GenerateBlocksForChunk_New(Chunk* chunk)
 				float heightOffset = ((float)z - baseHeight) / baseHeight;
 
 				// === Calculate Density ===
-				//float density = rawDensity + (-10.f / CHUNK_SIZE_Z) * ((float)z - baseHeight);
-				float density = rawDensity;
+				float density = rawDensity + (-10.f / CHUNK_SIZE_Z) * ((float)z - baseHeight);
+				//float density = rawDensity;
 				density += continentOffset;
 				density += continentAmplitude * heightOffset;
 				density -= erosionOffset;

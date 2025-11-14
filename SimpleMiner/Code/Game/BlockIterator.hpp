@@ -6,6 +6,7 @@ class Block;
 class BlockIterator
 {
 public:
+	BlockIterator() {}
 	BlockIterator(Chunk* chunk, int index) :m_chunk(chunk), m_blockIndex(index) {};
 	~BlockIterator() {}
 
@@ -22,6 +23,7 @@ public:
 	Block* GetBlockPtr();
 	IntVec3 GetLocalCoords() const; 
 	Chunk* GetChunk() const;
+	int GetBlockIndex() const;
 
 private:
 	Chunk* m_chunk = nullptr;

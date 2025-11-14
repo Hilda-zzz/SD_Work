@@ -6,6 +6,7 @@ class Clock;
 class SandboxMap;
 class SandboxPlayer;
 class WangTileMap;
+class Image;
 
 enum class GameState
 {
@@ -75,4 +76,6 @@ private:
 	float m_curDeltaTime = 0.f;
 
 	GameMode m_selectedGameMode = GameMode::SANDBOX;
+
+	Image* m_testUtilImg = nullptr;
 };
