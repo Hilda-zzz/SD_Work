@@ -13,6 +13,7 @@
 #include <chrono>
 #include <thread>
 #include "Engine/JobSystem/JobSystem.hpp"
+#include "Game/Nova2D/Nova2DSystem.hpp"
 //#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
@@ -24,6 +25,8 @@ Game*			g_theGame = nullptr;
 bool			g_isDebugDraw = false;
 Clock*			g_systemClock = nullptr;
 JobSystem*		g_theJobSystem = nullptr;
+
+Nova2DSystem* g_nova2D = nullptr;
 
 constexpr float TARGET_FPS = 60.0f;
 constexpr float TARGET_FRAME_TIME = (1.0f / TARGET_FPS) * 1000.f;
@@ -69,6 +72,9 @@ void App::Startup()
 	g_theAudio = new AudioSystem(audioConfig);
 
 	g_theJobSystem = new JobSystem();
+
+	Nova2DConfig nova2DConfig = Nova2DConfig();
+	g_nova2D = new Nova2DSystem(g_theRenderer, nova2DConfig);
 	
 	g_theEventSystem->Startup();
 	g_theWindow->Startup();
@@ -78,6 +84,7 @@ void App::Startup()
 	g_theAudio->Startup();
 	g_theJobSystem->Startup();
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
+	g_nova2D->Startup();
 
 	g_theGame = new Game();
 }
@@ -87,6 +94,7 @@ void App::Shutdown()
 	delete g_theGame;
 	g_theGame = nullptr;
 
+	g_nova2D->Shutdown();
 	g_theJobSystem->Shutdown();
 	g_theAudio->Shutdown();
 	g_theDevConsole->Shutdown();
@@ -94,6 +102,9 @@ void App::Shutdown()
 	g_theWindow->Shutdown();
 	g_theInput->Shutdown();
 	g_theEventSystem->Shutdown();
+
+	delete g_nova2D;
+	g_nova2D = nullptr;
 
 	delete g_theJobSystem;
 	g_theJobSystem = nullptr;
@@ -162,6 +173,9 @@ void App::BeginFrame()
 	g_theDevConsole->BeginFrame();
 	g_theAudio->BeginFrame();
 	g_theJobSystem->BeginFrame();
+
+	g_nova2D->BeginFrame();
+
 	Clock::TickSystemClock();
 }
 
@@ -186,6 +200,7 @@ void App::Render()  const
 
 void App::EndFrame()
 {
+	g_nova2D->EndFrame();
 	g_theJobSystem->EndFrame();
 	g_theAudio->EndFrame();
 	g_theDevConsole->EndFrame();

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <queue>
 #include <unordered_set>
-#include "Engine/Core/Timer.hpp"
+#include "Engine/Core/GameTimer.hpp"
 #include "TileChunk.hpp"
 
 class TileLayer;
@@ -12,7 +12,7 @@ struct DelayedDirtyRequest
 	TileChunk* m_chunk;
 	DirtyType m_dirtyType;
 	IntVec2 m_dirtyGridPos;
-	Timer m_timer;
+	GameTimer m_timer;
 };
 
 class ChunkUpddateManger
@@ -33,6 +33,6 @@ private:
 	std::unordered_set<uint64_t> m_queuedChunks; 
 	int m_maxChunksPerFrame = 1;
 
-	Timer m_dirtyObstacleDelayTimer;
-	Timer m_dirtyFarmlandDelayTimer;
+	GameTimer m_dirtyObstacleDelayTimer;
+	GameTimer m_dirtyFarmlandDelayTimer;
 };

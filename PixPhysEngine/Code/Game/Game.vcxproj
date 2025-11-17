@@ -36,6 +36,7 @@
     <ClCompile Include="GameCommon.cpp" />
     <ClCompile Include="Main_Windows.cpp" />
     <ClCompile Include="BasePlayer.cpp" />
+    <ClCompile Include="Nova2D\Nova2DSystem.cpp" />
     <ClCompile Include="RigidbodyManager.cpp" />
     <ClCompile Include="RigidBodyObject.cpp" />
     <ClCompile Include="SampleImageUtils.cpp" />
@@ -59,6 +60,8 @@
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="BasePlayer.hpp" />
+    <ClInclude Include="Nova2D\Nova2DSystem.hpp" />
+    <ClInclude Include="Nova2D\NovaParticle2D.hpp" />
     <ClInclude Include="PCGTemplate.hpp" />
     <ClInclude Include="RigidbodyManager.hpp" />
     <ClInclude Include="RigidBodyObject.hpp" />

@@ -26,6 +26,9 @@
     <Filter Include="Utils">
       <UniqueIdentifier>{adae1ccc-0257-4bc8-8fc1-edcfe2891511}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Nova2D">
+      <UniqueIdentifier>{79c45180-0c30-48d7-86b2-df21d4a6349e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -84,6 +87,9 @@
     </ClCompile>
     <ClCompile Include="SampleImageUtils.cpp">
       <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Nova2D\Nova2DSystem.cpp">
+      <Filter>Nova2D</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +161,12 @@
     </ClInclude>
     <ClInclude Include="SampleImageUtils.hpp">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DSystem.hpp">
+      <Filter>Nova2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\NovaParticle2D.hpp">
+      <Filter>Nova2D</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

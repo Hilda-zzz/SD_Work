@@ -3,8 +3,8 @@
 
 ChunkUpddateManger::ChunkUpddateManger(TileLayer* layer) : m_focusLayer(layer)
 {
-	m_dirtyObstacleDelayTimer = Timer(0.5f);
-	m_dirtyFarmlandDelayTimer = Timer(0.5f);
+	m_dirtyObstacleDelayTimer = GameTimer(0.5f);
+	m_dirtyFarmlandDelayTimer = GameTimer(0.5f);
 }
 
 void ChunkUpddateManger::MarkChunkDirty(TileChunk* dirtyChunk, DirtyType dirtyType, IntVec2 const& dirtyGridPos)
@@ -14,7 +14,7 @@ void ChunkUpddateManger::MarkChunkDirty(TileChunk* dirtyChunk, DirtyType dirtyTy
 	dirtyRequest.m_dirtyGridPos = dirtyGridPos;
 	dirtyRequest.m_dirtyType = dirtyType;
 
-	dirtyRequest.m_timer = Timer(0.5f);
+	dirtyRequest.m_timer = GameTimer(0.5f);
 	dirtyRequest.m_timer.Start();
 
 	m_dirtyChunkQueue.push(dirtyRequest);
@@ -118,7 +118,7 @@ void ChunkUpddateManger::CheckAndQueueNeighbors(TileChunk* centerChunk, DirtyTyp
 				dirtyRequest.m_dirtyGridPos = neighborChunk->m_startPosition;
 				dirtyRequest.m_dirtyType = dirtyType;
 
-				dirtyRequest.m_timer = Timer(0.5f);
+				dirtyRequest.m_timer = GameTimer(0.5f);
 				dirtyRequest.m_timer.Start();
 
 				m_dirtyChunkQueue.push(dirtyRequest);

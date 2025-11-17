@@ -8,8 +8,14 @@
 #include "ThirdParty/Noise/SmoothNoise.hpp"
 #include "Engine/Math/FloatRange.hpp"
 #include "SampleImageUtils.hpp"
+#include "Nova2D/Nova2DSystem.hpp"
+#include "Engine/Input/InputSystem.hpp"
+#include "Engine/Window/Window.hpp"
 
 extern Renderer* g_theRenderer;
+extern Nova2DSystem* g_nova2D;
+extern InputSystem* g_theInput;
+extern Window* g_theWindow;
 
 constexpr float DEFAULT_OCTAVE_PERSISTANCE = 0.5f;
 constexpr float DEFAULT_NOISE_OCTAVE_SCALE = 2.0f;
@@ -914,6 +920,21 @@ void WangTileMap::Update(float deltaTime)
 {
 	m_deltaTime = deltaTime;
 
+	if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE)) {
+		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+		Vec2 mousePosInWorld = AABB2(m_player->m_camera.GetOrthoBottomLeft(), m_player->m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+
+		// 使用全局系统发射粒子
+		g_nova2D->EmitBurst(
+			mousePosInWorld,
+			5000,
+			Vec2(0, 100),
+			360.0f
+		);
+	}
+
+	g_nova2D->Update(deltaTime);
+
 	RenderDebugUI();
 }
 
@@ -945,6 +966,9 @@ void WangTileMap::Render() const
 	{
 		RenderEdgePixelOverlay();
 	}
+
+	// ==========================================
+	g_nova2D->Render(m_player->m_camera);
 
 	// ==========================================
 	std::vector<Vertex_PCU> chunkGridVerts;

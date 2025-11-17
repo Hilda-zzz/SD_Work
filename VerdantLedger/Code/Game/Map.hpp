@@ -3,7 +3,7 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Game/Player.hpp"
-#include "Engine/Core/Timer.hpp"
+#include "Engine/Core/GameTimer.hpp"
 #include "ChunkUpdateManager.hpp"
 
 class Game;

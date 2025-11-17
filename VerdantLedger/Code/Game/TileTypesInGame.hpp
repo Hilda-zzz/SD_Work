@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include "Engine/Core/Timer.hpp"
+#include "Engine/Core/GameTimer.hpp"
 
 class CropDefinitions;
 
