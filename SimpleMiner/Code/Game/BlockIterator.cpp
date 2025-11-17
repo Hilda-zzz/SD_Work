@@ -93,6 +93,11 @@ bool BlockIterator::IsOpaque() const
 	return BlockDefinition::s_blockDefs[GetBlock().GetTypeIndex()].m_isOpaque;
 }
 
+bool BlockIterator::IsSolid() const
+{
+	return BlockDefinition::s_blockDefs[GetBlock().GetTypeIndex()].m_isSolid;
+}
+
 Block BlockIterator::GetBlock() const
 {
 	return m_chunk->GetBlock(m_blockIndex);

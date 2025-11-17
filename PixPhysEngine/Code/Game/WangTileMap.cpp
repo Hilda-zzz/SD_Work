@@ -927,7 +927,7 @@ void WangTileMap::Update(float deltaTime)
 		// 使用全局系统发射粒子
 		g_nova2D->EmitBurst(
 			mousePosInWorld,
-			5000,
+			6000,
 			Vec2(0, 100),
 			360.0f
 		);

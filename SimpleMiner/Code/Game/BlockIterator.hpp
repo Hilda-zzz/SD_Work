@@ -19,6 +19,7 @@ public:
 
 	bool IsValid() const;   
 	bool IsOpaque() const;
+	bool IsSolid() const;
 	Block GetBlock() const;    
 	Block* GetBlockPtr();
 	IntVec3 GetLocalCoords() const; 

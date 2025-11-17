@@ -938,7 +938,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// +X face
 	BlockIterator fwdX = iter.GetFwdX();
-	if (!fwdX.IsValid() || !fwdX.IsOpaque()) {
+	if (!fwdX.IsValid() || !fwdX.IsOpaque()) {  // || !fwdX.IsSolid()
 		// Get neighbor block's light influences
 		Block neighborBlock = fwdX.IsValid() ? fwdX.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;  // Normalize [0-15] to [0-1]
@@ -962,7 +962,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// -X face
 	BlockIterator negX = iter.GetNegX();
-	if (!negX.IsValid() || !negX.IsOpaque()) {
+	if (!negX.IsValid() || !negX.IsOpaque() ) { //|| !negX.IsSolid()
 		Block neighborBlock = negX.IsValid() ? negX.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -985,7 +985,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// +Y face
 	BlockIterator fwdY = iter.GetFwdY();
-	if (!fwdY.IsValid() || !fwdY.IsOpaque()) {
+	if (!fwdY.IsValid() || !fwdY.IsOpaque() ) { //|| !fwdY.IsSolid()
 		Block neighborBlock = fwdY.IsValid() ? fwdY.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -1008,7 +1008,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// -Y face
 	BlockIterator negY = iter.GetNegY();
-	if (!negY.IsValid() || !negY.IsOpaque()) {
+	if (!negY.IsValid() || !negY.IsOpaque()) {  // || !negY.IsSolid()
 		Block neighborBlock = negY.IsValid() ? negY.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -1031,7 +1031,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// +Z face (top)
 	BlockIterator fwdZ = iter.GetFwdZ();
-	if (!fwdZ.IsValid() || !fwdZ.IsOpaque()) {
+	if (!fwdZ.IsValid() || !fwdZ.IsOpaque()) {  // || !fwdZ.IsSolid()
 		Block neighborBlock = fwdZ.IsValid() ? fwdZ.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -1054,7 +1054,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// -Z face (bottom)
 	BlockIterator negZ = iter.GetNegZ();
-	if (!negZ.IsValid() || !negZ.IsOpaque()) {
+	if (!negZ.IsValid() || !negZ.IsOpaque()) {  // || !negZ.IsSolid()
 		Block neighborBlock = negZ.IsValid() ? negZ.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
