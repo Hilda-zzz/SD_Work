@@ -113,6 +113,11 @@ IntVec2 const IntVec2::operator+(IntVec2 const& vecToSubtract) const
 	return IntVec2(x + vecToSubtract.x, y + vecToSubtract.y);
 }
 
+IntVec2 const IntVec2::operator*(int intToMul) const
+{
+	return IntVec2(intToMul * x, intToMul * y);
+}
+
 void const IntVec2::operator+=(IntVec2 const& vecToAdd)
 {
 	x += vecToAdd.x;

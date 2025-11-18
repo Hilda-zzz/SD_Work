@@ -44,7 +44,7 @@ public:
 		const b2Vec2* vertices,
 		int vertexCount,
 		float radius,
-		b2HexColor color,
+		b2HexColor m_color,
 		void* context);
 	//static void DrawCircle(b2Vec2 center, float radius,
 	//	b2HexColor color, void* context);

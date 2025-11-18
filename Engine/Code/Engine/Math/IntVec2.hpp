@@ -33,6 +33,7 @@ public:
 	bool    operator<(IntVec2 const& other) const;
 	IntVec2 const	operator-(IntVec2 const& vecToSubtract) const;	// vec2 - vec2
 	IntVec2 const	operator+(IntVec2 const& vecToAdd) const;
+	IntVec2 const	operator*(int intToMul) const;
 	void const	operator+=(IntVec2 const& vecToAdd);
 	void const	operator-=(IntVec2 const& vecToSubtract);
 	

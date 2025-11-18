@@ -322,9 +322,6 @@
     <ClCompile Include="Network\NetworkSystem.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Math\IntVec3.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="..\ThirdParty\imgui\imgui.cpp">
       <Filter>ThirdParty\imgui</Filter>
     </ClCompile>
@@ -480,6 +477,9 @@
     </ClCompile>
     <ClCompile Include="..\ThirdParty\poly2tri\sweep\sweep_context.cc">
       <Filter>ThirdParty\poly2tri\sweep</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\IntVec3.cpp">
+      <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

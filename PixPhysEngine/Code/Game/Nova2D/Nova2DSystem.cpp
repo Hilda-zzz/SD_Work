@@ -50,7 +50,7 @@ void Nova2DSystem::Render(Camera const& camera) const
 	RenderParticlesCPU(camera);
 }
 
-void Nova2DSystem::EmitParticle(Vec2 pos, Vec2 vel, float lifetime, Rgba8 color, float size) 
+void Nova2DSystem::EmitParticle(Vec2 pos, Vec2 vel, float lifetime, Rgba8 m_color, float size) 
 {
 	int slot = FindDeadParticleSlot();
 	if (slot == -1) return;  // 粒子池满了
@@ -61,7 +61,7 @@ void Nova2DSystem::EmitParticle(Vec2 pos, Vec2 vel, float lifetime, Rgba8 color,
 	p.m_lifetime = lifetime;
 	p.m_maxLifetime = lifetime;
 	p.m_size = size;
-	p.m_color = color;
+	p.m_color = m_color;
 }
 
 void Nova2DSystem::EmitBurst(Vec2 pos, int count, Vec2 baseVelocity, float spread) 
@@ -78,7 +78,7 @@ void Nova2DSystem::EmitBurst(Vec2 pos, int count, Vec2 baseVelocity, float sprea
 		velocity += baseVelocity;
 
 		// 随机颜色（黄到红的火花）
-		Rgba8 color(
+		Rgba8 m_color(
 			255,
 			rng.RollRandomFloatInRange(100, 200),
 			rng.RollRandomFloatInRange(0, 50),
@@ -88,7 +88,7 @@ void Nova2DSystem::EmitBurst(Vec2 pos, int count, Vec2 baseVelocity, float sprea
 		float lifetime = rng.RollRandomFloatInRange(0.5f, 1.5f);
 		float size = rng.RollRandomFloatInRange(2.0f, 5.0f);
 
-		EmitParticle(pos, velocity, lifetime, color, size);
+		EmitParticle(pos, velocity, lifetime, m_color, size);
 	}
 }
 

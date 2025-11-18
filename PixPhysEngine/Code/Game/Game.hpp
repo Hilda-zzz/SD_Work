@@ -7,6 +7,7 @@ class SandboxMap;
 class SandboxPlayer;
 class WangTileMap;
 class Image;
+class HerringboneTileset;
 
 enum class GameState
 {
@@ -54,6 +55,10 @@ private:
 	void ExitAttractMode();
 	void ExitGameplayMode();
 
+	// --------------------------
+	void DebugDrawCurrentTile() const;
+	void RenderTileDebugUI();
+
 public:
 	static GameState m_curGameState;
 	static GameState m_nextGameState;
@@ -78,4 +83,7 @@ private:
 	GameMode m_selectedGameMode = GameMode::SANDBOX;
 
 	Image* m_testUtilImg = nullptr;
+
+	HerringboneTileset* m_testTileset = nullptr;
+	int m_testTileIndex = 0;
 };

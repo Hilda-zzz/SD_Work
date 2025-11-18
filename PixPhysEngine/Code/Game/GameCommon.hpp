@@ -18,9 +18,9 @@ extern AudioSystem* g_theAudio;
 constexpr float		SCREEN_SIZE_X=1600.f;
 constexpr float		SCREEN_SIZE_Y=800.f;
 
-void DebugDrawLine(Vec2 const& start, Vec2 const& end, float width,Rgba8 color);
-void DebugDrawRing(float thickness, float innerRadius, Rgba8 color, Vec2 ori);
-void DebugDrawCircle(float radius, Vec2 ori, Rgba8 color);
-void DebugDrawHighCircle(float radius, Vec2 ori, Rgba8 color);
-void DebugDrawBoxLine(Vec2 botLeft, Vec2 topRight, float width, Rgba8 color);
-void DebugDrawBox(Vec2 botLeft, Vec2 topRight, Rgba8 color);
+void DebugDrawLine(Vec2 const& start, Vec2 const& end, float width,Rgba8 m_color);
+void DebugDrawRing(float thickness, float innerRadius, Rgba8 m_color, Vec2 ori);
+void DebugDrawCircle(float radius, Vec2 ori, Rgba8 m_color);
+void DebugDrawHighCircle(float radius, Vec2 ori, Rgba8 m_color);
+void DebugDrawBoxLine(Vec2 botLeft, Vec2 topRight, float width, Rgba8 m_color);
+void DebugDrawBox(Vec2 botLeft, Vec2 topRight, Rgba8 m_color);

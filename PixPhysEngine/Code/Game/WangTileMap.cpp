@@ -170,24 +170,24 @@ void WangTileMap::InitializeColorMaterialMappings()
 	m_colorMaterialMappings.push_back(ColorMaterialMapping(Rgba8(112, 128, 64), CellMatType::MAT_WOOD, 30.0f));
 }
 
-PixelLayerType WangTileMap::ClassifyPixel(const Rgba8& color) const
+PixelLayerType WangTileMap::ClassifyPixel(const Rgba8& m_color) const
 {
-	if (IsGrayscale(color, 10.0f)) 
+	if (IsGrayscale(m_color, 10.0f)) 
 	{
-		if (color.r == 0) return PixelLayerType::EMPTY;
+		if (m_color.r == 0) return PixelLayerType::EMPTY;
 		return PixelLayerType::GRAYSCALE;
 	}
 	return PixelLayerType::COLORED;
 }
 
-CellMatType WangTileMap::GetMaterialTypeForColor(const Rgba8& color) const
+CellMatType WangTileMap::GetMaterialTypeForColor(const Rgba8& m_color) const
 {
 	float minDistance = FLT_MAX;
 	CellMatType closestMat = CellMatType::MAT_STONE;  // 默认值
 
 	for (const ColorMaterialMapping& mapping : m_colorMaterialMappings) 
 	{
-		float distance = ColorDistance(color, mapping.m_color);
+		float distance = ColorDistance(m_color, mapping.m_color);
 
 		if (distance < mapping.m_colorTolerance && distance < minDistance) 
 		{
@@ -207,12 +207,12 @@ float WangTileMap::ColorDistance(const Rgba8& c1, const Rgba8& c2) const
 	return std::sqrt((float)(dr * dr + dg * dg + db * db));
 }
 
-bool WangTileMap::IsGrayscale(const Rgba8& color, float tolerance) const
+bool WangTileMap::IsGrayscale(const Rgba8& m_color, float tolerance) const
 {
 	float maxDiff = std::max({
-		std::abs((int)color.r - (int)color.g),
-		std::abs((int)color.g - (int)color.b),
-		std::abs((int)color.r - (int)color.b)
+		std::abs((int)m_color.r - (int)m_color.g),
+		std::abs((int)m_color.g - (int)m_color.b),
+		std::abs((int)m_color.r - (int)m_color.b)
 		});
 
 	return maxDiff == 0;
@@ -393,16 +393,16 @@ void WangTileMap::GenerateColoredLayers()
 	std::vector<Rgba8> uniqueColors = GetUniqueColoredLayers();
 
 	// 为每种颜色生成对应的层
-	for (const Rgba8& color : uniqueColors) 
+	for (const Rgba8& m_color : uniqueColors) 
 	{
-		CellMatType matType = GetMaterialTypeForColor(color);
+		CellMatType matType = GetMaterialTypeForColor(m_color);
 
 		for (int chunkY = 0; chunkY < m_chunkGridSize.y; ++chunkY) 
 		{
 			for (int chunkX = 0; chunkX < m_chunkGridSize.x; ++chunkX) 
 			{
 				CellChunk* chunk = m_chunks[chunkY][chunkX];
-				GenerateColoredCellsInChunk(chunk, color, matType);
+				GenerateColoredCellsInChunk(chunk, m_color, matType);
 			}
 		}
 	}
@@ -675,11 +675,11 @@ void WangTileMap::GenerateColoredCellsInChunk(CellChunk* chunk, const Rgba8& lay
 				Cell& cell = chunk->GetLocalCell(localX, localY);
 				cell.SetToType(matType);
 
-				Rgba8 color = SampleImage(m_sand, worldX, worldY);
-				color.r = static_cast<unsigned char>(GetClamped(color.r * 0.9f, 0.0f, 255.0f));
-				color.g = static_cast<unsigned char>(GetClamped(color.g * 0.7f, 0.0f, 255.0f));
-				color.b = static_cast<unsigned char>(GetClamped(color.b * 0.5f, 0.0f, 255.0f));
-				cell.m_color = color;
+				Rgba8 m_color = SampleImage(m_sand, worldX, worldY);
+				m_color.r = static_cast<unsigned char>(GetClamped(m_color.r * 0.9f, 0.0f, 255.0f));
+				m_color.g = static_cast<unsigned char>(GetClamped(m_color.g * 0.7f, 0.0f, 255.0f));
+				m_color.b = static_cast<unsigned char>(GetClamped(m_color.b * 0.5f, 0.0f, 255.0f));
+				cell.m_color = m_color;
 
 				// === 使用噪声动态调整边界范围 ===
 

@@ -25,7 +25,7 @@ public:
 	void Render(Camera const& camera) const;
 
 	// 粒子发射（MVP版本：直接发射，不用发射器）
-	void EmitParticle(Vec2 pos, Vec2 vel, float lifetime, Rgba8 color, float size);
+	void EmitParticle(Vec2 pos, Vec2 vel, float lifetime, Rgba8 m_color, float size);
 	void EmitBurst(Vec2 pos, int count, Vec2 baseVelocity, float spread);
 
 	// 查询

@@ -146,7 +146,7 @@ void RigidBodyManager::DestoryRigidBody(RigidBodyObject* obj)
 	obj = nullptr;
 }
 
-void RigidBodyManager::DrawSolidPolygon(b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color, void* context)
+void RigidBodyManager::DrawSolidPolygon(b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor m_color, void* context)
 {
 	for (int i = 0; i < vertexCount; ++i)
 	{

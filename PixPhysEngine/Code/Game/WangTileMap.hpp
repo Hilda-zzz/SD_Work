@@ -38,10 +38,10 @@ private:
 	// new ===================
 	void LoadMultiLayerTemplate(const std::string& filename);
 	void InitializeColorMaterialMappings();
-	PixelLayerType ClassifyPixel(const Rgba8& color) const;
-	CellMatType GetMaterialTypeForColor(const Rgba8& color) const;
+	PixelLayerType ClassifyPixel(const Rgba8& m_color) const;
+	CellMatType GetMaterialTypeForColor(const Rgba8& m_color) const;
 	float ColorDistance(const Rgba8& c1, const Rgba8& c2) const;
-	bool IsGrayscale(const Rgba8& color, float tolerance = 10.0f) const;
+	bool IsGrayscale(const Rgba8& m_color, float tolerance = 10.0f) const;
 
 	float CalculateBaseDensity(int cellX, int cellY) const;
 	float CalculateColoredDensity(int cellX, int cellY, const Rgba8& targetColor) const;

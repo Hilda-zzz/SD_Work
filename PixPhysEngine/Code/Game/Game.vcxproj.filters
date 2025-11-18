@@ -29,6 +29,9 @@
     <Filter Include="Nova2D">
       <UniqueIdentifier>{79c45180-0c30-48d7-86b2-df21d4a6349e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="WangTileMapMode\HerringboneTileStruct">
+      <UniqueIdentifier>{6c8f1428-ae79-4d96-9c1d-4b1ebd6463d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -90,6 +93,12 @@
     </ClCompile>
     <ClCompile Include="Nova2D\Nova2DSystem.cpp">
       <Filter>Nova2D</Filter>
+    </ClCompile>
+    <ClCompile Include="HerringboneTile.cpp">
+      <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
+    </ClCompile>
+    <ClCompile Include="HerringboneTileset.cpp">
+      <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -167,6 +176,12 @@
     </ClInclude>
     <ClInclude Include="Nova2D\NovaParticle2D.hpp">
       <Filter>Nova2D</Filter>
+    </ClInclude>
+    <ClInclude Include="HerringboneTile.hpp">
+      <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
+    </ClInclude>
+    <ClInclude Include="HerringboneTileset.hpp">
+      <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
