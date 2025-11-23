@@ -3,6 +3,7 @@
 #include "Engine/Core/Image.hpp"
 #include <string>
 #include "PCGTemplate.hpp"
+#include "HerringboneMapGenerator.hpp"
 
 class SandboxPlayer;
 
@@ -91,4 +92,6 @@ private:
 
 	Image* m_stickerImageA = nullptr;               // RED区域贴画
 	Image* m_stickerImageB = nullptr;               // CYAN区域贴画
+
+	
 };

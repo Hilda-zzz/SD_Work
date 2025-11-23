@@ -13,6 +13,33 @@ class Entity;
 class CubeSkyBox;
 class World;
 class PiecewiseCurve1D;
+class PlayerController;
+class InputController_SpectatorMode;
+class GameCamera;
+
+// Physics constants
+constexpr float GRAVITY = -20.0f;              // Units per second squared
+constexpr float GROUND_CHECK_DISTANCE = 0.1f;
+constexpr float MAX_FALL_SPEED = -50.0f;
+constexpr float CORNER_OFFSET = 0.001f;
+
+constexpr float GROUND_RAYCAST_OFFSET = 0.01f;  // 1cm
+constexpr float GROUND_RAY_LENGTH = 0.02f;
+
+constexpr float g_playerHeight = 1.8f;
+constexpr float g_playerWidth = 0.6f;
+constexpr float g_playerHorizontalGroundAcceleration = 64.0f;
+constexpr float g_playerHorizontalFlyAcceleration = 32.0f;
+constexpr float g_playerHorizontalAirAcceleration = 4.0f;
+constexpr float g_playerHorizontalGroundDragCoefficient = 8.0f;
+constexpr float g_playerHorizontalAirDragCoefficient = 4.0f;
+constexpr float g_playerMaxHorizontalSpeed = 400.0f;
+constexpr float g_playerMaxVerticalSpeed = 600.0f;
+constexpr float g_playerGravityAcceleration = 20.f;
+constexpr float g_playerJumpImpulse = 7.0f;
+constexpr float g_playerEyeHeight = 1.65f;
+constexpr float g_cameraOverShoulderDistance = 4.0f;
+
 
 typedef std::vector<Entity*> EntityList;
 
@@ -89,6 +116,10 @@ private:
 	World* m_world = nullptr;
 	Player* m_player = nullptr;
 	Prop* m_groundGrid = nullptr;
+
+	PlayerController* m_playerController = nullptr;
+	InputController_SpectatorMode* m_spectatorInputController = nullptr;
+	GameCamera* m_gameCamera = nullptr;
 
 	float m_previousTimeScale = 1.f;
 

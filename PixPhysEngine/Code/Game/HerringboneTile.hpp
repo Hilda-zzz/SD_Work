@@ -46,25 +46,51 @@ struct HbEdgeConstraint
 // Herringbone Tile 的六条边
 // 对应人字形排列的六种边缘匹配方式
 // ============================================
-enum class HerringboneEdge : uint8_t 
+
+// 横向 Tile 的边缘
+enum class HTileEdge : uint8_t
+{
+	TOP_LEFT = 0,
+	TOP_RIGHT = 1,
+	RIGHT = 2,
+	BOTTOM_RIGHT = 3,
+	BOTTOM_LEFT = 4,
+	LEFT = 5,
+	COUNT = 6
+};
+
+// 纵向 Tile 的边缘
+enum class VTileEdge : uint8_t
+{
+	TOP = 0,
+	RIGHT_TOP = 1,
+	RIGHT_BOTTOM = 2,
+	BOTTOM = 3,
+	LEFT_BOTTOM = 4,
+	LEFT_TOP = 5,
+	COUNT = 6
+};
+
+enum class HerringboneEdgeType : uint8_t
 {
 	// 横向瓦片 (40×20 内容)
-	H_TOP_LEFT = 0,      // 顶部左半边（y最大，左侧）
-	H_TOP_RIGHT = 1,     // 顶部右半边（y最大，右侧）
-	H_RIGHT = 2,         // 右边（x最大）
-	H_BOTTOM_RIGHT = 3,  // 底部右半边（y=0，右侧）
-	H_BOTTOM_LEFT = 4,   // 底部左半边（y=0，左侧）
-	H_LEFT = 5,          // 左边（x=0）
+	H_TOP_LEFT = 0,
+	H_TOP_RIGHT = 1,
+	H_RIGHT = 2,
+	H_BOTTOM_RIGHT = 3,
+	H_BOTTOM_LEFT = 4,
+	H_LEFT = 5,
 
 	// 纵向瓦片 (20×40 内容)
-	V_TOP = 0,           // 顶部（y最大）
-	V_RIGHT_TOP = 1,     // 右边上半部（x最大，上侧）
-	V_RIGHT_BOTTOM = 2,  // 右边下半部（x最大，下侧）
-	V_BOTTOM = 3,        // 底部（y=0）
-	V_LEFT_BOTTOM = 4,   // 左边下半部（x=0，下侧）
-	V_LEFT_TOP = 5,      // 左边上半部（x=0，上侧）
+	V_TOP = 6,
+	V_RIGHT_TOP = 7,
+	V_RIGHT_BOTTOM = 8,
+	V_BOTTOM = 9,
+	V_LEFT_BOTTOM = 10,
+	V_LEFT_TOP = 11,
 
-	COUNT
+	COUNT = 12,
+	INVALID = 255
 };
 
 // ============================================

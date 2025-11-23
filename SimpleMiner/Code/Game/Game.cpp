@@ -23,6 +23,9 @@
 #include "TerrainConfig.hpp"
 #include "ThirdParty/imgui/imgui_internal.h"
 #include "Curve1D.hpp"
+#include "PlayerController.hpp"
+#include "InputController_SpectatorMode.hpp"
+#include "Game.hpp"
 
 extern bool g_isDebugDraw;
 extern Renderer* g_theRenderer;
@@ -30,12 +33,33 @@ extern Clock* g_systemClock;
 
 GameState Game::m_curGameState = GameState::GAME_STATE_ATTRACT;
 GameState Game::m_nextGameState = GameState::GAME_STATE_ATTRACT;
+std::string GetCameraModeString(CameraMode mode)
+{
+	switch (mode)
+	{
+	case CameraMode::FIRST_PERSON: return "First Person";
+	case CameraMode::OVER_THE_SHOULDER: return "Over Shoulder";
+	case CameraMode::INDEPENDENT: return "Independent";
+	case CameraMode::SPECTATOR_FULL: return "Spectator Full";
+	case CameraMode::SPECTATOR_XY: return "Spectator XY";
+	default: return "Unknown";
+	}
+}
+
+std::string GetPhysicsModeString(PhysicsMode mode)
+{
+	switch (mode)
+	{
+	case PhysicsMode::WALKING: return "Walking";
+	case PhysicsMode::FLYING: return "Flying";
+	case PhysicsMode::NOCLIP: return "NoClip";
+	default: return "Unknown";
+	}
+}
 
 Game::Game()
 {
 	m_gameClock = new Clock();
-
-	m_player = new Player(this);
 	m_groundGrid = new Prop(this);
 
 	IntVec2 clientDimensions = g_theWindow->GetClientDimensions();
@@ -47,9 +71,26 @@ Game::Game()
 	m_screenCamera.SetOrthographicView(Vec2(0.f, 0.f), m_screenSize);
 	m_screenCamera.SetPositionAndOrientation(Vec3(0.f, 0.f, 0.f), EulerAngles(0.f,0.f,0.f));
 
-	m_player->m_playerCam.SetViewport(viewport);
-	float camAspect = viewport.GetDimensions().x / viewport.GetDimensions().y;
-	m_player->m_playerCam.SetPerspectiveView(camAspect, 60.f, 0.01f, 100000.f);
+	//***********************************************************************************
+	m_player = new Player(this);
+	m_gameCamera = new GameCamera(this);
+	m_playerController = new PlayerController(m_player, m_gameCamera);
+	m_playerController->SetCameraMode(CameraMode::FIRST_PERSON);
+	m_player->SetGameCamera(m_gameCamera);
+	m_gameCamera->SetTarget(m_player);
+
+	//m_player->m_playerCam.SetViewport(viewport);
+	//float camAspect = viewport.GetDimensions().x / viewport.GetDimensions().y;
+	//m_player->m_playerCam.SetPerspectiveView(camAspect, 60.f, 0.01f, 100000.f);
+	//***********************************************************************************
+
+	//----------------------Definitions-----------------------------
+	BlockDefinition::InitializeBlockDefinitionsFromFile();
+	Chunk::SetBlockAtlasTexture(&BlockDefinition::s_blockSheet->GetTexture());
+	m_world = new World(m_playerController);
+	m_player->SetWorld(m_world);
+	m_gameCamera->SetWorld(m_world);
+	//***********************************************************************************
 
 	std::string logString = "\
 Mouse x-axis / Right stick x-axis           Yaw\n\
@@ -83,10 +124,7 @@ F8 / B button                               Reload";
 
 	m_cubeSkybox = new CubeSkyBox(g_theRenderer, skyboxPaths,&skyBoxShaderPath);
 
-	//----------------------Definitions-----------------------------
-	BlockDefinition::InitializeBlockDefinitionsFromFile();
-	Chunk::SetBlockAtlasTexture(&BlockDefinition::s_blockSheet->GetTexture());
-	m_world = new World(m_player);
+
 
 	// ---------------------------
 	if (!FolderExists("Saves"))
@@ -120,6 +158,9 @@ Game::~Game()
 
 	delete m_world;
 	m_world = nullptr;
+
+	delete m_playerController;
+	delete m_gameCamera;
 
 	BlockDefinition::ShutdownBlockDefinitions();
 }
@@ -281,7 +322,7 @@ void Game::RenderAttractMode() const
 void Game::RenderGameplayMode() const
 {
 	g_theRenderer->ClearScreen(m_world->GetSkyLight());
-	g_theRenderer->BeginCamera(m_player->m_playerCam);
+	g_theRenderer->BeginCamera(m_gameCamera->GetEngineCamera());
 
 	// m_cubeSkybox->Render();
 	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
@@ -290,9 +331,9 @@ void Game::RenderGameplayMode() const
 
 	m_world->Render();
 
-	g_theRenderer->EndCamera(m_player->m_playerCam);
+	g_theRenderer->EndCamera(m_gameCamera->GetEngineCamera());
 
-	DebugRenderWorld(m_player->m_playerCam);
+	DebugRenderWorld(m_gameCamera->GetEngineCamera());
 }
 
 void Game::RenderUI() const
@@ -1196,11 +1237,14 @@ void Game::AddDebugText()
 	char debugInfoBuffer[1024];
 	const char* cameraModeName = (m_player->m_isSpectatorFull) ? "SpectatorFull" : "SpectatorXY";
 	snprintf(debugInfoBuffer, sizeof(debugInfoBuffer),
-		"[LMB] Dig  [RMB] Add  %s  [1] Glowstone  [2] Cobblestone  [3] ChiseledBrick      [C] Camera: %s     Time: %.2f  FPS: %.2f",
+		"[LMB] Dig  [RMB] Add  %s  [1] Glowstone  [2] Cobblestone  [3] ChiseledBrick      [C] Camera: %s     Time: %.2f  FPS: %.2f\n\
+[C - Cam] %s  [V - Phy] %s",
 		m_player->m_curBlockBrushName.c_str(),
 		cameraModeName,
 		g_systemClock->GetTotalSeconds(),
-		1.f / g_systemClock->GetDeltaSeconds());
+		1.f / g_systemClock->GetDeltaSeconds(),
+		GetCameraModeString(m_gameCamera->GetMode()).c_str(),
+		GetPhysicsModeString(m_player->GetPhysicsMode()).c_str());
 
 	// Display the merged text across the full width
 	Vec2 topLeft = Vec2(margin, topY);

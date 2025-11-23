@@ -42,6 +42,14 @@ EulerAngles EulerAngles::operator+(EulerAngles const& eulerAnglesToAdd) const
 	return EulerAngles(m_yawDegrees + eulerAnglesToAdd.m_yawDegrees, m_pitchDegrees+ eulerAnglesToAdd.m_pitchDegrees, m_rollDegrees + eulerAnglesToAdd.m_rollDegrees);
 }
 
+void EulerAngles::operator+=(EulerAngles const& eulerAnglesToAdd)
+{
+	m_yawDegrees += eulerAnglesToAdd.m_yawDegrees;
+	m_pitchDegrees += eulerAnglesToAdd.m_pitchDegrees;
+	m_rollDegrees += eulerAnglesToAdd.m_rollDegrees;
+}
+
+
 void EulerAngles::SetFromText(char const* text)
 {
 	Strings result = SplitStringOnDelimiterIgnoreSpace(text, ',');

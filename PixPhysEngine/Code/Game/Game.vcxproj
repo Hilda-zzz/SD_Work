@@ -34,6 +34,7 @@
     <ClCompile Include="ChunkUpdateJob.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
+    <ClCompile Include="HerringboneMapGenerator.cpp" />
     <ClCompile Include="HerringboneTile.cpp" />
     <ClCompile Include="HerringboneTileset.cpp" />
     <ClCompile Include="Main_Windows.cpp" />
@@ -62,6 +63,7 @@
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="BasePlayer.hpp" />
+    <ClInclude Include="HerringboneMapGenerator.hpp" />
     <ClInclude Include="HerringboneTile.hpp" />
     <ClInclude Include="HerringboneTileset.hpp" />
     <ClInclude Include="Nova2D\Nova2DSystem.hpp" />

@@ -27,9 +27,8 @@ public:
 	// 获取满足给定边缘约束的所有tiles
 	std::vector<HerringboneTile*> FindTilesByConstraints(
 		HbTileOrientation orientation,
-		const HbEdgeConstraint& constraint1,
-		const HbEdgeConstraint& constraint2,
-		const HbEdgeConstraint& constraint3
+		const HbEdgeConstraint constraints[6],  // 所有 6 条边的约束
+		const bool hasConstraint[6]             // 标记哪些边需要匹配
 	);
 
 	// === 调试信息 ===

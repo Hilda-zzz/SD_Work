@@ -17,6 +17,8 @@ class LoadChunkJob;
 class SaveChunkJob;
 class ConstantBuffer;
 class Shader;
+class PlayerController;
+class GameCamera;
 
 struct WorldConstants
 {
@@ -36,7 +38,7 @@ struct WorldConstants
 class World
 {
 public:
-	World(Player* player);
+	World(PlayerController* playerController);
 	~World();
 	void Shutdown();
 
@@ -60,6 +62,10 @@ public:
 
 	Chunk* GetChunkByWorldPos(Vec3 const& worldPos);
 	Chunk const* GetChunkByWorldPos(Vec3 const& worldPos) const;
+
+
+	GameRaycastResult3D RaycastVsBlocks(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist);
+
 
 private:
 	//=========================
@@ -128,8 +134,8 @@ private:
 	void SetWorldConstantsToGPU() const;
 	
 	// =========== Raycast ===================
-	GameRaycastResult3D RaycastVsBlocks(Vec3 const& startPos, Vec3 const& fwdNormal, float maxDist);
-	void UpdateCameraRaycast();
+	
+	void UpdateEyeRaycast();
 
 	void DebugDrawRaycast();
 	void DrawBlockDebugOutline(BlockIterator const& blockIter, int hitFaceIndex);
@@ -162,7 +168,9 @@ private:
 	std::set<IntVec2> m_chunksLoading;
 	std::set<Chunk*> m_chunksSaving;
 
+	PlayerController* m_playerController = nullptr;
 	Player* m_player = nullptr;
+	GameCamera* m_gameCamera = nullptr;
 	bool m_isDebugDraw = false;
 	bool m_showChunkJobStats = false;
 

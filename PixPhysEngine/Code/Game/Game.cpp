@@ -40,6 +40,15 @@ Game::Game()
 
 	m_testTileset = new HerringboneTileset();
 	m_testTileset->LoadFromImage("Data/Images/rainforest.png");
+
+	HbRegionGenParams params;
+	params.m_regionBottomLeftChunk = IntVec2(0, 0);       // 从 (0,0) chunk 开始
+	params.m_regionSizeInChunks = IntVec2(80, 40);          // 生成 2×2 chunks
+	params.m_tileset = m_testTileset;                     // 使用刚加载的 tileset
+	params.m_randomSeed = 12348;                          // 随机种子
+
+	// 调用生成器
+	m_generator.InitializeTileGrid(params);
 }
 
 Game::~Game()
@@ -148,7 +157,7 @@ void Game::UpdateAttractMode(float deltaTime)
 	}
 
 	//------------------------------
-	RenderTileDebugUI();
+	// RenderTileDebugUI();
 }
 
 void Game::UpdateGameplayMode(float deltaTime)
@@ -189,7 +198,7 @@ void Game::UpdateCamera(float deltaTime)
 	UNUSED(deltaTime);
 	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
 	m_screenCamera.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
-	m_screenCamera.SetOrthographicView(Vec2{ 0.f,0.f }, Vec2{ 1600.f,800.f });
+	m_screenCamera.SetOrthographicView(Vec2{ -100.f,-50.f }, Vec2{ 3200.f,1600.f });
 }
 
 void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
@@ -229,6 +238,11 @@ void Game::RenderAttractMode() const
 	g_theRenderer->BeginCamera(m_screenCamera);
 	g_theRenderer->BindTexture(nullptr);
 	DebugDrawRing(4.f, 20.f, Rgba8::WHITE, Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
+
+	//DebugDrawCurrentTile();
+	m_generator.RenderHPixelGrid();
+	m_generator.RenderTileBoundaries();
+
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
 
@@ -279,7 +293,9 @@ void Game::RenderAttractMode() const
 	//}
 
 	//---------------------------------------
-	DebugDrawCurrentTile();
+	
+
+	
 }
 
 void Game::RenderGameplayMode() const
@@ -321,7 +337,7 @@ void Game::RenderGameplayMode() const
 void Game::RenderGameModeSelectionUI() const
 {
 	// ImGui Game Mode Selection Window
-	ImGui::SetNextWindowPos(ImVec2(SCREEN_SIZE_X * 0.5f - 150.f, SCREEN_SIZE_Y * 0.5f - 100.f), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(SCREEN_SIZE_X * 0.8f - 150.f, SCREEN_SIZE_Y * 0.8f - 100.f), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(300.f, 200.f), ImGuiCond_Always);
 
 	ImGui::SetNextWindowFocus();

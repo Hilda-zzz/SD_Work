@@ -100,6 +100,9 @@
     <ClCompile Include="HerringboneTileset.cpp">
       <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
     </ClCompile>
+    <ClCompile Include="HerringboneMapGenerator.cpp">
+      <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -181,6 +184,9 @@
       <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
     </ClInclude>
     <ClInclude Include="HerringboneTileset.hpp">
+      <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
+    </ClInclude>
+    <ClInclude Include="HerringboneMapGenerator.hpp">
       <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
     </ClInclude>
   </ItemGroup>

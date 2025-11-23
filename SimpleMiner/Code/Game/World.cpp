@@ -20,16 +20,21 @@
 #include "Engine/Renderer/ConstantBuffer.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "ThirdParty/Noise/SmoothNoise.hpp"
+#include "Game/GameCamera.hpp"
+#include "Game/PlayerController.hpp"
 
 extern Game* g_theGame;
 extern JobSystem* g_theJobSystem;
 extern InputSystem* g_theInput;
 
-World::World(Player* player):m_player(player)
-{
-	//InitializeChunks();
-	m_player->SetCurWorld(this);
 
+
+World::World(PlayerController* playerController) :
+	m_playerController(playerController),
+	m_player(m_playerController->GetPlayer()),
+	m_gameCamera(m_playerController->GetCamera())
+{
+	//m_player->SetCurWorld(this);
 	m_worldShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/WorldShader");
 	m_worldConstantBuffer = g_theRenderer->CreateConstantBuffer(sizeof(WorldConstants));
 
@@ -172,14 +177,18 @@ void World::Shutdown()
 
 void World::Update(float deltaTime)
 {
+	//m_player->Update(deltaTime);
+
+	m_playerController->UpdateInput(deltaTime);
 	m_player->Update(deltaTime);
+	m_gameCamera->Update(deltaTime);
 
 	//--------------------------
 	UpdateWorldRenderConstants(deltaTime);
 
 	//*****************************************************************************************************
 	// ========== debug draw basis ==========
-	Vec3 basisPos = m_player->m_position + m_player->m_orientation.GetForward_IFwd() * 50.f;
+	Vec3 basisPos = m_player->GetPosition() + m_player->GetOrientation().GetForward_IFwd() * 50.f;
 	Mat44 basisTransform = Mat44::MakeTranslation3D(basisPos);
 	DebugAddWorldBasis(basisTransform, 0.f, DebugRenderMode::ALWAYS, 1.5f);
 	DebugAddWorldBasis(Mat44(), 0.f, DebugRenderMode::USE_DEPTH, 1.f);
@@ -211,58 +220,8 @@ void World::Update(float deltaTime)
 	ProcessDirtyLighting();
 	//*****************************************************************************************************
 
-	//---------------------------------------------------------------------------------
-	// rebuild nearest dirty mesh chunk
-	//Chunk* nearestDirtyChunk = FindNearestDirtyChunk(m_player->m_position);
-	//if (nearestDirtyChunk) {
-	//	nearestDirtyChunk->RebuildMeshWithCulling();
-	//}
-
-	//// or activate a nearest missing chunk
-	//else if (m_chunkUpdateList.size() < MAX_ACTIVE_CHUNKS) {
-	//	IntVec2 chunkCoords = IntVec2(-999999, -999999);
-	//	if (FindNearestMissingChunk(m_player->m_position, chunkCoords))
-	//	{
-	//		ActivateChunk(chunkCoords);
-	//	}
-	//}
-
-	//// or deactivate farthest active chunk if its center is outside the deactivation range
-	//else
-	//{
-	//	Chunk* farestChunk = FindFarestOutrangeChunk(m_player->m_position);
-	//	if (farestChunk)
-	//	{
-	//		DeactivateChunk(farestChunk);
-	//	}
-	//}
-
-	UpdateCameraRaycast();
-	if (g_theInput->WasKeyJustPressed('R'))
-	{
-		m_isRaycastLock = !m_isRaycastLock;
-		if (m_isRaycastLock)
-		{
-			m_debugDrawRaycastResult = m_currentRaycastResult;
-		}
-	}
+	UpdateEyeRaycast();
 	DebugDrawRaycast();
-	//if (m_isRaycastLock)
-	//{
-	//	if (m_debugDrawRaycastResult.m_didImpact)
-	//	{
-	//		DebugAddWorldLine(m_debugDrawRaycastResult.m_rayStartPos, 
-	//			m_debugDrawRaycastResult.m_impactPos, 0.05f, 0.f,Rgba8::CYAN);
-	//		DebugAddWorldPoint(m_debugDrawRaycastResult.m_impactPos, 0.05f, 0.f, Rgba8::YELLOW);
-	//	}
-	//	else
-	//	{
-	//		DebugAddWorldLine(m_debugDrawRaycastResult.m_rayStartPos,
-	//			m_debugDrawRaycastResult.m_rayStartPos+m_debugDrawRaycastResult.m_rayFwdNormal * 8.f, 
-	//			0.05f, 0.f, Rgba8::WHITE);
-	//	}
-	//	
-	//}
 	
 }
 
@@ -276,6 +235,10 @@ void World::Render() const
 	{
 		chunk->Render();
 	}
+	if(m_gameCamera->GetMode()!=CameraMode::FIRST_PERSON)
+		m_player->Render();
+
+	m_gameCamera->Render();
 
 	// === Render Noise Debug Visualization ===
 	TerrainConfig& config = TerrainConfig::GetInstance();
@@ -301,7 +264,7 @@ void World::Render() const
 		}
 
 		// Get position information
-		IntVec2 chunkCoords = Chunk::GetChunkCoords(m_player->m_position);
+		IntVec2 chunkCoords = Chunk::GetChunkCoords(m_player->GetPosition());
 		auto it = m_activeChunks.find(chunkCoords);
 		Chunk* curChunk = nullptr;
 		if (it != m_activeChunks.end())
@@ -313,7 +276,7 @@ void World::Render() const
 		IntVec3 localCoords(0, 0, 0);
 		if (curChunk)
 		{
-			globalCoords = curChunk->GetGlobalCoords(m_player->m_position);
+			globalCoords = curChunk->GetGlobalCoords(m_player->GetPosition());
 			localCoords = curChunk->GlobalCoordsToLocalCoords(globalCoords);
 		}
 
@@ -324,23 +287,22 @@ void World::Render() const
 			"Player Pos: (%.2f, %.2f, %.2f)\n"
 			"Chunk Coords: (%d, %d)\n"
 			"Global Block: (%d, %d, %d)\n"
-			"Local Block: (%d, %d, %d)",
+			"Local Block: (%d, %d, %d)\n",
 			totalChunkCount, totalVertsCount, totalIndicesCount,
-			m_player->m_position.x, m_player->m_position.y, m_player->m_position.z,
+			m_player->GetPosition().x, m_player->GetPosition().y, m_player->GetPosition().z,
 			chunkCoords.x, chunkCoords.y,
 			globalCoords.x, globalCoords.y, globalCoords.z,
 			localCoords.x, localCoords.y, localCoords.z);
-
 		float textWidth = 800.f;
-		float textHeight = 400.f;  // Increased height for multiple lines
+		float textHeight = 450.f;  // Increased height for additional lines
 		float margin = 10.f;
-		float verticalOffset = 60.f;  // Move down from the top debug line
+		float verticalOffset = 60.f;
 		Vec2 topLeft = Vec2(margin, g_theGame->GetScreenSize().y - margin - textHeight - verticalOffset);
 		Vec2 bottomRight = Vec2(margin + textWidth, g_theGame->GetScreenSize().y - margin - verticalOffset);
 		DebugAddScreenText(std::string(debugBuffer),
 			AABB2(topLeft, bottomRight),
-			16.f,  // Slightly smaller font to fit more text
-			Vec2(0.f, 1.f),  // Left-aligned, top-aligned
+			16.f,
+			Vec2(0.f, 1.f),
 			0.f,
 			Rgba8::WHITE,
 			Rgba8::WHITE);
@@ -437,8 +399,8 @@ void World::RequestChunkActivation()
 	if (!m_player) return;
 
 	// Get player's current chunk coordinates
-	IntVec2 playerChunkCoords = Chunk::GetChunkCoords(m_player->m_position);
-	Vec2 playerPosXY = Vec2(m_player->m_position.x, m_player->m_position.y);
+	IntVec2 playerChunkCoords = Chunk::GetChunkCoords(m_player->GetPosition());
+	Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
 
 	// Calculate how many chunks we can still activate
 	int totalActiveChunks = (int)m_activeChunks.size();
@@ -550,7 +512,7 @@ void World::RequestChunkDeactivations()
 {
 	if (!m_player) return;
 
-	Vec2 playerPosXY = Vec2(m_player->m_position.x, m_player->m_position.y);
+	Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
 	static float deactivationRangeSq = static_cast<float>(CHUNK_DEACTIVATION_RANGE * CHUNK_DEACTIVATION_RANGE);
 
 	// Create a list of chunks to deactivate (can't modify m_activeChunks while iterating)
@@ -705,7 +667,7 @@ void World::SubmitGenerateJobs()
 		m_generateJobsQueued.pop_front();
 		
 		// discard far chunk
-		Vec2 playerPosXY = Vec2(m_player->m_position.x, m_player->m_position.y);
+		Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
 		IntVec2 chunkCoords = job->GetChunkCoords();
 		IntVec2 chunkCenter = Chunk::GetChunkCenter(chunkCoords);
 		float distance = GetDistanceSquared2D(playerPosXY, Vec2((float)chunkCenter.x, (float)chunkCenter.y));
@@ -731,7 +693,7 @@ void World::SubmitLoadJobs()
 		IntVec2 chunkCoords = job->GetChunkCoords();
 
 		// discard far chunk
-		Vec2 playerPosXY = Vec2(m_player->m_position.x, m_player->m_position.y);
+		Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
 		IntVec2 chunkCenter = Chunk::GetChunkCenter(chunkCoords);
 		float distance = GetDistanceSquared2D(playerPosXY, Vec2((float)chunkCenter.x, (float)chunkCenter.y));
 		if (distance > CHUNK_DEACTIVATION_RANGE * CHUNK_DEACTIVATION_RANGE)
@@ -769,7 +731,7 @@ void World::SortGenerateJobsByDistance()
 	if (m_generateJobsQueued.empty())
 		return;
 
-	Vec3 playerPos = m_player->m_position;
+	Vec3 playerPos = m_player->GetPosition();
 
 	std::sort(m_generateJobsQueued.begin(),
 		m_generateJobsQueued.end(),
@@ -796,7 +758,7 @@ void World::SortLoadJobsByDistance()
 	if (m_loadJobsQueued.empty())
 		return;
 
-	Vec3 playerPos = m_player->m_position;
+	Vec3 playerPos = m_player->GetPosition();
 
 	std::sort(m_loadJobsQueued.begin(),
 		m_loadJobsQueued.end(),
@@ -841,7 +803,7 @@ void World::SortMeshRebuildQueueByDistance()
 	if (m_chunksQueuedForMeshRebuild.empty())
 		return;
 
-	Vec3 playerPos = m_player->m_position;
+	Vec3 playerPos = m_player->GetPosition();
 
 	std::sort(m_chunksQueuedForMeshRebuild.begin(),
 		m_chunksQueuedForMeshRebuild.end(),
@@ -868,7 +830,7 @@ void World::RebuildChunkMeshes()
 		if (!chunk->m_neighborNorth || !chunk->m_neighborEast || !chunk->m_neighborSouth || !chunk->m_neighborWest)
 			continue;
 		// Too far
-		Vec2 playerPosXY = Vec2(m_player->m_position.x, m_player->m_position.y);
+		Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
 		IntVec2 chunkCenter = chunk->GetChunkCenter();
 		float distance = GetDistanceSquared2D(playerPosXY, Vec2((float)chunkCenter.x, (float)chunkCenter.y));
 		if (distance > CHUNK_DEACTIVATION_RANGE * CHUNK_DEACTIVATION_RANGE)
@@ -1818,7 +1780,7 @@ void World::SetWorldConstantsToGPU() const
 	// ========== 组装常量数据 ==========
 	WorldConstants constants = {};
 
-	Vec3 cameraPos = m_player->m_position;
+	Vec3 cameraPos = m_player->GetPosition();
 	constants.CameraPosition = cameraPos;
 	constants.Padding1 = 0.0f;
 
@@ -1894,9 +1856,29 @@ GameRaycastResult3D World::RaycastVsBlocks(Vec3 const& startPos, Vec3 const& fwd
 		result.m_didImpact = true;
 		result.m_impactDist = 0.0f;
 		result.m_impactPos = startPos;
-		result.m_impactNormal = -fwdNormal;
+
+		// ✅ 计算最近的墙面法线，而不是使用 -fwdNormal
+		Vec3 blockCenter = Vec3((float)currentBlockCoords.x, (float)currentBlockCoords.y, (float)currentBlockCoords.z) + Vec3(0.5f, 0.5f, 0.5f);
+		Vec3 toStart = startPos - blockCenter;
+
+		// 找出哪个轴的距离最大，那个就是最可能的穿透方向
+		Vec3 absToStart(fabsf(toStart.x), fabsf(toStart.y), fabsf(toStart.z));
+
+		if (absToStart.x > absToStart.y && absToStart.x > absToStart.z)
+		{
+			result.m_impactNormal = Vec3(toStart.x > 0 ? 1.f : -1.f, 0.f, 0.f);
+		}
+		else if (absToStart.y > absToStart.z)
+		{
+			result.m_impactNormal = Vec3(0.f, toStart.y > 0 ? 1.f : -1.f, 0.f);
+		}
+		else
+		{
+			result.m_impactNormal = Vec3(0.f, 0.f, toStart.z > 0 ? 1.f : -1.f);
+		}
+
 		result.m_impactedBlockIter = blockIter;
-		result.m_impactedFaceIndex = -1; // 内部击中
+		result.m_impactedFaceIndex = -1;
 		return result;
 	}
 
@@ -2066,10 +2048,10 @@ GameRaycastResult3D World::RaycastVsBlocks(Vec3 const& startPos, Vec3 const& fwd
 	return result;
 }
 
-void World::UpdateCameraRaycast()
+void World::UpdateEyeRaycast()
 {
-	Vec3 cameraPos = m_player->m_playerCam.GetPosition();
-	Vec3 cameraForward = m_player->m_playerCam.GetOrientation().GetForward_IFwd();
+	Vec3 cameraPos = m_player->GetEyePosition();
+	Vec3 cameraForward = m_player->GetEyesightOrientation().GetForward_IFwd();
 
 	m_currentRaycastResult =RaycastVsBlocks(cameraPos, cameraForward, 8.0f);
 }
@@ -2378,7 +2360,7 @@ void World::UnhookChunkNeighbors(Chunk* chunk)
 
 Chunk* World::GetChunkByWorldPos(Vec3 const& worldPos)
 {
-	if (worldPos.z < 0.f || worldPos.z >= CHUNK_SIZE_Z)
+	if (worldPos.z < 0.f || worldPos.z >= CHUNK_SIZE_Z+1)
 		return nullptr;
 
 	IntVec2 chunkCoords = Chunk::GetChunkCoords(worldPos);
@@ -2407,3 +2389,5 @@ Chunk const* World::GetChunkByWorldPos(Vec3 const& worldPos) const
 
 	return nullptr;
 }
+
+

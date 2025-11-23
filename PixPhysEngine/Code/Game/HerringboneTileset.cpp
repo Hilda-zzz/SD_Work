@@ -357,26 +357,39 @@ const HerringboneTile* HerringboneTileset::GetTile(int index) const
 	return nullptr;
 }
 
+// 在 HerringboneTileset.cpp 中重新实现
 std::vector<HerringboneTile*> HerringboneTileset::FindTilesByConstraints(
 	HbTileOrientation orientation,
-	const HbEdgeConstraint& constraint1,
-	const HbEdgeConstraint& constraint2,
-	const HbEdgeConstraint& constraint3) 
+	const HbEdgeConstraint constraints[6],
+	const bool hasConstraint[6])
 {
 	std::vector<HerringboneTile*> results;
 
-	// 线性搜索所有tiles
-	for (HerringboneTile* tile : m_tiles) 
+	// 线性搜索所有 tiles
+	for (HerringboneTile* tile : m_tiles)
 	{
-		if (tile->GetOrientation() != orientation) 
+		if (tile->GetOrientation() != orientation)
 		{
 			continue;
 		}
 
-		// 检查前三条边的约束是否匹配
-		if (tile->GetEdgeConstraint(0) == constraint1 &&
-			tile->GetEdgeConstraint(1) == constraint2 &&
-			tile->GetEdgeConstraint(2) == constraint3) 
+		// 检查所有有约束的边是否匹配
+		bool allMatch = true;
+		for (int i = 0; i < 6; ++i)
+		{
+			// 如果这条边有约束，则需要匹配
+			if (hasConstraint[i])
+			{
+				if (tile->GetEdgeConstraint(i) != constraints[i])
+				{
+					allMatch = false;
+					break;
+				}
+			}
+			// 如果这条边没有约束，跳过（wildcard）
+		}
+
+		if (allMatch)
 		{
 			results.push_back(tile);
 		}

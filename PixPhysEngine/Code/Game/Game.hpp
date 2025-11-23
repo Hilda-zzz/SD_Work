@@ -2,6 +2,7 @@
 #include "GameCommon.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Game/HerringboneMapGenerator.hpp"
 class Clock;
 class SandboxMap;
 class SandboxPlayer;
@@ -86,4 +87,5 @@ private:
 
 	HerringboneTileset* m_testTileset = nullptr;
 	int m_testTileIndex = 0;
+	HerringboneMapGenerator m_generator;
 };

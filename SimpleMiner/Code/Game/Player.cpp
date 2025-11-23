@@ -1,248 +1,73 @@
-#include "Player.hpp"
-#include "Engine/Input/InputSystem.hpp"
+﻿#include "Game/Player.hpp"
+#include "Game/GameCamera.hpp"
+#include "Game/World.hpp"
 #include "Game/GameCommon.hpp"
-#include <Engine/Math/MathUtils.hpp>
+#include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Window/Window.hpp"
-#include "World.hpp"
+#include "Game.hpp"
 
 extern Window* g_theWindow;
-Player::Player(Game* owner) :Entity(owner)
+
+Player::Player(Game* owner)
+	: Entity(owner)
 {
-	m_position = Vec3(0.f, 0.f, 120.f);
-	//m_position = Vec3(0.f, 0.f, 0.f);
-	m_orientation = EulerAngles(-45.f, 30.f, 0.f);
-	m_playerCam = Camera();
-	
- 	m_playerCam.SetCameraToRenderTransform(Mat44(Vec3(0.f, 0.f, 1.f), Vec3(-1.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f)));
- 	m_playerCam.SetPositionAndOrientation(m_position, m_orientation);
-}
+	m_eyeHeight = 1.65f;  // Eyes at 1.65m above feet
 
-void Player::Update(float deltaSeconds)
-{
-	m_velocity = Vec3(0.f, 0.f, 0.f);
-	m_angularVelocity = EulerAngles(0.f, 0.f, 0.f);
-	Mat44 rollMat = Mat44();
-	//--------------------------------------------------------
-	UpdateKBInput(deltaSeconds);
-	UpdateControllerInput(deltaSeconds);
+	// Start in walking mode
+	SetPhysicsMode(PhysicsMode::WALKING);
 
-	HandleGameplayKBInput();
-
-	m_playerCam.SetPosition(m_position);
-	m_playerCam.SetOrientation(m_orientation);
-}
-
-void Player::Render() const
-{
+	// Initial position (high up so we fall to ground)
+	SetPosition(Vec3(0.f, 0.f, 110.f));
+	SetOrientation(EulerAngles(0.f, 0.f, 0.f));
 }
 
 Player::~Player()
 {
 }
 
-void Player::UpdateKBInput(float deltaSeconds)
+void Player::Update(float deltaSeconds)
 {
-	// change mode
-	if (g_theInput->WasKeyJustPressed('C'))
+	// 检查是否应该应用重力
+	bool shouldApplyGravity = false;
+	if (m_physicsMode == PhysicsMode::WALKING)
 	{
-		m_isSpectatorFull = !m_isSpectatorFull;
+		if (!m_isOnGround)
+		{
+			Chunk* chunkBelow = m_world->GetChunkByWorldPos(m_position);
+			if (chunkBelow != nullptr)
+			{
+				shouldApplyGravity = true;
+			}
+		}
 	}
 
-	Vec3 fwdDirection;
-	Vec3 leftDirection;
-	Vec3 upDirection;
-	if (m_isSpectatorFull)
+	if (shouldApplyGravity)
 	{
-		m_orientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
+		m_acceleration.z -= g_playerGravityAcceleration;
 	}
-	else
-	{
-		EulerAngles xyOrientation(m_orientation.m_yawDegrees, 0.f, 0.f);  // Only use yaw
-		xyOrientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
-	}
+	//------------------------------------------------------------
+	// Drag
+	float dragCoeff = m_isOnGround ? g_playerHorizontalGroundDragCoefficient : 
+		g_playerHorizontalAirDragCoefficient;
+	Vec3 horizontalVelocity(m_velocity.x, m_velocity.y, 0.f);
+	Vec3 dragForce = -dragCoeff * horizontalVelocity;
 
+	m_acceleration += dragForce;
 
-	float curMoveSpeed;
-	if (g_theInput->IsKeyDown(KEYCODE_LEFT_SHIFT))
-	{
-		curMoveSpeed=m_moveSpeed* m_sprintFactor;
-	}
-	else
-	{
-		curMoveSpeed = m_moveSpeed;
-	}
-
-	m_velocity = Vec3(0.f, 0.f, 0.f);
-	Vec3 aimDirection = Vec3(0.f, 0.f, 0.f);
-	if (g_theInput->IsKeyDown('W'))
-	{
-		aimDirection += fwdDirection;
-	}
-	if (g_theInput->IsKeyDown('S'))
-	{
-		aimDirection -= fwdDirection;
-	}
-	if (g_theInput->IsKeyDown('A'))
-	{
-		aimDirection += leftDirection;
-	}
-	if (g_theInput->IsKeyDown('D'))
-	{
-		aimDirection -= leftDirection;
-	}
-
-	m_angularVelocity.m_rollDegrees = 0.f;
-	if (g_theInput->IsKeyDown('Q'))
-	{
-		m_position += Vec3(0.f, 0.f, 1.f) * curMoveSpeed * deltaSeconds;
-	}
-	if (g_theInput->IsKeyDown('E'))
-	{
-		m_position += Vec3(0.f, 0.f, -1.f) * curMoveSpeed * deltaSeconds;
-	}
-
-	m_angularVelocity.m_yawDegrees = -g_theInput->GetCursorClientDelta().x * g_theWindow->GetClientDimensions().x;
-	m_angularVelocity.m_pitchDegrees = g_theInput->GetCursorClientDelta().y * g_theWindow->GetClientDimensions().y;
-
-	m_angularVelocity.m_yawDegrees *= m_mouseSensitivity;
-	m_angularVelocity.m_pitchDegrees *= m_mouseSensitivity;
-	m_orientation = m_orientation + m_angularVelocity;
-	m_orientation.m_rollDegrees = GetClamped(m_orientation.m_rollDegrees, -45.f, 45.f);
-	m_orientation.m_pitchDegrees = GetClamped(m_orientation.m_pitchDegrees, -85.f, 85.f);
-
-	aimDirection.Normalized();
-	aimDirection.SetLength(curMoveSpeed);
-	m_velocity = aimDirection;
-	m_position += m_velocity * deltaSeconds;
-
-	// digging
-
+	//------------------------------------------------------------
+	Entity::UpdatePhysics(deltaSeconds);
 }
 
-void Player::HandleGameplayKBInput()
+void Player::SetEyesightOrientation(EulerAngles eye)
 {
-	// Block digging and placing
-	if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
-	{
-		//m_curWorld->DigBlockByPlayerPos(m_position);
-		m_curWorld->DigAtRaycast();
-	}
-	if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
-	{
-		//m_curWorld->PlaceBlockByPlayerPos(m_curBlockBrushName, m_position);
-		m_curWorld->PlaceBlockAtRaycast(m_curBlockBrushName);
-	}
-
-	// Block selection
-	if (g_theInput->WasKeyJustPressed('1'))
-	{
-		m_curBlockBrushName = "Glowstone";
-	}
-	if (g_theInput->WasKeyJustPressed('2'))
-	{
-		m_curBlockBrushName = "Cobblestone";
-	}
-	if (g_theInput->WasKeyJustPressed('3'))
-	{
-		m_curBlockBrushName = "ChiseledBrick";
-	}
+	m_eyeSightOrientation = eye;
 }
 
-void Player::UpdateControllerInput(float deltaSeconds)
+
+
+bool Player::CanJump() const
 {
-	XboxController const& controller = g_theInput->GetController(0);
-	if (controller.IsConnected())
-	{
-		if (controller.WasButtonJustPressed(XboxButtonID::DPAD_UP))
-		{
-			m_isSpectatorFull = !m_isSpectatorFull;
-		}
-
-		Vec3 fwdDirection;
-		Vec3 leftDirection;
-		Vec3 upDirection;
-		if (m_isSpectatorFull)
-		{
-			m_orientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
-		}
-		else
-		{
-			EulerAngles xyOrientation(m_orientation.m_yawDegrees, 0.f, 0.f);  // Only use yaw
-			xyOrientation.GetAsVectors_IFwd_JLeft_KUp(fwdDirection, leftDirection, upDirection);
-		}
-
-		float curMoveSpeed;
-		if (controller.GetLeftTrigger() > 0.f|| controller.GetRightTrigger() > 0.f)
-		{
-			curMoveSpeed = m_moveSpeed * m_sprintFactor;
-		}
-		else
-		{
-			curMoveSpeed = m_moveSpeed;
-		}
-
-		Vec3 moveDirection = Vec3();
-		float leftStickMagnitude = controller.GetLeftStick().GetMagnitude();
-		if (leftStickMagnitude > 0.f)
-		{
-			m_velocity = Vec3(0.f, 0.f,0.f);
-			moveDirection -= controller.GetLeftStick().GetPosition().x* leftDirection;
-			moveDirection += controller.GetLeftStick().GetPosition().y* fwdDirection;
-
-		}
- 		if (controller.IsButtonDown(XboxButtonID::LEFT_SHOULDER))
- 		{
- 			m_position += Vec3(0.f, 0.f, 1.f) * curMoveSpeed*deltaSeconds;
- 		}
- 		if (controller.IsButtonDown(XboxButtonID::RIGHT_SHOULDER))
- 		{
- 			m_position += Vec3(0.f, 0.f, -1.f) * curMoveSpeed * deltaSeconds;
- 		}
-		moveDirection.Normalized();
-		m_velocity = moveDirection * (leftStickMagnitude * curMoveSpeed);
-
-		float rightStickMagnitude = controller.GetRightStick().GetMagnitude();
-		if (rightStickMagnitude > 0.f)
-		{
-			m_angularVelocity.m_yawDegrees = -controller.GetRightStick().GetPosition().x * m_yawSpeed;
-			m_angularVelocity.m_pitchDegrees = -controller.GetRightStick().GetPosition().y* m_pitchSpeed;
-		}
-
-		m_orientation = m_orientation + m_angularVelocity * deltaSeconds;
-		m_orientation.m_rollDegrees = GetClamped(m_orientation.m_rollDegrees, -45.f, 45.f);
-		m_orientation.m_pitchDegrees = GetClamped(m_orientation.m_pitchDegrees, -85.f, 85.f);
-		m_position += m_velocity * deltaSeconds;
-
-	}
-}
-
-void Player::HandleGameplayControllerInput()
-{
-	XboxController const& controller = g_theInput->GetController(0);
-
-	// Block digging and placing
- 	if (controller.WasButtonJustPressed(XboxButtonID::X))
- 	{
-		//m_curWorld->DigBlockByPlayerPos(m_position);
-		m_curWorld->DigAtRaycast();
- 	}
- 	if (controller.WasButtonJustPressed(XboxButtonID::Y))
- 	{
-		//m_curWorld->PlaceBlockByPlayerPos(m_curBlockBrushName, m_position);
-		m_curWorld->PlaceBlockAtRaycast(m_curBlockBrushName);
- 	}
- 
- 	// Block selection
- 	if (controller.WasButtonJustPressed(XboxButtonID::DPAD_LEFT))
- 	{
-		m_curBlockBrushName = "Glowstone";
- 	}
- 	if (controller.WasButtonJustPressed(XboxButtonID::DPAD_DOWN))
- 	{
-		m_curBlockBrushName = "Cobblestone";
- 	}
- 	if (controller.WasButtonJustPressed(XboxButtonID::DPAD_RIGHT))
- 	{
-		m_curBlockBrushName = "ChiseledBrick";
- 	}
+	// Can only jump if on the ground and in walking mode
+	return IsOnGround() && GetPhysicsMode() == PhysicsMode::WALKING;
 }
