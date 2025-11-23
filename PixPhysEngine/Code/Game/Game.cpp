@@ -236,7 +236,13 @@ void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
 void Game::RenderAttractMode() const
 {
 	g_theRenderer->BeginCamera(m_screenCamera);
+
+	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
 	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->BindShader(nullptr);
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+
 	DebugDrawRing(4.f, 20.f, Rgba8::WHITE, Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
 
 	//DebugDrawCurrentTile();

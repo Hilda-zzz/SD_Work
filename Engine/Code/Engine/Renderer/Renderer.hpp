@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
@@ -74,7 +74,8 @@ enum class DepthMode
 enum class VertexType
 {
 	VERTEX_PCU,
-	VERTEX_PCUTBN
+	VERTEX_PCUTBN,
+	NOVA2D_PARTICLE_INSTANCED
 };
 
 struct RendererConfig
@@ -148,7 +149,7 @@ public:
 	void			BindShader(Shader* shader);
 
 	//-----------------------Buffer-------------------------------------------------------------------
-	VertexBuffer* CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride);
+	VertexBuffer* CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride, bool isPerInstance = false);
 	IndexBuffer* CreateIndexBuffer(unsigned int size);
 
 	void CopyGameVertexBufferToGPU(const void* data, unsigned int verticeCount, VertexBuffer* vbo);
@@ -182,6 +183,12 @@ public:
 	void SetTextureSlot(TextureSlot slot=TextureSlot::SLOT_BASE_COLOR, Texture* texture=nullptr); // call by each child material
 	void ApplyTextureBindings();
 	void ClearTextureSlots();
+
+	// ---------------------Draw Instanced -----------------------------------
+	void DrawInstanced(VertexBuffer* vertexVBO,     // 顶点数据（四边形）
+		VertexBuffer* instanceVBO,					// 实例数据（粒子）
+		unsigned int vertexCount,					// 4（四边形顶点数）
+		unsigned int instanceCount);				// 粒子数量
 
 
 
@@ -278,4 +285,9 @@ protected:
 	// -------------New Material System-----------------------
 	static constexpr int MAX_TEXTURE_SLOTS = 16;
 	ID3D11ShaderResourceView* m_boundTextures[16] = { nullptr }; // track bound textures
+
+private:
+	void CreateInputLayout_PCU(Shader* shader);
+	void CreateInputLayout_PCUTBN(Shader* shader);
+	void CreateInputLayout_ParticleInstanced(Shader* shader);
 };

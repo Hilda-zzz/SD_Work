@@ -1,9 +1,11 @@
 ﻿#pragma once
 #include <vector>
-#include "NovaParticle2D.hpp"
+#include "Nova2DParticle.hpp"
 
 class Renderer;
 class Camera;
+class VertexBuffer;
+class Shader;
 
 struct Nova2DConfig 
 {
@@ -32,6 +34,14 @@ public:
 	int GetAliveParticleCount() const;
 
 private:
+	void UpdateParticlesCPU(float deltaTime);
+	void RenderParticlesCPU(Camera const& camera) const;
+	int  FindDeadParticleSlot();
+
+	// ------------------ Draw Instanced ---------------------------
+	void RenderInstanced() const;
+
+private:
 	// CPU粒子数组（MVP: 先不用GPU）
 	std::vector<Nova2DParticle> m_particles;
 
@@ -39,8 +49,8 @@ private:
 	Nova2DConfig m_config;
 	Renderer* m_renderer = nullptr;
 
-	// 内部方法
-	void UpdateParticlesCPU(float deltaTime);
-	void RenderParticlesCPU(Camera const& camera) const;
-	int FindDeadParticleSlot();
+	// Draw Instanced
+	VertexBuffer* m_quadVBO = nullptr;
+	VertexBuffer* m_instanceVBO = nullptr;
+	Shader* m_particleShader = nullptr;
 };

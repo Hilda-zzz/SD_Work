@@ -7,7 +7,7 @@ class VertexBuffer
 	friend class Renderer;
 
 public:
-	VertexBuffer(ID3D11Device* device, unsigned int verticeCount, unsigned int stride);
+	VertexBuffer(ID3D11Device* device, unsigned int verticeCount, unsigned int stride, bool isPerInstance = false);
 	VertexBuffer(const VertexBuffer& copy) = delete;
 	~VertexBuffer();
 
@@ -22,4 +22,7 @@ private:
 	ID3D11Buffer* m_buffer = nullptr;
 	unsigned int m_verticeCount = 0;
 	unsigned int m_stride = 0;
+
+	// -------------------------------
+	bool m_isPerInstance = false;
 };

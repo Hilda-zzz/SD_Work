@@ -32,6 +32,9 @@
     <Filter Include="WangTileMapMode\HerringboneTileStruct">
       <UniqueIdentifier>{6c8f1428-ae79-4d96-9c1d-4b1ebd6463d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Nova2D\Nova2DShaders">
+      <UniqueIdentifier>{1d8aaa62-51ef-432e-b6e2-7c7b90600d4d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -177,7 +180,7 @@
     <ClInclude Include="Nova2D\Nova2DSystem.hpp">
       <Filter>Nova2D</Filter>
     </ClInclude>
-    <ClInclude Include="Nova2D\NovaParticle2D.hpp">
+    <ClInclude Include="Nova2D\Nova2DParticle.hpp">
       <Filter>Nova2D</Filter>
     </ClInclude>
     <ClInclude Include="HerringboneTile.hpp">
@@ -189,5 +192,13 @@
     <ClInclude Include="HerringboneMapGenerator.hpp">
       <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
     </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DParticleInstance.hpp">
+      <Filter>Nova2D</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\Run\Data\Nova2DShaders\Nova2DParticleInstanced.hlsl">
+      <Filter>Nova2D\Nova2DShaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

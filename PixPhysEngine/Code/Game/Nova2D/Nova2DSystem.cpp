@@ -3,25 +3,59 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Nova2DParticleInstance.hpp"
+#include "Engine/Renderer/VertexBuffer.hpp"
 
 Nova2DSystem::Nova2DSystem(Renderer* renderer, Nova2DConfig const& config)
 	:m_renderer(renderer),m_config(config)
 {
 }
 
-Nova2DSystem::~Nova2DSystem() {
+Nova2DSystem::~Nova2DSystem() 
+{
+
 }
 
 void Nova2DSystem::Startup() 
 {
+	// 1 -----------------------------------------------------------
 	// 预分配粒子数组
 	m_particles.resize(m_config.maxParticles);
-
 	// 初始化为死亡状态
 	for (auto& p : m_particles) 
 	{
 		p.m_lifetime = 0.0f;
 	}
+
+	// 2 -----------------------------------------------------------
+	struct QuadVertex {
+		Vec3 position;  
+		Vec2 uv;
+	};
+
+	QuadVertex quadVerts[6] = {
+		// 第一个三角形 (左下 → 右下 → 左上)
+		{ Vec3(0.0f, 0.0f, 0.0f), Vec2(0.0f, 0.0f) },  
+		{ Vec3(1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f) },  
+		{ Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 1.0f) },  
+
+		// 第二个三角形 (左上 → 右下 → 右上)
+		{ Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 1.0f) },  
+		{ Vec3(1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f) },  
+		{ Vec3(1.0f, 1.0f, 0.0f), Vec2(1.0f, 1.0f) },  
+	};
+	m_quadVBO = m_renderer->CreateVertexBuffer(6, sizeof(QuadVertex), false);
+	m_renderer->CopyGameVertexBufferToGPU(quadVerts, 6, m_quadVBO);
+
+	// 3 -----------------------------------------------------------
+	m_instanceVBO = m_renderer->CreateVertexBuffer(
+		m_config.maxParticles,
+		sizeof(Nova2DParticleInstance),
+		true  // ✅ Per-Instance
+	);
+
+	// 4 -----------------------------------------------------------
+	m_particleShader = m_renderer->CreateShaderFromFile("Data/Nova2DShaders/Nova2DParticleInstanced",VertexType::NOVA2D_PARTICLE_INSTANCED);
 
 	DebuggerPrintf("Nova2D System started with %d max particles\n", m_config.maxParticles);
 }
@@ -29,6 +63,10 @@ void Nova2DSystem::Startup()
 void Nova2DSystem::Shutdown() 
 {
 	m_particles.clear();
+
+	delete m_instanceVBO;
+	delete m_quadVBO;
+
 	DebuggerPrintf("Nova2D System shutdown\n");
 }
 
@@ -47,7 +85,8 @@ void Nova2DSystem::Update(float deltaTime)
 
 void Nova2DSystem::Render(Camera const& camera) const 
 {
-	RenderParticlesCPU(camera);
+	// RenderParticlesCPU(camera);
+	RenderInstanced();
 }
 
 void Nova2DSystem::EmitParticle(Vec2 pos, Vec2 vel, float lifetime, Rgba8 m_color, float size) 
@@ -160,4 +199,22 @@ int Nova2DSystem::FindDeadParticleSlot()
 		}
 	}
 	return -1;  // 没有空位
+}
+
+void Nova2DSystem::RenderInstanced() const
+{
+	std::vector<Nova2DParticleInstance> instances;
+	for (auto& p : m_particles) 
+	{
+		if (!p.IsAlive()) continue;
+		instances.push_back({ p.m_position, Vec2(p.m_size, p.m_size), p.m_color, 0.0f });
+	}
+	m_renderer->CopyGameVertexBufferToGPU(instances.data(), instances.size(), m_instanceVBO);
+
+	m_renderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+	Texture* tex = m_renderer->CreateOrGetTextureFromFile("Data/Images/TestUV2.png");
+	m_renderer->BindTexture(tex);
+	m_renderer->BindShader(m_particleShader);
+
+	m_renderer->DrawInstanced(m_quadVBO, m_instanceVBO, 6, instances.size());
 }

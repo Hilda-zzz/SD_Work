@@ -945,6 +945,7 @@ void WangTileMap::Render() const
 	g_theRenderer->BeginCamera(m_player->m_camera);
 	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
 	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->BindShader(nullptr);
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 
@@ -996,6 +997,12 @@ void WangTileMap::Render() const
 		AddVertsForLinSegment2D(chunkGridVerts, start + Vec2(0.f, 32.f), end + Vec2(0.f, 32.f), 0.5f, gridColor);
 		AddVertsForLinSegment2D(chunkGridVerts, start + Vec2(0.f, 48.f), end + Vec2(0.f, 48.f), 0.5f, gridColor);
 	}
+
+	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
+	g_theRenderer->BindTexture(nullptr);
+	g_theRenderer->BindShader(nullptr);
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 
 	g_theRenderer->DrawVertexArray(chunkGridVerts);
 

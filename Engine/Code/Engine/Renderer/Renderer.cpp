@@ -1149,7 +1149,7 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 		ERROR_AND_DIE(Stringf("Could not create pixel shader."));
 	}
 
-	if (vertexType == VertexType::VERTEX_PCU)
+	/*if (vertexType == VertexType::VERTEX_PCU)
 	{
 		D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
 		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,
@@ -1176,12 +1176,12 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
 				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
- 			{"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
- 				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
- 			{"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
- 				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
- 			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT,
- 				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		};
 		UINT numElements = ARRAYSIZE(inputElementDesc);
 		hr = m_device->CreateInputLayout(
@@ -1191,11 +1191,31 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 			&m_currentShader->m_inputLayout
 		);
 	}
-	
+
 	if (!SUCCEEDED(hr))
 	{
 		ERROR_AND_DIE(Stringf("Could not create vertex layout"));
+	}*/
+
+
+	switch (vertexType) {
+	case VertexType::VERTEX_PCU:
+		CreateInputLayout_PCU(m_currentShader);
+		break;
+
+	case VertexType::VERTEX_PCUTBN:
+		CreateInputLayout_PCUTBN(m_currentShader);
+		break;
+
+	case VertexType::NOVA2D_PARTICLE_INSTANCED:
+		CreateInputLayout_ParticleInstanced(m_currentShader);
+		break;
+
+	default:
+		ERROR_AND_DIE("Unknown VertexType!");
 	}
+
+	//-----------------------------------------------------------------------------
 	m_loadedShaders.push_back(m_currentShader);
 	return m_currentShader;
 }
@@ -1273,9 +1293,9 @@ void Renderer::BindShader(Shader* shader)
 }
 //-------------------------------------------------------------
 
-VertexBuffer* Renderer::CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride)
+VertexBuffer* Renderer::CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride, bool isPerInstance)
 {
-	VertexBuffer* curVertexBuffer =new VertexBuffer(m_device, verticeCount, stride);
+	VertexBuffer* curVertexBuffer =new VertexBuffer(m_device, verticeCount, stride, isPerInstance);
 	return curVertexBuffer;
 }
 
@@ -1662,6 +1682,22 @@ void Renderer::ClearTextureSlots()
 	}
 }
 
+void Renderer::DrawInstanced(VertexBuffer* vertexVBO, VertexBuffer* instanceVBO, unsigned int vertexCount, unsigned int instanceCount)
+{
+	SetStateIfChanged();
+
+	// 绑定顶点缓冲区（四边形）
+	UINT strides[2] = { vertexVBO->GetStride(), instanceVBO->GetStride() };
+	UINT offsets[2] = { 0, 0 };
+	ID3D11Buffer* buffers[2] = { vertexVBO->m_buffer, instanceVBO->m_buffer };
+
+	m_deviceContext->IASetVertexBuffers(0, 2, buffers, strides, offsets);
+	m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// 绘制实例化
+	m_deviceContext->DrawInstanced(vertexCount, instanceCount, 0, 0);
+}
+
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)
 {
 	SetStateIfChanged();
@@ -1839,6 +1875,114 @@ void Renderer::SetPBRConstants(Vec3 const& albedo, float metallic, float roughne
 
 	CopyCPUToGPU(&pbrConstants, sizeof(pbrConstants), m_pbrCBO);
 	BindConstantBuffer(k_pbrConstantsSlot, m_pbrCBO);
+}
+
+// ========== Renderer.cpp ==========
+
+void Renderer::CreateInputLayout_PCU(Shader* shader) {
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+			0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+
+	UINT numElements = ARRAYSIZE(inputElementDesc);
+	HRESULT hr = m_device->CreateInputLayout(
+		inputElementDesc, numElements,
+		shader->m_vertexShaderByteCode.data(),
+		shader->m_vertexShaderByteCode.size(),
+		&shader->m_inputLayout
+	);
+
+	if (!SUCCEEDED(hr)) {
+		ERROR_AND_DIE("Could not create PCU input layout");
+	}
+}
+
+void Renderer::CreateInputLayout_PCUTBN(Shader* shader) {
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+			0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+
+	UINT numElements = ARRAYSIZE(inputElementDesc);
+	HRESULT hr = m_device->CreateInputLayout(
+		inputElementDesc, numElements,
+		shader->m_vertexShaderByteCode.data(),
+		shader->m_vertexShaderByteCode.size(),
+		&shader->m_inputLayout
+	);
+
+	if (!SUCCEEDED(hr)) {
+		ERROR_AND_DIE("Could not create PCUTBN input layout");
+	}
+}
+
+void Renderer::CreateInputLayout_ParticleInstanced(Shader* shader) {
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+		// ===== Slot 0: Per-Vertex 数据（四边形顶点）=====
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+			0,    // ← InputSlot 0
+			0,    // ← Offset 0
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0},
+
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
+			0,    // ← InputSlot 0
+			12,   // ← Offset 12 (3 floats = 12 bytes)
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0},
+
+		// ===== Slot 1: Per-Instance 数据（粒子）=====
+		{"INSTANCE_POS", 0, DXGI_FORMAT_R32G32_FLOAT,
+			1,    // ← InputSlot 1（从实例 Buffer 读取）
+			0,    // ← Offset 0（结构体开始）
+			D3D11_INPUT_PER_INSTANCE_DATA,  // ← 关键！
+			1},   // ← 每个实例前进1步
+
+		{"INSTANCE_SIZE", 0, DXGI_FORMAT_R32G32_FLOAT,
+			1,    // ← InputSlot 1
+			8,    // ← Offset 8（2 floats = 8 bytes）
+			D3D11_INPUT_PER_INSTANCE_DATA,
+			1},
+
+		{"INSTANCE_COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+			1,    // ← InputSlot 1
+			16,   // ← Offset 16（4 floats = 16 bytes）
+			D3D11_INPUT_PER_INSTANCE_DATA,
+			1},
+
+		{"INSTANCE_ROTATION", 0, DXGI_FORMAT_R32_FLOAT,
+			1,    // ← InputSlot 1
+			20,   // ← Offset 20（1 byte = 4 bytes after Rgba8）
+			D3D11_INPUT_PER_INSTANCE_DATA,
+			1},
+	};
+
+	UINT numElements = ARRAYSIZE(inputElementDesc);
+	HRESULT hr = m_device->CreateInputLayout(
+		inputElementDesc, numElements,
+		shader->m_vertexShaderByteCode.data(),
+		shader->m_vertexShaderByteCode.size(),
+		&shader->m_inputLayout
+	);
+
+	if (!SUCCEEDED(hr)) {
+		ERROR_AND_DIE("Could not create ParticleInstanced input layout");
+	}
 }
 
 

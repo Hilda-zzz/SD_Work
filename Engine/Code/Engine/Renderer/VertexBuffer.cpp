@@ -4,7 +4,8 @@
 #include <d3d11.h>
 #include <Engine/Core/ErrorWarningAssert.hpp>
 
-VertexBuffer::VertexBuffer(ID3D11Device* device, unsigned int verticeCount, unsigned int stride):m_device(device),m_verticeCount(verticeCount),m_stride(stride)
+VertexBuffer::VertexBuffer(ID3D11Device* device, unsigned int verticeCount, unsigned int stride, bool isPerInstance)
+	:m_device(device),m_verticeCount(verticeCount),m_stride(stride),m_isPerInstance(isPerInstance)
 {
 	Create();
 }
