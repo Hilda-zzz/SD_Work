@@ -85,8 +85,17 @@ void Nova2DSystem::Update(float deltaTime)
 
 void Nova2DSystem::Render(Camera const& camera) const 
 {
-	// RenderParticlesCPU(camera);
-	RenderInstanced();
+	switch (m_renderMode)
+	{
+	case Nova2DRenderMode::CPU_VERTEX_BUILD:
+		RenderParticlesCPU(camera);
+		break;
+	case Nova2DRenderMode::GPU_INSTANCED:
+		RenderInstanced();
+		break;
+	default:
+		break;
+	}
 }
 
 void Nova2DSystem::EmitParticle(Vec2 pos, Vec2 vel, float lifetime, Rgba8 m_color, float size) 

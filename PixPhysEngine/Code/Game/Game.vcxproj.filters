@@ -195,6 +195,12 @@
     <ClInclude Include="Nova2D\Nova2DParticleInstance.hpp">
       <Filter>Nova2D</Filter>
     </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DEmitterConfig.hpp">
+      <Filter>Nova2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DEmitter.hpp">
+      <Filter>Nova2D</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\..\Run\Data\Nova2DShaders\Nova2DParticleInstanced.hlsl">

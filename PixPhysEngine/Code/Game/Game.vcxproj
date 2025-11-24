@@ -66,6 +66,8 @@
     <ClInclude Include="HerringboneMapGenerator.hpp" />
     <ClInclude Include="HerringboneTile.hpp" />
     <ClInclude Include="HerringboneTileset.hpp" />
+    <ClInclude Include="Nova2D\Nova2DEmitter.hpp" />
+    <ClInclude Include="Nova2D\Nova2DEmitterConfig.hpp" />
     <ClInclude Include="Nova2D\Nova2DParticleInstance.hpp" />
     <ClInclude Include="Nova2D\Nova2DSystem.hpp" />
     <ClInclude Include="Nova2D\Nova2DParticle.hpp" />

@@ -9,7 +9,13 @@ class Shader;
 
 struct Nova2DConfig 
 {
-	int maxParticles = 10000;  // MVP: 先用小数量
+	int maxParticles = 50000;  // MVP: 先用小数量
+};
+
+enum class Nova2DRenderMode
+{
+	CPU_VERTEX_BUILD,      // 旧方案：每帧构建顶点
+	GPU_INSTANCED          // 新方案：实例化渲染
 };
 
 class Nova2DSystem {
@@ -48,6 +54,9 @@ private:
 	// 配置
 	Nova2DConfig m_config;
 	Renderer* m_renderer = nullptr;
+
+	// Bench Mark
+	Nova2DRenderMode m_renderMode = Nova2DRenderMode::GPU_INSTANCED;
 
 	// Draw Instanced
 	VertexBuffer* m_quadVBO = nullptr;

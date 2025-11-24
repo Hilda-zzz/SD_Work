@@ -927,7 +927,7 @@ void WangTileMap::Update(float deltaTime)
 		// 使用全局系统发射粒子
 		g_nova2D->EmitBurst(
 			mousePosInWorld,
-			6000,
+			30000,
 			Vec2(0, 100),
 			360.0f
 		);
@@ -953,19 +953,19 @@ void WangTileMap::Render() const
 	{
 		for (const auto& chunk : row)
 		{
-			chunk->RenderChunk();
+			//chunk->RenderChunk();
 		}
 	}	
 
 	// ==========================================
 	if (m_showWangTemplate && m_templateImage)
 	{
-		RenderWangTemplateOverlay();
+		//RenderWangTemplateOverlay();
 	}
 
 	if (m_drawEdges)
 	{
-		RenderEdgePixelOverlay();
+		//RenderEdgePixelOverlay();
 	}
 
 	// ==========================================
@@ -1004,6 +1004,6 @@ void WangTileMap::Render() const
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 
-	g_theRenderer->DrawVertexArray(chunkGridVerts);
+	//g_theRenderer->DrawVertexArray(chunkGridVerts);
 
 }
