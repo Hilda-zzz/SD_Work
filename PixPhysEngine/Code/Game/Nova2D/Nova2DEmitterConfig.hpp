@@ -2,8 +2,9 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/Rgba8.hpp"
 
-class SpriteDefinition;
+//class SpriteDefinition;
 class SpriteAnimDefinition;
+class SpriteSheet;
 
 //----------------------------------------------------------------------
 // Emitter Shape
@@ -163,7 +164,7 @@ struct Nova2DEmitterConfig
 	n2d_AppearanceConfig			m_appearanceConfig;
 
 	// ===== Assets =====
-	SpriteDefinition const*			m_sprite = nullptr;       
+	SpriteSheet const*			m_sprite = nullptr;       
 	SpriteAnimDefinition const*		m_animation = nullptr; 
 
 	// ===== Physics =====
@@ -178,102 +179,107 @@ struct Nova2DEmitterConfig
 //==========================================================================
 // 辅助工具：预设配置生成器
 //==========================================================================
-//namespace EmitterPresets {
-//	// 火焰效果
-//	inline ParticleEmitterConfig CreateFireConfig() {
-//		ParticleEmitterConfig config;
-//
-//		// Emission
-//		config.emission.mode = EmissionMode::CONTINUOUS;
-//		config.emission.emissionRate = 50.0f;
-//		config.emission.lifetimeMin = 0.5f;
-//		config.emission.lifetimeMax = 1.5f;
-//		config.emission.shape = EmitterShape::CIRCLE;
-//		config.emission.shapeRadius = 10.0f;
-//
-//		// Motion
-//		config.motion.startVelocityMin = Vec2(0, 100);
-//		config.motion.startVelocityMax = Vec2(0, 200);
-//
-//		// Appearance
-//		config.appearance.sizeMin = 3.0f;
-//		config.appearance.sizeMax = 8.0f;
-//		config.appearance.colorStart = Rgba8(255, 200, 50, 255); // 黄橙色
-//
-//		// Physics
-//		config.enableGravity = false;  // 火焰向上飘
-//
-//		return config;
-//	}
-//
-//	// 烟雾效果
-//	inline ParticleEmitterConfig CreateSmokeConfig() {
-//		ParticleEmitterConfig config;
-//
-//		config.emission.mode = EmissionMode::CONTINUOUS;
-//		config.emission.emissionRate = 20.0f;
-//		config.emission.lifetimeMin = 1.0f;
-//		config.emission.lifetimeMax = 3.0f;
-//		config.emission.shape = EmitterShape::CIRCLE;
-//		config.emission.shapeRadius = 15.0f;
-//
-//		config.motion.startVelocityMin = Vec2(0, 30);
-//		config.motion.startVelocityMax = Vec2(0, 80);
-//
-//		config.appearance.sizeMin = 5.0f;
-//		config.appearance.sizeMax = 15.0f;
-//		config.appearance.colorStart = Rgba8(100, 100, 100, 150); // 灰色半透明
-//
-//		config.enableGravity = false;
-//
-//		return config;
-//	}
-//
-//	// 爆炸效果（Burst 模式）
-//	inline ParticleEmitterConfig CreateExplosionConfig() {
-//		ParticleEmitterConfig config;
-//
-//		config.emission.mode = EmissionMode::BURST;
-//		config.emission.burstCount = 200;
-//		config.emission.lifetimeMin = 0.3f;
-//		config.emission.lifetimeMax = 1.0f;
-//		config.emission.shape = EmitterShape::POINT;
-//
-//		config.motion.startVelocityMin = Vec2(-200, -200);
-//		config.motion.startVelocityMax = Vec2(200, 200);
-//		config.motion.maxSpeed = 300.0f;
-//
-//		config.appearance.sizeMin = 2.0f;
-//		config.appearance.sizeMax = 6.0f;
-//		config.appearance.colorStart = Rgba8(255, 150, 50, 255);
-//
-//		config.enableGravity = true;
-//		config.gravityScale = 0.5f;
-//
-//		return config;
-//	}
-//
-//	// 火花飞溅
-//	inline ParticleEmitterConfig CreateSparkConfig() {
-//		ParticleEmitterConfig config;
-//
-//		config.emission.mode = EmissionMode::BURST;
-//		config.emission.burstCount = 50;
-//		config.emission.lifetimeMin = 0.2f;
-//		config.emission.lifetimeMax = 0.8f;
-//		config.emission.shape = EmitterShape::CIRCLE;
-//		config.emission.shapeRadius = 5.0f;
-//
-//		config.motion.startVelocityMin = Vec2(-150, 50);
-//		config.motion.startVelocityMax = Vec2(150, 250);
-//
-//		config.appearance.sizeMin = 1.0f;
-//		config.appearance.sizeMax = 3.0f;
-//		config.appearance.colorStart = Rgba8(255, 200, 100, 255);
-//
-//		config.enableGravity = true;
-//
-//		return config;
-//	}
-//}
+namespace EmitterPresets 
+{
+	// 火焰效果
+	inline Nova2DEmitterConfig CreateFireConfig() 
+	{
+		Nova2DEmitterConfig config;
+
+		// Emission
+		config.m_emissionConfig.m_mode = n2d_EmissionMode::CONTINUOUS;
+		config.m_emissionConfig.m_emissionRate = 50.0f;
+		config.m_emissionConfig.m_lifetimeMin = 0.5f;
+		config.m_emissionConfig.m_lifetimeMax = 1.5f;
+		config.m_emissionConfig.m_shape = n2d_EmitterShape::CIRCLE;
+		config.m_emissionConfig.m_shapeRadius = 10.0f;
+
+		// Motion
+		config.m_motionConfig.m_startVelocityMin = Vec2(0, 100);
+		config.m_motionConfig.m_startVelocityMax = Vec2(0, 200);
+
+		// Appearance
+		config.m_appearanceConfig.m_sizeMin = 3.0f;
+		config.m_appearanceConfig.m_sizeMax = 8.0f;
+		config.m_appearanceConfig.m_colorStart = Rgba8(255, 200, 50, 255); // 黄橙色
+
+		// Physics
+		config.m_enableGravity = false;  // 火焰向上飘
+
+		return config;
+	}
+
+	// 烟雾效果
+	inline Nova2DEmitterConfig CreateSmokeConfig() 
+	{
+		Nova2DEmitterConfig config;
+
+		config.m_emissionConfig.m_mode = n2d_EmissionMode::CONTINUOUS;
+		config.m_emissionConfig.m_emissionRate = 20.0f;
+		config.m_emissionConfig.m_lifetimeMin = 1.0f;
+		config.m_emissionConfig.m_lifetimeMax = 3.0f;
+		config.m_emissionConfig.m_shape = n2d_EmitterShape::CIRCLE;
+		config.m_emissionConfig.m_shapeRadius = 15.0f;
+
+		config.m_motionConfig.m_startVelocityMin = Vec2(0, 30);
+		config.m_motionConfig.m_startVelocityMax = Vec2(0, 80);
+
+		config.m_appearanceConfig.m_sizeMin = 5.0f;
+		config.m_appearanceConfig.m_sizeMax = 15.0f;
+		config.m_appearanceConfig.m_colorStart = Rgba8(100, 100, 100, 150); // 灰色半透明
+
+		config.m_enableGravity = false;
+
+		return config;
+	}
+
+	// 爆炸效果（Burst 模式）
+	inline Nova2DEmitterConfig CreateExplosionConfig() 
+	{
+		Nova2DEmitterConfig config;
+
+		config.m_emissionConfig.m_mode = n2d_EmissionMode::BURST;
+		config.m_emissionConfig.m_burstCount = 200;
+		config.m_emissionConfig.m_lifetimeMin = 0.3f;
+		config.m_emissionConfig.m_lifetimeMax = 1.0f;
+		config.m_emissionConfig.m_shape = n2d_EmitterShape::POINT;
+
+		config.m_motionConfig.m_startVelocityMin = Vec2(-200, -200);
+		config.m_motionConfig.m_startVelocityMax = Vec2(200, 200);
+		config.m_motionConfig.m_maxSpeed = 300.0f;
+
+		config.m_appearanceConfig.m_sizeMin = 2.0f;
+		config.m_appearanceConfig.m_sizeMax = 6.0f;
+		config.m_appearanceConfig.m_colorStart = Rgba8(255, 150, 50, 255);
+
+		config.m_enableGravity = true;
+		config.m_gravityScale = 0.5f;
+
+		return config;
+	}
+
+	// 火花飞溅
+	inline Nova2DEmitterConfig CreateSparkConfig()
+	{
+		Nova2DEmitterConfig config;
+
+		config.m_emissionConfig.m_mode = n2d_EmissionMode::BURST;
+		config.m_emissionConfig.m_burstCount = 50;
+		config.m_emissionConfig.m_lifetimeMin = 0.2f;
+		config.m_emissionConfig.m_lifetimeMax = 0.8f;
+		config.m_emissionConfig.m_shape = n2d_EmitterShape::CIRCLE;
+		config.m_emissionConfig.m_shapeRadius = 5.0f;
+
+		config.m_motionConfig.m_startVelocityMin = Vec2(-150, 50);
+		config.m_motionConfig.m_startVelocityMax = Vec2(150, 250);
+
+		config.m_appearanceConfig.m_sizeMin = 1.0f;
+		config.m_appearanceConfig.m_sizeMax = 3.0f;
+		config.m_appearanceConfig.m_colorStart = Rgba8(255, 200, 100, 255);
+
+		config.m_enableGravity = true;
+
+		return config;
+	}
+}
 

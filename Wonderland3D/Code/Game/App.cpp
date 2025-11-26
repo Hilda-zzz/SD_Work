@@ -52,6 +52,7 @@ void App::Startup()
 	
 	RendererConfig rendererConfig;
 	rendererConfig.m_window = g_theWindow;
+	rendererConfig.m_imguiInitialized = true;
 	g_theRenderer = new Renderer(rendererConfig);
 	
 	g_systemClock = new Clock();
@@ -178,7 +179,7 @@ void App::Update()
 
 void App::Render()  const
 {
-	g_theRenderer->ClearScreen(Rgba8(100,100,100,255));
+	g_theRenderer->ClearScreen(Rgba8(80,80,80,255));
 	g_theGame->Renderer();
 }
 

@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "Nova2DEmitterConfig.hpp"
-#include "Engine/Math/RandomNumberGenerator.hpp"
+#include "ThirdParty/Noise/RawNoise.hpp"
 
 class Nova2DSystem;
 class SpriteDefinition;
@@ -50,7 +50,7 @@ public:
 	//----------------------------------------------------------------------
 	// 纹理/动画设置
 	//----------------------------------------------------------------------
-	void SetSprite(SpriteDefinition const* sprite);
+	void SetSprite(SpriteSheet const* sprite);
 	void SetAnimation(SpriteAnimDefinition const* anim);
 
 	//----------------------------------------------------------------------
@@ -85,8 +85,41 @@ private:
 	float GenerateSize() const;             // Appearance Module
 	float GenerateRotation() const;         // Motion Module (rotation)
 
+	//----------------------------------------------------------------------
+	// Random number generator
+	//----------------------------------------------------------------------
+
+	// 生成 [0, 1) 范围的随机数
+	inline float GetRandomZeroToOne(int index, unsigned int seed) const {
+		return Get1dNoiseZeroToOne(index, seed);
+	}
+
+	// 生成 [min, max) 范围的随机数
+	inline float GetRandomInRange(int index, unsigned int seed, float min, float max) const {
+		float t = GetRandomZeroToOne(index, seed);
+		return min + t * (max - min);
+	}
+
+	// 生成 2D 随机向量（使用两个不同的索引）
+	inline Vec2 GetRandomVec2InRange(int& indexRef, unsigned int seed,
+		Vec2 const& min, Vec2 const& max) const {
+		float x = GetRandomInRange(indexRef++, seed, min.x, max.x);
+		float y = GetRandomInRange(indexRef++, seed, min.y, max.y);
+		return Vec2(x, y);
+	}
+
+	// 生成随机角度（度数）
+	inline float GetRandomAngleDegrees(int index, unsigned int seed) const {
+		return GetRandomInRange(index, seed, 0.0f, 360.0f);
+	}
+
+
 private:
 	Nova2DEmitterConfig m_config;
+
+	// ✅ 新增：噪声索引追踪
+	int m_noiseIndex = 0;  // 每发射一个粒子递增
+	unsigned int m_noiseSeed = 0;  // Emitter 的唯一种子
 
 	// State
 	bool m_isPlaying = false;

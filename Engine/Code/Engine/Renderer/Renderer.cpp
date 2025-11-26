@@ -1970,6 +1970,12 @@ void Renderer::CreateInputLayout_ParticleInstanced(Shader* shader) {
 			20,   // ← Offset 20（1 byte = 4 bytes after Rgba8）
 			D3D11_INPUT_PER_INSTANCE_DATA,
 			1},
+
+		{"INSTANCE_UVRECT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 
+			1, 
+			24, 
+			D3D11_INPUT_PER_INSTANCE_DATA, 
+			1}
 	};
 
 	UINT numElements = ARRAYSIZE(inputElementDesc);

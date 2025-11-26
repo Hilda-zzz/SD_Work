@@ -6,6 +6,7 @@ class Renderer;
 class Camera;
 class VertexBuffer;
 class Shader;
+class Nova2DEmitter;
 
 struct Nova2DConfig 
 {
@@ -39,7 +40,18 @@ public:
 	// 查询
 	int GetAliveParticleCount() const;
 
+	// ===== 新增：接受完整粒子结构 =====
+	void EmitParticleStruct(Nova2DParticle const& particle);
+
+	// ===== 新增：Emitter 管理 =====
+	void RegisterEmitter(Nova2DEmitter* emitter);
+	void UnregisterEmitter(Nova2DEmitter* emitter);
+
+	// ===== 新增：获取当前游戏时间（用于动画） =====
+	float GetCurrentGameTime() const { return m_totalGameTime; }
+
 private:
+	// Mode 1 Basic cpu update each particle
 	void UpdateParticlesCPU(float deltaTime);
 	void RenderParticlesCPU(Camera const& camera) const;
 	int  FindDeadParticleSlot();
@@ -47,7 +59,14 @@ private:
 	// ------------------ Draw Instanced ---------------------------
 	void RenderInstanced() const;
 
+	// ------------------ Emitter ----------------------------------
+	// Mode 2 Update emitters and then update each particle on CPU
+	void UpdateEmitters(float deltaTime);
+
 private:
+
+	float m_totalGameTime = 0.0f;  // 累积游戏时间
+
 	// CPU粒子数组（MVP: 先不用GPU）
 	std::vector<Nova2DParticle> m_particles;
 
@@ -62,4 +81,8 @@ private:
 	VertexBuffer* m_quadVBO = nullptr;
 	VertexBuffer* m_instanceVBO = nullptr;
 	Shader* m_particleShader = nullptr;
+
+	// Emitter
+	std::vector<Nova2DEmitter*> m_activeEmitters;
+	
 };

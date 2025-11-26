@@ -2,7 +2,7 @@
 struct VS_INPUT 
 {
     // Per-Vertex
-    float3 localPosition : POSITION;   // (0,0), (1,0), (0,1), (1,1)
+    float3 localPosition : POSITION;  
     float2 uv : TEXCOORD;
     
     // Per-Instance
@@ -10,6 +10,7 @@ struct VS_INPUT
     float2 size : INSTANCE_SIZE;           
     float4 color : INSTANCE_COLOR;         
     float rotation : INSTANCE_ROTATION;   
+    float4 uvRect : INSTANCE_UVRECT;
     
     uint instanceID : SV_InstanceID;       // auto supply
 };
@@ -31,10 +32,35 @@ cbuffer CameraConstants : register(b2)
 VS_OUTPUT VertexMain(VS_INPUT input) 
 {
     VS_OUTPUT output;
+
+    float cosR = cos(input.rotation);
+    float sinR = sin(input.rotation);
     
+    float2 localPos = input.localPosition.xy;
+    float2 rotatedLocal;
+    rotatedLocal.x = localPos.x * cosR - localPos.y * sinR;
+    rotatedLocal.y = localPos.x * sinR + localPos.y * cosR;
+
+    float2 scaledLocal = rotatedLocal * input.size;
+
+    float2 worldPos = input.worldPosition + scaledLocal;
+
+    float4 worldPosition = float4(worldPos, 0.0, 1.0);
+    float4 camPosition = mul(WorldToCameraTransform, worldPosition);
+    float4 renderPosition = mul(CameraToRenderTransform, camPosition);
+    float4 clipPosition = mul(RenderToClipTransform, renderPosition);
+    
+    output.position = clipPosition;
+    output.color = input.color;
+
+    float2 uvRange = input.uvRect.zw - input.uvRect.xy;
+    output.uv = input.uvRect.xy + input.uv * uvRange;
+    
+    return output;
+
     // 1. Scale and Center
-	float4 localPosition=float4(input.localPosition,1);
-    localPosition.xy=(localPosition.xy-0.5f)* input.size;  
+	//float4 localPosition=float4(input.localPosition,1);
+    //localPosition.xy=(localPosition.xy-0.5f)* input.size;  
 
     // 2. #TODO: Rotation
     // float2 rotated;
@@ -43,19 +69,19 @@ VS_OUTPUT VertexMain(VS_INPUT input)
     // localPos = rotated;
     
     // 3. Translation
-    float2 worldPos = input.worldPosition.xy + localPosition.xy;
+    // float2 worldPos = input.worldPosition.xy + localPosition.xy;
     
     // 4. Cam
-	float4 worldPosition = float4(worldPos, 0, 1);
-	float4 camPosition=mul(WorldToCameraTransform,worldPosition);
-	float4 renderPosition=mul(CameraToRenderTransform,camPosition);
-	float4 clipPosition=mul(RenderToClipTransform,renderPosition);
-    
-    output.position=clipPosition;
-    output.color = input.color;
-    output.uv = input.uv;
-    
-    return output;
+	// float4 worldPosition = float4(worldPos, 0, 1);
+	// float4 camPosition=mul(WorldToCameraTransform,worldPosition);
+	// float4 renderPosition=mul(CameraToRenderTransform,camPosition);
+	// float4 clipPosition=mul(RenderToClipTransform,renderPosition);
+    // 
+    // output.position=clipPosition;
+    // output.color = input.color;
+    // output.uv = input.uv;
+    // 
+    // return output;
 }
 
 // ========== Pixel Shader ==========
@@ -64,9 +90,8 @@ SamplerState DiffuseSampler : register(s0);
 
 float4 PixelMain(VS_OUTPUT input) : SV_Target 
 {
-    float4 color = input.color;
     float4 texColor = DiffuseTexture.Sample(DiffuseSampler, input.uv);
-
+    float4 color = input.color*texColor;
 	clip(color.a-0.01f);
-	return float4(color);
+	return color;
 }

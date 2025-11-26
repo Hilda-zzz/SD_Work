@@ -17,6 +17,7 @@
 #include "SampleImageUtils.hpp"
 #include "HerringboneTileset.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include "Nova2DTestMap.hpp"
 
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
@@ -69,6 +70,12 @@ Game::~Game()
 	{
 		delete m_wangTileMap;
 		m_wangTileMap = nullptr;
+	}
+
+	if (m_nova2DMap)
+	{
+		delete m_nova2DMap;
+		m_nova2DMap = nullptr;
 	}
 
 	delete m_gameClock;
@@ -171,6 +178,9 @@ void Game::UpdateGameplayMode(float deltaTime)
 		break;
 	case GameMode::WANG_TILE_MAP:
 		m_wangTileMap->Update(deltaTime);
+		break;
+	case GameMode::NOVA2D_TEST:
+		m_nova2DMap->Update(deltaTime);
 		break;
 	default:
 		break;
@@ -317,6 +327,9 @@ void Game::RenderGameplayMode() const
 	case GameMode::WANG_TILE_MAP:
 		m_wangTileMap->Render();
 		break;
+	case GameMode::NOVA2D_TEST:
+		m_nova2DMap->Render();
+		break;
 	default:
 		break;
 	}
@@ -333,7 +346,7 @@ void Game::RenderGameplayMode() const
 	std::vector<Vertex_PCU> title;
 	BitmapFont* font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 	font->AddVertsForTextInBox2D(title, statsMessage,
-		AABB2(Vec2(100.f, 450.f), Vec2(1000.f, 750.f)), 15.f, Rgba8::CYAN, 0.7f, Vec2(0.f, 1.f));
+		AABB2(Vec2(100.f, 2500.f), Vec2(1800.f, 3000.f)), 50.f, Rgba8::CYAN, 0.7f, Vec2(0.f, 1.f));
 	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
 	g_theRenderer->BindTexture(&font->GetTexture());
 	g_theRenderer->DrawVertexArray(title);
@@ -376,6 +389,15 @@ void Game::RenderGameModeSelectionUI() const
 	if (ImGui::Button("Wang Tile Map Mode", ImVec2(buttonWidth, buttonHeight)))
 	{
 		const_cast<Game*>(this)->m_selectedGameMode = GameMode::WANG_TILE_MAP;
+		const_cast<Game*>(this)->m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
+	}
+
+	ImGui::Spacing();
+
+	ImGui::SetCursorPosX(buttonPosX);
+	if (ImGui::Button("Nova2D Map Mode", ImVec2(buttonWidth, buttonHeight)))
+	{
+		const_cast<Game*>(this)->m_selectedGameMode = GameMode::NOVA2D_TEST;
 		const_cast<Game*>(this)->m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
 	}
 
@@ -441,6 +463,9 @@ void Game::EnterGameplayMode()
 	case GameMode::WANG_TILE_MAP:
 		m_wangTileMap = new WangTileMap(m_sandboxPlayer);
 		break;
+	case GameMode::NOVA2D_TEST:
+		m_nova2DMap = new Nova2DTestMap(m_sandboxPlayer);
+		break;
 	default:
 		break;
 	}
@@ -467,6 +492,23 @@ void Game::ExitAttractMode()
 
 void Game::ExitGameplayMode()
 {
+	switch (m_selectedGameMode)
+	{
+	case GameMode::SANDBOX:
+		delete m_sandboxMap;
+		m_sandboxMap = nullptr;
+		break;
+	case GameMode::WANG_TILE_MAP:
+		delete m_wangTileMap;
+		m_wangTileMap = nullptr;
+		break;
+	case GameMode::NOVA2D_TEST:
+		delete m_nova2DMap;
+		m_nova2DMap = nullptr;
+		break;
+	default:
+		break;
+	}
 }
 
 void Game::DebugDrawCurrentTile() const {

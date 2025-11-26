@@ -184,10 +184,59 @@ float3 CalculatePBR(float3 N, float3 V, float3 L,
 	float NdotL = max(dot(N, L), 0.0); 
 	float3 diffuse = kD * albedo / PI;
 
-	return (diffuse + specular) * NdotL * c_sunIntensity;
+	float3 lightColor = float3(1.0, 1.0, 1.0);
+	float3 radiance = lightColor * c_sunIntensity;
+	return (diffuse + specular) * NdotL * radiance;
 }
 
 //======================================================================
+
+float3 LinearToSRGB(float3 linearColor) 
+{
+    float3 sRGB;
+    sRGB.r = (linearColor.r <= 0.0031308) 
+             ? linearColor.r * 12.92 
+             : 1.055 * pow(linearColor.r, 1.0/2.4) - 0.055;
+    sRGB.g = (linearColor.g <= 0.0031308) 
+             ? linearColor.g * 12.92 
+             : 1.055 * pow(linearColor.g, 1.0/2.4) - 0.055;
+    sRGB.b = (linearColor.b <= 0.0031308) 
+             ? linearColor.b * 12.92 
+             : 1.055 * pow(linearColor.b, 1.0/2.4) - 0.055;
+    return sRGB;
+}
+
+float3 SRGBToLinear(float3 sRGB) 
+{
+    float3 linearColor;
+    linearColor.r = (sRGB.r <= 0.04045) 
+               ? sRGB.r / 12.92 
+               : pow((sRGB.r + 0.055) / 1.055, 2.4);
+    linearColor.g = (sRGB.g <= 0.04045) 
+               ? sRGB.g / 12.92 
+               : pow((sRGB.g + 0.055) / 1.055, 2.4);
+    linearColor.b = (sRGB.b <= 0.04045) 
+               ? sRGB.b / 12.92 
+               : pow((sRGB.b + 0.055) / 1.055, 2.4);
+    return linearColor;
+}
+
+float3 ACESFilm(float3 x) {
+    //float a = 2.51;
+    //float b = 0.03;
+    //float c = 2.43;
+    //float d = 0.59;
+    //float e = 0.14;
+    //return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
+	return x / (x + float3(1.0,1.0,1.0));
+}
+
+float3 GammaCorrection(float3 x) {
+	return pow(x, 1.0/2.2);  
+}
+
+// =======================================================================
+
 VertexOutPixelIn VertexMain(VertexInput input)
 {
 	float4 modelPosition = float4(input.a_modelPosition, 1);
@@ -220,6 +269,8 @@ VertexOutPixelIn VertexMain(VertexInput input)
 	return v2p;
 }
 
+// ============================================================================
+
 float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 {
 	// === Sample Material Texture ===
@@ -227,6 +278,9 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
     float2 texMR = t_MetallicRoughnessTexture.Sample(s_samplerState, input.v_uv).rg;
     float texAO = t_AOTexture.Sample(s_samplerState, input.v_uv).r;
 	float3 texEmissive=t_EmissiveTexture.Sample(s_samplerState, input.v_uv).rgb;
+
+	texAlbedo = SRGBToLinear(texAlbedo);
+	texEmissive = SRGBToLinear(texEmissive);
 
 	// === Apply parameters ===
     float3 albedo = texAlbedo * c_albedo  * c_modelColor.rgb * input.v_color.rgb;
@@ -268,6 +322,10 @@ float4 PixelMain(VertexOutPixelIn input) : SV_Target0
 	float4 finalColor=float4(directLightColor+ambient,1.f);
 
 	//========================================
+	
+	// Gamma
+	finalColor.rgb = ACESFilm(finalColor.rgb);  
+	finalColor.rgb = GammaCorrection(finalColor.rgb);
 
  	clip(finalColor.a - 0.01f);
  	return finalColor;

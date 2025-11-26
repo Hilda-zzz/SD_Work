@@ -953,19 +953,19 @@ void WangTileMap::Render() const
 	{
 		for (const auto& chunk : row)
 		{
-			//chunk->RenderChunk();
+			chunk->RenderChunk();
 		}
 	}	
 
 	// ==========================================
 	if (m_showWangTemplate && m_templateImage)
 	{
-		//RenderWangTemplateOverlay();
+		RenderWangTemplateOverlay();
 	}
 
 	if (m_drawEdges)
 	{
-		//RenderEdgePixelOverlay();
+		RenderEdgePixelOverlay();
 	}
 
 	// ==========================================
@@ -1004,6 +1004,6 @@ void WangTileMap::Render() const
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 
-	//g_theRenderer->DrawVertexArray(chunkGridVerts);
+	g_theRenderer->DrawVertexArray(chunkGridVerts);
 
 }

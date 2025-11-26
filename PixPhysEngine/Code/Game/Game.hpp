@@ -9,6 +9,7 @@ class SandboxPlayer;
 class WangTileMap;
 class Image;
 class HerringboneTileset;
+class Nova2DTestMap;
 
 enum class GameState
 {
@@ -20,6 +21,7 @@ enum class GameMode
 {
 	SANDBOX,
 	WANG_TILE_MAP,
+	NOVA2D_TEST
 };
 
 
@@ -88,4 +90,6 @@ private:
 	HerringboneTileset* m_testTileset = nullptr;
 	int m_testTileIndex = 0;
 	HerringboneMapGenerator m_generator;
+
+	Nova2DTestMap* m_nova2DMap = nullptr;
 };

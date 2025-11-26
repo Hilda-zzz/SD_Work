@@ -35,6 +35,9 @@
     <Filter Include="Nova2D\Nova2DShaders">
       <UniqueIdentifier>{1d8aaa62-51ef-432e-b6e2-7c7b90600d4d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Nova2D\Nova2DEditor">
+      <UniqueIdentifier>{75ad34ee-4ae7-47e9-8c3b-e11069e466ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -105,6 +108,15 @@
     </ClCompile>
     <ClCompile Include="HerringboneMapGenerator.cpp">
       <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
+    </ClCompile>
+    <ClCompile Include="Nova2D\Nova2DEmitter.cpp">
+      <Filter>Nova2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Nova2D\Nova2DParticle.cpp">
+      <Filter>Nova2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Nova2DTestMap.cpp">
+      <Filter>Nova2D\Nova2DEditor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -200,6 +212,9 @@
     </ClInclude>
     <ClInclude Include="Nova2D\Nova2DEmitter.hpp">
       <Filter>Nova2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2DTestMap.hpp">
+      <Filter>Nova2D\Nova2DEditor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -74,7 +74,17 @@ private:
 	std::vector<Prop*> m_materialSpheres;
 
 	//Light
-	Vec3 m_sunDirection = Vec3(1.f, 1.f, -1.f);
-	float m_sunIntensity = 1.f;
-	float m_ambientIntensity = 0.4f;
+	mutable Vec3 m_sunDirection = Vec3(1.f, 1.f, -1.f);
+	mutable float m_sunIntensity = 0.25f;
+	mutable float m_ambientIntensity = 0.03f;
+
+	//----------------------------------------------------
+	// ImGui controlled sphere
+	Prop* m_controllableSphere = nullptr;
+
+	// ImGui control parameters
+	mutable float m_controlSphereAlbedo[3] = { 1.0f, 1.0f, 1.0f };  // RGB color
+	mutable float m_controlSphereMetallic = 0.5f;
+	mutable float m_controlSphereRoughness = 0.5f;
+	mutable bool m_showImGuiPanel = true;
 };

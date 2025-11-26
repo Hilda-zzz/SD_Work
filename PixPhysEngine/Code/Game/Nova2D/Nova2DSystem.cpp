@@ -5,6 +5,8 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Nova2DParticleInstance.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
+#include "Nova2DEmitter.hpp"
+#include <map>
 
 Nova2DSystem::Nova2DSystem(Renderer* renderer, Nova2DConfig const& config)
 	:m_renderer(renderer),m_config(config)
@@ -35,14 +37,14 @@ void Nova2DSystem::Startup()
 
 	QuadVertex quadVerts[6] = {
 		// 第一个三角形 (左下 → 右下 → 左上)
-		{ Vec3(0.0f, 0.0f, 0.0f), Vec2(0.0f, 0.0f) },  
-		{ Vec3(1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f) },  
-		{ Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 1.0f) },  
+		{ Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f) },
+		{ Vec3(0.5f, -0.5f, 0.0f), Vec2(1.0f, 0.0f) },
+		{ Vec3(-0.5f, 0.5f, 0.0f), Vec2(0.0f, 1.0f) },
 
 		// 第二个三角形 (左上 → 右下 → 右上)
-		{ Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 1.0f) },  
-		{ Vec3(1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f) },  
-		{ Vec3(1.0f, 1.0f, 0.0f), Vec2(1.0f, 1.0f) },  
+		{ Vec3(-0.5f, 0.5f, 0.0f), Vec2(0.0f, 1.0f) },
+		{ Vec3(0.5f, -0.5f, 0.0f), Vec2(1.0f, 0.0f) },
+		{ Vec3(0.5f, 0.5f, 0.0f), Vec2(1.0f, 1.0f) },  
 	};
 	m_quadVBO = m_renderer->CreateVertexBuffer(6, sizeof(QuadVertex), false);
 	m_renderer->CopyGameVertexBufferToGPU(quadVerts, 6, m_quadVBO);
@@ -80,6 +82,13 @@ void Nova2DSystem::EndFrame()
 
 void Nova2DSystem::Update(float deltaTime) 
 {
+	// 更新总时间
+	m_totalGameTime += deltaTime;
+
+	// 更新发射器（会产生新粒子）
+	UpdateEmitters(deltaTime);
+
+	// 更新粒子物理
 	UpdateParticlesCPU(deltaTime);
 }
 
@@ -150,8 +159,35 @@ int Nova2DSystem::GetAliveParticleCount() const
 	return count;
 }
 
+void Nova2DSystem::EmitParticleStruct(Nova2DParticle const& particle)
+{
+	int slot = FindDeadParticleSlot();
+	if (slot == -1) return;  // 粒子池满了
+
+	m_particles[slot] = particle;
+}
+
+void Nova2DSystem::RegisterEmitter(Nova2DEmitter* emitter)
+{
+	if (emitter) 
+	{
+		m_activeEmitters.push_back(emitter);
+	}
+}
+
+void Nova2DSystem::UnregisterEmitter(Nova2DEmitter* emitter)
+{
+	auto it = std::find(m_activeEmitters.begin(), m_activeEmitters.end(), emitter);
+	if (it != m_activeEmitters.end()) 
+	{
+		m_activeEmitters.erase(it);
+	}
+}
+
 void Nova2DSystem::UpdateParticlesCPU(float deltaTime) 
 {
+	constexpr float GLOBAL_GRAVITY = 200.0f;
+
 	for (auto& p : m_particles) {
 		if (!p.IsAlive()) continue;
 
@@ -161,8 +197,21 @@ void Nova2DSystem::UpdateParticlesCPU(float deltaTime)
 		// 更新生命
 		p.m_lifetime -= deltaTime;
 
-		// 简单重力
-		p.m_velocity.y -= 200.0f * deltaTime;  // 向下加速
+		// ===== 根据标志应用重力 =====
+		if (p.HasFlag(Nova2DParticleFlags::NOVA_FLAG_GRAVITY)) {
+			p.m_velocity.y -= GLOBAL_GRAVITY * deltaTime;
+		}
+
+		//// ===== 根据标志应用旋转 =====
+		//if (p.HasFlag(Nova2DParticleFlags::NOVA_FLAG_ROTATE)) {
+		//	p.m_rotation += 90.0f * deltaTime;  // 每秒旋转 90 度
+		//}
+
+		//// ===== 根据标志应用淡出 =====
+		//if (p.HasFlag(Nova2DParticleFlags::NOVA_FLAG_FADE_OUT)) {
+		//	float alpha = p.GetLifetimeRatio();
+		//	p.m_color.a = (unsigned char)(alpha * 255);
+		//}
 	}
 }
 
@@ -212,8 +261,8 @@ int Nova2DSystem::FindDeadParticleSlot()
 
 void Nova2DSystem::RenderInstanced() const
 {
-	std::vector<Nova2DParticleInstance> instances;
-	for (auto& p : m_particles) 
+	/*std::vector<Nova2DParticleInstance> instances;
+	for (auto& p : m_particles)
 	{
 		if (!p.IsAlive()) continue;
 		instances.push_back({ p.m_position, Vec2(p.m_size, p.m_size), p.m_color, 0.0f });
@@ -225,5 +274,76 @@ void Nova2DSystem::RenderInstanced() const
 	m_renderer->BindTexture(tex);
 	m_renderer->BindShader(m_particleShader);
 
-	m_renderer->DrawInstanced(m_quadVBO, m_instanceVBO, 6, instances.size());
+	m_renderer->DrawInstanced(m_quadVBO, m_instanceVBO, 6, instances.size());*/
+
+	// ----------------------------------- new ---------------------------------------
+	int aliveCount = GetAliveParticleCount();
+	if (aliveCount == 0) return;
+
+	// ===== 关键：按纹理分组渲染 =====
+	// 避免频繁切换纹理状态
+	std::map<Texture*, std::vector<Nova2DParticleInstance>> batchedParticles;
+
+	float currentTime = m_totalGameTime;
+
+	for (Nova2DParticle const& p : m_particles) 
+	{
+		if (!p.IsAlive()) continue;
+
+		// 获取纹理和 UV
+		Texture* tex = p.GetTexture();
+		if (!tex) tex = nullptr;  
+
+		AABB2 uvs = p.GetCurrentUVs(currentTime);
+
+		// 构建实例数据
+		Nova2DParticleInstance data;
+		data.m_worldPosition = p.m_position;
+		data.m_size = Vec2(p.m_size, p.m_size);
+		data.m_color = p.m_color;
+		data.m_rotation = p.m_rotation;
+		data.m_uvMinX = uvs.m_mins.x;
+		data.m_uvMinY = uvs.m_mins.y;
+		data.m_uvMaxX = uvs.m_maxs.x;
+		data.m_uvMaxY = uvs.m_maxs.y;
+
+		// 按纹理分组
+		batchedParticles[tex].push_back(data);
+	}
+
+	// ===== 按批次渲染 =====
+	for (auto const& [texture, instances] : batchedParticles) 
+	{
+		if (instances.empty()) continue;
+
+		// 创建临时实例 VBO
+		VertexBuffer* instanceVBO = m_renderer->CreateVertexBuffer(
+			instances.size(),
+			sizeof(Nova2DParticleInstance),
+			true  // ✅ Per-Instance
+		);
+		m_renderer->CopyGameVertexBufferToGPU(instances.data(), instances.size(), instanceVBO);
+
+		// 设置渲染状态
+		m_renderer->BindShader(m_particleShader);
+		m_renderer->BindTexture(texture);
+		m_renderer->SetBlendMode(BlendMode::ALPHA);  // 或 ADDITIVE
+
+		// 绘制
+		m_renderer->DrawInstanced(m_quadVBO, instanceVBO, 6, instances.size());
+
+		// 清理
+		delete instanceVBO;
+	}
+}
+
+void Nova2DSystem::UpdateEmitters(float deltaTime)
+{
+	for (Nova2DEmitter* emitter : m_activeEmitters) 
+	{
+		if (emitter) 
+		{
+			emitter->Update(deltaTime, this);
+		}
+	}
 }
