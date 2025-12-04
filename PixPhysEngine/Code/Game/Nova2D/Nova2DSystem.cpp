@@ -83,7 +83,7 @@ void Nova2DSystem::EndFrame()
 void Nova2DSystem::Update(float deltaTime) 
 {
 	// 更新总时间
-	m_totalGameTime += deltaTime;
+	//m_totalGameTime += deltaTime;
 
 	// 更新发射器（会产生新粒子）
 	UpdateEmitters(deltaTime);
@@ -284,7 +284,7 @@ void Nova2DSystem::RenderInstanced() const
 	// 避免频繁切换纹理状态
 	std::map<Texture*, std::vector<Nova2DParticleInstance>> batchedParticles;
 
-	float currentTime = m_totalGameTime;
+	//float currentTime = m_totalGameTime;
 
 	for (Nova2DParticle const& p : m_particles) 
 	{
@@ -294,7 +294,8 @@ void Nova2DSystem::RenderInstanced() const
 		Texture* tex = p.GetTexture();
 		if (!tex) tex = nullptr;  
 
-		AABB2 uvs = p.GetCurrentUVs(currentTime);
+		float particleLifeTime = p.GetPassedTime();
+		AABB2 uvs = p.GetCurrentUVs(particleLifeTime);
 
 		// 构建实例数据
 		Nova2DParticleInstance data;
@@ -328,6 +329,7 @@ void Nova2DSystem::RenderInstanced() const
 		m_renderer->BindShader(m_particleShader);
 		m_renderer->BindTexture(texture);
 		m_renderer->SetBlendMode(BlendMode::ALPHA);  // 或 ADDITIVE
+		m_renderer->SetModelConstants();
 
 		// 绘制
 		m_renderer->DrawInstanced(m_quadVBO, instanceVBO, 6, instances.size());

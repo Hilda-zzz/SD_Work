@@ -47,7 +47,7 @@ SandboxMap::SandboxMap(SandboxPlayer* playerPtr, IntVec2 const& size) : BaseMap(
 	// m_grid = std::vector(size.y, std::vector(size.x, Cell()));
 
 	m_player->SetCurMap(this);
-	Initialize();
+	//Initialize();
 
 
 	//================
@@ -176,7 +176,12 @@ void SandboxMap::Render() const
 	// std::vector<Vertex_PCU> cellVerts;
 	for (auto& row : m_chunks) {
 		for (auto& chunk : row) {
-			chunk->RenderChunk();
+			chunk->RenderSolidCells();
+		}
+	}
+	for (auto& row : m_chunks) {
+		for (auto& chunk : row) {
+			chunk->RenderLiquidCells();
 		}
 	}
 	//g_theRenderer->DrawVertexArray(cellVerts);
@@ -883,7 +888,7 @@ void SandboxMap::RenderPhysicsDebug() const
 		AABB2 groundBox(mins, maxs);
 
 		// 添加矩形顶点（绿色半透明）
-		AddVertsForAABB2D(debugVerts, groundBox, Rgba8(0, 255, 0, 128));
+		AddVertsForAABBWire2D(debugVerts, groundBox, Rgba8(0, 255, 0, 255),3.f,true);
 	}
 
 	// ========== 渲染方块 ==========

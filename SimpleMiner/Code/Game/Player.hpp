@@ -41,7 +41,7 @@ public:
 
 	// Movement parameters
 	float m_moveSpeed = 4.0f;              // Normal walking speed (m/s)
-	float m_sprintMultiplier = 2.5f;       // Sprint speed multiplier
+	float m_sprintMultiplier = 8.f;       // Sprint speed multiplier
 	float m_jumpSpeed = 8.0f;              // Initial jump velocity (m/s)
 
 	// Input sensitivity

@@ -50,7 +50,7 @@ public:
 	//----------------------------------------------------------------------
 	// 纹理/动画设置
 	//----------------------------------------------------------------------
-	void SetSprite(SpriteSheet const* sprite);
+	void SetSpriteDef(SpriteDefinition const* sprite);
 	void SetAnimation(SpriteAnimDefinition const* anim);
 
 	//----------------------------------------------------------------------

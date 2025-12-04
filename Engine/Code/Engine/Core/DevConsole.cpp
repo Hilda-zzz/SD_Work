@@ -378,6 +378,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 	renderer.SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
 	renderer.SetBlendMode(BlendMode::ALPHA);
 	renderer.SetSamplerMode(SamplerMode::POINT_CLAMP);
+	renderer.BindShader(nullptr);
 
 	//bkg
 	renderer.BindTexture(nullptr);

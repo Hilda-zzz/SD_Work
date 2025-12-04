@@ -1,10 +1,18 @@
-#include "ResourceManager.hpp"
+﻿#include "ResourceManager.hpp"
 #include "../Core/XmlUtils.hpp"
 #include "../Core/ErrorWarningAssert.hpp"
 #include "MeshResource.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+
 
 std::unordered_map<std::string, MeshResource*> ResourceManager::s_meshLookup;
 std::vector<MeshResource*> ResourceManager::s_meshResources;
+
+std::unordered_map<std::string, SpriteSheet*> ResourceManager::s_spriteSheetLookup;
+std::vector<SpriteSheet*> ResourceManager::s_spriteSheets;
+
+std::unordered_map<std::string, SpriteAnimDefinition*> ResourceManager::s_spriteAnimLookup;
+std::vector<SpriteAnimDefinition*> ResourceManager::s_spriteAnims;
 
 ResourceManager::ResourceManager()
 {
@@ -26,6 +34,20 @@ void ResourceManager::Shutdown()
 		delete mesh;
 		mesh = nullptr;
 	}
+
+	for (SpriteAnimDefinition* anim : s_spriteAnims)
+	{
+		delete anim;
+	}
+	s_spriteAnims.clear();
+	s_spriteAnimLookup.clear();
+
+	for (SpriteSheet* sheet : s_spriteSheets)
+	{
+		delete sheet;
+	}
+	s_spriteSheets.clear();
+	s_spriteSheetLookup.clear();
 }
 
 MeshResource* ResourceManager::CreateOrGetObjMeshFromMetaFile(std::string const& metaFilePath)
@@ -39,6 +61,65 @@ MeshResource* ResourceManager::CreateOrGetObjMeshFromMetaFile(std::string const&
 	// if not exist, create it
 	StaticMeshInfo meshInfo = ParseObjMetaFile(metaFilePath);
 	return CreateObjMeshFromInfo(meshInfo);
+}
+
+SpriteSheet* ResourceManager::CreateOrGetSpriteSheet(std::string const& name, std::string const& texturePath, IntVec2 const& gridLayout)
+{
+	auto it = s_spriteSheetLookup.find(name);
+	if (it != s_spriteSheetLookup.end())
+	{
+		return it->second;
+	}
+
+	Texture* texture = m_curRenderer->CreateOrGetTextureFromFile(texturePath.c_str());
+	GUARANTEE_OR_DIE(texture, Stringf("Failed to load texture: %s", texturePath.c_str()));
+
+	SpriteSheet* sheet = new SpriteSheet(*texture, gridLayout);
+	s_spriteSheets.push_back(sheet);
+	s_spriteSheetLookup[name] = sheet;
+
+	return sheet;
+}
+
+SpriteAnimDefinition* ResourceManager::CreateOrGetSpriteAnim(std::string const& name, std::string const& sheetName, int startFrame, int endFrame, float framesPerSecond, SpriteAnimPlaybackType playbackType)
+{
+	// 检查是否已存在
+	auto it = s_spriteAnimLookup.find(name);
+	if (it != s_spriteAnimLookup.end())
+	{
+		return it->second;
+	}
+
+	// 获取 SpriteSheet
+	SpriteSheet* sheet = GetSpriteSheet(sheetName);
+	GUARANTEE_OR_DIE(sheet, Stringf("SpriteSheet not found: %s", sheetName.c_str()));
+
+	// 创建动画
+	SpriteAnimDefinition* anim = new SpriteAnimDefinition(*sheet, startFrame, endFrame, framesPerSecond, playbackType);
+	s_spriteAnims.push_back(anim);
+	s_spriteAnimLookup[name] = anim;
+
+	return anim;
+}
+
+SpriteSheet* ResourceManager::GetSpriteSheet(std::string const& name) const
+{
+	auto it = s_spriteSheetLookup.find(name);
+	if (it != s_spriteSheetLookup.end())
+	{
+		return it->second;
+	}
+	return nullptr;
+}
+
+SpriteAnimDefinition* ResourceManager::GetSpriteAnim(std::string const& name) const
+{
+	auto it = s_spriteAnimLookup.find(name);
+	if (it != s_spriteAnimLookup.end())
+	{
+		return it->second;
+	}
+	return nullptr;
 }
 
 StaticMeshInfo ResourceManager::ParseObjMetaFile(std::string const& metaFilePath)

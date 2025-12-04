@@ -18,6 +18,8 @@
 #include "HerringboneTileset.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Nova2DTestMap.hpp"
+#include "GameMap.hpp"
+#include "GamePlayer.hpp"
 
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
@@ -42,14 +44,14 @@ Game::Game()
 	m_testTileset = new HerringboneTileset();
 	m_testTileset->LoadFromImage("Data/Images/rainforest.png");
 
-	HbRegionGenParams params;
-	params.m_regionBottomLeftChunk = IntVec2(0, 0);       // 从 (0,0) chunk 开始
-	params.m_regionSizeInChunks = IntVec2(80, 40);          // 生成 2×2 chunks
-	params.m_tileset = m_testTileset;                     // 使用刚加载的 tileset
-	params.m_randomSeed = 12348;                          // 随机种子
+	//HbRegionGenParams params;
+	//params.m_regionBottomLeftChunk = IntVec2(0, 0);       // 从 (0,0) chunk 开始
+	//params.m_regionSizeInChunks = IntVec2(80, 40);          // 生成 2×2 chunks
+	//params.m_tileset = m_testTileset;                     // 使用刚加载的 tileset
+	//params.m_randomSeed = 12348;                          // 随机种子
 
-	// 调用生成器
-	m_generator.InitializeTileGrid(params);
+	//// 调用生成器
+	//m_generator.InitializeTileGrid(params);
 }
 
 Game::~Game()
@@ -76,6 +78,12 @@ Game::~Game()
 	{
 		delete m_nova2DMap;
 		m_nova2DMap = nullptr;
+	}
+
+	if (m_gameWorldMap)
+	{
+		delete m_gameWorldMap;
+		m_gameWorldMap = nullptr;
 	}
 
 	delete m_gameClock;
@@ -182,6 +190,9 @@ void Game::UpdateGameplayMode(float deltaTime)
 	case GameMode::NOVA2D_TEST:
 		m_nova2DMap->Update(deltaTime);
 		break;
+	case GameMode::GAME_WORLD:
+		m_gameWorldMap->Update(deltaTime);
+		break;
 	default:
 		break;
 	}
@@ -208,7 +219,7 @@ void Game::UpdateCamera(float deltaTime)
 	UNUSED(deltaTime);
 	IntVec2 windowDimension = g_theWindow->GetClientDimensions();
 	m_screenCamera.SetViewport(AABB2(Vec2(0.f, 0.f), Vec2((float)windowDimension.x, (float)windowDimension.y)));
-	m_screenCamera.SetOrthographicView(Vec2{ -100.f,-50.f }, Vec2{ 3200.f,1600.f });
+	m_screenCamera.SetOrthographicView(Vec2{ 0.f,0.f }, Vec2{ 1600.f,800.f });
 }
 
 void Game::AdjustForPauseAndTimeDitortion(float& deltaSeconds)
@@ -256,8 +267,8 @@ void Game::RenderAttractMode() const
 	DebugDrawRing(4.f, 20.f, Rgba8::WHITE, Vec2(SCREEN_SIZE_X * 0.5f, SCREEN_SIZE_Y * 0.5f));
 
 	//DebugDrawCurrentTile();
-	m_generator.RenderHPixelGrid();
-	m_generator.RenderTileBoundaries();
+	//m_generator.RenderHPixelGrid();
+	//m_generator.RenderTileBoundaries();
 
 	g_theDevConsole->Render(AABB2(m_screenCamera.GetOrthoBottomLeft(), m_screenCamera.GetOrthoTopRight()), g_theRenderer);
 	g_theRenderer->EndCamera(m_screenCamera);
@@ -330,6 +341,9 @@ void Game::RenderGameplayMode() const
 	case GameMode::NOVA2D_TEST:
 		m_nova2DMap->Render();
 		break;
+	case GameMode::GAME_WORLD:
+		m_gameWorldMap->Render();
+		break;
 	default:
 		break;
 	}
@@ -346,10 +360,15 @@ void Game::RenderGameplayMode() const
 	std::vector<Vertex_PCU> title;
 	BitmapFont* font = g_theRenderer->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
 	font->AddVertsForTextInBox2D(title, statsMessage,
-		AABB2(Vec2(100.f, 2500.f), Vec2(1800.f, 3000.f)), 50.f, Rgba8::CYAN, 0.7f, Vec2(0.f, 1.f));
+		AABB2(Vec2(50.f, 700.f), Vec2(400.f, 780.f)), 18.f, Rgba8::CYAN, 0.7f, Vec2(0.f, 1.f));
+
 	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
 	g_theRenderer->BindTexture(&font->GetTexture());
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->BindShader(nullptr);
+
 	g_theRenderer->DrawVertexArray(title);
+
 	g_theRenderer->EndCamera(m_screenCamera);
 }
 
@@ -398,6 +417,15 @@ void Game::RenderGameModeSelectionUI() const
 	if (ImGui::Button("Nova2D Map Mode", ImVec2(buttonWidth, buttonHeight)))
 	{
 		const_cast<Game*>(this)->m_selectedGameMode = GameMode::NOVA2D_TEST;
+		const_cast<Game*>(this)->m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
+	}
+
+	ImGui::Spacing();
+
+	ImGui::SetCursorPosX(buttonPosX);
+	if (ImGui::Button("Game World Mode", ImVec2(buttonWidth, buttonHeight)))
+	{
+		const_cast<Game*>(this)->m_selectedGameMode = GameMode::GAME_WORLD;
 		const_cast<Game*>(this)->m_nextGameState = GameState::GAME_STATE_GAMEPLAY;
 	}
 
@@ -454,17 +482,33 @@ void Game::EnterAttractMode()
 
 void Game::EnterGameplayMode()
 {
-	m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
 	switch (m_selectedGameMode)
 	{
 	case GameMode::SANDBOX:
+		m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
+		m_sandboxPlayer->InitCamera(IntVec2(640, 320));
 		m_sandboxMap = new SandboxMap(m_sandboxPlayer, IntVec2(640, 320));
+		m_sandboxMap->Initialize();
 		break;
 	case GameMode::WANG_TILE_MAP:
+		m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
+		m_sandboxPlayer->InitCamera(IntVec2(640, 320));
 		m_wangTileMap = new WangTileMap(m_sandboxPlayer);
+		m_wangTileMap->Initialize();
 		break;
 	case GameMode::NOVA2D_TEST:
+		m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
+		m_sandboxPlayer->InitCamera(IntVec2(640, 320));
 		m_nova2DMap = new Nova2DTestMap(m_sandboxPlayer);
+		m_nova2DMap->Initialize();
+		break;
+	case GameMode::GAME_WORLD:
+		m_gamePlayer = new GamePlayer(IntVec2(640, 320),Vec2(0.f,0.f));
+		m_gamePlayer->InitCamera(IntVec2(640, 320));
+		m_gameWorldMap = new GameMap(m_gamePlayer,IntVec2(10,5)); 
+		m_gameWorldMap->SetHerringboneTileset(m_testTileset);
+		m_gameWorldMap->Initialize();
+
 		break;
 	default:
 		break;
@@ -497,14 +541,26 @@ void Game::ExitGameplayMode()
 	case GameMode::SANDBOX:
 		delete m_sandboxMap;
 		m_sandboxMap = nullptr;
+		delete m_sandboxPlayer;
+		m_sandboxPlayer = nullptr;
 		break;
 	case GameMode::WANG_TILE_MAP:
 		delete m_wangTileMap;
 		m_wangTileMap = nullptr;
+		delete m_sandboxPlayer;
+		m_sandboxPlayer = nullptr;
 		break;
 	case GameMode::NOVA2D_TEST:
 		delete m_nova2DMap;
 		m_nova2DMap = nullptr;
+		delete m_sandboxPlayer;
+		m_sandboxPlayer = nullptr;
+		break;
+	case GameMode::GAME_WORLD:
+		delete m_gameWorldMap;
+		m_gameWorldMap = nullptr;
+		delete m_gamePlayer;
+		m_gamePlayer = nullptr;
 		break;
 	default:
 		break;

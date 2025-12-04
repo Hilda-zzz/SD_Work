@@ -113,6 +113,27 @@ public:
 		bool m_showNoiseDebug = false;
 	} m_debug;
 
+	// Cheese Cave 参数
+	struct CheeseParams {
+		float m_scale = 40.0f;           // 3D噪声尺度
+		int m_octaves = 4;
+		float m_hollowness = 0.3f;       // 空洞密度 (0-1)
+		float m_threshold = 0.0f;        // 密度阈值
+		bool m_enabled = true;
+	} m_cheeseCave;
+
+	// Spaghetti Cave 参数
+	struct SpaghettiParams {
+		float m_scale = 80.0f;           // 3D噪声尺度
+		int m_octaves = 3;
+		float m_thickness = 0.05f;       // 隧道厚度
+		float m_ridgeThreshold = 0.5f;   // Ridge噪声阈值
+		bool m_enabled = true;
+
+		int m_baseLevel = 20;
+		int m_highLevel = 70;
+	} m_spaghettiCave;
+
 	// ========================================
 	// Seeds (种子 - 运行时可改)
 	// ========================================
@@ -125,6 +146,10 @@ public:
 		unsigned int m_temperatureSeed = 0u+4;
 		unsigned int m_humiditySeed = 0u+5;
 		unsigned int m_treeSeed = 0u + 6;
+
+		unsigned int m_cheeseCaveSeed = 0u + 7;
+		unsigned int m_spaghettiCaveSeed = 0u + 8;
+		unsigned int m_noodleCaveSeed = 0u + 9;
 
 		void RegenerateSeeds();  // 重新生成所有种子
 	} m_seeds;

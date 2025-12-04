@@ -119,6 +119,16 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 	 		g_theEventSystem->FireEvent("CharInput", args);
 			return 0;
 		}
+		case WM_MOUSEWHEEL:
+		{
+			// Get wheel delta (120 units per notch)
+			short wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+			float normalizedDelta = wheelDelta / 120.0f;
+			EventArgs args;
+			args.SetValue("WheelDelta", Stringf("%f", normalizedDelta));
+			g_theEventSystem->FireEvent("WheelDelta", args);
+			return 0;
+		}
 	}
 	// Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
 	return DefWindowProc(windowHandle, wmMessageCode, wParam, lParam);

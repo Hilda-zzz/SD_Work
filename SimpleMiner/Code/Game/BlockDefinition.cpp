@@ -14,6 +14,7 @@ BlockDefinition::BlockDefinition(XmlElement const* blockDefElement)
 	m_name = ParseXmlAttribute(blockDefElement, "name", std::string());
 	GUARANTEE_OR_DIE(!m_name.empty(), "BlockDefinition must have a 'name' attribute");
 
+	m_isWater= ParseXmlAttribute(blockDefElement, "isWater", false);
 	m_isVisible = ParseXmlAttribute(blockDefElement, "isVisible", false);
 	m_isSolid = ParseXmlAttribute(blockDefElement, "isSolid", false);
 	m_isOpaque = ParseXmlAttribute(blockDefElement, "isOpaque", false); 

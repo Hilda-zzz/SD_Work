@@ -19,6 +19,8 @@ class ConstantBuffer;
 class Shader;
 class PlayerController;
 class GameCamera;
+class TextureCube;
+class Texture;
 
 struct WorldConstants
 {
@@ -34,6 +36,19 @@ struct WorldConstants
 	float Padding2[2];
 };
 
+struct WaterConstants
+{
+	float Time;
+	float WaveSpeed;
+	float WaveScale;
+	float SpecularPower;
+	Vec3  DeepWaterColor;
+	float SpecularIntensity;
+	Vec3  ShallowWaterColor;
+	float WaterAlpha;
+	float RefractionStrength;  // 新增：折射强度
+	float Padding[3];
+};
 
 class World
 {
@@ -132,7 +147,11 @@ private:
 	void UpdateWorldRenderConstants(float deltaTime);
 	void UpdateDayNightCycle(float deltaTime);
 	void SetWorldConstantsToGPU() const;
-	
+
+	// ===================Water==============
+	void InitializeWaterSystem();
+	void ShutdownWaterSystem();
+	void RenderWaterSystem() const;
 	// =========== Raycast ===================
 	
 	void UpdateEyeRaycast();
@@ -192,6 +211,19 @@ private:
 
 	float m_worldTimeScale = 1.f;
 	float m_worldTimeInDays = 0.f;
+
+	//=================Water====================
+	Shader* m_waterShader = nullptr;
+	Texture* m_sceneColorTexture = nullptr;
+	Texture* m_sceneDepthTexture = nullptr;
+	ConstantBuffer* m_waterConstantBuffer = nullptr;
+	Texture* m_waterNormalTexture = nullptr;
+	TextureCube* m_skyboxCubemap = nullptr;
+
+	//Light
+	Vec3 m_sunDirection = Vec3(0.f, 1.f, -0.5f);
+	float m_sunIntensity = 0.7f;
+	float m_ambientIntensity = 0.3f;
 
 	//================== Raycast ===============
 	GameRaycastResult3D m_currentRaycastResult;

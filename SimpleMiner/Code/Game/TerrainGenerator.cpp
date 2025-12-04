@@ -265,7 +265,6 @@ void TerrainGenerator::GenerateBlocksForChunk_New(Chunk* chunk)
 	// =========== 2d noise ====================
 	Generate2DNoise(chunk);
 
-
 	// ============ density func ================
 	// ============ Step 1: Calculate densities and find surface heights ================
 	int extendedWidth = NOISE_EXTENDED_SIZE;  // 24
@@ -310,23 +309,32 @@ void TerrainGenerator::GenerateBlocksForChunk_New(Chunk* chunk)
 
 				float rawDensity = Compute3dPerlinNoise(
 					(float)globalX, (float)globalY, (float)z,
-					64, 8
+					64, 6
 				);
 
 				// === Base Height ===
-				float baseHeight = DEFAULT_TERRAIN_HEIGHT + (continentOffset * (CHUNK_SIZE_Z / 2.0f));
+				float baseHeight = DEFAULT_TERRAIN_HEIGHT + (continentOffset * (CHUNK_SIZE_Z / 5.0f));
 
 				// === Height Offset ===
 				float heightOffset = ((float)z - baseHeight) / baseHeight;
 
 				// === Calculate Density ===
-				float density = rawDensity + (-10.f / CHUNK_SIZE_Z) * ((float)z - baseHeight);
+				float density = rawDensity + (-4.f / CHUNK_SIZE_Z) * ((float)z - baseHeight);
 				//float density = rawDensity;
-				density += continentOffset;
+				density += continentOffset*0.7f;
 				density += continentAmplitude * heightOffset;
-				density -= erosionOffset;
-				density -= erosionAmplitude * heightOffset;
+				density -= erosionOffset*0.8f;
+				density -= erosionAmplitude * heightOffset*0.8f;
 				density += pvOffset * pvNoise * (1.f / CHUNK_SIZE_Z);
+
+				// Cave
+				if (z > 10 && z <80)
+				{
+					if (IsCaveAt(globalX, globalY, z))
+					{
+						density = -1.0f; // Set to Air
+					}
+				}
 
 				// Store density in extended array
 				extendedDensities[extendedIdx] = density;
@@ -2349,6 +2357,96 @@ int TerrainGenerator::GetDeterministicTreeType(int globalX, int globalY, int num
 	hash ^= (hash >> 16);
 
 	return hash % numTypes;
+}
+
+float TerrainGenerator::GenerateCheeseCaveNoise(int globalX, int globalY, int globalZ)
+{
+	TerrainConfig& config = TerrainConfig::GetInstance();
+
+	// 生成3D Perlin噪声
+	float noise = Compute3dPerlinNoise(
+		(float)globalX, (float)globalY, (float)globalZ,
+		config.m_cheeseCave.m_scale,
+		config.m_cheeseCave.m_octaves,
+		DEFAULT_OCTAVE_PERSISTANCE,
+		DEFAULT_NOISE_OCTAVE_SCALE,
+		true,
+		config.m_seeds.m_cheeseCaveSeed
+	);
+
+	// 映射到 hollowness 控制的阈值
+	// noise > threshold 时为空气(洞穴)
+	float threshold = config.m_cheeseCave.m_hollowness;
+
+	return (noise - threshold); // 返回值 < 0 时为洞穴
+}
+
+float TerrainGenerator::GenerateSpaghettiCaveNoise(int globalX, int globalY, int globalZ)
+{
+	TerrainConfig& config = TerrainConfig::GetInstance();
+	unsigned int seed = config.m_seeds.m_spaghettiCaveSeed;
+
+	// 生成两个不同的 Ridged 噪声
+	float ridge1 = ComputeRidgedNoise3D(
+		(float)globalX, (float)globalY, (float)globalZ,
+		config.m_spaghettiCave.m_scale,
+		config.m_spaghettiCave.m_octaves,
+		seed
+	);
+
+	float ridge2 = ComputeRidgedNoise3D(
+		(float)globalX, (float)globalY, (float)globalZ,
+		config.m_spaghettiCave.m_scale * 1.3f,  // 不同尺度
+		config.m_spaghettiCave.m_octaves,
+		seed + 12345  // 不同 seed
+	);
+
+	// === 关键：使用加法而不是逻辑与 ===
+	// 当两个 ridge 值都很小时，它们的和也很小
+	// 这会形成蜿蜒的隧道
+	// float combined = ridge1 + ridge2;
+
+	// 使用 thickness 作为阈值
+	// combined < threshold 时为洞穴
+	// 返回值: < 0 为洞穴, >= 0 为固体
+	if ((ridge1 - config.m_spaghettiCave.m_thickness) < 0.f && (ridge2 - config.m_spaghettiCave.m_thickness) < 0.f)
+		return -1.f;
+	else
+		return 1.f;
+}
+
+float TerrainGenerator::ComputeRidgedNoise3D(float x, float y, float z, float scale, int octaves, unsigned int seed)
+{
+	// Ridge噪声 = abs(Perlin噪声)
+	float noise = Compute3dPerlinNoise(
+		x, y, z, scale, octaves,
+		DEFAULT_OCTAVE_PERSISTANCE,
+		DEFAULT_NOISE_OCTAVE_SCALE,
+		true, seed
+	);
+
+	return fabsf(noise); // Ridge效果
+}
+
+bool TerrainGenerator::IsCaveAt(int globalX, int globalY, int globalZ)
+{
+	TerrainConfig& config = TerrainConfig::GetInstance();
+
+	// Cheese Cave
+	if (config.m_cheeseCave.m_enabled)
+	{
+		float cheeseNoise = GenerateCheeseCaveNoise(globalX, globalY, globalZ);
+		if (cheeseNoise > 0.0f) return true;
+	}
+
+	// Spaghetti Cave
+	if (config.m_spaghettiCave.m_enabled)
+	{
+		float spaghettiNoise = GenerateSpaghettiCaveNoise(globalX, globalY, globalZ);
+		if (spaghettiNoise <  0.0f) return true;
+	}
+
+	return false;
 }
 
 BiomeType TerrainGenerator::DetermineBiome(ContinentalnessLevel continent, ErosionLevel erosion, PeaksValleysLevel pv, TemperatureLevel temp, HumidityLevel humidity)

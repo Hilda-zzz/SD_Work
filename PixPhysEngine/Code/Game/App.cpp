@@ -14,6 +14,7 @@
 #include <thread>
 #include "Engine/JobSystem/JobSystem.hpp"
 #include "Game/Nova2D/Nova2DSystem.hpp"
+#include "Engine/ResourceManager/ResourceManager.hpp"
 //#include "Game/EngineBuildPreferences.hpp"
 
 App*			g_theApp = nullptr;
@@ -27,6 +28,7 @@ Clock*			g_systemClock = nullptr;
 JobSystem*		g_theJobSystem = nullptr;
 
 Nova2DSystem* g_nova2D = nullptr;
+ResourceManager* g_theResourceManager = nullptr;
 
 constexpr float TARGET_FPS = 60.0f;
 constexpr float TARGET_FRAME_TIME = (1.0f / TARGET_FPS) * 1000.f;
@@ -56,7 +58,7 @@ void App::Startup()
 	WindowConfig windowConfig;
 	windowConfig.m_inputSystem = g_theInput;
 	windowConfig.m_aspectRatio = 2.f;
-	windowConfig.m_windowTitle = "Protogame2D";
+	windowConfig.m_windowTitle = "PixPhys";
 	g_theWindow = new Window(windowConfig);
 	
 	RendererConfig rendererConfig;
@@ -73,6 +75,8 @@ void App::Startup()
 
 	g_theJobSystem = new JobSystem();
 
+	g_theResourceManager = new ResourceManager();
+
 	Nova2DConfig nova2DConfig = Nova2DConfig();
 	g_nova2D = new Nova2DSystem(g_theRenderer, nova2DConfig);
 	
@@ -83,6 +87,7 @@ void App::Startup()
 	g_theInput->Startup();
 	g_theAudio->Startup();
 	g_theJobSystem->Startup();
+	g_theResourceManager->Startup(g_theRenderer);
 	g_theEventSystem->SubscribeEventCallbackFuction("CloseWindow", OnQuitEvent);
 	g_nova2D->Startup();
 
@@ -95,6 +100,7 @@ void App::Shutdown()
 	g_theGame = nullptr;
 
 	g_nova2D->Shutdown();
+	g_theResourceManager->Shutdown();
 	g_theJobSystem->Shutdown();
 	g_theAudio->Shutdown();
 	g_theDevConsole->Shutdown();
@@ -105,6 +111,9 @@ void App::Shutdown()
 
 	delete g_nova2D;
 	g_nova2D = nullptr;
+
+	delete g_theResourceManager;
+	g_theResourceManager = nullptr;
 
 	delete g_theJobSystem;
 	g_theJobSystem = nullptr;
@@ -192,7 +201,7 @@ void App::Update()
 
 void App::Render()  const
 {
-	g_theRenderer->ClearScreen(Rgba8::BLACK);
+	g_theRenderer->ClearScreen(Rgba8(20,20,20));
 	g_theGame->Renderer();
 
 	g_theRenderer->RenderImguiFrame();

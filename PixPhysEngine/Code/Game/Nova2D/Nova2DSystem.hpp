@@ -47,9 +47,6 @@ public:
 	void RegisterEmitter(Nova2DEmitter* emitter);
 	void UnregisterEmitter(Nova2DEmitter* emitter);
 
-	// ===== 新增：获取当前游戏时间（用于动画） =====
-	float GetCurrentGameTime() const { return m_totalGameTime; }
-
 private:
 	// Mode 1 Basic cpu update each particle
 	void UpdateParticlesCPU(float deltaTime);
@@ -64,9 +61,6 @@ private:
 	void UpdateEmitters(float deltaTime);
 
 private:
-
-	float m_totalGameTime = 0.0f;  // 累积游戏时间
-
 	// CPU粒子数组（MVP: 先不用GPU）
 	std::vector<Nova2DParticle> m_particles;
 
@@ -84,5 +78,4 @@ private:
 
 	// Emitter
 	std::vector<Nova2DEmitter*> m_activeEmitters;
-	
 };

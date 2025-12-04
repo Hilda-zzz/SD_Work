@@ -48,7 +48,7 @@ protected:
 	// ========================================
 	// Construct
 	// ========================================
-	BasePlayer(IntVec2 const& mapSize);
+	//BasePlayer(IntVec2 const& mapSize);
 	BasePlayer() = default;
 
 	// ========================================

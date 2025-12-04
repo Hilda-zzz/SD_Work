@@ -4,7 +4,7 @@
 
 //class SpriteDefinition;
 class SpriteAnimDefinition;
-class SpriteSheet;
+class SpriteDefinition;
 
 //----------------------------------------------------------------------
 // Emitter Shape
@@ -164,8 +164,8 @@ struct Nova2DEmitterConfig
 	n2d_AppearanceConfig			m_appearanceConfig;
 
 	// ===== Assets =====
-	SpriteSheet const*			m_sprite = nullptr;       
-	SpriteAnimDefinition const*		m_animation = nullptr; 
+	SpriteDefinition const*			m_spriteDef = nullptr;       
+	SpriteAnimDefinition const*		m_animationDef = nullptr; 
 
 	// ===== Physics =====
 	bool	m_enableGravity = true;             

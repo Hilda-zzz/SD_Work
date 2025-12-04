@@ -101,7 +101,7 @@ public:
 		s_materialDefs[CellMatType::MAT_WATER].m_collisionMomentumTransfer = 0.1f;
 		s_materialDefs[CellMatType::MAT_WATER].m_horizontalDamping = 0.9f;
 		s_materialDefs[CellMatType::MAT_WATER].m_verticalDamping = 0.99f;
-		s_materialDefs[CellMatType::MAT_WATER].m_collisionDamping = 0.5f;
+		s_materialDefs[CellMatType::MAT_WATER].m_collisionDamping = 0.9f;
 
 		// oil - 液体
 		s_materialDefs[CellMatType::MAT_OIL] = CellMatDef(PhyType::PHY_LIQUID);

@@ -3,17 +3,17 @@
 
 AABB2 Nova2DParticle::GetCurrentUVs(float currentTime) const
 {
-	if (m_anim)
+	if (m_animDef)
 	{
 		// 动画模式：根据经过的时间获取当前帧
 		float animTime = currentTime - m_animStartTime;
-		SpriteDefinition const& frame = m_anim->GetSpriteDefAtTime(animTime);
+		SpriteDefinition const& frame = m_animDef->GetSpriteDefAtTime(animTime);
 		return frame.GetUVs();
 	}
-	else if (m_sprite)
+	else if (m_spriteDef)
 	{
 		// 静态精灵模式
-		return m_sprite->GetSpriteUVs(0);
+		return m_spriteDef->GetUVs();
 	}
 	// 默认：全纹理
 	return AABB2(Vec2::ZERO, Vec2::ONE);
@@ -21,13 +21,13 @@ AABB2 Nova2DParticle::GetCurrentUVs(float currentTime) const
 
 Texture* Nova2DParticle::GetTexture() const
 {
-	if (m_anim) 
+	if (m_animDef) 
 	{
-		return &m_anim->GetSpriteDefAtTime(0.0f).GetTexture();
+		return &m_animDef->GetSpriteDefAtTime(0.0f).GetTexture();
 	}
-	else if (m_sprite) 
+	else if (m_spriteDef)
 	{
-		return &m_sprite->GetTexture();
+		return &m_spriteDef->GetTexture();
 	}
 	return nullptr;
 }

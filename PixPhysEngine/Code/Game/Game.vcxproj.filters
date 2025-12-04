@@ -20,9 +20,6 @@
     <Filter Include="WangTileMapMode">
       <UniqueIdentifier>{0bbbf371-aa67-4bc0-a90e-89bd72f77c74}</UniqueIdentifier>
     </Filter>
-    <Filter Include="PCG">
-      <UniqueIdentifier>{fda71529-c25c-4a9d-87fb-70bf54ab973b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{adae1ccc-0257-4bc8-8fc1-edcfe2891511}</UniqueIdentifier>
     </Filter>
@@ -37,6 +34,18 @@
     </Filter>
     <Filter Include="Nova2D\Nova2DEditor">
       <UniqueIdentifier>{75ad34ee-4ae7-47e9-8c3b-e11069e466ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WorldMode">
+      <UniqueIdentifier>{71533931-a9e9-46dd-8db0-08fcb8270d08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WangTileMapMode\Region">
+      <UniqueIdentifier>{5c0e6e51-feae-4113-87c5-37202c0dafc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigFiles">
+      <UniqueIdentifier>{6aa74e80-1e34-402d-8c39-15e987538246}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigFiles\RegionConfigs">
+      <UniqueIdentifier>{73c76f9a-9b30-4ac6-97dc-b0c0fd20ff2f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +127,33 @@
     <ClCompile Include="Nova2DTestMap.cpp">
       <Filter>Nova2D\Nova2DEditor</Filter>
     </ClCompile>
+    <ClCompile Include="SuperChunk.cpp">
+      <Filter>CellMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="GameMap.cpp">
+      <Filter>WorldMode</Filter>
+    </ClCompile>
+    <ClCompile Include="GameMapDebugRenderer.cpp">
+      <Filter>WorldMode</Filter>
+    </ClCompile>
+    <ClCompile Include="GamePlayer.cpp">
+      <Filter>WorldMode</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionBounds.cpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionGenerationData.cpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionManager.cpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClCompile>
+    <ClCompile Include="HerringboneMapGenerator_v2.cpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionGenerationData_v2.cpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -183,9 +219,6 @@
     <ClInclude Include="BasePlayer.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="PCGTemplate.hpp">
-      <Filter>PCG</Filter>
-    </ClInclude>
     <ClInclude Include="SampleImageUtils.hpp">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -216,10 +249,48 @@
     <ClInclude Include="Nova2DTestMap.hpp">
       <Filter>Nova2D\Nova2DEditor</Filter>
     </ClInclude>
+    <ClInclude Include="SuperChunk.hpp">
+      <Filter>CellMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMap.hpp">
+      <Filter>WorldMode</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMapDebugRenderer.hpp">
+      <Filter>WorldMode</Filter>
+    </ClInclude>
+    <ClInclude Include="GamePlayer.hpp">
+      <Filter>WorldMode</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DAssetManager.hpp">
+      <Filter>Nova2D</Filter>
+    </ClInclude>
+    <ClInclude Include="PCGTemplate.hpp">
+      <Filter>WangTileMapMode\HerringboneTileStruct</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionBounds.hpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionGenerationData.hpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionManager.hpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClInclude>
+    <ClInclude Include="HerringboneMapGenerator_v2.hpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionGenerationData_v2.hpp">
+      <Filter>WangTileMapMode\Region</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\..\Run\Data\Nova2DShaders\Nova2DParticleInstanced.hlsl">
       <Filter>Nova2D\Nova2DShaders</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\..\Run\Data\RegionConfigs\JungleRegion.xml">
+      <Filter>ConfigFiles\RegionConfigs</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

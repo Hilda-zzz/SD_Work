@@ -25,17 +25,7 @@ WangTileMap::WangTileMap(SandboxPlayer* player)
 {
 	m_player = player;
 	//m_player->SetCurMap(this);
-	Initialize();
-	InitializeColorMaterialMappings();
-	LoadMaterialTextures();
-	m_edgeSticker = new Image("Data/Images/edge_soil_lush_1.png");
-	m_sand = new Image("Data/Images/moss.png");
-	m_sandEdgeSticker = new Image("Data/Images/edge_soil_dead_1.png");
-
-	m_stickerImageA = new Image("Data/Images/edge_earth_rainforest_ver.png");           // RED区域贴画
-
-	LoadTemplateFromFile("Data/Images/XShapeWithColor.png");
-	GenerateMapFromTemplate();
+	//Initialize();
 }
 
 WangTileMap::~WangTileMap()
@@ -60,6 +50,17 @@ WangTileMap::~WangTileMap()
 void WangTileMap::Initialize()
 {
 	CreateChunkGrid();
+
+	InitializeColorMaterialMappings();
+	LoadMaterialTextures();
+	m_edgeSticker = new Image("Data/Images/edge_soil_lush_1.png");
+	m_sand = new Image("Data/Images/moss.png");
+	m_sandEdgeSticker = new Image("Data/Images/edge_soil_dead_1.png");
+
+	m_stickerImageA = new Image("Data/Images/edge_earth_rainforest_ver.png");           // RED区域贴画
+
+	LoadTemplateFromFile("Data/Images/XShapeWithColor.png");
+	GenerateMapFromTemplate();
 }
 
 void WangTileMap::LoadTemplateFromFile(const std::string& filename)
@@ -927,7 +928,7 @@ void WangTileMap::Update(float deltaTime)
 		// 使用全局系统发射粒子
 		g_nova2D->EmitBurst(
 			mousePosInWorld,
-			30000,
+			300,
 			Vec2(0, 100),
 			360.0f
 		);
@@ -1006,4 +1007,5 @@ void WangTileMap::Render() const
 
 	g_theRenderer->DrawVertexArray(chunkGridVerts);
 
+	g_theRenderer->EndCamera(m_player->m_camera);
 }

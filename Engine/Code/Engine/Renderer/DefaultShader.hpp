@@ -19,6 +19,8 @@ cbuffer CameraConstants : register(b2)
 	float4x4 WorldToCameraTransform;
 	float4x4 CameraToRenderTransform;
 	float4x4 RenderToClipTransform;
+	float2 ViewportSize; 
+    float2 _Padding;
 }
 
 cbuffer ModelConstants : register(b3)

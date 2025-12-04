@@ -59,7 +59,7 @@ void Nova2DEmitter::Update(float deltaTime, Nova2DSystem* particleSystem)
 	}
 
 	// 更新动画时间
-	if (m_config.m_animation) 
+	if (m_config.m_animationDef) 
 	{
 		m_animTime += deltaTime;
 	}
@@ -154,14 +154,14 @@ void Nova2DEmitter::EmitSingleParticle(Nova2DSystem* particleSystem)
 	//particle.m_userInt = (uint32_t)GameParticleType::SPARK;  // 游戏层定义
 
 	// 设置纹理/动画
-	if (m_config.m_animation) 
+	if (m_config.m_animationDef) 
 	{
-		particle.m_anim = m_config.m_animation;
+		particle.m_animDef = m_config.m_animationDef;
 		particle.m_animStartTime = m_animTime;
 	}
-	else if (m_config.m_sprite) 
+	else if (m_config.m_spriteDef) 
 	{
-		particle.m_sprite = m_config.m_sprite;
+		particle.m_spriteDef = m_config.m_spriteDef;
 	}
 
 	// 发射粒子
@@ -387,13 +387,13 @@ void Nova2DEmitter::SetShape(n2d_EmitterShape shape, float param) {
 //==========================================================================
 // 纹理/动画设置
 //==========================================================================
-void Nova2DEmitter::SetSprite(SpriteSheet const* sprite) {
-	m_config.m_sprite = sprite;
-	m_config.m_animation = nullptr;
+void Nova2DEmitter::SetSpriteDef(SpriteDefinition const* sprite) {
+	m_config.m_spriteDef = sprite;
+	m_config.m_animationDef = nullptr;
 }
 
 void Nova2DEmitter::SetAnimation(SpriteAnimDefinition const* anim) {
-	m_config.m_animation = anim;
-	m_config.m_sprite = nullptr;
+	m_config.m_animationDef = anim;
+	m_config.m_spriteDef = nullptr;
 	m_animTime = 0.0f;
 }

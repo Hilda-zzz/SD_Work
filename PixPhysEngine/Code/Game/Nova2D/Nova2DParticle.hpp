@@ -5,7 +5,7 @@
 #include <Engine/Renderer/Texture.hpp>
 #include "Engine/Math/AABB2.hpp"
 
-class SpriteSheet;
+class SpriteDefinition;
 class SpriteAnimDefinition;
 class Texture;
 
@@ -66,8 +66,8 @@ struct Nova2DParticle
 	float m_rotation;
 
 	// Assets
-	SpriteSheet const* m_sprite = nullptr;
-	SpriteAnimDefinition const* m_anim = nullptr;
+	SpriteDefinition const* m_spriteDef = nullptr;
+	SpriteAnimDefinition const* m_animDef = nullptr;
 	float m_animStartTime = 0.0f;
 
 	// ===== 标志位（控制行为）=====
@@ -83,6 +83,11 @@ struct Nova2DParticle
 	float GetLifetimeRatio() const
 	{
 		return m_lifetime / m_maxLifetime;
+	}
+
+	float GetPassedTime() const
+	{
+		return m_maxLifetime - m_lifetime;
 	}
 
 	AABB2 GetCurrentUVs(float currentTime) const;

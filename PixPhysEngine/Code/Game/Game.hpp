@@ -2,7 +2,7 @@
 #include "GameCommon.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/Camera.hpp"
-#include "Game/HerringboneMapGenerator.hpp"
+#include "Game/HerringboneMapGenerator_v2.hpp"
 class Clock;
 class SandboxMap;
 class SandboxPlayer;
@@ -10,6 +10,8 @@ class WangTileMap;
 class Image;
 class HerringboneTileset;
 class Nova2DTestMap;
+class GameMap;
+class GamePlayer;
 
 enum class GameState
 {
@@ -21,7 +23,8 @@ enum class GameMode
 {
 	SANDBOX,
 	WANG_TILE_MAP,
-	NOVA2D_TEST
+	NOVA2D_TEST,
+	GAME_WORLD
 };
 
 
@@ -92,4 +95,7 @@ private:
 	HerringboneMapGenerator m_generator;
 
 	Nova2DTestMap* m_nova2DMap = nullptr;
+
+	GameMap* m_gameWorldMap = nullptr;
+	GamePlayer* m_gamePlayer = nullptr;
 };

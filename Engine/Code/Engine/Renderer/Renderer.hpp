@@ -190,6 +190,23 @@ public:
 		unsigned int vertexCount,					// 4（四边形顶点数）
 		unsigned int instanceCount);				// 粒子数量
 
+	// ========== 水体渲染相关方法 ==========
+
+	// 创建可作为RenderTarget的纹理
+	Texture* CreateOrGetRenderTargetTexture(IntVec2 dimensions, char const* name);
+	Texture* CreateOrGetDepthTexture(IntVec2 dimensions, char const* name);
+
+	// 拷贝当前帧缓冲到纹理
+	void CopyFramebufferToTexture(Texture* destTexture);
+
+	// 拷贝深度缓冲到纹理
+	void CopyDepthToTexture(Texture* destTexture);
+
+	// 绑定纹理到特定槽位（扩展现有BindTexture）
+	void BindTextureToSlot(int slot, Texture const* texture);
+
+	// 获取屏幕尺寸
+	IntVec2 GetScreenDimensions() const;
 
 
 public:

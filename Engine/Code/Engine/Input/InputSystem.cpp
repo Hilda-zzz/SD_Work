@@ -62,6 +62,7 @@ void InputSystem::Startup()
 {
 	g_theEventSystem->SubscribeEventCallbackFuction("KeyPressed", InputSystem::Event_KeyPressed);
 	g_theEventSystem->SubscribeEventCallbackFuction("KeyReleased", InputSystem::Event_KeyReleased);
+	g_theEventSystem->SubscribeEventCallbackFuction("WheelDelta", InputSystem::Event_WheelDelta);
 }
 
 void InputSystem::Shutdown()
@@ -115,6 +116,8 @@ void InputSystem::EndFrame()
 	{
 		m_gameplayKeyStates[i].m_wasPressedLastFrame = m_gameplayKeyStates[i].m_isPressed;
 	}
+
+	m_mouseWheelDelta = 0.0f;
 }
 
 void InputSystem::RegisterInputConsumer(IInputConsumer* consumer)
@@ -257,6 +260,11 @@ Vec2 InputSystem::GetCursorClientPosition() const
 	return g_theWindow->GetMousePixelPos();
 }
 
+void InputSystem::HandleMouseWheel(float delta)
+{
+	m_mouseWheelDelta += delta;
+}
+
 bool InputSystem::Event_KeyPressed(EventArgs& args)
 {
 	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
@@ -269,6 +277,13 @@ bool InputSystem::Event_KeyReleased(EventArgs& args)
 {
 	unsigned char keyCode = (unsigned char)args.GetValue("KeyCode", -1);
 	g_theInput->HandleKeyReleased(keyCode);
+	return true;
+}
+
+bool InputSystem::Event_WheelDelta(EventArgs& args)
+{
+	float wheelDelta = args.GetValue("WheelDelta", 0.f);
+	g_theInput->HandleMouseWheel(wheelDelta);
 	return true;
 }
 

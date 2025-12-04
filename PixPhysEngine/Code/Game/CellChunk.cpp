@@ -1,4 +1,4 @@
-#include "CellChunk.hpp"
+﻿#include "CellChunk.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
 //#include "Game/SandboxMap.hpp"
@@ -33,20 +33,56 @@ CellChunk::~CellChunk()
 
 void CellChunk::RebuildVertexWithNewColor()
 {
-	m_vertex.clear();
+	//m_solidVertex.clear();
+	//for (int localY = 0; localY < CHUNK_SIZE; ++localY) {
+	//	for (int localX = 0; localX < CHUNK_SIZE; ++localX) {
+	//		const Cell& cell = GetLocalCell(localX, localY);
+	//		if (cell.m_type != CellMatType::MAT_EMPTY) {
+	//			IntVec2 worldPos = LocalToWorld(localX, localY);
+
+	//			// Get color based on debug mode
+	//			Rgba8 cellColor = m_map->GetCellDebugColor(cell,worldPos);
+
+	//			AddVertsForAABB2D(m_solidVertex,
+	//				AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
+	//					Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
+	//				cellColor);
+	//		}
+	//	}
+	//}
+
+	m_solidVertex.clear();
+	m_liquidVertex.clear();
+
 	for (int localY = 0; localY < CHUNK_SIZE; ++localY) {
 		for (int localX = 0; localX < CHUNK_SIZE; ++localX) {
 			const Cell& cell = GetLocalCell(localX, localY);
-			if (cell.m_type != CellMatType::MAT_EMPTY) {
-				IntVec2 worldPos = LocalToWorld(localX, localY);
+			if (cell.m_type == CellMatType::MAT_EMPTY) continue;
 
-				// Get color based on debug mode
-				Rgba8 cellColor = m_map->GetCellDebugColor(cell,worldPos);
+			IntVec2 worldPos = LocalToWorld(localX, localY);
 
-				AddVertsForAABB2D(m_vertex,
+			// 获取材质定义
+			const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+
+			// 根据物理类型判断
+			if (matDef.m_physicsType == PhyType::PHY_LIQUID) {
+				// 液体 - 添加alpha值的颜色
+				Rgba8 cellColor = m_map->GetCellDebugColor(cell, worldPos);
+				cellColor.a = 180; // 设置半透明 (0-255, 180约为70%透明度)
+
+				AddVertsForAABB2D(m_liquidVertex,
 					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
 						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
-					cellColor);
+					cellColor,1.f);
+			}
+			else {
+				// 固体 - 完全不透明
+				Rgba8 cellColor = m_map->GetCellDebugColor(cell, worldPos);
+
+				AddVertsForAABB2D(m_solidVertex,
+					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
+						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
+					cellColor,0.5f);
 			}
 		}
 	}
@@ -54,7 +90,7 @@ void CellChunk::RebuildVertexWithNewColor()
 
 void CellChunk::RebuildVertexUseSelfColor()
 {
-	m_vertex.clear();
+	m_solidVertex.clear();
 	for (int localY = 0; localY < CHUNK_SIZE; ++localY) 
 	{
 		for (int localX = 0; localX < CHUNK_SIZE; ++localX) 
@@ -62,7 +98,7 @@ void CellChunk::RebuildVertexUseSelfColor()
 			const Cell& cell = GetLocalCell(localX, localY);
 			if (cell.m_type != CellMatType::MAT_EMPTY) {
 				IntVec2 worldPos = LocalToWorld(localX, localY);
-				AddVertsForAABB2D(m_vertex,
+				AddVertsForAABB2D(m_solidVertex,
 					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
 						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
 					cell.m_color);
@@ -74,7 +110,31 @@ void CellChunk::RebuildVertexUseSelfColor()
 
 void CellChunk::RenderChunk() const
 {
-	g_theRenderer->DrawVertexArray(m_vertex);
+	g_theRenderer->DrawVertexArray(m_solidVertex);
+}
+
+void CellChunk::RenderSolidCells() const
+{
+	if (m_solidVertex.empty()) return;
+
+	// 设置固体渲染状态
+	g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
+	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL); // 2D游戏通常不需要深度
+
+	// 渲染固体顶点
+	g_theRenderer->DrawVertexArray(m_solidVertex);
+}
+
+void CellChunk::RenderLiquidCells() const
+{
+	if (m_liquidVertex.empty()) return;
+
+	// 设置液体渲染状态（半透明）
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+	g_theRenderer->SetDepthMode(DepthMode::DISABLED);
+
+	// 渲染液体顶点
+	g_theRenderer->DrawVertexArray(m_liquidVertex);
 }
 
 // ==================== Core Data Access ====================

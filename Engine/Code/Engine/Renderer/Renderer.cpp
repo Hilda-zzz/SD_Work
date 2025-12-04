@@ -45,6 +45,8 @@ void* m_dxgiDebugModule = nullptr;
 #include "ThirdParty/imgui/imgui.h"
 #include "ThirdParty/imgui/backends/imgui_impl_win32.h"
 #include "ThirdParty/imgui/backends/imgui_impl_dx11.h"
+#include <ThirdParty/imgui/implot.h>
+
 //-------------------------------------------------------------
 constexpr int MAX_POINT_LIGHTS= 10;
 constexpr int MAX_SPOT_LIGHTS = 10;
@@ -67,6 +69,8 @@ struct CameraConstants
 	Mat44 WorldToCameraTransform;
 	Mat44 CameraToRenderTransform;
 	Mat44 RenderToClipTransform;
+	Vec2  ViewportSize;
+	float  Padding[2];
 };
 static const int k_cameraConstantsSlot = 2;
 
@@ -388,7 +392,8 @@ void Renderer::Startup()
 	depthTextureDesc.MipLevels = 1;
 	depthTextureDesc.ArraySize = 1;
 	depthTextureDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	//depthTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthTextureDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 	depthTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	depthTextureDesc.SampleDesc.Count = 1;
 
@@ -398,7 +403,12 @@ void Renderer::Startup()
 		ERROR_AND_DIE("Could not create texture for depth stencil.");
 	}
 
-	hr = m_device->CreateDepthStencilView(m_depthStencilTexture, nullptr, &m_depthStencilDSV);
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice = 0;
+
+	hr = m_device->CreateDepthStencilView(m_depthStencilTexture, &dsvDesc, &m_depthStencilDSV);
 	if (!SUCCEEDED(hr))
 	{
 		ERROR_AND_DIE("Could not create depth stencil view.");
@@ -647,6 +657,7 @@ void Renderer::BeginCamera(const Camera& camera)
 	camConstants.WorldToCameraTransform = camera.GetWorldToCameraTransform();
 	camConstants.CameraToRenderTransform = camera.GetCameraToRenderTransorm();
 	camConstants.RenderToClipTransform = camera.GetRenderToClipTransform();
+	camConstants.ViewportSize = camera.GetViewport().GetDimensions();
 	CopyCPUToGPU(&camConstants, sizeof(CameraConstants), m_cameraCBO);
 	BindConstantBuffer(k_cameraConstantsSlot, m_cameraCBO);
 
@@ -1605,6 +1616,7 @@ void Renderer::InitializeImgui()
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -1631,6 +1643,7 @@ void Renderer::InitializeImgui()
 
 void Renderer::ShutdownImgui()
 {
+	ImPlot::DestroyContext();
 	// Cleanup
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -1696,6 +1709,245 @@ void Renderer::DrawInstanced(VertexBuffer* vertexVBO, VertexBuffer* instanceVBO,
 
 	// 绘制实例化
 	m_deviceContext->DrawInstanced(vertexCount, instanceCount, 0, 0);
+}
+
+Texture* Renderer::CreateOrGetRenderTargetTexture(IntVec2 dimensions, char const* name)
+{
+	// ========== 1. 检查是否已存在 ==========
+	for (Texture* texture : m_loadedTextures)
+	{
+		if (texture->m_name == name)
+		{
+			// 已存在：检查尺寸是否匹配
+			if (texture->m_dimensions == dimensions)
+			{
+				return texture;  // 尺寸匹配，直接返回
+			}
+			else
+			{
+				// 尺寸不匹配，需要重新创建（通常窗口大小改变时）
+				DebuggerPrintf("Warning: RenderTarget '%s' exists with different size. Recreating...\n", name);
+
+				// 从列表中移除并删除旧的
+				for (size_t i = 0; i < m_loadedTextures.size(); ++i)
+				{
+					if (m_loadedTextures[i] == texture)
+					{
+						m_loadedTextures.erase(m_loadedTextures.begin() + i);
+						break;
+					}
+				}
+				delete texture;
+				break;
+			}
+		}
+	}
+
+	// ========== 2. 创建新的Texture对象 ==========
+	Texture* newTexture = new Texture();
+	newTexture->m_name = name;
+	newTexture->m_dimensions = dimensions;
+
+	// ========== 3. 创建D3D11 Texture2D ==========
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = dimensions.x;
+	textureDesc.Height = dimensions.y;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+
+	HRESULT hr = m_device->CreateTexture2D(&textureDesc, nullptr, &newTexture->m_texture);
+	if (FAILED(hr))
+	{
+		delete newTexture;
+		ERROR_AND_DIE("Failed to create render target texture!");
+	}
+
+	// ========== 4. 创建ShaderResourceView ==========
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	hr = m_device->CreateShaderResourceView(newTexture->m_texture, &srvDesc,
+		&newTexture->m_shaderResourceView);
+	if (FAILED(hr))
+	{
+		delete newTexture;
+		ERROR_AND_DIE("Failed to create shader resource view for render target!");
+	}
+
+	// ========== 5. 创建RenderTargetView ==========
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = textureDesc.Format;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+
+	hr = m_device->CreateRenderTargetView(newTexture->m_texture, &rtvDesc,
+		&newTexture->m_renderTargetView);
+	if (FAILED(hr))
+	{
+		delete newTexture;
+		ERROR_AND_DIE("Failed to create render target view!");
+	}
+
+	// ========== 6. 加入统一管理 ← 关键！==========
+	m_loadedTextures.push_back(newTexture);
+
+	return newTexture;
+}
+
+Texture* Renderer::CreateOrGetDepthTexture(IntVec2 dimensions, char const* name)
+{
+	// ========== 1. 检查是否已存在 ==========
+	for (Texture* texture : m_loadedTextures)
+	{
+		if (texture->m_name == name)
+		{
+			if (texture->m_dimensions == dimensions)
+			{
+				return texture;
+			}
+			else
+			{
+				// 尺寸不匹配，重新创建
+				for (size_t i = 0; i < m_loadedTextures.size(); ++i)
+				{
+					if (m_loadedTextures[i] == texture)
+					{
+						m_loadedTextures.erase(m_loadedTextures.begin() + i);
+						break;
+					}
+				}
+				delete texture;
+				break;
+			}
+		}
+	}
+
+	// ========== 2. 创建新的Texture对象 ==========
+	Texture* newTexture = new Texture();
+	newTexture->m_name = name;
+	newTexture->m_dimensions = dimensions;
+
+	// ========== 3. 创建D3D11 Texture2D（深度格式）==========
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = dimensions.x;
+	textureDesc.Height = dimensions.y;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;  // 可读深度格式
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+
+	HRESULT hr = m_device->CreateTexture2D(&textureDesc, nullptr, &newTexture->m_texture);
+	if (FAILED(hr))
+	{
+		delete newTexture;
+		ERROR_AND_DIE("Failed to create depth texture!");
+	}
+
+	// ========== 4. 创建DepthStencilView（临时，用于验证）==========
+	//D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	//dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	//dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	//dsvDesc.Texture2D.MipSlice = 0;
+
+	//ID3D11DepthStencilView* tempDSV = nullptr;
+	//hr = m_device->CreateDepthStencilView(newTexture->m_texture, &dsvDesc, &tempDSV);
+	//if (FAILED(hr))
+	//{
+	//	delete newTexture;
+	//	ERROR_AND_DIE("Failed to create depth stencil view!");
+	//}
+	//tempDSV->Release();  // 立即释放，我们只需要SRV
+
+	// ========== 5. 创建ShaderResourceView ==========
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS; 
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	hr = m_device->CreateShaderResourceView(newTexture->m_texture, &srvDesc,
+		&newTexture->m_shaderResourceView);
+	if (FAILED(hr))
+	{
+		delete newTexture;
+		ERROR_AND_DIE("Failed to create shader resource view for depth texture!");
+	}
+
+	// ========== 6. 加入统一管理 ← 关键！==========
+	m_loadedTextures.push_back(newTexture);
+
+	return newTexture;
+}
+
+void Renderer::CopyFramebufferToTexture(Texture* destTexture)
+{
+	if (!destTexture || !destTexture->m_texture)
+	{
+		ERROR_AND_DIE("Invalid destination texture!");
+	}
+
+	// 获取当前后缓冲
+	ID3D11Texture2D* backBuffer = nullptr;
+	HRESULT hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
+		(void**)&backBuffer);
+	if (FAILED(hr))
+	{
+		ERROR_AND_DIE("Failed to get back buffer!");
+	}
+
+	// 拷贝后缓冲到目标纹理
+	m_deviceContext->CopyResource(destTexture->m_texture, backBuffer);
+
+	// 释放后缓冲引用
+	backBuffer->Release();
+}
+
+void Renderer::CopyDepthToTexture(Texture* destTexture)
+{
+	if (!destTexture || !destTexture->m_texture)
+	{
+		ERROR_AND_DIE("Invalid destination texture!");
+	}
+
+	// 拷贝深度缓冲到目标纹理
+	m_deviceContext->CopyResource(destTexture->m_texture, m_depthStencilTexture);
+}
+
+void Renderer::BindTextureToSlot(int slot, Texture const* texture)
+{
+	ID3D11ShaderResourceView* srv = nullptr;
+	if (texture)
+	{
+		srv = texture->m_shaderResourceView;
+	}
+
+	m_deviceContext->PSSetShaderResources(slot, 1, &srv);
+
+	// 更新跟踪数组
+	if (slot >= 0 && slot < MAX_TEXTURE_SLOTS)
+	{
+		m_boundTextures[slot] = srv;
+	}
+}
+
+IntVec2 Renderer::GetScreenDimensions() const
+{
+	return m_config.m_window->GetClientDimensions();
 }
 
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)

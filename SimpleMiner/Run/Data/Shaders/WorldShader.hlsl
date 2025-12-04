@@ -18,6 +18,8 @@ cbuffer CameraConstants : register(b2)
 	float4x4 WorldToCameraTransform;
 	float4x4 CameraToRenderTransform;
 	float4x4 RenderToClipTransform;
+	float2 ViewportSize; 
+    float2 _Padding;
 }
 
 cbuffer ModelConstants : register(b3)
@@ -77,6 +79,7 @@ float4 PixelMain(v2p_t input) : SV_Target0
     float fogFraction = saturate((distanceToCamera - FogNearDistance) / (FogFarDistance - FogNearDistance));
 
 	float3 finalColor = lerp(litColor, SkyColor.rgb, fogFraction);
+	//float3 finalColor =litColor;
 
 	clip(textureColor.a-0.01f);
 	return float4(finalColor,textureColor.a);

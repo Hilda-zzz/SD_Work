@@ -8,9 +8,9 @@
 extern Window* g_theWindow;
 extern InputSystem* g_theInput;
 
-SandboxPlayer::SandboxPlayer(IntVec2 const& mapSize) : BasePlayer(mapSize)
+SandboxPlayer::SandboxPlayer(IntVec2 const& mapSize) //: BasePlayer(mapSize)
 {
-	InitCamera(mapSize);
+	//InitCamera(mapSize);
 	m_sandBoxUI = SandBoxUI();
 	m_rigidBodyDrawnCells.reserve(2000);
 }

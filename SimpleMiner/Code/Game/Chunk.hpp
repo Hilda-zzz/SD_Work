@@ -12,6 +12,7 @@
 class VertexBuffer;
 class IndexBuffer;
 class Texture;
+class BlockIterator;
 
 // === Basic Info ===
 constexpr int CHUNK_BITS_X = 5;  //2^4=16
@@ -161,6 +162,7 @@ public:
 	void Render() const;
 	void RenderDebug() const;
 	void RenderNoiseDebug() const;
+	void RenderWater() const;
 
 	//=== GET AND SET ===
 	Block GetBlock(const IntVec3& localCoords) const;
@@ -216,6 +218,8 @@ public:
 	void AddBlockVertsWithCulling(int blockIndex, Block const& block);
 	void CalculateWorldBounds();
 
+	void AddWaterBlockVerts(int blockIndex, Block const& block);
+	bool ShouldRenderWaterFace(const BlockIterator& neighbor) const;
 	//int SaveChunkToFile(std::string const& saveFolder);
 	//bool LoadChunkFromFile(std::string const& filename);
 
@@ -244,6 +248,15 @@ public:
 
 	int m_vertsCount = 0;
 	int m_indicesCount = 0;
+
+	// ========== 新增：水体专用渲染数据 ==========
+	std::vector<Vertex_PCUTBN> m_waterVertices;
+	std::vector<unsigned int> m_waterIndices;
+	VertexBuffer* m_waterVertexBuffer = nullptr;
+	IndexBuffer* m_waterIndexBuffer = nullptr;
+	int m_waterVertsCount = 0;
+	int m_waterIndicesCount = 0;
+	//=========================================
 
 	Chunk* m_neighborEast = nullptr;   // +X
 	Chunk* m_neighborWest = nullptr;   // -X

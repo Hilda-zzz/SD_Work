@@ -28,6 +28,9 @@ public:
 	void RebuildVertexUseSelfColor();
 	void RenderChunk() const;
 
+	void RenderSolidCells() const;
+	void RenderLiquidCells() const;
+
 	// === Core Data Access ===
 	Cell& GetLocalCell(int localX, int localY);
 	Cell const& GetLocalCell(int localX, int localY) const;
@@ -64,6 +67,9 @@ public:
 	int GetActiveCellCount() const;
 	bool IsEmpty() const;
 
+	bool GetIsVisible() const { return m_isVisible; }
+	void SetIsVisible(bool visible) { m_isVisible = visible; }
+
 private:
 	void CalculateWorldBounds();
 	void CalculateUpdatePhaseIndex();
@@ -84,5 +90,7 @@ private:
 	std::mutex m_incomingMutex;                       // Protects m_incomingCells only
 
 	// === Render ===
-	std::vector<Vertex_PCU> m_vertex;
+	std::vector<Vertex_PCU> m_solidVertex;
+	std::vector<Vertex_PCU> m_liquidVertex;
+	bool m_isVisible = false;
 };

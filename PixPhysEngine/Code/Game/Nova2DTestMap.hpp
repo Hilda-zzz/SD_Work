@@ -57,9 +57,9 @@ private:
 
 	// 纹理资源
 	SpriteSheet* m_sparkSheet = nullptr;
-	SpriteSheet* m_circleSheet = nullptr;
-	SpriteSheet* m_explosionSheet = nullptr;
-	SpriteAnimDefinition* m_explosionAnim = nullptr;
+	//SpriteSheet* m_circleSheet = nullptr;
+	//SpriteSheet* m_explosionSheet = nullptr;
+	//SpriteAnimDefinition* m_explosionAnim = nullptr;
 
 	// UI 状态（用于编辑）
 	mutable Nova2DEmitterConfig m_editingConfig;	// 当前编辑的配置

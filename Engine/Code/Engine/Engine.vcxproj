@@ -352,6 +352,9 @@
     <ClCompile Include="..\ThirdParty\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\implot.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\implot_demo.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\implot_items.cpp" />
     <ClCompile Include="..\ThirdParty\Noise\RawNoise.cpp" />
     <ClCompile Include="..\ThirdParty\Noise\SmoothNoise.cpp" />
     <ClCompile Include="..\ThirdParty\poly2tri\common\shapes.cc" />
@@ -486,6 +489,8 @@
     <ClInclude Include="..\ThirdParty\imgui\imconfig.h" />
     <ClInclude Include="..\ThirdParty\imgui\imgui.h" />
     <ClInclude Include="..\ThirdParty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\ThirdParty\imgui\implot.h" />
+    <ClInclude Include="..\ThirdParty\imgui\implot_internal.h" />
     <ClInclude Include="..\ThirdParty\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\ThirdParty\imgui\imstb_textedit.h" />
     <ClInclude Include="..\ThirdParty\imgui\imstb_truetype.h" />

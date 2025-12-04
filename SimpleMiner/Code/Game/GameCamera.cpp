@@ -22,7 +22,7 @@ GameCamera::GameCamera(Game* game)
 	m_engineCamera.SetViewport(viewport);
 
 	float aspectRatio = viewport.GetDimensions().x / viewport.GetDimensions().y;
-	m_engineCamera.SetPerspectiveView(aspectRatio, 60.f, 0.01f, 100000.f);
+	m_engineCamera.SetPerspectiveView(aspectRatio, 60.f, 0.1f, 1000.f);
 
 	// Set camera transform (matching your existing setup)
 	m_engineCamera.SetCameraToRenderTransform(

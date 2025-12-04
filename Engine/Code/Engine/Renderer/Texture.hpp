@@ -1,9 +1,10 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Math/IntVec2.hpp"
 #include <string>
 
 struct ID3D11Texture2D;
 struct ID3D11ShaderResourceView;
+struct ID3D11RenderTargetView;
 
 class Texture
 {
@@ -25,4 +26,7 @@ protected:
 
 	ID3D11Texture2D*			m_texture = nullptr;
 	ID3D11ShaderResourceView*	m_shaderResourceView = nullptr;
+
+	// ========== 新增：RenderTarget支持 ==========
+	ID3D11RenderTargetView* m_renderTargetView = nullptr;  // 用于作为渲染目标
 };

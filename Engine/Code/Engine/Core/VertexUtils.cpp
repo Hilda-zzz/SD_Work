@@ -92,15 +92,15 @@ void AddVertsForDisc2D(std::vector<Vertex_PCU>& verts, Vec2 const& center, float
 	}
 }
 
-void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color)
+void AddVertsForAABB2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, float z)
 {
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, 0.f), color, Vec2(0.f, 0.f)));
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, 0.f), color, Vec2(1.f, 1.f)));
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_maxs.y, 0.f), color, Vec2(0.f, 1.f)));
-	
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, 0.f), color, Vec2(0.f, 0.f)));
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_mins.y, 0.f), color, Vec2(1.f, 0.f)));
-	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, 0.f), color, Vec2(1.f, 1.f)));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, z), color, Vec2(0.f, 0.f)));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, z), color, Vec2(1.f, 1.f)));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_maxs.y, z), color, Vec2(0.f, 1.f)));
+																	  
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_mins.x, bounds.m_mins.y, z), color, Vec2(0.f, 0.f)));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_mins.y, z), color, Vec2(1.f, 0.f)));
+	verts.push_back(Vertex_PCU(Vec3(bounds.m_maxs.x, bounds.m_maxs.y, z), color, Vec2(1.f, 1.f)));
 
 }
 

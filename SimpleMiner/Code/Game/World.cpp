@@ -22,6 +22,7 @@
 #include "ThirdParty/Noise/SmoothNoise.hpp"
 #include "Game/GameCamera.hpp"
 #include "Game/PlayerController.hpp"
+#include "Engine/Core/Clock.hpp"
 
 extern Game* g_theGame;
 extern JobSystem* g_theJobSystem;
@@ -38,6 +39,7 @@ World::World(PlayerController* playerController) :
 	m_worldShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/WorldShader");
 	m_worldConstantBuffer = g_theRenderer->CreateConstantBuffer(sizeof(WorldConstants));
 
+	InitializeWaterSystem();
 	//*****************************************************************************************************
 	//for (int i = -1; i < 1; i++)
 	//{
@@ -84,6 +86,8 @@ World::~World()
 	m_generateJobsQueued.clear();
 	m_loadJobsQueued.clear();
 	m_saveJobsQueued.clear();
+
+	ShutdownWaterSystem();
 }
 
 void World::Shutdown()
@@ -231,10 +235,21 @@ void World::Render() const
 	SetWorldConstantsToGPU();
 
 	g_theRenderer->BindShader(m_worldShader);
+
+	// ========== Pass 1: 渲染所有固体方块 ==========
 	for (Chunk* chunk : m_chunkUpdateList)
 	{
 		chunk->Render();
 	}
+
+	// ========== Pass 2: 拷贝场景纹理 ==========
+	g_theRenderer->CopyFramebufferToTexture(m_sceneColorTexture);
+	g_theRenderer->CopyDepthToTexture(m_sceneDepthTexture);
+
+	// ========== Pass 2: 渲染所有水体（半透明）==========
+	RenderWaterSystem();
+
+	// ================================================
 	if(m_gameCamera->GetMode()!=CameraMode::FIRST_PERSON)
 		m_player->Render();
 
@@ -1081,7 +1096,7 @@ void World::MarkBoundaryBlocksAsDirty(Chunk* chunk)
 				BlockIterator blockIter(chunk, index);
 
 				// If non-opaque, mark as dirty to receive light from neighbor
-				if (!blockIter.IsOpaque())
+				if (!blockIter.IsSolid())
 				{
 					MarkLightingDirty(blockIter);
 				}
@@ -1099,7 +1114,7 @@ void World::MarkBoundaryBlocksAsDirty(Chunk* chunk)
 				int index = chunk->LocalCoordsToIndex(0, y, z);
 				BlockIterator blockIter(chunk, index);
 
-				if (!blockIter.IsOpaque())
+				if (!blockIter.IsSolid())
 				{
 					MarkLightingDirty(blockIter);
 				}
@@ -1117,7 +1132,7 @@ void World::MarkBoundaryBlocksAsDirty(Chunk* chunk)
 				int index = chunk->LocalCoordsToIndex(x, CHUNK_MAX_Y, z);
 				BlockIterator blockIter(chunk, index);
 
-				if (!blockIter.IsOpaque())
+				if (!blockIter.IsSolid())
 				{
 					MarkLightingDirty(blockIter);
 				}
@@ -1135,7 +1150,7 @@ void World::MarkBoundaryBlocksAsDirty(Chunk* chunk)
 				int index = chunk->LocalCoordsToIndex(x, 0, z);
 				BlockIterator blockIter(chunk, index);
 
-				if (!blockIter.IsOpaque())
+				if (!blockIter.IsSolid())
 				{
 					MarkLightingDirty(blockIter);
 				}
@@ -1158,7 +1173,7 @@ void World::MarkSkyBlocks(Chunk* chunk)
 
 				// If this block is opaque, stop descending this column
 				// Everything below is underground
-				if (block->IsFullOpaque())
+				if (block->IsSolid())
 				{
 					break;
 				}
@@ -1184,7 +1199,7 @@ void World::SetSkyLightAndMarkNeighbors(Chunk* chunk)
 				Block* block = &chunk->m_blocks[index];
 				
 				// If opaque, stop descending this column
-				if (block->IsFullOpaque())
+				if (block->IsSolid())
 				{
 					break;
 				}
@@ -1201,7 +1216,7 @@ void World::SetSkyLightAndMarkNeighbors(Chunk* chunk)
 				{
 					Block* eastBlock = eastNeighbor.GetBlockPtr();
 					// If non-opaque and NOT sky, it should receive light from this sky block
-					if (eastBlock && !eastBlock->IsFullOpaque() && !eastBlock->IsSky())
+					if (eastBlock && !eastBlock->IsSolid() && !eastBlock->IsSky())
 					{
 						MarkLightingDirty(eastNeighbor);
 					}
@@ -1212,7 +1227,7 @@ void World::SetSkyLightAndMarkNeighbors(Chunk* chunk)
 				if (westNeighbor.IsValid())
 				{
 					Block* westBlock = westNeighbor.GetBlockPtr();
-					if (westBlock && !westBlock->IsFullOpaque() && !westBlock->IsSky())
+					if (westBlock && !westBlock->IsSolid() && !westBlock->IsSky())
 					{
 						MarkLightingDirty(westNeighbor);
 					}
@@ -1223,7 +1238,7 @@ void World::SetSkyLightAndMarkNeighbors(Chunk* chunk)
 				if (northNeighbor.IsValid())
 				{
 					Block* northBlock = northNeighbor.GetBlockPtr();
-					if (northBlock && !northBlock->IsFullOpaque() && !northBlock->IsSky())
+					if (northBlock && !northBlock->IsSolid() && !northBlock->IsSky())
 					{
 						MarkLightingDirty(northNeighbor);
 					}
@@ -1234,7 +1249,7 @@ void World::SetSkyLightAndMarkNeighbors(Chunk* chunk)
 				if (southNeighbor.IsValid())
 				{
 					Block* southBlock = southNeighbor.GetBlockPtr();
-					if (southBlock && !southBlock->IsFullOpaque() && !southBlock->IsSky())
+					if (southBlock && !southBlock->IsSolid() && !southBlock->IsSky())
 					{
 						MarkLightingDirty(southNeighbor);
 					}
@@ -1360,7 +1375,7 @@ void World::MarkLightingDirtyIfNotOpaque(BlockIterator& blockIter)
 	if (!blockIter.IsValid())
 		return;
 
-	if (!blockIter.IsOpaque())
+	if (!blockIter.IsSolid())
 	{
 		MarkLightingDirty(blockIter);
 	}
@@ -1397,7 +1412,7 @@ uint8_t World::ComputeCorrectIndoorLight(Block* block, BlockIterator& blockIter)
 	correctLight = blockDef.m_indoorLight;
 
 	// Rule 3: If non-opaque, get light from neighbors (with falloff)
-	if (!block->IsFullOpaque())
+	if (!block->IsSolid())
 	{
 		// Check all 6 neighbors
 		BlockIterator neighbors[6] = {
@@ -1445,7 +1460,7 @@ uint8_t World::ComputeCorrectOutdoorLight(Block* block, BlockIterator& blockIter
 	correctLight = blockDef.m_outdoorLight;
 
 	// Rule 3: If non-opaque, get light from neighbors (with falloff)
-	if (!block->IsFullOpaque())
+	if (!block->IsSolid())
 	{
 		// Check all 6 neighbors
 		BlockIterator neighbors[6] = {
@@ -1809,6 +1824,122 @@ void World::SetWorldConstantsToGPU() const
 	// ========== 使用 Renderer 的通用接口上传和绑定 ==========
 	g_theRenderer->CopyConstantBufferToGPU(&constants, sizeof(WorldConstants), m_worldConstantBuffer);
 	g_theRenderer->BindConstantBuffer(9, m_worldConstantBuffer);
+}
+
+void World::InitializeWaterSystem()
+{
+	// ========== 1. 创建场景纹理 ==========
+	IntVec2 screenSize = g_theRenderer->GetScreenDimensions();
+
+	// 颜色纹理（用于折射）
+	m_sceneColorTexture = g_theRenderer->CreateOrGetRenderTargetTexture(
+		screenSize,
+		"WaterSceneColor"
+	);
+
+	// 深度纹理（用于深度雾化）
+	m_sceneDepthTexture = g_theRenderer->CreateOrGetDepthTexture(
+		screenSize,
+		"WaterSceneDepth"
+	);
+
+	// ========== 2. 加载水面Shader ==========
+	m_waterShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/WaterScreenSpace", VertexType::VERTEX_PCUTBN);
+
+	// ========== 3. 创建常量缓冲 ==========
+	m_waterConstantBuffer = g_theRenderer->CreateConstantBuffer(sizeof(WaterConstants));
+
+	// ========== 4. 加载水面法线贴图 ==========
+	m_waterNormalTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Water 0325bnormal.jpg",5);
+
+	// ========== 5. 加载/创建天空盒（如果还没有）==========
+	if (m_skyboxCubemap == nullptr)
+	{
+		std::string skyboxPaths[] = {
+		"Data/Images/SkyBox1/skyhsky_lf.png",
+		"Data/Images/SkyBox1/skyhsky_rt.png",
+		"Data/Images/SkyBox1/skyhsky_dn.png",
+		"Data/Images/SkyBox1/skyhsky_up.png",
+		"Data/Images/SkyBox1/skyhsky_ft.png",
+		"Data/Images/SkyBox1/skyhsky_bk.png",
+		};
+		// 方式A: 从6张图片创建
+		m_skyboxCubemap = g_theRenderer->CreateOrGetCubeTextureFromFiles(skyboxPaths);
+	}
+}
+
+void World::ShutdownWaterSystem()
+{
+	delete m_waterConstantBuffer;
+	m_waterConstantBuffer = nullptr;
+}
+
+void World::RenderWaterSystem() const
+{
+	// ========== 1. 准备常量缓冲数据 ==========
+	WaterConstants constants;
+	constants.Time = Clock::GetSystemClock().GetTotalSeconds();
+	constants.WaveSpeed = 0.5f;              // 波浪速度
+	constants.WaveScale = 0.3f;              // 法线贴图平铺
+	constants.SpecularPower =64.0f;        // 高光锐利度
+	constants.SpecularIntensity = 1.0f;      // 高光强度
+	constants.DeepWaterColor = Vec3(0.05, 0.21, 0.39);      // 深蓝
+	constants.ShallowWaterColor = Vec3(0.2, 0.69, 0.69);  // 浅蓝
+	constants.WaterAlpha =1.f;            // 85%不透明
+	constants.RefractionStrength = 0.08f;
+
+	//// 时间和水面高度
+	//constants.Time = Clock::GetSystemClock().GetTotalSeconds();  // 或使用你的时间系统
+
+	//// 水面效果参数
+	//constants.RefractionStrength = 0.05f;
+	//constants.FresnelPower = 5.0f;
+
+	//// 水的颜色
+	//constants.DeepWaterColor = Vec3(0.0f, 0.1f, 0.3f);
+	//constants.ShallowWaterColor = Vec3(0.1f, 0.5f, 0.7f);
+
+	//// 太阳光照（可以从时间/天气系统获取）
+	//constants.SunDirection = Vec3(0.5f, -0.3f, -0.8f).GetNormalized();
+	//constants.SunIntensity = 2.0f;
+	//constants.SunColor = Vec3(1.0f, 0.95f, 0.8f);
+
+	//// 视口和裁剪面
+	//IntVec2 screenSize = g_theRenderer->GetScreenDimensions();
+	//constants.ViewportSize = Vec2((float)screenSize.x, (float)screenSize.y);
+	//constants.NearPlane = m_gameCamera->GetEngineCamera().GetNearPlane();
+	//constants.FarPlane = m_gameCamera->GetEngineCamera().GetFarPlane();
+
+	// 上传到GPU
+	g_theRenderer->CopyConstantBufferToGPU(&constants, sizeof(constants), m_waterConstantBuffer);
+	g_theRenderer->BindConstantBuffer(4, m_waterConstantBuffer);
+	// ========== 2. 绑定Shader和资源 ==========
+	g_theRenderer->BindShader(m_waterShader);
+
+	// 绑定纹理到特定槽位
+	g_theRenderer->BindTextureToSlot(0, nullptr);
+	g_theRenderer->BindTextureToSlot(1, m_waterNormalTexture);   // t1: 法线贴图
+	g_theRenderer->BindTextureToSlot(2, m_sceneColorTexture);    // t2: 场景颜色
+	g_theRenderer->BindTextureToSlot(3, m_sceneDepthTexture);    // t3: 场景深度
+
+	// 绑定天空盒（槽位4）
+	g_theRenderer->BindTextureCube(m_skyboxCubemap, 4);          // t4: 天空盒
+
+	// 绑定常量缓冲
+	g_theRenderer->BindConstantBuffer(3, m_waterConstantBuffer); // b3
+
+	// ========== 3. 设置渲染状态 ==========
+	g_theRenderer->SetBlendMode(BlendMode::OPAQUE);               // 半透明
+	g_theRenderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL); // 深度测试但不写入
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+
+	Vec3 normalSunDirection = m_sunDirection.GetNormalized();
+	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
+	// ========== 4. 渲染所有水面Quads ==========
+	for (Chunk* chunk : m_chunkUpdateList)
+	{
+		chunk->RenderWater();
+	}
 }
 
 // World.cpp

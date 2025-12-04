@@ -143,9 +143,14 @@ public:
 
 	//Vec2 GetCursorNormalizedPosition() const;
 
+	// Mouse wheel
+	float GetMouseWheelDelta() const { return m_mouseWheelDelta; }
+	void HandleMouseWheel(float delta);
+
 public:
 	static bool Event_KeyPressed(EventArgs& args);
 	static bool Event_KeyReleased(EventArgs& args);
+	static bool Event_WheelDelta(EventArgs& args);
 
 protected:
 	
@@ -157,6 +162,8 @@ protected:
 	Vec2 m_lastCursorPos = Vec2::ZERO;
 	Vec2 m_curCursorPos = Vec2::ZERO;
 	Vec2 m_cursorClientDelta = Vec2::ZERO;
+
+	float m_mouseWheelDelta = 0.0f;
 
 private:
 	std::multiset<IInputConsumer*, InputConsumerComparator> m_inputConsumersList;

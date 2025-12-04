@@ -33,6 +33,12 @@ Chunk::~Chunk()
 	m_vertexBuffer = nullptr;
 	delete m_indexBuffer;
 	m_indexBuffer = nullptr;
+
+	// 新增：清理水体资源
+	delete m_waterVertexBuffer;
+	m_waterVertexBuffer = nullptr;
+	delete m_waterIndexBuffer;
+	m_waterIndexBuffer = nullptr;
 }
 
 void Chunk::SetBlockAtlasTexture(Texture* texture)
@@ -170,6 +176,11 @@ void Chunk::RebuildMeshWithCulling()
 	m_vertices.clear();
 	m_indices.clear();
 
+	m_waterVertsCount = 0;
+	m_waterIndicesCount = 0;
+	m_waterVertices.clear();    // 新增
+	m_waterIndices.clear();     // 新增
+
 	if (m_vertexBuffer) {
 		delete m_vertexBuffer;
 		m_vertexBuffer = nullptr;
@@ -179,34 +190,74 @@ void Chunk::RebuildMeshWithCulling()
 		m_indexBuffer = nullptr;
 	}
 
+	if (m_waterVertexBuffer)
+	{
+		delete m_waterVertexBuffer;  // 新增
+		m_waterVertexBuffer = nullptr;
+	}
+	if (m_waterIndexBuffer)
+	{
+		delete m_waterIndexBuffer;   // 新增
+		m_waterIndexBuffer = nullptr;
+	}
+
 	int estimatedVertices = static_cast<int>(BLOCKS_PER_CHUNK * 6 * 4 * VISIBLE_FACE_RATIO);
 	int estimatedIndices = static_cast<int>(BLOCKS_PER_CHUNK * 6 * 6 * VISIBLE_FACE_RATIO);
 	m_vertices.reserve(estimatedVertices);
 	m_indices.reserve(estimatedIndices);
+
+	m_waterVertices.reserve(estimatedVertices / 4);  // 水面通常较少
+	m_waterIndices.reserve(estimatedIndices / 4);
+
 	//-----
 	
 	for (int i = 0; i < BLOCKS_PER_CHUNK; i++)
 	{
-		IntVec3 blockCoords = IndexToLocalCoords(i);
 		Block block = m_blocks[i];
-		if (BlockDefinition::s_blockDefs[block.GetTypeIndex()].m_isVisible) {
-			AddBlockVertsWithCulling(i, block);
+		const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
+
+		if (!def.m_isVisible) continue;
+
+		// 区分水体和固体方块
+		if (def.m_isWater) {
+			AddWaterBlockVerts(i, block);  // 新方法：添加到水体缓冲
+		}
+		else {
+			AddBlockVertsWithCulling(i, block);  // 添加到固体缓冲
 		}
 	}
-
-	//-----
+	
 	m_isDirty = false;
+	//--------------------------
 	m_indicesCount = (int)m_indices.size();
 	m_vertsCount = (int)m_vertices.size();
 
-	CreateGPUResources();
-	g_theRenderer->CopyGameVertexBufferToGPU(m_vertices.data(), (int)m_vertices.size(), m_vertexBuffer);
-	g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
+	if (m_indicesCount != 0 && m_vertsCount != 0)
+	{
+		CreateGPUResources();
+		g_theRenderer->CopyGameVertexBufferToGPU(m_vertices.data(), (int)m_vertices.size(), m_vertexBuffer);
+		g_theRenderer->CopyGameIndexBufferToGPU(m_indices.data(), (int)m_indices.size(), m_indexBuffer);
+	}
+	//--------------------------
+	m_waterVertsCount = (int)m_waterVertices.size();
+	m_waterIndicesCount = (int)m_waterIndices.size();
 
+	if (m_waterIndicesCount > 0) {
+		m_waterVertexBuffer = g_theRenderer->CreateVertexBuffer(m_waterVertsCount, sizeof(Vertex_PCUTBN));
+		m_waterIndexBuffer = g_theRenderer->CreateIndexBuffer(m_waterIndicesCount);
+		g_theRenderer->CopyGameVertexBufferToGPU(m_waterVertices.data(), m_waterVertsCount, m_waterVertexBuffer);
+		g_theRenderer->CopyGameIndexBufferToGPU(m_waterIndices.data(), m_waterIndicesCount, m_waterIndexBuffer);
+	}
+	//--------------------------
 	m_vertices.clear();
 	m_vertices.shrink_to_fit();
 	m_indices.clear();
 	m_indices.shrink_to_fit();
+
+	m_waterVertices.clear();
+	m_waterVertices.shrink_to_fit();
+	m_waterIndices.clear();
+	m_waterIndices.shrink_to_fit();
 }
 
 void Chunk::RebuildDebugMesh()
@@ -503,6 +554,64 @@ void Chunk::RenderNoiseDebug() const
 		g_theRenderer->BindShader(nullptr);
 		g_theRenderer->DrawVertexArray((int)debugVerts.size(), debugVerts.data());
 	}
+}
+
+void Chunk::RenderWater() const
+{
+	//if (!m_waterVertexBuffer || !m_waterIndexBuffer) return;
+	//if (m_waterIndicesCount == 0) return;
+
+	//// ========== 半透明渲染设置 ==========
+	//g_theRenderer->SetModelConstants();
+	//g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+
+	//// 关键：启用Alpha混合
+	//g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+
+	//// 关键：深度测试启用，但禁用深度写入（避免遮挡后面的水）
+	//g_theRenderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+
+	//g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
+	////g_theRenderer->BindShader(nullptr);  // 使用默认shader
+	//g_theRenderer->BindTexture(s_blockAtlasTexture);
+
+	//g_theRenderer->DrawGameIndexedVertexBuffer(m_waterVertexBuffer, m_waterIndexBuffer);
+
+	 // ========== 1. 验证水面数据 ==========
+	if (!m_waterVertexBuffer || !m_waterIndexBuffer) return;
+	if (m_waterIndicesCount == 0) return;
+
+	// ========== 2. 设置模型变换 ==========
+	// 注意：水面通常不需要额外的模型变换（已在世界坐标中）
+	g_theRenderer->SetModelConstants();
+
+	// ========== 3. 设置渲染状态 ==========
+
+	// 光栅化：背面剔除（正常渲染）
+	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+
+	// 混合模式：启用Alpha混合（半透明）
+	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+
+	// 深度模式：测试深度但不写入（避免遮挡后面的水面或物体）
+	g_theRenderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+
+	// 采样器：使用双线性+Wrap模式（让法线贴图平铺）
+	// 注意：这里改为BILINEAR_WRAP，之前的POINT_CLAMP不适合法线贴图
+	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
+
+	// ========== 4. 绑定纹理 ==========
+	// 注意：不再使用block atlas，而是使用水面专用纹理
+	// t0: diffuseTexture（可选，通常不用）
+	// t1: normalTexture（由World绑定）
+	// 这里不绑定纹理，让World::RenderWaterSystem()统一管理
+
+	// ========== 5. 不绑定Shader ==========
+	// Shader由World::RenderWaterSystem()统一绑定
+	// 这样所有Chunk共用同一个Shader和常量缓冲
+
+	// ========== 6. 渲染水面 ==========
+	g_theRenderer->DrawGameIndexedVertexBuffer(m_waterVertexBuffer, m_waterIndexBuffer);
 }
 
 
@@ -929,8 +1038,158 @@ IntVec3 Chunk::GetGlobalCoords(const Vec3& position)
 
 void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 {
+	//const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
+	//if (!def.m_isVisible) return;
+
+	//BlockIterator iter(this, blockIndex);
+	//IntVec3 localCoords = iter.GetLocalCoords();
+	//Vec3 blockWorldPos = LocalCoordsToWorldPos(localCoords);
+
+	//// +X face
+	//BlockIterator fwdX = iter.GetFwdX();
+	//if (!fwdX.IsValid() || !fwdX.IsOpaque()) {  // || !fwdX.IsSolid()
+	//	// Get neighbor block's light influences
+	//	Block neighborBlock = fwdX.IsValid() ? fwdX.GetBlock() : Block(0);
+	//	float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;  // Normalize [0-15] to [0-1]
+	//	float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;    // Normalize [0-15] to [0-1]
+	//	uint8_t grayScale = 230;  // Face directional shading
+
+	//	Rgba8 vertexColor = Rgba8(
+	//		static_cast<uint8_t>(outdoorLight * 255.0f),  // Red channel: outdoor light
+	//		static_cast<uint8_t>(indoorLight * 255.0f),   // Green channel: indoor light
+	//		grayScale,                                     // Blue channel: directional shading
+	//		255
+	//	);
+
+	//	Vec3 bl = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+	//	Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+	//	Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+	//	Vec3 tl = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+	//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+	//		vertexColor, def.m_sideUVs);
+	//}
+
+	//// -X face
+	//BlockIterator negX = iter.GetNegX();
+	//if (!negX.IsValid() || !negX.IsOpaque() ) { //|| !negX.IsSolid()
+	//	Block neighborBlock = negX.IsValid() ? negX.GetBlock() : Block(0);
+	//	float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+	//	float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+	//	uint8_t grayScale = 230;
+
+	//	Rgba8 vertexColor = Rgba8(
+	//		static_cast<uint8_t>(outdoorLight * 255.0f),
+	//		static_cast<uint8_t>(indoorLight * 255.0f),
+	//		grayScale,
+	//		255
+	//	);
+
+	//	Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+	//	Vec3 br = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+	//	Vec3 tr = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+	//	Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+	//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+	//		vertexColor, def.m_sideUVs);
+	//}
+
+	//// +Y face
+	//BlockIterator fwdY = iter.GetFwdY();
+	//if (!fwdY.IsValid() || !fwdY.IsOpaque() ) { //|| !fwdY.IsSolid()
+	//	Block neighborBlock = fwdY.IsValid() ? fwdY.GetBlock() : Block(0);
+	//	float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+	//	float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+	//	uint8_t grayScale = 200;
+
+	//	Rgba8 vertexColor = Rgba8(
+	//		static_cast<uint8_t>(outdoorLight * 255.0f),
+	//		static_cast<uint8_t>(indoorLight * 255.0f),
+	//		grayScale,
+	//		255
+	//	);
+
+	//	Vec3 bl = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+	//	Vec3 br = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+	//	Vec3 tr = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+	//	Vec3 tl = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+	//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+	//		vertexColor, def.m_sideUVs);
+	//}
+
+	//// -Y face
+	//BlockIterator negY = iter.GetNegY();
+	//if (!negY.IsValid() || !negY.IsOpaque()) {  // || !negY.IsSolid()
+	//	Block neighborBlock = negY.IsValid() ? negY.GetBlock() : Block(0);
+	//	float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+	//	float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+	//	uint8_t grayScale = 200;
+
+	//	Rgba8 vertexColor = Rgba8(
+	//		static_cast<uint8_t>(outdoorLight * 255.0f),
+	//		static_cast<uint8_t>(indoorLight * 255.0f),
+	//		grayScale,
+	//		255
+	//	);
+
+	//	Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+	//	Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+	//	Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+	//	Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+	//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+	//		vertexColor, def.m_sideUVs);
+	//}
+
+	//// +Z face (top)
+	//BlockIterator fwdZ = iter.GetFwdZ();
+	//if (!fwdZ.IsValid() || !fwdZ.IsOpaque()) {  // || !fwdZ.IsSolid()
+	//	Block neighborBlock = fwdZ.IsValid() ? fwdZ.GetBlock() : Block(0);
+	//	float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+	//	float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+	//	uint8_t grayScale = 255;
+
+	//	Rgba8 vertexColor = Rgba8(
+	//		static_cast<uint8_t>(outdoorLight * 255.0f),
+	//		static_cast<uint8_t>(indoorLight * 255.0f),
+	//		grayScale,
+	//		255
+	//	);
+
+	//	Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+	//	Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+	//	Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+	//	Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+	//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+	//		vertexColor, def.m_topUVs);
+	//}
+
+	//// -Z face (bottom)
+	//BlockIterator negZ = iter.GetNegZ();
+	//if (!negZ.IsValid() || !negZ.IsOpaque()) {  // || !negZ.IsSolid()
+	//	Block neighborBlock = negZ.IsValid() ? negZ.GetBlock() : Block(0);
+	//	float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+	//	float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+	//	uint8_t grayScale = 255;
+
+	//	Rgba8 vertexColor = Rgba8(
+	//		static_cast<uint8_t>(outdoorLight * 255.0f),
+	//		static_cast<uint8_t>(indoorLight * 255.0f),
+	//		grayScale,
+	//		255
+	//	);
+
+	//	Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+	//	Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+	//	Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+	//	Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+	//	AddVertsForQuad3D_WithTBN(m_vertices, m_indices, bl, br, tr, tl,
+	//		vertexColor, def.m_bottomUVs);
+	//}
+
+//---------------------------------------------------------------------------------
 	const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
 	if (!def.m_isVisible) return;
+
+	// 如果当前方块是水，不添加顶点
+	if (!def.m_isSolid) return;  // 假设BlockDefinition有m_isWater属性
 
 	BlockIterator iter(this, blockIndex);
 	IntVec3 localCoords = iter.GetLocalCoords();
@@ -938,17 +1197,25 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// +X face
 	BlockIterator fwdX = iter.GetFwdX();
-	if (!fwdX.IsValid() || !fwdX.IsOpaque()) {  // || !fwdX.IsSolid()
-		// Get neighbor block's light influences
+	bool shouldCull = fwdX.IsValid() && fwdX.IsOpaque();
+	// 如果邻居是水且当前方块是固体，不剔除
+	if (fwdX.IsValid() && def.m_isSolid) {
+		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[fwdX.GetBlock().GetTypeIndex()];
+		if (!neighborDef.m_isSolid) {
+			shouldCull = false;
+		}
+	}
+
+	if (!shouldCull) {
 		Block neighborBlock = fwdX.IsValid() ? fwdX.GetBlock() : Block(0);
-		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;  // Normalize [0-15] to [0-1]
-		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;    // Normalize [0-15] to [0-1]
-		uint8_t grayScale = 230;  // Face directional shading
+		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
+		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
+		uint8_t grayScale = 230;
 
 		Rgba8 vertexColor = Rgba8(
-			static_cast<uint8_t>(outdoorLight * 255.0f),  // Red channel: outdoor light
-			static_cast<uint8_t>(indoorLight * 255.0f),   // Green channel: indoor light
-			grayScale,                                     // Blue channel: directional shading
+			static_cast<uint8_t>(outdoorLight * 255.0f),
+			static_cast<uint8_t>(indoorLight * 255.0f),
+			grayScale,
 			255
 		);
 
@@ -962,7 +1229,15 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// -X face
 	BlockIterator negX = iter.GetNegX();
-	if (!negX.IsValid() || !negX.IsOpaque() ) { //|| !negX.IsSolid()
+	shouldCull = negX.IsValid() && negX.IsOpaque();
+	if (negX.IsValid() && def.m_isSolid) {
+		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[negX.GetBlock().GetTypeIndex()];
+		if (!neighborDef.m_isSolid) {
+			shouldCull = false;
+		}
+	}
+
+	if (!shouldCull) {
 		Block neighborBlock = negX.IsValid() ? negX.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -985,7 +1260,15 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// +Y face
 	BlockIterator fwdY = iter.GetFwdY();
-	if (!fwdY.IsValid() || !fwdY.IsOpaque() ) { //|| !fwdY.IsSolid()
+	shouldCull = fwdY.IsValid() && fwdY.IsOpaque();
+	if (fwdY.IsValid() && def.m_isSolid) {
+		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[fwdY.GetBlock().GetTypeIndex()];
+		if (!neighborDef.m_isSolid) {
+			shouldCull = false;
+		}
+	}
+
+	if (!shouldCull) {
 		Block neighborBlock = fwdY.IsValid() ? fwdY.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -1008,7 +1291,15 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// -Y face
 	BlockIterator negY = iter.GetNegY();
-	if (!negY.IsValid() || !negY.IsOpaque()) {  // || !negY.IsSolid()
+	shouldCull = negY.IsValid() && negY.IsOpaque();
+	if (negY.IsValid() && def.m_isSolid) {
+		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[negY.GetBlock().GetTypeIndex()];
+		if (!neighborDef.m_isSolid) {
+			shouldCull = false;
+		}
+	}
+
+	if (!shouldCull) {
 		Block neighborBlock = negY.IsValid() ? negY.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -1031,7 +1322,15 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// +Z face (top)
 	BlockIterator fwdZ = iter.GetFwdZ();
-	if (!fwdZ.IsValid() || !fwdZ.IsOpaque()) {  // || !fwdZ.IsSolid()
+	shouldCull = fwdZ.IsValid() && fwdZ.IsOpaque();
+	if (fwdZ.IsValid() && def.m_isSolid) {
+		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[fwdZ.GetBlock().GetTypeIndex()];
+		if (!neighborDef.m_isSolid) {
+			shouldCull = false;
+		}
+	}
+
+	if (!shouldCull) {
 		Block neighborBlock = fwdZ.IsValid() ? fwdZ.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -1054,7 +1353,15 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 
 	// -Z face (bottom)
 	BlockIterator negZ = iter.GetNegZ();
-	if (!negZ.IsValid() || !negZ.IsOpaque()) {  // || !negZ.IsSolid()
+	shouldCull = negZ.IsValid() && negZ.IsOpaque();
+	if (negZ.IsValid() && def.m_isSolid) {
+		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[negZ.GetBlock().GetTypeIndex()];
+		if (!neighborDef.m_isSolid) {
+			shouldCull = false;
+		}
+	}
+
+	if (!shouldCull) {
 		Block neighborBlock = negZ.IsValid() ? negZ.GetBlock() : Block(0);
 		float outdoorLight = neighborBlock.GetOutdoorLightInfluence() / 15.0f;
 		float indoorLight = neighborBlock.GetIndoorLightInfluence() / 15.0f;
@@ -1082,6 +1389,125 @@ void Chunk::CalculateWorldBounds()
 	Vec3 minBound = Vec3((float)m_chunkCoords.x*(float)CHUNK_SIZE_X, (float)m_chunkCoords.y * (float)CHUNK_SIZE_Y, 0.f);
 	Vec3 maxBound = minBound + Vec3((float)CHUNK_SIZE_X, (float)CHUNK_SIZE_Y, (float)CHUNK_SIZE_Z);
 	m_worldBounds = AABB3(minBound, maxBound);
+}
+
+void Chunk::AddWaterBlockVerts(int blockIndex, Block const& block)
+{
+	const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
+
+	BlockIterator iter(this, blockIndex);
+	IntVec3 localCoords = iter.GetLocalCoords();
+	Vec3 blockWorldPos = LocalCoordsToWorldPos(localCoords);
+
+	// 半透明蓝色
+	Rgba8 waterColor = Rgba8(50, 100, 200, 255);  // RGBA: 蓝色，50% 透明度
+
+	// ========== 渲染规则 ==========
+	// 1. 水与空气/非不透明方块接壤 → 渲染该面
+	// 2. 水与水接壤 → 不渲染该面（优化）
+	// 3. 水与固体不透明方块接壤 → 不渲染该面（看不到）
+
+	// +X 面
+	BlockIterator fwdX = iter.GetFwdX();
+	if (ShouldRenderWaterFace(fwdX)) {
+		Vec3 bl = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+
+		Vec2 uvBL = Vec2(bl.x, bl.y);
+		Vec2 uvTR = Vec2(tr.x, tr.y);
+		AddVertsForQuad3D_WithTBN(m_waterVertices, m_waterIndices, bl, br, tr, tl,
+			waterColor, AABB2(uvBL,uvTR));
+	}
+
+	// -X 面
+	BlockIterator negX = iter.GetNegX();
+	if (ShouldRenderWaterFace(negX)) {
+		Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+
+		Vec2 uvBL = Vec2(bl.x, bl.y);
+		Vec2 uvTR = Vec2(tr.x, tr.y);
+		AddVertsForQuad3D_WithTBN(m_waterVertices, m_waterIndices, bl, br, tr, tl,
+			waterColor, AABB2(uvBL, uvTR));
+	}
+
+	// +Y 面
+	BlockIterator fwdY = iter.GetFwdY();
+	if (ShouldRenderWaterFace(fwdY)) {
+		Vec3 bl = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+
+		Vec2 uvBL = Vec2(bl.x, bl.y);
+		Vec2 uvTR = Vec2(tr.x, tr.y);
+		AddVertsForQuad3D_WithTBN(m_waterVertices, m_waterIndices, bl, br, tr, tl,
+			waterColor, AABB2(uvBL, uvTR));
+	}
+
+	// -Y 面
+	BlockIterator negY = iter.GetNegY();
+	if (ShouldRenderWaterFace(negY)) {
+		Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+
+		Vec2 uvBL = Vec2(bl.x, bl.y);
+		Vec2 uvTR = Vec2(tr.x, tr.y);
+		AddVertsForQuad3D_WithTBN(m_waterVertices, m_waterIndices, bl, br, tr, tl,
+			waterColor, AABB2(uvBL, uvTR));
+	}
+
+	// +Z 面（水面）- 最重要！
+	BlockIterator fwdZ = iter.GetFwdZ();
+	if (ShouldRenderWaterFace(fwdZ)) {
+		Vec3 bl = blockWorldPos + Vec3(0.0f, 0.0f, 1.0f);
+		Vec3 br = blockWorldPos + Vec3(1.0f, 0.0f, 1.0f);
+		Vec3 tr = blockWorldPos + Vec3(1.0f, 1.0f, 1.0f);
+		Vec3 tl = blockWorldPos + Vec3(0.0f, 1.0f, 1.0f);
+
+		Vec2 uvBL = Vec2(bl.x, bl.y);
+		Vec2 uvTR = Vec2(tr.x, tr.y);
+		AddVertsForQuad3D_WithTBN(m_waterVertices, m_waterIndices, bl, br, tr, tl,
+			waterColor, AABB2(uvBL, uvTR));
+	}
+
+	// -Z 面（水底）
+	BlockIterator negZ = iter.GetNegZ();
+	if (ShouldRenderWaterFace(negZ)) {
+		Vec3 bl = blockWorldPos + Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 br = blockWorldPos + Vec3(1.0f, 1.0f, 0.0f);
+		Vec3 tr = blockWorldPos + Vec3(1.0f, 0.0f, 0.0f);
+		Vec3 tl = blockWorldPos + Vec3(0.0f, 0.0f, 0.0f);
+
+		Vec2 uvBL = Vec2(bl.x, bl.y);
+		Vec2 uvTR = Vec2(tr.x, tr.y);
+		AddVertsForQuad3D_WithTBN(m_waterVertices, m_waterIndices, bl, br, tr, tl,
+			waterColor, AABB2(uvBL, uvTR));
+	}
+}
+
+bool Chunk::ShouldRenderWaterFace(const BlockIterator& neighbor) const
+{
+	// 边界外 → 渲染（假设是空气）
+	if (!neighbor.IsValid()) return true;
+
+	Block neighborBlock = neighbor.GetBlock();
+	const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[neighborBlock.GetTypeIndex()];
+
+	// 邻居是水 → 不渲染（优化）
+	if (neighborDef.m_isWater) return false;
+
+	// 邻居是不透明固体 → 不渲染（看不见）
+	if (neighborDef.m_isOpaque) return false;
+
+	// 其他情况（空气、玻璃等透明方块）→ 渲染
+	return true;
 }
 
 void Chunk::DebugRenderLightingAdvanced(bool showIndoor, bool showOutdoor, bool showZero) const

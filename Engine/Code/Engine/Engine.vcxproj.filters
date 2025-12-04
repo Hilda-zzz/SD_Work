@@ -83,6 +83,9 @@
     <Filter Include="ThirdParty\poly2tri\sweep">
       <UniqueIdentifier>{97551342-881f-4464-a1ff-a61a5f0c2bf1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\implot">
+      <UniqueIdentifier>{7bf51076-c81f-40ff-a7e1-735f2aef9d99}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -480,6 +483,15 @@
     </ClCompile>
     <ClCompile Include="Math\IntVec3.cpp">
       <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\implot.cpp">
+      <Filter>ThirdParty\implot</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\implot_demo.cpp">
+      <Filter>ThirdParty\implot</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\implot_items.cpp">
+      <Filter>ThirdParty\implot</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -911,6 +923,12 @@
     </ClInclude>
     <ClInclude Include="..\ThirdParty\poly2tri\sweep\sweep_context.h">
       <Filter>ThirdParty\poly2tri\sweep</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\implot.h">
+      <Filter>ThirdParty\implot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\implot_internal.h">
+      <Filter>ThirdParty\implot</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

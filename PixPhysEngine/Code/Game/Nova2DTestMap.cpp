@@ -8,9 +8,11 @@
 #include "Engine/Renderer/SpriteAnimDefinition.hpp"
 #include "Game/SandboxPlayer.hpp"
 #include "Engine/Window/Window.hpp"
+#include "Engine/ResourceManager/ResourceManager.hpp"
 
 extern Nova2DSystem* g_nova2D;
 extern Window* g_theWindow;
+extern ResourceManager* g_theResourceManager;
 
 //==========================================================================
 // 构造与析构
@@ -19,7 +21,7 @@ Nova2DTestMap::Nova2DTestMap(SandboxPlayer* player)
 	:BaseMap(IntVec2(WANG_MAP_CHUNKS_X* WANG_CHUNK_SIZE, WANG_MAP_CHUNKS_Y* WANG_CHUNK_SIZE), WANG_CHUNK_SIZE)
 {
 	m_player = player;
-	Initialize();
+	//Initialize();
 }
 
 Nova2DTestMap::~Nova2DTestMap() 
@@ -32,11 +34,6 @@ Nova2DTestMap::~Nova2DTestMap()
 	}
 	m_emitters.clear();
 
-	// 清理纹理资源（根据你的资源管理策略）
-	delete m_sparkSheet;
-	delete m_circleSheet;
-	delete m_explosionSheet;
-	delete m_explosionAnim;
 }
 
 //==========================================================================
@@ -51,11 +48,9 @@ void Nova2DTestMap::Initialize()
 void Nova2DTestMap::LoadTextureResources() 
 {
 	// 加载火花纹理
-	//Texture* sparkTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Particles/Spark.png");
-	//if (sparkTex) {
-	//	m_sparkSheet = new SpriteSheet(*sparkTex, IntVec2(1, 1));
-	//}
-
+	Texture* sparkTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Particles/Spark.png");
+	m_sparkSheet = g_theResourceManager->CreateOrGetSpriteSheet("SparkParticle", "Data/Images/Particles/Spark.png", IntVec2(5, 5));
+	
 	//// 加载圆形纹理
 	//Texture* circleTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Particles/Circle.png");
 	//if (circleTex) {
@@ -63,12 +58,12 @@ void Nova2DTestMap::LoadTextureResources()
 	//}
 
 	//// 加载爆炸动画（假设是 4x4 的 SpriteSheet）
-	//Texture* explosionTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Particles/Explosion.png");
+	//Texture* explosionTex = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Particles/Spark.png");
 	//if (explosionTex) {
-	//	SpriteSheet* m_explosionSheet = new SpriteSheet(*explosionTex, IntVec2(4, 4));
+	//	SpriteSheet* m_explosionSheet = new SpriteSheet(*explosionTex, IntVec2(5, 5));
 	//	m_explosionAnim = new SpriteAnimDefinition(
 	//		*m_explosionSheet,
-	//		0, 15,  // 16 帧动画
+	//		0, 23,  // 16 帧动画
 	//		30.0f,  // 30 FPS
 	//		SpriteAnimPlaybackType::ONCE
 	//	);
@@ -80,26 +75,24 @@ void Nova2DTestMap::CreatePresetEmitters()
 	// 预设 1：火焰发射器
 	Nova2DEmitter* fireEmitter = new Nova2DEmitter(EmitterPresets::CreateFireConfig());
 	fireEmitter->SetPosition(Vec2(400, 300));
-	fireEmitter->SetSprite(m_sparkSheet);
+	fireEmitter->SetSpriteDef(&m_sparkSheet->GetSpriteDef(0));
 	m_emitters.push_back(fireEmitter);
 	g_nova2D->RegisterEmitter(fireEmitter);
 
 	// 预设 2：爆炸发射器
 	Nova2DEmitter* explosionEmitter = new Nova2DEmitter(EmitterPresets::CreateExplosionConfig());
 	explosionEmitter->SetPosition(Vec2(600, 300));
-	if (m_explosionAnim) {
-		explosionEmitter->SetAnimation(m_explosionAnim);
-	}
-	else {
-		explosionEmitter->SetSprite(m_sparkSheet);
-	}
+	SpriteAnimDefinition* explosionAnim = g_theResourceManager->CreateOrGetSpriteAnim("Explosion", 
+		"SparkParticle", 
+		0, 23, 30.f, SpriteAnimPlaybackType::ONCE);
+	explosionEmitter->SetAnimation(explosionAnim);
 	m_emitters.push_back(explosionEmitter);
 	g_nova2D->RegisterEmitter(explosionEmitter);
 
 	// 预设 3：烟雾发射器
 	Nova2DEmitter* smokeEmitter = new Nova2DEmitter(EmitterPresets::CreateSmokeConfig());
 	smokeEmitter->SetPosition(Vec2(800, 300));
-	smokeEmitter->SetSprite(m_circleSheet);
+	//smokeEmitter->SetSpriteDef(m_circleSheet);
 	m_emitters.push_back(smokeEmitter);
 	g_nova2D->RegisterEmitter(smokeEmitter);
 
@@ -135,18 +128,17 @@ void Nova2DTestMap::Update(float deltaTime)
 		ApplyConfigToEmitter();
 		m_configDirty = false;
 	}
+
+	// 渲染 UI
+	RenderUI();
 }
 
 void Nova2DTestMap::Render() const 
 {
 	g_theRenderer->BeginCamera(m_player->m_camera);
-	// 渲染粒子系统
+	//// 渲染粒子系统
 	g_nova2D->Render(m_player->GetCamera());
 	g_theRenderer->EndCamera(m_player->m_camera);
-
-	// 渲染 UI
-	RenderUI();
-
 }
 
 //==========================================================================
@@ -172,14 +164,14 @@ void Nova2DTestMap::ApplyConfigToEmitter()
 
 void Nova2DTestMap::CreateNewEmitter() 
 {
-	Nova2DEmitter* newEmitter = new Nova2DEmitter(m_editingConfig);
-	newEmitter->SetPosition(Vec2(400, 300));
-	newEmitter->SetSprite(m_sparkSheet);
+	//Nova2DEmitter* newEmitter = new Nova2DEmitter(m_editingConfig);
+	//newEmitter->SetPosition(Vec2(400, 300));
+	//newEmitter->SetSpriteDef();
 
-	m_emitters.push_back(newEmitter);
-	g_nova2D->RegisterEmitter(newEmitter);
+	//m_emitters.push_back(newEmitter);
+	//g_nova2D->RegisterEmitter(newEmitter);
 
-	m_selectedEmitterIndex = (int)m_emitters.size() - 1;
+	//m_selectedEmitterIndex = (int)m_emitters.size() - 1;
 }
 
 void Nova2DTestMap::DeleteCurrentEmitter()

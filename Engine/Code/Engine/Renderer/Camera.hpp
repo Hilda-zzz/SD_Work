@@ -30,6 +30,7 @@ public:
 	Mat44 GetCameraToWorldTransform() const;
 	Mat44 GetWorldToCameraTransform() const;
 	AABB2 const& GetViewport() const;
+	AABB2 const& GetOrthoViewBound() const;
 
 	void SetCameraToRenderTransform(const Mat44& m);
 	Mat44 GetCameraToRenderTransorm() const;
@@ -43,6 +44,9 @@ public:
 	Mat44 GetOrthographicMatrix() const;
 	Mat44 GetPerspectiveMatrix() const;
 	Mat44 GetProjectionMatrix() const;
+
+	float GetNearPlane() const { return m_perspectiveNear; }
+	float GetFarPlane() const { return m_perspectiveFar; }
 
 	// set viewport
 

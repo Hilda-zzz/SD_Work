@@ -28,6 +28,7 @@ public:
 	bool m_isVisible = false;
 	bool m_isSolid = false;
 	bool m_isOpaque = false;
+	bool m_isWater = false;
 	IntVec2 m_topSpriteCoords = IntVec2::ZERO;
 	IntVec2 m_bottomSpriteCoords = IntVec2::ZERO;
 	IntVec2 m_sideSpriteCoords = IntVec2::ZERO;

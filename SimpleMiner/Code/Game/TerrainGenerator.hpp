@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "BiomeTypes.hpp"
 #include <vector>
 #include "TreeGenerator.hpp"
@@ -21,8 +21,8 @@ private:
 	static void Generate2DNoise(Chunk* chunk);
 	static void ReplaceSurface(
 		Chunk* chunk,
-		std::vector<float> const& extendedDensities,      // 24�24�128
-		std::vector<int> const& extendedSurfaceHeights);   // 24�24
+		std::vector<float> const& extendedDensities,      // 24×24×128
+		std::vector<int> const& extendedSurfaceHeights);   // 24×24
 
 	//====================================
 	static void GenerateTrees(Chunk* chunk, const std::vector<int>& surfaceHeights);
@@ -52,6 +52,23 @@ private:
 
 	static std::map<TreeType, std::map<TreeSize, TreeStamp>> s_treeStamps;
 	static bool s_treeStampsInitialized;
+
+	//====================================
+
+	// Cheese Cave 生成 (使用3D Perlin噪声)
+	static float GenerateCheeseCaveNoise(int globalX, int globalY, int globalZ);
+
+	// Spaghetti/Noodle Cave 生成 (使用Ridged噪声交集)
+	static float GenerateSpaghettiCaveNoise(int globalX, int globalY, int globalZ);
+
+	// Ridge 噪声辅助函数
+	static float ComputeRidgedNoise3D(
+		float x, float y, float z,
+		float scale, int octaves,
+		unsigned int seed);
+
+	// 洞穴密度组合函数
+	static bool IsCaveAt(int globalX, int globalY, int globalZ);
 
 	//====================================
 

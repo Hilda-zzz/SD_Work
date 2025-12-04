@@ -6,10 +6,9 @@
 
 extern Window* g_theWindow;
 
-BasePlayer::BasePlayer(IntVec2 const& mapSize)
-{
-	InitCamera(mapSize);
-}
+//BasePlayer::BasePlayer(IntVec2 const& mapSize)
+//{
+//}
 
 void BasePlayer::InitCamera(IntVec2 const& mapSize)
 {

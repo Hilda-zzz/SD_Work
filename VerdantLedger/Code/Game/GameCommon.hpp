@@ -15,8 +15,8 @@ extern Window* g_theWindow;
 extern Renderer* g_theRenderer;
 extern AudioSystem* g_theAudio;
 
-constexpr float		SCREEN_SIZE_X=1600.f;
-constexpr float		SCREEN_SIZE_Y=800.f;
+//constexpr float		SCREEN_SIZE_X=1600.f;
+//constexpr float		SCREEN_SIZE_Y=800.f;
 
 void DebugDrawLine(Vec2 const& start, Vec2 const& end, float width,Rgba8 color);
 void DebugDrawRing(float thickness, float innerRadius, Rgba8 color, Vec2 ori);

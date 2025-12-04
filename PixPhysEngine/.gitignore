@@ -1,0 +1,4 @@
+.vs/
+Temporary/
+*.exe
+!PixPhysEngine_Release_x64.exe

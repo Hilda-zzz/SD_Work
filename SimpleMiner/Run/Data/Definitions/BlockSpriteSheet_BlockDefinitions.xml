@@ -1,6 +1,6 @@
 <Definitions>
   <BlockDefinition name="Air" isVisible="false" isSolid="false" isOpaque="false"/>
-  <BlockDefinition name="Water" isVisible="true" isSolid="false" isOpaque="true" sideSpriteCoords="0, 0" topSpriteCoords="0, 0" bottomSpriteCoords="0, 0"/>
+  <BlockDefinition name="Water" isWater="true" isVisible="true" isSolid="false" isOpaque="true" sideSpriteCoords="0, 0" topSpriteCoords="0, 0" bottomSpriteCoords="0, 0"/>
   <BlockDefinition name="Sand" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="1, 0" topSpriteCoords="1, 0" bottomSpriteCoords="1, 0"/>
   <BlockDefinition name="Snow" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="2, 0" topSpriteCoords="2, 0" bottomSpriteCoords="2, 0"/>
   <BlockDefinition name="Ice" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="3, 0" topSpriteCoords="3, 0" bottomSpriteCoords="3, 0"/>

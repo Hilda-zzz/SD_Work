@@ -206,6 +206,12 @@
     <FxCompile Include="..\..\Run\Data\Shaders\WorldShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\WaterScreenSpace.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\DX11BlinnPhong.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\Definitions\BlockSpriteSheet_BlockDefinitions.xml">

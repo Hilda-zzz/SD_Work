@@ -94,6 +94,11 @@ AABB2 const& Camera::GetViewport() const
 	return m_viewPort;
 }
 
+AABB2 const& Camera::GetOrthoViewBound() const
+{
+	return AABB2(m_orthographicBottomLeft,m_orthograhicTopRight);
+}
+
 void Camera::SetCameraToRenderTransform(const Mat44& m)
 {
 	m_cameraToRenderTransform = m;
