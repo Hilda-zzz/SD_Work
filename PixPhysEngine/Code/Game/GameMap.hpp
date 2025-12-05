@@ -2,6 +2,7 @@
 #include "BaseMap.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include <vector>
+#include "RegionDefinition.hpp"
 
 class SuperChunk;
 class GamePlayer;
@@ -86,6 +87,7 @@ private:
     void InitializeSuperChunks();
     bool IsInBounds(int worldX, int worldY) const;
     bool IsSuperChunkCoordsValid(IntVec2 const& coords) const;
+    void InitializeRegionDefs();
 
 	// === Streaming Helpers ===
 	void CalculateRequiredSuperChunks(IntVec2 const& playerSuperChunkCoords,
@@ -122,4 +124,9 @@ private:
 	// Streaming
 	int m_activationRadius=1;              // Radius in super chunks (1 = 3×3, 2 = 5×5)
 	IntVec2 m_lastPlayerSuperChunk;      // Track player movement between super chunks
+
+    // Region Def
+    RegionDefinition m_jungleRegion;
+
+    bool m_showDebugPanel = true;
 };

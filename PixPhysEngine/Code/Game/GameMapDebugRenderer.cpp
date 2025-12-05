@@ -7,6 +7,7 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Game/RegionManager.hpp"
+#include "ThirdParty/ImGui/imgui.h"
 
 extern Renderer* g_theRenderer;
 
@@ -302,7 +303,7 @@ void GameMapDebugRenderer::RenderPixelGrid(Camera const& camera) const
 
 		for (HbTilePlacement const& placement : tilePlacements)
 		{
-			
+
 			if (!placement.m_selectedTile)
 			{
 				continue;
@@ -582,15 +583,15 @@ void GameMapDebugRenderer::RenderFrustumCulling(Camera const& camera) const
 	IntVec2 gridSize = m_map->GetSuperChunkGridSize();
 
 	// 遍历所有 SuperChunk
-	for (int sy = 0; sy < gridSize.y; ++sy) 
+	for (int sy = 0; sy < gridSize.y; ++sy)
 	{
-		for (int sx = 0; sx < gridSize.x; ++sx) 
+		for (int sx = 0; sx < gridSize.x; ++sx)
 		{
 			SuperChunk* sc = m_map->GetSuperChunkByCoords(IntVec2(sx, sy));
 			if (!sc || !sc->IsActive()) continue;
 
 			// 如果 SuperChunk 可见，在左上角画蓝色方块
-			if (sc->GetIsVisible()) 
+			if (sc->GetIsVisible())
 			{
 				AABB2 scBounds = sc->GetWorldBounds();
 				float markerSize = 20.0f;
@@ -602,9 +603,9 @@ void GameMapDebugRenderer::RenderFrustumCulling(Camera const& camera) const
 				);
 				AddVertsForAABB2D(verts, marker, Rgba8::BLUE);
 
-				for (int cy = 0; cy < CHUNKS_PER_SUPER_CHUNK; ++cy) 
+				for (int cy = 0; cy < CHUNKS_PER_SUPER_CHUNK; ++cy)
 				{
-					for (int cx = 0; cx < CHUNKS_PER_SUPER_CHUNK; ++cx) 
+					for (int cx = 0; cx < CHUNKS_PER_SUPER_CHUNK; ++cx)
 					{
 						CellChunk* chunk = sc->GetChunk(cx, cy);
 						if (!chunk) continue;
@@ -676,3 +677,151 @@ void GameMapDebugRenderer::RenderFrustumCulling(Camera const& camera) const
 //		g_theRenderer->DrawVertexArray(gridVerts);
 //	}
 //}
+//-----------------------------------------------------------------------------
+// ImGui Debug Control Panel
+//-----------------------------------------------------------------------------
+void GameMapDebugRenderer::RenderDebugUI()
+{
+	// Note: Make sure ImGui context is initialized before calling this
+	// This is typically called in your Game::Update() or similar location
+
+	ImGui::Begin("GameMap Debug Renderer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Text("Debug Visualization Controls");
+	ImGui::Separator();
+
+	// Super Chunk Bounds Section
+	ImGui::Text("Super Chunks:");
+	ImGui::Checkbox("Draw Super Chunk Bounds", &m_drawSuperChunkBounds);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Show green wireframes around super chunks\nActive: Green, Inactive: Gray");
+	}
+
+	// Chunk Bounds Section
+	ImGui::Checkbox("Draw Chunk Bounds", &m_drawChunkBounds);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Show blue wireframes around individual chunks");
+	}
+
+	// Active Only Filter
+	ImGui::Checkbox("Active Only", &m_drawActiveOnly);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Only draw bounds for active super chunks/chunks");
+	}
+
+	ImGui::Separator();
+
+	// Player Location Highlight
+	ImGui::Text("Player:");
+	ImGui::Checkbox("Highlight Player Location", &m_highlightPlayerLocation);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Highlight player's current super chunk (Cyan) and chunk (Magenta)");
+	}
+
+	ImGui::Separator();
+
+	// Frustum Culling Visualization
+	ImGui::Text("Culling:");
+	ImGui::Checkbox("Draw Frustum Culling", &m_drawFrustumCulling);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Show blue markers on visible super chunks and chunks\nBlue square in top-left corner = visible");
+	}
+
+	ImGui::Separator();
+
+	// Generated Pixels Section
+	ImGui::Text("Herringbone Generation:");
+	ImGui::Checkbox("Draw Generated Pixels", &m_drawGeneratedPixels);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Visualize herringbone tile generation status\nRed: Generated, different shades for variants");
+	}
+
+	// Pixel Grid
+	ImGui::Checkbox("Draw Pixel Grid", &m_drawPixelGrid);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Show yellow grid lines for herringbone pixels");
+	}
+
+	// Pixel Draw Mode (if you have different visualization modes)
+	ImGui::Text("Pixel Draw Mode:");
+	ImGui::RadioButton("Mode 0: Basic", &m_pixelDrawMode, 0);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Basic pixel visualization");
+	}
+
+	ImGui::RadioButton("Mode 1: Detailed", &m_pixelDrawMode, 1);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Detailed pixel information");
+	}
+
+	ImGui::RadioButton("Mode 2: Tile Edges", &m_pixelDrawMode, 2);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Show tile edge constraints");
+	}
+
+	ImGui::Separator();
+
+	// Quick Toggle Buttons
+	ImGui::Text("Quick Actions:");
+	if (ImGui::Button("Enable All"))
+	{
+		m_drawSuperChunkBounds = true;
+		m_drawChunkBounds = true;
+		m_highlightPlayerLocation = true;
+		m_drawFrustumCulling = true;
+		m_drawGeneratedPixels = true;
+		m_drawPixelGrid = true;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Disable All"))
+	{
+		m_drawSuperChunkBounds = false;
+		m_drawChunkBounds = false;
+		m_highlightPlayerLocation = false;
+		m_drawFrustumCulling = false;
+		m_drawGeneratedPixels = false;
+		m_drawPixelGrid = false;
+	}
+
+	// Performance section (optional)
+	ImGui::Separator();
+	ImGui::Text("Performance:");
+	if (m_map)
+	{
+		IntVec2 gridSize = m_map->GetSuperChunkGridSize();
+		ImGui::Text("Super Chunk Grid: %dx%d", gridSize.x, gridSize.y);
+		ImGui::Text("Total Super Chunks: %d", gridSize.x * gridSize.y);
+	}
+
+	ImGui::End();
+}

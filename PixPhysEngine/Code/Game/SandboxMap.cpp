@@ -453,12 +453,15 @@ Rgba8 SandboxMap::GetCellDebugColor(const Cell& cell, IntVec2 const& worldCoords
 
 	case CellColorMode::STATIC_DYNAMIC:
 		// Static solids = White
-		if (matDef.m_physicsType == PhyType::PHY_STATIC_SOLID) {
+		if (matDef.m_physicsType == PhyType::PHY_STATIC_SOLID) 
+		{
 			return Rgba8::WHITE;
 		}
 		// Dynamic particles = Green, Static particles = Red
 		else if (matDef.m_physicsType == PhyType::PHY_MOVE_SOLID ||
-			matDef.m_physicsType == PhyType::PHY_LIQUID) {
+			matDef.m_physicsType == PhyType::PHY_LIQUID ||
+			matDef.m_physicsType == PhyType::PHY_CELLULAR_AUTOMATON) 
+		{
 			return cell.m_isFreeFalling ? Rgba8(0, 255, 0) : Rgba8(255, 0, 0);
 		}
 		return cell.m_color;
@@ -470,7 +473,9 @@ Rgba8 SandboxMap::GetCellDebugColor(const Cell& cell, IntVec2 const& worldCoords
 		}
 		// Gradient from Red (0 frames) to Green (80+ frames)
 		else if (matDef.m_physicsType == PhyType::PHY_MOVE_SOLID ||
-			matDef.m_physicsType == PhyType::PHY_LIQUID) {
+			matDef.m_physicsType == PhyType::PHY_LIQUID ||
+			matDef.m_physicsType == PhyType::PHY_CELLULAR_AUTOMATON) 
+		{
 			float t = GetClamped(cell.m_framesWithoutMovement / 80.0f, 0.0f, 1.0f);
 			uint8_t green = static_cast<uint8_t>(255 * (1.0f - t));
 			uint8_t red = static_cast<uint8_t>(255 * t);

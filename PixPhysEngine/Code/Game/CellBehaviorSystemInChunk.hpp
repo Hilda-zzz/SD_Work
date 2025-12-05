@@ -41,6 +41,7 @@ private:
 	// === 物理类型特化处理 ===
 	static void UpdateMoveSolid(Cell& cell, int worldX, int worldY, SandboxMap* map);
 	static void UpdateLiquid(Cell& cell, int worldX, int worldY, SandboxMap* map);
+	static void UpdateCellularAutomaton(Cell& cell, int worldX, int worldY, SandboxMap* map);
 
 	static void MarkChunkDirtyWithNeighbors(SandboxMap* map, int worldX, int worldY);
 

@@ -52,6 +52,9 @@ public:
 		return m_regions;
 	}
 
+	RegionBounds GetRegionBoundsForPosition(Vec2 const& worldPosition);
+	RegionGenerationData* GetRegionData(RegionBounds const& regionBound);
+
 private:
 	// 生成Region的确定性种子
 	unsigned int HashRegionBounds(RegionBounds const& bounds) const;

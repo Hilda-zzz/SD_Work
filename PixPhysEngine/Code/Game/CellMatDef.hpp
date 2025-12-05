@@ -9,6 +9,7 @@ enum class PhyType :uint8_t
 	PHY_STATIC_SOLID,
 	PHY_MOVE_SOLID,
 	PHY_LIQUID,
+	PHY_CELLULAR_AUTOMATON
 };
 
 enum class CellMatType : uint8_t
@@ -26,7 +27,9 @@ enum class CellMatType : uint8_t
 	MAT_LAVA,
 	MAT_ACID,
 	MAT_STSOLID_FIRE,
-	MAT_DYSOLID_FIRE
+	MAT_DYSOLID_FIRE,
+
+	MAT_CA_SAND
 };
 
 class CellMatDef
@@ -68,6 +71,10 @@ public:
 		else if (type == PhyType::PHY_LIQUID) {
 			SetDefaultLiquidParams();
 		}
+		else if (type == PhyType::PHY_CELLULAR_AUTOMATON)
+		{
+			SetDefaultCellularAutomatonParams();
+		}
 
 		SetDefaultInteractionParams();
 	}
@@ -94,6 +101,16 @@ private:
 		m_liquid.m_surfaceTension = 0.1f;
 		m_liquid.m_canDisplace = true;
 		m_liquid.m_displacementForce = 0.8f;
+	}
+
+	void SetDefaultCellularAutomatonParams() {
+		m_gravityMultiplier = 0.0f;
+		m_terminalVelocity = 0.0f;
+		m_airResistance = 1.0f;
+		m_collisionDamping = 1.0f;
+		m_horizontalDamping = 1.0f;
+		m_verticalDamping = 1.0f;
+		//m_cellularAutomaton.m_diagonalCheckOrder = 0;
 	}
 
 	void SetDefaultInteractionParams() {

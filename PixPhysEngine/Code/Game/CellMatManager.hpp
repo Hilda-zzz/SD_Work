@@ -200,6 +200,14 @@ public:
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_isPersist = false;
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeCountDown = IntRange(240, 360);
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_EMPTY;
+
+		// CA Sand
+		s_materialDefs[CellMatType::MAT_CA_SAND] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_density = 1.5f;
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_color = Rgba8::YELLOW;
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_name = "CA Sand";
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_description = "Cellular automaton sand";
+		//s_materialDefs[CellMatType::MAT_CA_SAND].m_cellularAutomaton.m_diagonalCheckOrder = 0;
 	}
 
 	static const CellMatDef& GetMaterialDef(CellMatType matType) {

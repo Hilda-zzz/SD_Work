@@ -4,9 +4,11 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include <vector>
+#include "RegionDefinition.hpp"
 
 // 前向声明
 class HerringboneMapGenerator;
+class RegionDefinition;
 
 // Half Tile 在完整 Tile 中的位置
 enum class HalfTilePositionType : uint8_t
@@ -82,14 +84,25 @@ public:
     // === 调试 ===
     void PrintDebugInfo() const;
     
+	// === 密度计算 ===
+	float CalculateBaseDensity(int worldX, int worldY) const;
+	float CalculateColoredDensity(int worldX, int worldY, const Rgba8& targetColor) const;
+
+	// === Region Definition 访问 ===
+	RegionDefinition const& GetRegionDefinition() const { return m_regionDef; }
+	void SetRegionDefinition(const RegionDefinition& def) { m_regionDef = def; }
+
+    Rgba8 GetPixelColorAtWorld(int worldX, int worldY) const;
+
     // === Generator需要访问的数据（友元或公开） ===
     friend class HerringboneMapGenerator;
-    
+ 
 private:
     // === 基本信息 ===
     RegionBounds m_bounds;
     unsigned int m_regionSeed;
     HerringboneTileset* m_tileset;
+    RegionDefinition m_regionDef;
     
     // === 生成参数（扩展后的区域） ===
     IntVec2 m_expandedBottomLeftChunk;  // 扩展后的区域左下角
@@ -108,4 +121,5 @@ private:
     // === 最终pixel数据 ===
     std::vector<std::vector<Rgba8>> m_pixels;  // [hpixelY][hpixelX]
     IntVec2 m_pixelSize;  // 最终尺寸（不包括边界）
+
 };

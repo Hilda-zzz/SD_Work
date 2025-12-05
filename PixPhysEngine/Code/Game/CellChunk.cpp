@@ -110,6 +110,8 @@ void CellChunk::RebuildVertexUseSelfColor()
 
 void CellChunk::RenderChunk() const
 {
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(m_solidVertex);
 }
 

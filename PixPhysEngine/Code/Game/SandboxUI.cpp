@@ -137,6 +137,11 @@ void SandBoxUI::RenderMaterialSelector(SandboxPlayer* player)
 			m_showToolsOnly = false;
 		}
 
+		if (renderCategoryButton("Pure CA", PhyType::PHY_CELLULAR_AUTOMATON)) {
+			m_selectedCategory = PhyType::PHY_CELLULAR_AUTOMATON;
+			m_showToolsOnly = false;
+		}
+
 		if (renderCategoryButton("Tools", PhyType::PHY_STATIC_SOLID, true)) {
 			m_selectedCategory = PhyType::PHY_STATIC_SOLID;
 			m_showToolsOnly = true;

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RegionConfig name="Jungle" biomeType="LUSH_FOREST">
+
+	<!-- ============================================ -->
+	<!-- 基础层：从灰度 herringbone pixel 生成        -->
+	<!-- ============================================ -->
+	<BaseLayer>
+		<!-- 密度来源 -->
+		<DensitySource type="herringbone_grayscale"/>
+
+		<!-- 主噪声扰动 -->
+		<Noise scale="64.0" octaves="2" persistence="0.5" octaveScale="2.0" seedOffset="0">
+			<!-- 噪声效果：预设类型 -->
+			<Effect type="ADD_ABS" strength="0.6"/>
+			<!-- 
+                预设类型：
+                - SUBTRACT_ABS: density -= abs(noise) * strength
+                - ADD_ABS: density += abs(noise) * strength
+                - SUBTRACT: density -= noise * strength
+                - ADD: density += noise * strength
+                - MULTIPLY: density *= (1.0 + noise * strength)
+            -->
+		</Noise>
+
+		<!-- 材质层（按顺序应用，density范围互斥）-->
+		<MaterialLayers>
+			<!-- 层 1: 主体 Stone -->
+			<Layer material="MAT_STONE">
+				<DensityRange min="0.9" max="1.0"/>
+				<Texture path="Data/Images/earth_rainforest.png" enabled="true"/>
+			</Layer>
+
+			<!-- 层 2: 主体 Wood -->
+			<Layer material="MAT_WOOD">
+				<DensityRange min="0.55" max="0.9"/>
+				<Texture path="Data/Images/soil_lush.png" enabled="true"/>
+			</Layer>
+		</MaterialLayers>
+
+		<!-- 装饰层（叠加逻辑，在上述材质基础上再次判断）-->
+		<DecorationLayers>
+			<Decoration material="MAT_WOOD">
+				<!-- 基础密度条件 -->
+				<BaseDensityCondition min="0.6" max="1.0"/>
+
+				<!-- 装饰噪声 -->
+				<DecorationNoise scale="16.0" octaves="2" seedOffset="1">
+					<!-- 强度调制器：预设类型 -->
+					<StrengthModulation type="INVERSE_DENSITY" multiplier="2.0"/>
+					<!-- 
+                        预设类型：
+                        - INVERSE_DENSITY: noise *= (1.0 + (1.0 - baseDensity) * multiplier)
+                        - LINEAR_DENSITY: noise *= (1.0 + baseDensity * multiplier)
+                        - CONSTANT: noise *= multiplier
+                    -->
+
+					<!-- 阈值判断 -->
+					<Threshold min="0.2"/>
+				</DecorationNoise>
+
+				<Texture path="Data/Images/soil_lush.png" enabled="true"/>
+			</Decoration>
+		</DecorationLayers>
+
+		<!-- 边缘贴纸（在特定密度范围应用，按顺序叠加）-->
+		<EdgeStickers>
+			<!-- 作用条件 -->
+			<ApplyCondition>
+				<DensityRange min="0.6" max="0.8"/>
+			</ApplyCondition>
+
+			<!-- 贴纸列表（按 order 从小到大依次叠加）-->
+			<Stickers>
+				<Sticker order="1"
+                         path="Data/Images/edge_soil_lush_1.png"
+                         offsetX="0" offsetY="0"
+                         scale="0.5">
+					<!-- 色彩调整 -->
+					<ColorAdjust hueShift="0.0" saturation="1.0" brightness="1.0"/>
+				</Sticker>
+
+				<Sticker order="2"
+                         path="Data/Images/edge_soil_lush_1.png"
+                         offsetX="10" offsetY="10"
+                         scale="0.5">
+					<ColorAdjust hueShift="0.0" saturation="1.0" brightness="1.0"/>
+				</Sticker>
+
+				<Sticker order="3"
+                         path="Data/Images/edge_soil_lush_1.png"
+                         offsetX="0" offsetY="0"
+                         scale="1.0">
+					<ColorAdjust hueShift="0.0" saturation="1.0" brightness="1.0"/>
+				</Sticker>
+			</Stickers>
+		</EdgeStickers>
+	</BaseLayer>
+
+	<!-- ============================================ -->
+	<!-- 彩色层：从特定颜色 pixel 生成                -->
+	<!-- ============================================ -->
+	<ColoredLayers>
+
+		<!-- 红色层 - 沙地 -->
+		<ColoredLayer name="SandLayer">
+			<!-- 触发颜色（精确匹配）-->
+			<TriggerColor r="112" g="128" b="64" a="255"/>
+
+			<!-- 密度来源 -->
+			<DensitySource type="colored_pixel"/>
+
+			<!-- 噪声扰动 -->
+			<Noise scale="32.0" octaves="2" persistence="0.5" octaveScale="2.0" seedOffset="1">
+				<Effect type="ADD_ABS" strength="0.35"/>
+			</Noise>
+
+			<!-- 材质层 -->
+			<MaterialLayers>
+				<Layer material="MAT_SAND">
+					<DensityRange min="0.5" max="1.0"/>
+
+					<!-- 基础纹理 -->
+					<Texture path="Data/Images/moss.png">
+						<!-- 颜色乘法器 -->
+						<ColorAdjust hueShift="0.3" saturation="1.0" brightness="1.0"/>
+					</Texture>
+				</Layer>
+			</MaterialLayers>
+
+			<!-- 边缘检测与贴纸 -->
+			<EdgeDetection enabled="true">
+				<!-- 动态阈值计算 -->
+				<DynamicThreshold type="NOISED_OFFSET">
+					<!-- 基础阈值 -->
+					<BaseThreshold>1.75</BaseThreshold>
+
+					<!-- 阈值噪声 -->
+					<ThresholdNoise scale="32.0" octaves="3" seedOffset="100">
+						<NoiseRange>0.5</NoiseRange>
+					</ThresholdNoise>
+
+					<!-- 
+                        type="NOISED_OFFSET" 对应公式:
+                        dynamicThreshold = -density + baseThreshold + abs(noise) * noiseRange
+                    -->
+				</DynamicThreshold>
+
+				<!-- 边缘贴纸 -->
+				<EdgeStickers>
+					<Sticker order="1"
+                             path="Data/Images/edge_soil_dead_1.png"
+                             offsetX="0" offsetY="0"
+                             scale="0.5">
+						<ColorAdjust hueShift="0.0" saturation="1.0" brightness="1.0"/>
+					</Sticker>
+
+					<Sticker order="2"
+                             path="Data/Images/edge_soil_dead_1.png"
+                             offsetX="5" offsetY="5"
+                             scale="1.0">
+						<ColorAdjust hueShift="10.0" saturation="0.9" brightness="1.1"/>
+					</Sticker>
+
+					<Sticker order="3"
+                             path="Data/Images/edge_soil_dead_1.png"
+                             offsetX="10" offsetY="10"
+                             scale="1.0">
+						<ColorAdjust hueShift="0.0" saturation="1.0" brightness="0.95"/>
+					</Sticker>
+				</EdgeStickers>
+			</EdgeDetection>
+		</ColoredLayer>
+
+		<!-- 绿色层 - 草地 --><!--
+		<ColoredLayer name="GrassLayer">
+			<TriggerColor r="0" g="255" b="0" a="255"/>
+			<DensitySource type="colored_pixel"/>
+
+			<Noise scale="32.0" octaves="2" persistence="0.5" octaveScale="2.0" seedOffset="2">
+				<Effect type="ADD_ABS" strength="0.3"/>
+			</Noise>
+
+			<MaterialLayers>
+				<Layer material="MAT_GRASS">
+					<DensityRange min="0.5" max="1.0"/>
+					<BaseTexture path="Data/Images/grass.png"/>
+				</Layer>
+			</MaterialLayers>
+		</ColoredLayer>-->
+
+	</ColoredLayers>
+
+	<!-- 详细装饰脚本（预留 Lua 接口）-->
+	<DetailScript path="Data/Scripts/JungleDetails.lua" enabled="false"/>
+
+</RegionConfig>

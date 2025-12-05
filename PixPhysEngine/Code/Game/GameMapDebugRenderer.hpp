@@ -16,6 +16,7 @@ public:
 	~GameMapDebugRenderer();
 
 	void Render(Camera const& camera) const;
+	void RenderDebugUI();  // ImGui debug control panel
 
 	// Toggle options
 	void SetDrawSuperChunkBounds(bool draw) { m_drawSuperChunkBounds = draw; }
@@ -27,6 +28,19 @@ public:
 	bool GetDrawChunkBounds() const { return m_drawChunkBounds; }
 	bool GetDrawActiveOnly() const { return m_drawActiveOnly; }
 	bool GetHighlightPlayerLocation() const { return m_highlightPlayerLocation; }
+
+	// Additional getters/setters for new debug options
+	void SetDrawFrustumCulling(bool draw) { m_drawFrustumCulling = draw; }
+	bool GetDrawFrustumCulling() const { return m_drawFrustumCulling; }
+
+	void SetDrawGeneratedPixels(bool draw) { m_drawGeneratedPixels = draw; }
+	bool GetDrawGeneratedPixels() const { return m_drawGeneratedPixels; }
+
+	void SetDrawPixelGrid(bool draw) { m_drawPixelGrid = draw; }
+	bool GetDrawPixelGrid() const { return m_drawPixelGrid; }
+
+	void SetPixelDrawMode(int mode) { m_pixelDrawMode = mode; }
+	int GetPixelDrawMode() const { return m_pixelDrawMode; }
 
 private:
 	void RenderSuperChunkBounds(Camera const& camera) const;

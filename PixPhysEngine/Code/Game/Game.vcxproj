@@ -32,6 +32,7 @@
     <ClCompile Include="CellChunk.cpp" />
     <ClCompile Include="CellMatManager.cpp" />
     <ClCompile Include="ChunkUpdateJob.cpp" />
+    <ClCompile Include="ConfigDrivenCellGenerator.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
     <ClCompile Include="GameMap.cpp" />
@@ -48,6 +49,8 @@
     <ClCompile Include="Nova2D\Nova2DParticle.cpp" />
     <ClCompile Include="Nova2D\Nova2DSystem.cpp" />
     <ClCompile Include="RegionBounds.cpp" />
+    <ClCompile Include="RegionDefinition.cpp" />
+    <ClCompile Include="RegionDefinitionLoader.cpp" />
     <ClCompile Include="RegionGenerationData.cpp" />
     <ClCompile Include="RegionGenerationData_v2.cpp" />
     <ClCompile Include="RegionManager.cpp" />
@@ -71,6 +74,7 @@
     <ClInclude Include="Cell.hpp" />
     <ClInclude Include="CellMatManager.hpp" />
     <ClInclude Include="ChunkUpdateJob.hpp" />
+    <ClInclude Include="ConfigDrivenCellGenerator.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
@@ -91,6 +95,8 @@
     <ClInclude Include="Nova2D\Nova2DParticle.hpp" />
     <ClInclude Include="PCGTemplate.hpp" />
     <ClInclude Include="RegionBounds.hpp" />
+    <ClInclude Include="RegionDefinition.hpp" />
+    <ClInclude Include="RegionDefinitionLoader.hpp" />
     <ClInclude Include="RegionGenerationData.hpp" />
     <ClInclude Include="RegionGenerationData_v2.hpp" />
     <ClInclude Include="RegionManager.hpp" />

@@ -9,6 +9,12 @@
 #include <set>
 #include "RegionManager.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "RegionDefinition.hpp"
+#include "ConfigDrivenCellGenerator.hpp"
+#include "GameCommon.hpp"
+#include "Engine/Input/InputSystem.hpp"
+
+extern InputSystem* g_theInput;
 
 GameMap::GameMap(GamePlayer* player, IntVec2 const& mapSizeInSuperChunks)
     : BaseMap(
@@ -60,6 +66,8 @@ void GameMap::Initialize()
 {
     m_activationRadius = 1;
 
+	InitializeRegionDefs();
+
 	InitializePCGSystem();
 
     InitializeSuperChunks();
@@ -92,6 +100,8 @@ void GameMap::InitializeSuperChunks()
         for (int superX = 0; superX < m_superChunkGridSize.x; ++superX) {
             IntVec2 superChunkCoords(superX, superY);
             m_superChunks[superY][superX] = new SuperChunk(superChunkCoords, this);
+
+			GenerateSuperChunkCells(m_superChunks[superY][superX]);
         }
     }
 
@@ -105,6 +115,17 @@ void GameMap::Update(float deltaTime)
 
     UpdateSuperChunkStreaming();
 
+	// 切换调试面板 (例如按 F3)
+	if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
+	{
+		m_showDebugPanel = !m_showDebugPanel;
+	}
+
+	// 渲染 ImGui 面板
+	if (m_showDebugPanel)
+	{
+		m_debugRenderer->RenderDebugUI();
+	}
     // Phase 5: Update active super chunks
     // UpdateCellsPhysInChunk();
 }
@@ -168,7 +189,7 @@ void GameMap::ActivateSuperChunk(IntVec2 const& superChunkCoords)
 	m_activeSuperChunks.push_back(sc);
 
 	// ⭐ 2. 生成该SuperChunk的cells
-	GenerateSuperChunkCells(sc);
+	// GenerateSuperChunkCells(sc);
 
 	DebuggerPrintf("Activated and generated super chunk (%d, %d)\n",
 		superChunkCoords.x, superChunkCoords.y);
@@ -272,7 +293,49 @@ IntVec2 GameMap::ChunkToSuperChunk(IntVec2 const& chunkCoords)
 
 void GameMap::GenerateSuperChunkCells(SuperChunk* sc)
 {
+	if (!sc) return;
 
+	IntVec2 scCoords = sc->GetSuperChunkCoords();
+
+	// === 1. 确定该 SuperChunk 所属的 Region ===
+	Vec2 scWorldCenter = Vec2(
+		SuperChunkToWorld(scCoords).x + (CHUNK_SIZE * CHUNKS_PER_SUPER_CHUNK) / 2.0f,
+		SuperChunkToWorld(scCoords).y + (CHUNK_SIZE * CHUNKS_PER_SUPER_CHUNK) / 2.0f
+	);
+
+	RegionBounds regionBounds = m_regionManager->GetRegionBoundsForPosition(scWorldCenter);
+	RegionGenerationData* regionData = m_regionManager->GetRegionData(regionBounds);
+
+	if (!regionData) {
+		DebuggerPrintf("ERROR: No region data found for super chunk (%d, %d)\n",
+			scCoords.x, scCoords.y);
+		return;
+	}
+
+	// === 2. 获取该 Region 的 RegionDefinition ===
+	RegionDefinition const& regionDef = m_jungleRegion;
+
+	DebuggerPrintf("Generating cells for SuperChunk (%d,%d) in region '%s'\n",
+		scCoords.x, scCoords.y, regionDef.GetName().c_str());
+
+	// === 3. 遍历该 SuperChunk 的所有 Chunks ===
+	for (int cy = 0; cy < CHUNKS_PER_SUPER_CHUNK; ++cy) 
+	{
+		for (int cx = 0; cx < CHUNKS_PER_SUPER_CHUNK; ++cx) 
+		{
+			CellChunk* chunk = sc->GetChunk(cx, cy);
+			if (!chunk) continue;
+
+			// === 4. 生成该 Chunk 的 cells ===
+			ConfigDrivenCellGenerator::GenerateChunkCells(chunk, regionDef, regionData);
+
+			// === 5. 重建渲染顶点 ===
+			chunk->RebuildVertexWithNewColor();
+		}
+	}
+
+	DebuggerPrintf("Successfully generated cells for SuperChunk (%d,%d)\n",
+		scCoords.x, scCoords.y);
 }
 
 void GameMap::GenerateMapPixels()
@@ -366,6 +429,25 @@ bool GameMap::IsSuperChunkCoordsValid(IntVec2 const& coords) const
 {
     return (coords.x >= 0 && coords.x < m_superChunkGridSize.x &&
             coords.y >= 0 && coords.y < m_superChunkGridSize.y);
+}
+
+void GameMap::InitializeRegionDefs()
+{
+	if (m_jungleRegion.LoadFromXML("Data/RegionConfigs/JungleRegion.xml"))
+	{
+		m_jungleRegion.PrintDebugInfo();
+
+		// 访问配置
+		BaseLayerConfig const& baseLayer = m_jungleRegion.GetBaseLayer();
+
+		// 查找特定颜色的彩色层
+		Rgba8 redColor(255, 0, 0, 255);
+		ColoredLayerConfig const* redLayer = m_jungleRegion.FindColoredLayer(redColor);
+
+		if (redLayer) {
+			DebuggerPrintf("Found red layer: %s\n", redLayer->name.c_str());
+		}
+	}
 }
 
 // === Streaming System ===

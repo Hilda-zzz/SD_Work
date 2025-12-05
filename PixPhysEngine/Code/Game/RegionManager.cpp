@@ -4,6 +4,7 @@
 #include "GameCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "SuperChunk.hpp"
+#include "CellChunk.hpp"
 
 RegionManager::RegionManager(unsigned int worldSeed)
 	: m_worldSeed(worldSeed)
@@ -243,6 +244,54 @@ void RegionManager::UnloadDistantRegions(IntVec2 const& centerSC, int keepRadius
 		DebuggerPrintf("Unloaded %d regions, %d remaining\n",
 			static_cast<int>(toUnload.size()), GetLoadedRegionCount());
 	}
+}
+
+RegionBounds RegionManager::GetRegionBoundsForPosition(Vec2 const& worldPosition)
+{
+	// 将世界坐标转换为 SuperChunk 坐标
+		constexpr int cellsPerSuperChunk = CHUNK_SIZE * CHUNKS_PER_SUPER_CHUNK;
+
+	IntVec2 scCoords(
+		static_cast<int>(worldPosition.x) / cellsPerSuperChunk,
+		static_cast<int>(worldPosition.y) / cellsPerSuperChunk
+	);
+
+	// 查找包含该 SuperChunk 的 Region
+	RegionBounds* foundBounds = FindRegionForSuperChunk(scCoords);
+
+	if (foundBounds) {
+		return *foundBounds;
+	}
+
+	// 如果未找到，返回一个无效的 RegionBounds
+	DebuggerPrintf("WARNING: No region found for world position (%.2f, %.2f), SC(%d, %d)\n",
+		worldPosition.x, worldPosition.y, scCoords.x, scCoords.y);
+
+	return RegionBounds();  // 返回默认构造的无效bounds
+}
+
+RegionGenerationData* RegionManager::GetRegionData(RegionBounds const& regionBound)
+{
+	    // 检查 bounds 是否有效
+    if (regionBound.m_bottomLeftSC == IntVec2(0, 0) && 
+        regionBound.m_topRightSC == IntVec2(0, 0)) {
+        DebuggerPrintf("WARNING: Invalid RegionBounds, cannot get region data\n");
+        return nullptr;
+    }
+    
+    // 在已生成的 regions 中查找
+    auto it = m_regions.find(regionBound);
+    
+    if (it != m_regions.end()) {
+        return it->second.get();
+    }
+    
+    // 如果没找到，返回 nullptr（或者可以选择创建）
+    DebuggerPrintf("WARNING: Region SC[%d,%d]-SC[%d,%d] not found in loaded regions\n",
+                   regionBound.m_bottomLeftSC.x, regionBound.m_bottomLeftSC.y,
+                   regionBound.m_topRightSC.x, regionBound.m_topRightSC.y);
+    
+    return nullptr;
 }
 
 unsigned int RegionManager::HashRegionBounds(RegionBounds const& bounds) const

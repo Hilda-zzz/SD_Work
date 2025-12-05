@@ -25,6 +25,9 @@ void CellBehaviorSystemInChunk::UpdateCell(Cell& cell, int worldX, int worldY, S
 	case PhyType::PHY_LIQUID:
 		UpdateLiquid(cell, worldX, worldY, map);
 		break;
+	case PhyType::PHY_CELLULAR_AUTOMATON:
+		UpdateCellularAutomaton(cell, worldX, worldY, map);
+		break;
 	}
 }
 
@@ -629,6 +632,443 @@ void CellBehaviorSystemInChunk::UpdateLiquid(Cell& cell, int worldX, int worldY,
 	// update accumulated movement
 	// UpdateAccumulatedMovementLiquid(worldX, worldY, currentX, currentY);
 	UpdateAccumulatedMovementLiquid(worldX, worldY, currentX, currentY, map);
+}
+
+void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, int worldY, SandboxMap* map)
+{
+	//const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+
+	//if (cell.m_updatedThisFrame) {
+	//	return;
+	//}
+
+	//cell.m_updatedThisFrame = true;
+
+	//// === 检查是否处于活动状态 ===
+	//if (!cell.m_isFreeFalling)
+	//{
+	//	bool shouldActivate = false;
+
+	//	// 检查正下方
+	//	if (map->IsInBounds(worldX, worldY - 1))
+	//	{
+	//		Cell& belowCell = map->GetCell(worldX, worldY - 1);
+	//		const CellMatDef& belowMatDef = CellMatManager::GetMaterialDef(belowCell.m_type);
+
+	//		// 正下方为空或液体，激活
+	//		if (belowCell.IsEmpty() || belowMatDef.m_physicsType == PhyType::PHY_LIQUID)
+	//		{
+	//			shouldActivate = true;
+	//		}
+	//		else
+	//		{
+	//			// 正下方被固体占据，检查左下和右下
+	//			// 检查左下
+	//			if (map->IsInBounds(worldX - 1, worldY - 1))
+	//			{
+	//				Cell& leftDiagCell = map->GetCell(worldX - 1, worldY - 1);
+	//				if (leftDiagCell.IsEmpty())
+	//				{
+	//					shouldActivate = true;
+	//				}
+	//			}
+
+	//			// 检查右下
+	//			if (!shouldActivate && map->IsInBounds(worldX + 1, worldY - 1))
+	//			{
+	//				Cell& rightDiagCell = map->GetCell(worldX + 1, worldY - 1);
+	//				if (rightDiagCell.IsEmpty())
+	//				{
+	//					shouldActivate = true;
+	//				}
+	//			}
+	//		}
+	//	}
+
+	//	if (shouldActivate)
+	//	{
+	//		cell.m_isFreeFalling = true;
+	//		cell.m_framesWithoutMovement = 0;
+	//	}
+	//	else
+	//	{
+	//		cell.m_framesWithoutMovement++;
+	//		return;  // 仍然静止，跳过更新
+	//	}
+	//}
+
+	//MarkChunkDirtyWithNeighbors(map, worldX, worldY);
+
+	//int newX = worldX;
+	//int newY = worldY;
+	//bool moved = false;
+
+	//// === 元胞自动机移动规则 ===
+	//if (map->IsInBounds(worldX, worldY - 1)) {
+	//	Cell& belowCell = map->GetCell(worldX, worldY - 1);
+
+	//	if (belowCell.IsEmpty()) {
+	//		std::swap(map->GetCell(worldX, worldY), map->GetCell(worldX, worldY - 1));
+	//		newY = worldY - 1;
+	//		moved = true;
+	//		MarkChunkDirtyWithNeighbors(map, newX, newY);
+	//		map->GetCell(newX, newY).m_framesWithoutMovement = 0;
+	//		return;
+	//	}
+
+	//	const CellMatDef& belowMatDef = CellMatManager::GetMaterialDef(belowCell.m_type);
+
+	//	if (belowMatDef.m_physicsType == PhyType::PHY_LIQUID) {
+	//		std::swap(map->GetCell(worldX, worldY), map->GetCell(worldX, worldY - 1));
+	//		newY = worldY - 1;
+	//		moved = true;
+	//		MarkChunkDirtyWithNeighbors(map, newX, newY);
+	//		map->GetCell(newX, newY).m_framesWithoutMovement = 0;
+	//		return;
+	//	}
+
+	//	int leftDiag = worldX - 1;
+	//	int rightDiag = worldX + 1;
+	//	int diagY = worldY - 1;
+
+	//	bool canMoveLeft = false;
+	//	bool canMoveRight = false;
+
+	//	if (map->IsInBounds(leftDiag, diagY)) {
+	//		Cell& leftDiagCell = map->GetCell(leftDiag, diagY);
+	//		if (leftDiagCell.IsEmpty()) {
+	//			canMoveLeft = true;
+	//		}
+	//		else {
+	//			const CellMatDef& leftDiagMatDef = CellMatManager::GetMaterialDef(leftDiagCell.m_type);
+	//			if (leftDiagMatDef.m_physicsType == PhyType::PHY_LIQUID) {
+	//				canMoveLeft = true;
+	//			}
+	//		}
+	//	}
+
+	//	if (map->IsInBounds(rightDiag, diagY)) {
+	//		Cell& rightDiagCell = map->GetCell(rightDiag, diagY);
+	//		if (rightDiagCell.IsEmpty()) {
+	//			canMoveRight = true;
+	//		}
+	//		else {
+	//			const CellMatDef& rightDiagMatDef = CellMatManager::GetMaterialDef(rightDiagCell.m_type);
+	//			if (rightDiagMatDef.m_physicsType == PhyType::PHY_LIQUID) {
+	//				canMoveRight = true;
+	//			}
+	//		}
+	//	}
+
+	//	int moveDir = 0;
+
+	//	if (canMoveLeft && canMoveRight) {
+	//		moveDir = (rand() % 2 == 0) ? -1 : 1;
+	//	}
+	//	else if (canMoveLeft) {
+	//		moveDir = -1;
+	//	}
+	//	else if (canMoveRight) {
+	//		moveDir = 1;
+	//	}
+
+	//	if (moveDir != 0) {
+	//		newX = worldX + moveDir;
+	//		newY = diagY;
+	//		std::swap(map->GetCell(worldX, worldY), map->GetCell(newX, newY));
+	//		moved = true;
+	//		MarkChunkDirtyWithNeighbors(map, newX, newY);
+	//		map->GetCell(newX, newY).m_framesWithoutMovement = 0;
+	//		return;
+	//	}
+	//}
+
+	//// === 无法移动：累计静止帧数 ===
+	//if (!moved) 
+	//{
+	//	Cell& finalCell = map->GetCell(worldX, worldY);
+	//	finalCell.m_framesWithoutMovement++;
+
+	//	if (finalCell.m_framesWithoutMovement >= 80) 
+	//	{
+	//		finalCell.m_isFreeFalling = false;
+	//	}
+	//}
+
+//-----------------------------------------------------------------------------------------------
+	// ExtraData状态: 0 = 未初始化, 1 = Falling, 2 = Stationary
+
+	// ExtraData状态: 1 = Falling, 2 = Stationary
+
+	bool moved = false;
+	MarkChunkDirtyWithNeighbors(map, worldX, worldY);
+	// ========================================================================
+	// 规则1: 根据下方状态设置 extra data
+	// ========================================================================
+	if (map->IsInBounds(worldX, worldY - 1))
+	{
+		Cell& belowCell = map->GetCell(worldX, worldY - 1);
+
+		if (belowCell.IsEmpty())
+		{
+			cell.m_extraData = 1;  // Falling
+		}
+		else
+		{
+			cell.m_extraData = 2;  // Stationary
+		}
+	}
+
+	// ========================================================================
+	// 规则2: extra data == 1 (Falling)
+	// ========================================================================
+	if (cell.m_extraData == 1)
+	{
+		// 执行两次
+		for (int attempt = 0; attempt < 3; attempt++)
+		{
+			// 50%概率触发
+			if (rand() % 3 == 0)
+			{
+				// 随机选择下落方向：0=左下, 1=正下, 2=右下
+				int direction = rand() % 3;
+				int targetX = worldX;
+				int targetY = worldY - 1;
+
+				if (direction == 0) {
+					targetX = worldX - 1;  // 左下
+				}
+				else if (direction == 2) {
+					targetX = worldX + 1;  // 右下
+				}
+				// direction == 1 时保持 targetX = worldX (正下)
+
+				if (map->IsInBounds(targetX, targetY))
+				{
+					Cell& targetCell = map->GetCell(targetX, targetY);
+					if (targetCell.IsEmpty())
+					{
+						std::swap(map->GetCell(worldX, worldY), map->GetCell(targetX, targetY));
+						worldX = targetX;
+						worldY = targetY;
+						moved = true;
+						MarkChunkDirtyWithNeighbors(map, worldX, worldY);
+					}
+				}
+			}
+		}
+	}
+	//	//if (moved) return;
+	//}
+
+	// ========================================================================
+	// 规则3: extra data == 2 (Stationary)
+	// ========================================================================
+	if (cell.m_extraData == 2)
+	{
+		// 3.1 执行一次：水平漂移
+		{
+			// 随机一个水平方向
+			int randomDir = (rand() % 2 == 0) ? -1 : 1;
+			int leftX = worldX - 1;
+			int rightX = worldX + 1;
+			int targetX = worldX + randomDir;
+
+			if (map->IsInBounds(leftX, worldY) &&
+				map->IsInBounds(rightX, worldY) &&
+				map->IsInBounds(worldX, worldY - 1))
+			{
+				Cell& leftCell = map->GetCell(leftX, worldY);
+				Cell& rightCell = map->GetCell(rightX, worldY);
+				Cell& belowCell = map->GetCell(worldX, worldY - 1);
+				const CellMatDef& belowMatDef = CellMatManager::GetMaterialDef(belowCell.m_type);
+
+				// 条件：左右都为空 && 下方不是static solid && 下方不为空
+				if (leftCell.IsEmpty() &&
+					rightCell.IsEmpty()) //&&
+					//!belowCell.IsEmpty() )
+					//belowMatDef.m_physicsType != PhyType::PHY_STATIC_SOLID)
+				{
+					// 与随机方向交换
+					if (map->IsInBounds(targetX, worldY))
+					{
+						std::swap(map->GetCell(worldX, worldY), map->GetCell(targetX, worldY));
+						moved = true;
+						MarkChunkDirtyWithNeighbors(map, targetX, worldY);
+						//return;
+					}
+				}
+			}
+		}
+
+		// 3.2 随机一个水平方向，执行两次：斜上方有雪时下落
+		{
+			int randomDir = (rand() % 2 == 0) ? -1 : 1;
+			int diagUpX = worldX + randomDir;
+			int diagUpY = worldY + 1;  // 斜上方
+
+			for (int attempt = 0; attempt < 2; attempt++)
+			{
+				if (map->IsInBounds(worldX, worldY - 1) &&
+					map->IsInBounds(diagUpX, diagUpY))
+				{
+					Cell& belowCell = map->GetCell(worldX, worldY - 1);
+					Cell& diagUpCell = map->GetCell(diagUpX, diagUpY);
+
+					// 如果下方为空 并且 斜上方为snow
+					if (belowCell.IsEmpty() && diagUpCell.m_type == CellMatType::MAT_CA_SAND)
+					{
+						// 与下方交换
+						std::swap(map->GetCell(worldX, worldY), map->GetCell(worldX, worldY - 1));
+						worldY = worldY - 1;
+						moved = true;
+						MarkChunkDirtyWithNeighbors(map, worldX, worldY);
+						// 继续执行第二次
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+
+			//if (moved) return;
+		}
+	}
+
+	//// ========================================================================
+	//// 规则4: 如果下方是液体，与之交换；执行两次
+	//// ========================================================================
+	//for (int attempt = 0; attempt < 2; attempt++)
+	//{
+	//	if (map->IsInBounds(worldX, worldY - 1))
+	//	{
+	//		Cell& belowCell = map->GetCell(worldX, worldY - 1);
+	//		const CellMatDef& belowMatDef = CellMatManager::GetMaterialDef(belowCell.m_type);
+
+	//		if (belowMatDef.m_physicsType == PhyType::PHY_LIQUID)
+	//		{
+	//			std::swap(map->GetCell(worldX, worldY), map->GetCell(worldX, worldY - 1));
+	//			worldY = worldY - 1;
+	//			moved = true;
+	//			MarkChunkDirtyWithNeighbors(map, worldX, worldY);
+	//			// 继续执行第二次
+	//		}
+	//		else
+	//		{
+	//			break;
+	//		}
+	//	}
+	//}
+
+	////if (moved) return;
+
+	// ========================================================================
+	// 规则5: 如果 extra data == 1，执行五次：被风吹起
+	// ========================================================================
+	if (cell.m_extraData == 1)
+	{
+		for (int attempt = 0; attempt < 4; attempt++)
+		{
+			// 随机一个水平方向
+			int randomDir = (rand() % 2 == 0) ? -1 : 1;
+			int diagUpX = worldX + randomDir;
+			int diagUpY = worldY + 1;  // 斜上方
+
+			// 统计周围八个位置的空格子数量
+			int emptyCount = 0;
+			for (int dy = -1; dy <= 1; dy++)
+			{
+				for (int dx = -1; dx <= 1; dx++)
+				{
+					if (dx == 0 && dy == 0) continue;
+					int checkX = worldX + dx;
+					int checkY = worldY + dy;
+					if (map->IsInBounds(checkX, checkY))
+					{
+						Cell& checkCell = map->GetCell(checkX, checkY);
+						if (checkCell.IsEmpty())
+						{
+							emptyCount++;
+						}
+					}
+				}
+			}
+
+			// 条件：周围有大于6个empty
+			if (emptyCount > 6)
+			{
+				if (map->IsInBounds(diagUpX, diagUpY))
+				{
+					Cell& diagUpCell = map->GetCell(diagUpX, diagUpY);
+
+					// 条件：斜上方为空
+					if (diagUpCell.IsEmpty())
+					{
+						// 检查斜上方是否与snow相邻
+						bool touchingSnow = false;
+						for (int dy = -1; dy <= 1; dy++)
+						{
+							for (int dx = -1; dx <= 1; dx++)
+							{
+								if (dx == 0 && dy == 0) continue;
+								int checkX = diagUpX + dx;
+								int checkY = diagUpY + dy;
+								if (map->IsInBounds(checkX, checkY))
+								{
+									Cell& checkCell = map->GetCell(checkX, checkY);
+									if (checkCell.m_type == CellMatType::MAT_CA_SAND)
+									{
+										touchingSnow = true;
+										break;
+									}
+								}
+							}
+							if (touchingSnow) break;
+						}
+
+						std::swap(map->GetCell(worldX, worldY), map->GetCell(diagUpX, diagUpY));
+						moved = true;
+						MarkChunkDirtyWithNeighbors(map, diagUpX, diagUpY);
+
+						// 条件：不与snow相邻
+						if (!touchingSnow)
+						{
+							// 与斜上方交换
+							
+							//return;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// ========================================================================
+	// 规则6: 如果左、右、上都是snow，下方为空，与上方交换
+	// ========================================================================
+	if (map->IsInBounds(worldX - 1, worldY) &&
+		map->IsInBounds(worldX + 1, worldY) &&
+		map->IsInBounds(worldX, worldY + 1) &&
+		map->IsInBounds(worldX, worldY - 1))
+	{
+		Cell& leftCell = map->GetCell(worldX - 1, worldY);
+		Cell& rightCell = map->GetCell(worldX + 1, worldY);
+		Cell& upCell = map->GetCell(worldX, worldY + 1);
+		Cell& downCell = map->GetCell(worldX, worldY - 1);
+
+		if (leftCell.m_type == CellMatType::MAT_CA_SAND &&
+			rightCell.m_type == CellMatType::MAT_CA_SAND &&
+			upCell.m_type == CellMatType::MAT_CA_SAND &&
+			downCell.IsEmpty())
+		{
+			// 与上方交换
+			std::swap(map->GetCell(worldX, worldY), map->GetCell(worldX, worldY + 1));
+			moved = true;
+			MarkChunkDirtyWithNeighbors(map, worldX, worldY + 1);
+			//return;
+		}
+	}
 }
 
 void CellBehaviorSystemInChunk::MarkChunkDirtyWithNeighbors(SandboxMap* map, int worldX, int worldY)

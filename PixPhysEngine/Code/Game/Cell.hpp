@@ -28,6 +28,8 @@ struct Cell {
 	int m_dissolveCountDown = -1;
 	int m_corrosionCountDown = -1;
 
+	int m_extraData = 0;
+
 	bool IsEmpty() const { return m_type == CellMatType::MAT_EMPTY; }
 	void SetEmpty() {
 		m_type = CellMatType::MAT_EMPTY;
