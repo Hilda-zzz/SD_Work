@@ -5,10 +5,12 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include <vector>
+#include "CellMatDef.hpp"
 
 class GameMap;
 class Camera;
 struct Vertex_PCU;
+class GamePlayer;
 
 class GameMapDebugRenderer {
 public:
@@ -17,6 +19,7 @@ public:
 
 	void Render(Camera const& camera) const;
 	void RenderDebugUI();  // ImGui debug control panel
+	void RenderMatBrushUI(GamePlayer* player);
 
 	// Toggle options
 	void SetDrawSuperChunkBounds(bool draw) { m_drawSuperChunkBounds = draw; }
@@ -53,6 +56,12 @@ private:
 
 	void RenderFrustumCulling(Camera const& camera) const;
 
+	void RenderActiveChunkBounds() const;
+
+	// sub panel
+	void RenderMaterialSelector(GamePlayer* player);
+	//void RenderMaterialProperties(CellMatType selectedMaterial);
+
 private:
 	GameMap* m_map;
 	bool m_drawSuperChunkBounds;
@@ -65,4 +74,13 @@ private:
 	bool m_drawGeneratedPixels = true;        // 是否绘制生成的pixels
 	bool m_drawPixelGrid = true;              // 是否绘制pixel网格线
 	int m_pixelDrawMode = 0;
+
+	bool m_drawActiveChunkBound = false;
+
+	bool m_showMaterialSelector = true;
+	bool m_showBrushControls = true;
+	// bool m_showMaterialProperties = true;
+	// Material selector state
+	PhyType m_selectedCategory = PhyType::PHY_MOVE_SOLID; // Default to Move Solid
+	bool m_showToolsOnly = false;
 };

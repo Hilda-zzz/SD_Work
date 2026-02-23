@@ -32,7 +32,7 @@
 
 			<!-- 层 2: 主体 Wood -->
 			<Layer material="MAT_WOOD">
-				<DensityRange min="0.55" max="0.9"/>
+				<DensityRange min="0.4" max="0.9"/>
 				<Texture path="Data/Images/soil_lush.png" enabled="true"/>
 			</Layer>
 		</MaterialLayers>
@@ -171,22 +171,26 @@
 			</EdgeDetection>
 		</ColoredLayer>
 
-		<!-- 绿色层 - 草地 --><!--
-		<ColoredLayer name="GrassLayer">
-			<TriggerColor r="0" g="255" b="0" a="255"/>
+		<!-- 红色层 - 沙地 -->
+		<ColoredLayer name="Water Layer">
+			<!-- 触发颜色（精确匹配）-->
+			<TriggerColor r="47" g="85" b="76" a="255"/>
+
+			<!-- 密度来源 -->
 			<DensitySource type="colored_pixel"/>
 
-			<Noise scale="32.0" octaves="2" persistence="0.5" octaveScale="2.0" seedOffset="2">
-				<Effect type="ADD_ABS" strength="0.3"/>
+			<!-- 噪声扰动 -->
+			<Noise scale="32.0" octaves="2" persistence="0.5" octaveScale="2.0" seedOffset="1">
+				<Effect type="ADD_ABS" strength="0.35"/>
 			</Noise>
 
+			<!-- 材质层 -->
 			<MaterialLayers>
-				<Layer material="MAT_GRASS">
+				<Layer material="MAT_WATER">
 					<DensityRange min="0.5" max="1.0"/>
-					<BaseTexture path="Data/Images/grass.png"/>
 				</Layer>
 			</MaterialLayers>
-		</ColoredLayer>-->
+		</ColoredLayer>
 
 	</ColoredLayers>
 

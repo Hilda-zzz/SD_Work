@@ -320,7 +320,7 @@ void TerrainGenerator::GenerateBlocksForChunk_New(Chunk* chunk)
 
 				// === Calculate Density ===
 				float density = rawDensity + (-4.f / CHUNK_SIZE_Z) * ((float)z - baseHeight);
-				//float density = rawDensity;
+
 				density += continentOffset*0.7f;
 				density += continentAmplitude * heightOffset;
 				density -= erosionOffset*0.8f;
@@ -332,7 +332,7 @@ void TerrainGenerator::GenerateBlocksForChunk_New(Chunk* chunk)
 				{
 					if (IsCaveAt(globalX, globalY, z))
 					{
-						density = -1.0f; // Set to Air
+						density = -100.0f; // Set to Air
 					}
 				}
 
@@ -620,12 +620,23 @@ void TerrainGenerator::ReplaceSurface(
 						{
 							block = BlockDefinition::s_nameToIndexMap["Water"];
 						}
+						if (density > -99.f)
+						{
+							
+						}
+						//else
+						//{
+						//	block = BlockDefinition::s_nameToIndexMap["Air"];
+						//}
+	
 					}
 					chunk->SetBlock(chunkIdx, block);
 				}
 				// Solid blocks
 				else
 				{
+					//block = BlockDefinition::s_nameToIndexMap["Stone"];
+					//chunk->SetBlock(chunkIdx, block);
 					// === Check if this is surface block (O(1) lookup!) ===
 					bool isSurface = (z == extendedSurfaceHeights[noiseIdx]);
 
@@ -767,6 +778,7 @@ void TerrainGenerator::ReplaceSurface(
 						}
 					}
 				}
+
 			}
 		}
 	}

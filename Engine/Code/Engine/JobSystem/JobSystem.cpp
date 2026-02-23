@@ -20,6 +20,7 @@ void JobSystem::Startup()
 	// determine by hardware cores
 	int numCores = (int)std::thread::hardware_concurrency();
 	m_numWorkerThreads = numCores - 1;
+	//m_numWorkerThreads = 20;
 	if (m_numWorkerThreads < 1)
 		m_numWorkerThreads = 1;
 

@@ -194,8 +194,8 @@ SSRResult TraceScreenSpaceRay(float3 worldPos, float3 reflectDir, float2 screenU
     result.color = float3(0, 0, 0);
     result.confidence = 0.0;
     
-    const int maxSteps = 1024;
-    float stepSize = 0.05;
+    const int maxSteps = 512;
+    float stepSize = 0.1;
     const float depthThreshold = 0.2; 
     
     float3 rayPos = worldPos;

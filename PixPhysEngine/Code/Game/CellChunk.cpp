@@ -5,6 +5,8 @@
 #include "Game/BaseMap.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "ThirdParty/tracy/tracy/Tracy.hpp"
+#include "Game/ChunkRigidBodyManager.hpp"
 
 extern Renderer* g_theRenderer;
 
@@ -12,7 +14,9 @@ CellChunk::CellChunk(IntVec2 const& chunkCoords, BaseMap* map)
 	: m_chunkCoords(chunkCoords)
 	, m_updatePhaseIndex(0)
 	, m_isDirty(true)  // Start dirty to ensure first update
-	,m_map(map)
+	, m_map(map)
+	, m_rigidBodyManager(nullptr)
+	, m_needsRigidBodyUpdate(false)
 {
 	// Initialize 64x64 cell grid
 	m_cells.resize(CHUNK_SIZE, std::vector<Cell>(CHUNK_SIZE));
@@ -24,15 +28,23 @@ CellChunk::CellChunk(IntVec2 const& chunkCoords, BaseMap* map)
 	CalculateUpdatePhaseIndex();
 
 	// Pre-allocate incoming cells buffer
-	m_incomingCells.reserve(256);  // Reasonable estimate  // #TODO: what it's for???
+	//m_incomingCells.reserve(256);  // Reasonable estimate  // #TODO: what it's for???
 }
 
 CellChunk::~CellChunk()
 {
+	if (m_rigidBodyManager) 
+	{
+		m_rigidBodyManager->ClearAll();  // Return all rbs to pool
+		delete m_rigidBodyManager;
+		m_rigidBodyManager = nullptr;
+	}
 }
 
 void CellChunk::RebuildVertexWithNewColor()
 {
+	//ZoneScoped;
+
 	//m_solidVertex.clear();
 	//for (int localY = 0; localY < CHUNK_SIZE; ++localY) {
 	//	for (int localX = 0; localX < CHUNK_SIZE; ++localX) {
@@ -51,18 +63,19 @@ void CellChunk::RebuildVertexWithNewColor()
 	//	}
 	//}
 
+
 	m_solidVertex.clear();
 	m_liquidVertex.clear();
 
 	for (int localY = 0; localY < CHUNK_SIZE; ++localY) {
 		for (int localX = 0; localX < CHUNK_SIZE; ++localX) {
 			const Cell& cell = GetLocalCell(localX, localY);
-			if (cell.m_type == CellMatType::MAT_EMPTY) continue;
+			if (cell.m_type.load() == CellMatType::MAT_EMPTY) continue;
 
 			IntVec2 worldPos = LocalToWorld(localX, localY);
 
 			// 获取材质定义
-			const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+			const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 
 			// 根据物理类型判断
 			if (matDef.m_physicsType == PhyType::PHY_LIQUID) {
@@ -73,7 +86,7 @@ void CellChunk::RebuildVertexWithNewColor()
 				AddVertsForAABB2D(m_liquidVertex,
 					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
 						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
-					cellColor,1.f);
+					cellColor, 1.f);
 			}
 			else {
 				// 固体 - 完全不透明
@@ -83,6 +96,21 @@ void CellChunk::RebuildVertexWithNewColor()
 					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
 						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
 					cellColor,0.5f);
+
+				//if (cell.m_isFreeFalling)
+				//{
+				//	AddVertsForAABB2D(m_solidVertex,
+				//		AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
+				//			Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
+				//		Rgba8::GREEN);
+				//}
+				//else
+				//{
+				//	AddVertsForAABB2D(m_solidVertex,
+				//		AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
+				//			Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
+				//		Rgba8::RED);
+				//}
 			}
 		}
 	}
@@ -96,12 +124,26 @@ void CellChunk::RebuildVertexUseSelfColor()
 		for (int localX = 0; localX < CHUNK_SIZE; ++localX) 
 		{
 			const Cell& cell = GetLocalCell(localX, localY);
-			if (cell.m_type != CellMatType::MAT_EMPTY) {
+			if (cell.m_type.load() != CellMatType::MAT_EMPTY) {
 				IntVec2 worldPos = LocalToWorld(localX, localY);
 				AddVertsForAABB2D(m_solidVertex,
 					AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
 						Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
 					cell.m_color);
+				//if (cell.m_isFreeFalling)
+				//{
+				//	AddVertsForAABB2D(m_solidVertex,
+				//		AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
+				//			Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
+				//		Rgba8::GREEN);
+				//}
+				//else
+				//{
+				//	AddVertsForAABB2D(m_solidVertex,
+				//		AABB2(Vec2((float)worldPos.x, (float)worldPos.y),
+				//			Vec2((float)worldPos.x + 1.f, (float)worldPos.y + 1.f)),
+				//		Rgba8::RED);
+				//}
 			}
 		}
 	}
@@ -110,6 +152,7 @@ void CellChunk::RebuildVertexUseSelfColor()
 
 void CellChunk::RenderChunk() const
 {
+	//ZoneScoped;
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(m_solidVertex);
@@ -117,11 +160,14 @@ void CellChunk::RenderChunk() const
 
 void CellChunk::RenderSolidCells() const
 {
+	//ZoneScoped;
 	if (m_solidVertex.empty()) return;
 
 	// 设置固体渲染状态
-	g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
-	g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL); // 2D游戏通常不需要深度
+	//g_theRenderer->SetModelConstants();
+	//g_theRenderer->BindTexture(nullptr);
+	//g_theRenderer->SetBlendMode(BlendMode::OPAQUE);
+	//g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL); // 2D游戏通常不需要深度
 
 	// 渲染固体顶点
 	g_theRenderer->DrawVertexArray(m_solidVertex);
@@ -132,6 +178,8 @@ void CellChunk::RenderLiquidCells() const
 	if (m_liquidVertex.empty()) return;
 
 	// 设置液体渲染状态（半透明）
+	g_theRenderer->SetModelConstants();
+	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	g_theRenderer->SetDepthMode(DepthMode::DISABLED);
 
@@ -157,6 +205,29 @@ Cell const& CellChunk::GetLocalCell(int localX, int localY) const
 
 
 // ==================== Cell Operations ====================
+
+void CellChunk::MarkDirty()
+{
+	m_isDirty = true;
+	//if (m_rigidBodyManager)
+	//{
+	//	m_rigidBodyManager->SetRbDirty(true);
+	//}
+}
+
+void CellChunk::ReserveVertexCapacity(int capacity)
+{
+	m_solidVertex.reserve(capacity);
+	m_liquidVertex.reserve(capacity/3);
+}
+
+void CellChunk::ClearVertex()
+{
+	m_solidVertex.clear();
+	m_solidVertex.shrink_to_fit();
+	m_liquidVertex.clear();
+	m_liquidVertex.shrink_to_fit();
+}
 
 void CellChunk::SwapLocalCells(int x1, int y1, int x2, int y2)           // #TODO: cell behavior system should use it ??
 {
@@ -225,8 +296,11 @@ bool CellChunk::IsLocalPosValid(int localX, int localY) const
 
 IntVec2 CellChunk::LocalToWorld(int localX, int localY) const
 {
-	int worldX = m_chunkCoords.x * CHUNK_SIZE + localX;
-	int worldY = m_chunkCoords.y * CHUNK_SIZE + localY;
+	//int worldX = m_chunkCoords.x * CHUNK_SIZE + localX;
+	//int worldY = m_chunkCoords.y * CHUNK_SIZE + localY;
+
+	int worldX = (m_chunkCoords.x << 6) + localX;
+	int worldY = (m_chunkCoords.y << 6) + localY;
 	return IntVec2(worldX, worldY);
 }
 
@@ -244,6 +318,7 @@ IntVec2 CellChunk::WorldToLocal(int worldX, int worldY)
 
 IntVec2 CellChunk::WorldToChunkIndex(int worldX, int worldY)
 {
+	//ZoneScoped;
 	int chunkX = worldX / CHUNK_SIZE;
 	int chunkY = worldY / CHUNK_SIZE;
 
@@ -258,6 +333,8 @@ IntVec2 CellChunk::WorldToChunkIndex(int worldX, int worldY)
 
 void CellChunk::ResetUpdateFlags()
 {
+	//ZoneScoped;
+
 	for (int y = 0; y < CHUNK_SIZE; ++y) {
 		for (int x = 0; x < CHUNK_SIZE; ++x) {
 			m_cells[y][x].m_updatedThisFrame = false;
@@ -290,6 +367,84 @@ bool CellChunk::IsEmpty() const
 		}
 	}
 	return true;
+}
+
+void CellChunk::SetIsVisible(bool visible)
+{
+	m_isVisible = visible;
+
+	// 同步到刚体管理器（影响更新频率）
+	if (m_rigidBodyManager) 
+	{
+		m_rigidBodyManager->SetVisible(visible);
+	}
+}
+
+void CellChunk::InitializeRigidBodySystem(RigidBodyObjectPool* objectPool)
+{
+	GUARANTEE_OR_DIE(objectPool != nullptr, "CellChunk: Object pool cannot be null");
+
+	if (m_rigidBodyManager) 
+	{
+		DebuggerPrintf("Warning: CellChunk [%d, %d] rigid body manager already initialized\n",
+			m_chunkCoords.x, m_chunkCoords.y);
+		return;
+	}
+
+	m_rigidBodyManager = new ChunkRigidBodyManager(this, objectPool);
+	m_rigidBodyManager->Initialize();
+
+	DebuggerPrintf("CellChunk [%d, %d] rigid body system initialized\n",
+		m_chunkCoords.x, m_chunkCoords.y);
+}
+
+void CellChunk::UpdateRigidBodies(float deltaTime)
+{
+	if (!m_rigidBodyManager) 
+	{
+		return;
+	}
+
+	m_rigidBodyManager->UpdateRigidBodies(deltaTime);
+}
+
+void CellChunk::DetectRigidBodies()
+{
+	if (!m_rigidBodyManager) {
+		return;
+	}
+
+	m_rigidBodyManager->DetectAndCreateRigidBodies();
+}
+
+void CellChunk::ActivateRigidBodies()
+{
+	if (!m_rigidBodyManager) 
+	{
+		return;
+	}
+
+	// ✅ 新增：如果刚体为空，立即检测和创建
+	if (m_rigidBodyManager->GetLocalRigidBodyCount() == 0) 
+	{
+		m_rigidBodyManager->DetectAndCreateRigidBodies();
+	}
+
+	m_rigidBodyManager->ActivateAll();
+}
+
+void CellChunk::DeactivateRigidBodies()
+{
+	if (!m_rigidBodyManager) {
+		return;
+	}
+
+	m_rigidBodyManager->DeactivateAll();
+}
+
+void CellChunk::MarkRigidBodyDirty()
+{
+	m_needsRigidBodyUpdate = true;
 }
 
 // ==================== Private Helpers ====================

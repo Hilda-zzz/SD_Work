@@ -21,6 +21,7 @@ class PlayerController;
 class GameCamera;
 class TextureCube;
 class Texture;
+class ProceduralSky;
 
 struct WorldConstants
 {
@@ -146,7 +147,10 @@ private:
 	// ========== 世界渲染相关（新增）==========
 	void UpdateWorldRenderConstants(float deltaTime);
 	void UpdateDayNightCycle(float deltaTime);
+	void UpdateCelestialPositions();
 	void SetWorldConstantsToGPU() const;
+
+	void SetSkyParams();
 
 	// ===================Water==============
 	void InitializeWaterSystem();
@@ -200,7 +204,7 @@ private:
 	Shader* m_worldShader = nullptr;
 	ConstantBuffer* m_worldConstantBuffer = nullptr;  // 自己管理的 CBO
 
-	float m_timeOfDay = 0.5f;           // 0.0-1.0 (0=午夜, 0.5=正午)
+	//float m_timeOfDay = 0.5f;           // 0.0-1.0 (0=午夜, 0.5=正午)
 	float m_fogNearDistance = 128.0f;
 	float m_fogFarDistance = 256.0f;
 
@@ -211,6 +215,7 @@ private:
 
 	float m_worldTimeScale = 1.f;
 	float m_worldTimeInDays = 0.f;
+	float m_timeInDay = 0.f;
 
 	//=================Water====================
 	Shader* m_waterShader = nullptr;
@@ -220,10 +225,18 @@ private:
 	Texture* m_waterNormalTexture = nullptr;
 	TextureCube* m_skyboxCubemap = nullptr;
 
-	//Light
+	// ===================Light=================
 	Vec3 m_sunDirection = Vec3(0.f, 1.f, -0.5f);
+	Vec3 m_moonDirection = Vec3(0.f, 0.f, -1.f);
+
 	float m_sunIntensity = 0.7f;
+	float m_moonIntensity = 0.3f;
+
 	float m_ambientIntensity = 0.3f;
+
+	// =============== Sky =====================
+	ProceduralSky* m_skySphere = nullptr;
+
 
 	//================== Raycast ===============
 	GameRaycastResult3D m_currentRaycastResult;

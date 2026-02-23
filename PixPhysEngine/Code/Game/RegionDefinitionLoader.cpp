@@ -502,6 +502,7 @@ CellMatType RegionDefinitionLoader::ParseMaterialType(const std::string& str)
 	if (str == "MAT_STONE") return CellMatType::MAT_STONE;
 	if (str == "MAT_WOOD") return CellMatType::MAT_WOOD;
 	if (str == "MAT_SAND") return CellMatType::MAT_SAND;
+	if (str == "MAT_WATER") return CellMatType::MAT_WATER;
 	//if (str == "MAT_GRASS") return CellMatType::MAT_GRASS;
 	// ... 添加更多材质类型
 

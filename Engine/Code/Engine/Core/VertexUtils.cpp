@@ -154,7 +154,7 @@ void AddVertsForTriangle2D(std::vector<Vertex_PCU>& verts, Triangle2 const& tria
 //{
 //}
 
-void AddVertsForLinSegment2D(std::vector<Vertex_PCU>& verts, Vec2 const& start, Vec2 const& end, float thickness, Rgba8 const& color)
+void AddVertsForLineSegment2D(std::vector<Vertex_PCU>& verts, Vec2 const& start, Vec2 const& end, float thickness, Rgba8 const& color)
 {
 	Vec2 step_fwd = end - start;
 	step_fwd = step_fwd.GetNormalized();
@@ -182,9 +182,9 @@ void AddVertsForArrow2D(std::vector<Vertex_PCU>& verts, Vec2 tailPos, Vec2 tipPo
 	Vec2 direction = tipPos - tailPos;
 	Vec2 leftArrow = (direction.GetRotatedDegrees(135.f)).GetNormalized()*arrowSize+tipPos;
 	Vec2 rightArrow = (direction.GetRotatedDegrees(-135.f)).GetNormalized() * arrowSize + tipPos;
-	AddVertsForLinSegment2D(verts, tailPos, tipPos, lineThickness, color);
-	AddVertsForLinSegment2D(verts, leftArrow, tipPos, lineThickness, color);
-	AddVertsForLinSegment2D(verts, rightArrow, tipPos, lineThickness, color);
+	AddVertsForLineSegment2D(verts, tailPos, tipPos, lineThickness, color);
+	AddVertsForLineSegment2D(verts, leftArrow, tipPos, lineThickness, color);
+	AddVertsForLineSegment2D(verts, rightArrow, tipPos, lineThickness, color);
 }
 
 void AddVertsForAABBWire2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, float width, bool isOutsideFrame)
@@ -452,6 +452,71 @@ void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, flo
 		Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, numStacks * eachUVHeight);
 
 		AddVertsForQuad3D(verts, sphereVerts[bl], sphereVerts[br], sphereVerts[northPole], sphereVerts[northPole], color, AABB2(blUV, trUV));
+	}
+}
+
+void AddVertsForSkySphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius,
+	const Rgba8& color, const AABB2& UVs, int numSlices, int numStacks)
+{
+	UNUSED(center);
+
+	std::vector<Vec3> sphereVerts;
+	sphereVerts.reserve(numSlices * (numStacks - 1) + 2);
+	sphereVerts.push_back(Vec3(0.f, 0.f, -radius));
+
+	float eachLongitude = 360.f / numSlices;
+	float eachLatitude = 180.f / numStacks;
+
+	for (int curStack = 0; curStack < numStacks - 1; curStack++)
+	{
+		float curLatitude = -90.f + (curStack + 1) * eachLatitude;
+		for (int curSlice = 0; curSlice < numSlices; curSlice++)
+		{
+			float curLongitude = curSlice * eachLongitude;
+			sphereVerts.push_back(Vec3::MakeFromPolarDegrees(curLatitude, curLongitude, radius));
+		}
+	}
+	sphereVerts.push_back(Vec3(0.f, 0.f, radius));
+
+	float eachUVHeight = (1.f / numStacks) * UVs.GetDimensions().y;
+	float eachUVWidth = 1.f / numSlices * UVs.GetDimensions().x;
+
+	// South pole - REVERSED winding (tl, tr instead of tr, tl)
+	for (int curSlice = 0; curSlice < numSlices; curSlice++)
+	{
+		int tl = 1 + curSlice;
+		int tr = 1 + ((curSlice + 1) % numSlices);
+		Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, 0.f);
+		Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, eachUVHeight);
+		AddVertsForQuad3D(verts, sphereVerts[0], sphereVerts[0], sphereVerts[tl], sphereVerts[tr], color, AABB2(blUV, trUV));
+	}
+
+	// Middle bands - REVERSED winding (tl, tr, br, bl instead of bl, br, tr, tl)
+	for (int curStack = 0; curStack < numStacks - 2; curStack++)
+	{
+		for (int curSlice = 0; curSlice < numSlices; curSlice++)
+		{
+			int baseIndex = 1 + curStack * numSlices;
+			int bl = baseIndex + curSlice;
+			int br = baseIndex + ((curSlice + 1) % numSlices);
+			int tl = bl + numSlices;
+			int tr = br + numSlices;
+			Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, (curStack + 1) * eachUVHeight);
+			Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, (curStack + 2) * eachUVHeight);
+			AddVertsForQuad3D(verts, sphereVerts[tl], sphereVerts[tr], sphereVerts[br], sphereVerts[bl], color, AABB2(blUV, trUV));
+		}
+	}
+
+	// North pole - REVERSED winding (N, N, br, bl instead of bl, br, N, N)
+	int northPole = (int)sphereVerts.size() - 1;
+	int lastRingStart = northPole - numSlices;
+	for (int curSlice = 0; curSlice < numSlices; curSlice++)
+	{
+		int bl = lastRingStart + curSlice;
+		int br = lastRingStart + ((curSlice + 1) % numSlices);
+		Vec2 blUV = UVs.m_mins + Vec2(curSlice * eachUVWidth, (numStacks - 1) * eachUVHeight);
+		Vec2 trUV = UVs.m_mins + Vec2((curSlice + 1) * eachUVWidth, numStacks * eachUVHeight);
+		AddVertsForQuad3D(verts, sphereVerts[northPole], sphereVerts[northPole], sphereVerts[br], sphereVerts[bl], color, AABB2(blUV, trUV));
 	}
 }
 

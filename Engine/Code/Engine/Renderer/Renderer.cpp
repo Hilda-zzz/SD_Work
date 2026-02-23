@@ -7,13 +7,19 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
 #include "Engine/Renderer/Shader.hpp"
+#include "Engine/Renderer/ComputeShader.hpp"
 #include "Engine/Core/FileUtils.hpp"
 #include "Engine/Renderer/DefaultShader.hpp"
 #include "Engine/Renderer/ConstantBuffer.hpp"
+#include "Engine/Renderer/StructuredBuffer.hpp"
 #include "Engine/Core/Image.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Material.hpp"
+#include "Engine/Renderer/ShaderIncludeHandler.hpp"
+#include "IndirectArgsBuffer.hpp"
+#include "Engine/Renderer/Texture2DArray.hpp"
+#include "Engine/Renderer/BlitShader.hpp"
 //-------------------------------------------------------------
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -221,6 +227,8 @@ void Renderer::Startup()
 	//m_currentShader =CreateShader("Default", g_shaderSource);
 	m_defaultShader = CreateShaderFromSource("Default", g_shaderSource);
 	BindShader(m_defaultShader);
+
+	m_blitShader = CreateShaderFromSource("Blit", g_blitShaderSource, VertexType::VERTEX_PCU);
 	//--------------------------------------------------------------------------------
 	m_immediateVBO = CreateVertexBuffer(24, sizeof(Vertex_PCU));
 	m_immediateIBO = CreateIndexBuffer(24);
@@ -436,7 +444,8 @@ void Renderer::Startup()
 	depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = TRUE;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	//depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
 	hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)DepthMode::READ_ONLY_LESS_EQUAL]);
 	if (!SUCCEEDED(hr))
 	{
@@ -446,7 +455,8 @@ void Renderer::Startup()
 	depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = TRUE;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	//depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
 	hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)DepthMode::READ_WRITE_LESS_EQUAL]);
 	if (!SUCCEEDED(hr))
 	{
@@ -472,6 +482,24 @@ void Renderer::Startup()
 		InitializeImgui();
 		m_enableImgui = true;
 	}
+
+	m_shaderIncludeHandler = new ShaderIncludeHandler();
+	m_shaderIncludeHandler->SetIncludeDirectory("Data/Shaders/");
+
+	//// 测试创建Texture2DArray
+	//std::vector<std::string> paths = {
+	//	"Data/Images/TestUV.png",
+	//	"Data/Images/TestUV2.png",
+	//	"Data/Images/rainforest.png"
+	//};
+
+	//Texture2DArray* testArray = CreateTexture2DArrayFromFiles(paths);
+	//BindTexture2DArray(testArray, 10);  // 绑定到slot 10
+
+	//DebuggerPrintf("Texture2DArray created: %d textures, %dx%d\n",
+	//	testArray->GetArraySize(),
+	//	testArray->GetDimensions().x,
+	//	testArray->GetDimensions().y);
 }
 
 void Renderer::BeginFrame()
@@ -505,6 +533,20 @@ void Renderer::Shutdown()
 	{
 		delete shader;
 	}
+
+	for (ComputeShader* shader : m_loadedComputeShaders)
+	{
+		delete shader;
+	}
+	m_loadedComputeShaders.clear();
+
+	if (m_shaderIncludeHandler)
+	{
+		delete m_shaderIncludeHandler;
+		m_shaderIncludeHandler = nullptr;
+	}
+		
+	//---------------------------------------------------------
 
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
@@ -581,6 +623,13 @@ void Renderer::Shutdown()
 		DX_SAFE_RELEASE( m_shadowMapTexture);
 	}
 	
+	// 清理Texture2DArray
+	for (int i = 0; i < (int)m_loadedTexture2DArrays.size(); i++)
+	{
+		delete m_loadedTexture2DArrays[i];
+		m_loadedTexture2DArrays[i] = nullptr;
+	}
+
 	if (m_shadowDepthView)
 	{
 		DX_SAFE_RELEASE(m_shadowDepthView);
@@ -631,11 +680,13 @@ void Renderer::ClearScreen(const Rgba8& clearColor)
 	float colorAsFloats[4];
 	clearColor.GetAsFloats(colorAsFloats);
 	m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
-	m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
+	//m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
+	m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 
 	if (m_shadowDepthView)
 	{
-		m_deviceContext->ClearDepthStencilView(m_shadowDepthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		//m_deviceContext->ClearDepthStencilView(m_shadowDepthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		m_deviceContext->ClearDepthStencilView(m_shadowDepthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
 	}
 	
 }
@@ -674,6 +725,19 @@ void Renderer::BeginCamera(const Camera& camera)
 void Renderer::EndCamera(const Camera& camera)
 {
 	UNUSED(camera);
+}
+
+void Renderer::SetViewport(IntVec2 dimensions)
+{
+	D3D11_VIEWPORT viewport;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	viewport.Width = (float)dimensions.x;
+	viewport.Height = (float)dimensions.y;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+
+	m_deviceContext->RSSetViewports(1, &viewport);
 }
 
 void Renderer::DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs)
@@ -1070,6 +1134,182 @@ void Renderer::BindTextureCube(TextureCube* textureCube, int slot)
 	}
 }
 
+Texture2DArray* Renderer::CreateTexture2DArrayFromFiles(const std::vector<std::string>& filePaths)
+{
+	if (filePaths.empty())
+	{
+		ERROR_AND_DIE("CreateTexture2DArrayFromFiles: empty file paths");
+	}
+
+	Texture2DArray* newArrayTex = new Texture2DArray();
+	newArrayTex->m_firstPath = filePaths[0];
+	newArrayTex->m_arraySize = (int)filePaths.size();
+
+	// ===== 1. 加载所有Image并找到最大尺寸 =====
+	std::vector<Image*> images;
+	images.reserve(filePaths.size());
+
+	IntVec2 maxDimensions(0, 0);
+
+	for (size_t i = 0; i < filePaths.size(); i++)
+	{
+		Image* image = CreateImageFromFile(filePaths[i].c_str());
+		if (!image)
+		{
+			// 清理已加载的Image
+			for (Image* img : images)
+			{
+				delete img;
+			}
+			delete newArrayTex;
+			ERROR_AND_DIE(Stringf("CreateTexture2DArrayFromFiles: Cannot load image: %s",
+				filePaths[i].c_str()));
+		}
+
+		// 更新最大尺寸
+		IntVec2 dims = image->GetDimensions();
+		if (dims.x > maxDimensions.x) maxDimensions.x = dims.x;
+		if (dims.y > maxDimensions.y) maxDimensions.y = dims.y;
+
+		images.push_back(image);
+	}
+
+	// ===== 2. 计算POT尺寸（Power of Two）=====
+	int potSize = 1;
+	while (potSize < maxDimensions.x || potSize < maxDimensions.y)
+	{
+		potSize *= 2;
+	}
+
+	// 限制最大尺寸（防止过大）
+	if (potSize > 2048) potSize = 2048;
+
+	newArrayTex->m_dimensions = IntVec2(potSize, potSize);
+
+	DebuggerPrintf("=== Texture2DArray Creation ===\n");
+	DebuggerPrintf("Unified POT size: %dx%d\n", potSize, potSize);
+
+	// ===== 3. 创建统一尺寸的像素缓冲（POT策略）=====
+	std::vector<std::vector<Rgba8>> resizedData;
+	resizedData.resize(images.size());
+
+	for (size_t i = 0; i < images.size(); i++)
+	{
+		Image* img = images[i];
+		IntVec2 srcDims = img->GetDimensions();
+
+		// 分配目标缓冲（透明填充，避免黑边）
+		resizedData[i].resize(potSize * potSize, Rgba8(0, 0, 0, 0));
+
+		// 简单复制（左上角对齐，不缩放）
+		for (int y = 0; y < srcDims.y && y < potSize; y++)
+		{
+			for (int x = 0; x < srcDims.x && x < potSize; x++)
+			{
+				int srcIndex = y * srcDims.x + x;
+				int dstIndex = y * potSize + x;
+				resizedData[i][dstIndex] = ((Rgba8*)img->GetRawData())[srcIndex];
+			}
+		}
+
+		// 调试输出
+		DebuggerPrintf("  [%d] %s: %dx%d → %dx%d\n",
+			(int)i,
+			filePaths[i].c_str(),
+			srcDims.x, srcDims.y,
+			potSize, potSize);
+	}
+
+	// ===== 4. 创建Texture2DArray =====
+	D3D11_TEXTURE2D_DESC arrayDesc = {};
+	arrayDesc.Width = newArrayTex->m_dimensions.x;
+	arrayDesc.Height = newArrayTex->m_dimensions.y;
+	arrayDesc.MipLevels = 1;
+	arrayDesc.ArraySize = newArrayTex->m_arraySize;
+	arrayDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	arrayDesc.SampleDesc.Count = 1;
+	arrayDesc.SampleDesc.Quality = 0;
+	arrayDesc.Usage = D3D11_USAGE_DEFAULT;
+	arrayDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	arrayDesc.CPUAccessFlags = 0;
+	arrayDesc.MiscFlags = 0;
+
+	HRESULT hr = m_device->CreateTexture2D(&arrayDesc, nullptr, &newArrayTex->m_texture);
+	if (FAILED(hr))
+	{
+		for (Image* img : images)
+		{
+			delete img;
+		}
+		delete newArrayTex;
+		ERROR_AND_DIE("CreateTexture2DArrayFromFiles: Failed to create Texture2D array");
+	}
+
+	// ===== 5. 上传每张纹理数据 =====
+	for (int i = 0; i < newArrayTex->m_arraySize; i++)
+	{
+		m_deviceContext->UpdateSubresource(
+			newArrayTex->m_texture,
+			D3D11CalcSubresource(0, i, 1),
+			nullptr,
+			resizedData[i].data(),
+			newArrayTex->m_dimensions.x * 4,
+			0
+		);
+	}
+
+	// ===== 6. 创建ShaderResourceView =====
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = arrayDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+	srvDesc.Texture2DArray.MostDetailedMip = 0;
+	srvDesc.Texture2DArray.MipLevels = 1;
+	srvDesc.Texture2DArray.FirstArraySlice = 0;
+	srvDesc.Texture2DArray.ArraySize = newArrayTex->m_arraySize;
+
+	hr = m_device->CreateShaderResourceView(
+		newArrayTex->m_texture,
+		&srvDesc,
+		&newArrayTex->m_shaderResourceView
+	);
+
+	if (FAILED(hr))
+	{
+		newArrayTex->m_texture->Release();
+		for (Image* img : images)
+		{
+			delete img;
+		}
+		delete newArrayTex;
+		ERROR_AND_DIE("CreateTexture2DArrayFromFiles: Failed to create SRV");
+	}
+
+	// ===== 7. 清理临时Image =====
+	for (Image* img : images)
+	{
+		delete img;
+	}
+
+	m_loadedTexture2DArrays.push_back(newArrayTex);
+
+	DebuggerPrintf("Texture2DArray created successfully!\n");
+	DebuggerPrintf("===============================\n");
+
+	return newArrayTex;
+}
+
+void Renderer::BindTexture2DArray(Texture2DArray* textureArray, int slot)
+{
+	if (textureArray)
+	{
+		m_deviceContext->PSSetShaderResources(slot, 1, &textureArray->m_shaderResourceView);
+	}
+	else
+	{
+		ERROR_RECOVERABLE("BindTexture2DArray: textureArray is nullptr");
+	}
+}
+
 BitmapFont* Renderer::CreateOrGetBitmapFont(char const* imageFilePath)
 {
 	// See if we already have this texture previously loaded
@@ -1160,55 +1400,6 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 		ERROR_AND_DIE(Stringf("Could not create pixel shader."));
 	}
 
-	/*if (vertexType == VertexType::VERTEX_PCU)
-	{
-		D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
-		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,
-			0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"COLOR",0,DXGI_FORMAT_R8G8B8A8_UNORM,
-			0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,
-			0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
-		};
-		UINT numElements = ARRAYSIZE(inputElementDesc);
-		hr = m_device->CreateInputLayout(
-			inputElementDesc, numElements,
-			m_currentShader->m_vertexShaderByteCode.data(),
-			m_currentShader->m_vertexShaderByteCode.size(),
-			&m_currentShader->m_inputLayout
-		);
-	}
-	else
-	{
-		D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
-			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
-				0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
-				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
-				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
-				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
-				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT,
-				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		};
-		UINT numElements = ARRAYSIZE(inputElementDesc);
-		hr = m_device->CreateInputLayout(
-			inputElementDesc, numElements,
-			m_currentShader->m_vertexShaderByteCode.data(),
-			m_currentShader->m_vertexShaderByteCode.size(),
-			&m_currentShader->m_inputLayout
-		);
-	}
-
-	if (!SUCCEEDED(hr))
-	{
-		ERROR_AND_DIE(Stringf("Could not create vertex layout"));
-	}*/
-
-
 	switch (vertexType) {
 	case VertexType::VERTEX_PCU:
 		CreateInputLayout_PCU(m_currentShader);
@@ -1221,7 +1412,12 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 	case VertexType::NOVA2D_PARTICLE_INSTANCED:
 		CreateInputLayout_ParticleInstanced(m_currentShader);
 		break;
-
+	case VertexType::VERTEX_PCU_TEXINDEX:
+		CreateInputLayout_PCU_TexIndex(m_currentShader);
+		break;
+	case VertexType::VERTEX_GPU_CELL:
+		CreateInputLayout_GpuCell(m_currentShader);
+		break;
 	default:
 		ERROR_AND_DIE("Unknown VertexType!");
 	}
@@ -1229,6 +1425,45 @@ Shader* Renderer::CreateShaderFromSource(char const* shaderName, char const* sha
 	//-----------------------------------------------------------------------------
 	m_loadedShaders.push_back(m_currentShader);
 	return m_currentShader;
+}
+
+ComputeShader* Renderer::CreateComputeShaderFromSource(char const* shaderName, char const* shaderSource)
+{
+	ComputeShaderConfig config(shaderName);
+	ComputeShader* shader = new ComputeShader(config);
+
+	// 编译Compute Shader
+	std::vector<unsigned char> csByteCode;
+	bool success = CompileShaderToByteCode(
+		csByteCode,
+		shaderName,
+		shaderSource,
+		config.m_entryPoint.c_str(),
+		"cs_5_0"  // Compute Shader 5.0
+	);
+
+	if (!success)
+	{
+		delete shader;
+		ERROR_AND_DIE(Stringf("Failed to compile compute shader: %s", shaderName));
+	}
+
+	// 创建 ID3D11ComputeShader
+	HRESULT hr = m_device->CreateComputeShader(
+		csByteCode.data(),
+		csByteCode.size(),
+		nullptr,
+		&shader->m_computeShader
+	);
+
+	if (FAILED(hr))
+	{
+		delete shader;
+		ERROR_AND_DIE(Stringf("Failed to create compute shader: %s", shaderName));
+	}
+
+	shader->m_shaderByteCode = csByteCode;
+	return shader;
 }
 
 Shader* Renderer::CreateShaderFromFile(char const* shaderName,VertexType vertexType)
@@ -1262,7 +1497,7 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, 
 	HRESULT hr;
 	hr = D3DCompile(
 		source, strlen(source),
-		name, nullptr, nullptr,
+		name, nullptr, m_shaderIncludeHandler,
 		enetryPoint, target, shaderFlags,
 		0, &shaderBlob, &errorBlob);
 	if (SUCCEEDED(hr))
@@ -1281,7 +1516,7 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, 
 		{
 			DebuggerPrintf((char*)errorBlob->GetBufferPointer());
 		}
-		ERROR_AND_DIE(Stringf("Could not compile vertex shader."));
+		ERROR_AND_DIE(Stringf("Could not compile shader."));
 		//result = false;
 	}
 
@@ -1302,11 +1537,58 @@ void Renderer::BindShader(Shader* shader)
 	m_deviceContext->VSSetShader(shader->m_vertexShader, nullptr, 0);
 	m_deviceContext->PSSetShader(shader->m_pixelShader, nullptr, 0);
 }
+
+//-------------------------Compute Shader------------------------------------
+
+ComputeShader* Renderer::CreateComputeShaderFromFile(char const* shaderName)
+{
+	// 检查是否已加载
+	for (ComputeShader* shader : m_loadedComputeShaders)
+	{
+		if (shader->GetName() == shaderName)
+		{
+			return shader;
+		}
+	}
+
+	// 读取文件
+	std::string fullPath = std::string(shaderName) + ".hlsl";
+	std::string shaderSource;
+	FileReadToString(shaderSource, fullPath);
+
+	// 编译并创建
+	ComputeShader* newShader = CreateComputeShaderFromSource(shaderName, shaderSource.c_str());
+	m_loadedComputeShaders.push_back(newShader);
+	return newShader;
+}
+
+void Renderer::BindComputeShader(ComputeShader* shader)
+{
+	m_currentComputeShader = shader;
+	if (shader)
+	{
+		m_deviceContext->CSSetShader(shader->m_computeShader, nullptr, 0);
+	}
+}
+
+void Renderer::Dispatch(unsigned int threadGroupX, unsigned int threadGroupY, unsigned int threadGroupZ)
+{
+	m_deviceContext->Dispatch(threadGroupX, threadGroupY, threadGroupZ);
+}
+
+void Renderer::UnbindComputeShader()
+{
+	m_deviceContext->CSSetShader(nullptr, nullptr, 0);
+	m_currentComputeShader = nullptr;
+}
+
 //-------------------------------------------------------------
 
-VertexBuffer* Renderer::CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride, bool isPerInstance)
+VertexBuffer* Renderer::CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride, 
+	bool isPerInstance, bool enableUAV)
 {
-	VertexBuffer* curVertexBuffer =new VertexBuffer(m_device, verticeCount, stride, isPerInstance);
+	VertexBuffer* curVertexBuffer =new VertexBuffer(m_device, verticeCount, stride,
+		isPerInstance, enableUAV);
 	return curVertexBuffer;
 }
 
@@ -1376,9 +1658,59 @@ void Renderer::DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo)
 	DrawIndexedVertexBuffer(vbo, ibo, count);
 }
 
+void Renderer::DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)
+{
+	DrawIndexedVertexBuffer(vbo, ibo, indexCount);
+}
+
 void Renderer::DrawGameVertexBuffer(VertexBuffer* vbo)
 {
 	DrawVertexBuffer(vbo, vbo->GetVerticeCount());
+}
+
+void Renderer::DrawGameVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount)
+{
+	DrawVertexBuffer(vbo, vertexCount);
+}
+
+
+void Renderer::DrawIndexedIndirect(VertexBuffer* vbo, IndexBuffer* ibo, IndirectArgsBuffer* argsBuffer, unsigned int byteOffset)
+{
+	// 1. 设置渲染状态（BlendMode, SamplerMode等）
+	SetStateIfChanged();
+
+	// 2. 绑定顶点缓冲区和索引缓冲区
+	BindVertexAndIndexBuffer(vbo, ibo);
+
+	// 3. 执行Indirect Draw
+	m_deviceContext->DrawIndexedInstancedIndirect(argsBuffer->GetBuffer(), byteOffset);
+}
+
+void Renderer::UnbindVertexBuffer(unsigned int slot)
+{
+	ID3D11Buffer* nullBuffer = nullptr;
+	UINT stride = 0;
+	UINT offset = 0;
+	m_deviceContext->IASetVertexBuffers(slot, 1, &nullBuffer, &stride, &offset);
+}
+
+void Renderer::BindVertexBufferUAV(unsigned int slot, VertexBuffer* vbo)
+{
+	if (!vbo)
+	{
+		// 解绑
+		ID3D11UnorderedAccessView* nullUAV = nullptr;
+		m_deviceContext->CSSetUnorderedAccessViews(slot, 1, &nullUAV, nullptr);
+		return;
+	}
+
+	if (!vbo->IsUAVEnabled())
+	{
+		ERROR_AND_DIE("VertexBuffer must be created with enableUAV=true to be bound as UAV");
+	}
+
+	ID3D11UnorderedAccessView* uav = vbo->GetUAV();
+	m_deviceContext->CSSetUnorderedAccessViews(slot, 1, &uav, nullptr);
 }
 
 void Renderer::InitializeShadowMapping()
@@ -1945,9 +2277,199 @@ void Renderer::BindTextureToSlot(int slot, Texture const* texture)
 	}
 }
 
+void Renderer::BindTextureToComputeShader(int slot, Texture const* texture)
+{
+	ID3D11ShaderResourceView* srv = nullptr;
+	if (texture)
+	{
+		srv = texture->m_shaderResourceView;
+	}
+	m_deviceContext->CSSetShaderResources(slot, 1, &srv);
+}
+
 IntVec2 Renderer::GetScreenDimensions() const
 {
 	return m_config.m_window->GetClientDimensions();
+}
+
+void Renderer::BeginMRTRender(Texture** renderTargets, int count, 
+	bool clearTargets, bool useDepthStencil)
+{
+	//// 保存Viewport
+	//UINT numViewports = 1;
+	//m_deviceContext->RSGetViewports(&numViewports, m_savedViewport);
+	//m_isInMRTRender = true;
+
+	// 收集RenderTargetView
+	ID3D11RenderTargetView* rtvArray[8] = { nullptr };  // D3D11最多8个RT
+
+	for (int i = 0; i < count && i < 8; i++)
+	{
+		if (renderTargets[i])
+		{
+			rtvArray[i] = renderTargets[i]->m_renderTargetView;
+		}
+	}
+
+	ID3D11DepthStencilView* dsv = useDepthStencil ? m_depthStencilDSV : nullptr;
+
+	// 设置多个RenderTarget + DepthStencil
+	m_deviceContext->OMSetRenderTargets(count, rtvArray, dsv);
+
+	if (renderTargets[0])
+	{
+		IntVec2 rtSize = renderTargets[0]->GetDimensions();
+
+		D3D11_VIEWPORT viewport;
+		viewport.TopLeftX = 0.0f;
+		viewport.TopLeftY = 0.0f;
+		viewport.Width = (float)rtSize.x;
+		viewport.Height = (float)rtSize.y;
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+
+		m_deviceContext->RSSetViewports(1, &viewport);
+	}
+
+	if (clearTargets)
+	{
+		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		for (int i = 0; i < count; i++)
+		{
+			if (rtvArray[i])
+			{
+				m_deviceContext->ClearRenderTargetView(rtvArray[i], clearColor);
+			}
+		}
+	}
+}
+
+void Renderer::EndMRTRender()
+{
+	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
+
+	//if (m_isInMRTRender)
+	//{
+	//	m_deviceContext->RSSetViewports(1, m_savedViewport);
+	//	m_isInMRTRender = false;
+	//}
+}
+
+void Renderer::DrawFullscreenQuad(Texture const* texture)
+{
+	Shader* previousShader = m_currentShader;
+	DepthMode prevDepth = m_desiredDepthMode;
+	BlendMode prevBlend = m_desiredBlendMode;
+
+	// 绑定纹理
+	BindTextureToSlot(0, texture);
+
+	// 使用默认Shader（或者专门的Blit Shader）
+	BindShader(m_blitShader);
+
+	// 关闭深度测试
+	SetDepthMode(DepthMode::DISABLED);
+
+	// 设置Blend模式
+	SetBlendMode(BlendMode::OPAQUE);
+
+	// 创建全屏Quad的顶点（NDC空间，覆盖整个屏幕）
+	Vertex_PCU vertices[6];
+
+	// Triangle 1: 左下、右下、右上
+	vertices[0].m_position = Vec3(-1.0f, -1.0f, 0.0f);
+	vertices[0].m_uvTexCoords = Vec2(0.0f, 1.0f);
+	vertices[0].m_color = Rgba8::WHITE;
+
+	vertices[1].m_position = Vec3(1.0f, -1.0f, 0.0f);
+	vertices[1].m_uvTexCoords = Vec2(1.0f, 1.0f);
+	vertices[1].m_color = Rgba8::WHITE;
+
+	vertices[2].m_position = Vec3(1.0f, 1.0f, 0.0f);
+	vertices[2].m_uvTexCoords = Vec2(1.0f, 0.0f);
+	vertices[2].m_color = Rgba8::WHITE;
+
+	// Triangle 2: 左下、右上、左上
+	vertices[3].m_position = Vec3(-1.0f, -1.0f, 0.0f);
+	vertices[3].m_uvTexCoords = Vec2(0.0f, 1.0f);
+	vertices[3].m_color = Rgba8::WHITE;
+
+	vertices[4].m_position = Vec3(1.0f, 1.0f, 0.0f);
+	vertices[4].m_uvTexCoords = Vec2(1.0f, 0.0f);
+	vertices[4].m_color = Rgba8::WHITE;
+
+	vertices[5].m_position = Vec3(-1.0f, 1.0f, 0.0f);
+	vertices[5].m_uvTexCoords = Vec2(0.0f, 0.0f);
+	vertices[5].m_color = Rgba8::WHITE;
+
+	// 绘制
+	DrawVertexArray(6, vertices);
+
+	SetDepthMode(prevDepth);
+	SetBlendMode(prevBlend);
+	BindShader(previousShader);
+}
+
+void Renderer::DrawFullscreenQuad(Shader* shader, std::vector<Texture const*> textures, BlendMode blendMode)
+{
+	// 保存当前状态
+	Shader* previousShader = m_currentShader;
+	DepthMode prevDepth = m_desiredDepthMode;
+	BlendMode prevBlend = m_desiredBlendMode;
+
+	// 绑定纹理
+	for (size_t i = 0; i < textures.size(); ++i)
+	{
+		BindTextureToSlot((int)i, textures[i]);
+	}
+
+	// 绑定Shader
+	BindShader(shader);
+
+	// 设置渲染状态
+	SetDepthMode(DepthMode::DISABLED);
+	SetBlendMode(blendMode);
+
+	// 全屏Quad顶点
+	Vertex_PCU vertices[6];
+
+	vertices[0].m_position = Vec3(-1.0f, -1.0f, 0.0f);
+	vertices[0].m_uvTexCoords = Vec2(0.0f, 1.0f);
+	vertices[0].m_color = Rgba8::WHITE;
+
+	vertices[1].m_position = Vec3(1.0f, -1.0f, 0.0f);
+	vertices[1].m_uvTexCoords = Vec2(1.0f, 1.0f);
+	vertices[1].m_color = Rgba8::WHITE;
+
+	vertices[2].m_position = Vec3(1.0f, 1.0f, 0.0f);
+	vertices[2].m_uvTexCoords = Vec2(1.0f, 0.0f);
+	vertices[2].m_color = Rgba8::WHITE;
+
+	vertices[3].m_position = Vec3(-1.0f, -1.0f, 0.0f);
+	vertices[3].m_uvTexCoords = Vec2(0.0f, 1.0f);
+	vertices[3].m_color = Rgba8::WHITE;
+
+	vertices[4].m_position = Vec3(1.0f, 1.0f, 0.0f);
+	vertices[4].m_uvTexCoords = Vec2(1.0f, 0.0f);
+	vertices[4].m_color = Rgba8::WHITE;
+
+	vertices[5].m_position = Vec3(-1.0f, 1.0f, 0.0f);
+	vertices[5].m_uvTexCoords = Vec2(0.0f, 0.0f);
+	vertices[5].m_color = Rgba8::WHITE;
+
+	// 渲染
+	DrawVertexArray(6, vertices);
+
+	// 恢复状态
+	SetDepthMode(prevDepth);
+	SetBlendMode(prevBlend);
+	BindShader(previousShader);
+
+	// 解绑纹理
+	for (size_t i = 0; i < textures.size(); ++i)
+	{
+		BindTextureToSlot((int)i, nullptr);
+	}
 }
 
 void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)
@@ -2011,6 +2533,220 @@ void Renderer::BindConstantBuffer(int slot, ConstantBuffer* cbo)
 	m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
 	m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);
 }
+void Renderer::BindConstantBufferCS(int slot, ConstantBuffer* cbo)
+{
+	m_deviceContext->CSSetConstantBuffers(slot, 1, &cbo->m_buffer);
+}
+//-------------------------------------------------------------
+StructuredBuffer* Renderer::CreateStructuredBuffer(unsigned int elementCount, unsigned int elementSize, bool isReadWrite)
+{
+	// 1. 创建StructuredBuffer对象
+	StructuredBuffer* buffer = new StructuredBuffer(elementCount, elementSize, isReadWrite);
+
+	// 2. 计算总大小
+	size_t totalSize = elementCount * elementSize;
+
+	// 3. 创建D3D11 Buffer 描述
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferDesc.ByteWidth = (UINT)totalSize;
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;  // GPU可读写
+	bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;  // 可作为SRV（只读）
+
+	if (isReadWrite) {
+		bufferDesc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;  // 可作为UAV（读写）
+	}
+
+	bufferDesc.CPUAccessFlags = 0;  // CPU不直接访问（使用CopyResource更新）
+	bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;  // ← 关键：标记为结构化Buffer
+	bufferDesc.StructureByteStride = elementSize;  // ← 关键：指定结构体大小
+
+	// 4. 创建Buffer
+	HRESULT hr = m_device->CreateBuffer(&bufferDesc, nullptr, &buffer->m_buffer);
+	GUARANTEE_OR_DIE(SUCCEEDED(hr), "Failed to create StructuredBuffer");
+
+	// 5. 创建Shader Resource View (SRV) - 用于只读访问（t寄存器）
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;  // ← 关键：结构化Buffer用UNKNOWN
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Buffer.NumElements = elementCount;
+
+	hr = m_device->CreateShaderResourceView(buffer->m_buffer, &srvDesc, &buffer->m_srv);
+	GUARANTEE_OR_DIE(SUCCEEDED(hr), "Failed to create SRV for StructuredBuffer");
+
+	// 6. 如果需要读写，创建Unordered Access View (UAV) - 用于读写访问（u寄存器）
+	if (isReadWrite) {
+		D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+		uavDesc.Format = DXGI_FORMAT_UNKNOWN;  // ← 关键：结构化Buffer用UNKNOWN
+		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+		uavDesc.Buffer.FirstElement = 0;
+		uavDesc.Buffer.NumElements = elementCount;
+		uavDesc.Buffer.Flags = 0;
+
+		hr = m_device->CreateUnorderedAccessView(buffer->m_buffer, &uavDesc, &buffer->m_uav);
+		GUARANTEE_OR_DIE(SUCCEEDED(hr), "Failed to create UAV for StructuredBuffer");
+	}
+
+	return buffer;
+}
+
+void Renderer::CopyDataToStructuredBuffer(StructuredBuffer* buffer, void const* data, unsigned int elementCount)
+{
+	GUARANTEE_OR_DIE(buffer != nullptr, "StructuredBuffer is null");
+	GUARANTEE_OR_DIE(data != nullptr, "Data is null");
+	GUARANTEE_OR_DIE(elementCount <= buffer->GetElementCount(), "Element count exceeds buffer capacity");
+
+	// 计算要复制的字节数
+	size_t bytesToCopy = elementCount * buffer->GetElementSize();
+
+	// 使用UpdateSubresource更新数据
+	D3D11_BOX box = {};
+	box.left = 0;
+	box.right = (UINT)bytesToCopy;
+	box.top = 0;
+	box.bottom = 1;
+	box.front = 0;
+	box.back = 1;
+
+	m_deviceContext->UpdateSubresource(buffer->m_buffer, 0, &box, data, 0, 0);
+}
+
+void Renderer::ReadStructuredBuffer(StructuredBuffer* buffer, void* outData, unsigned int elementCount)
+{
+	GUARANTEE_OR_DIE(buffer != nullptr, "StructuredBuffer is null");
+	GUARANTEE_OR_DIE(outData != nullptr, "Output data is null");
+	GUARANTEE_OR_DIE(elementCount <= buffer->GetElementCount(), "Element count exceeds buffer capacity");
+
+	// 创建Staging Buffer（用于CPU读取）
+	size_t bytesToRead = elementCount * buffer->GetElementSize();
+
+	D3D11_BUFFER_DESC stagingDesc = {};
+	stagingDesc.ByteWidth = (UINT)bytesToRead;
+	stagingDesc.Usage = D3D11_USAGE_STAGING;  // ← Staging：可被CPU读取
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	stagingDesc.BindFlags = 0;
+	stagingDesc.MiscFlags = 0;
+
+	ID3D11Buffer* stagingBuffer = nullptr;
+	HRESULT hr = m_device->CreateBuffer(&stagingDesc, nullptr, &stagingBuffer);
+	GUARANTEE_OR_DIE(SUCCEEDED(hr), "Failed to create staging buffer");
+
+	// 从GPU Buffer复制到Staging Buffer
+	D3D11_BOX box = {};
+	box.left = 0;
+	box.right = (UINT)bytesToRead;
+	box.top = 0;
+	box.bottom = 1;
+	box.front = 0;
+	box.back = 1;
+
+	m_deviceContext->CopySubresourceRegion(stagingBuffer, 0, 0, 0, 0, buffer->m_buffer, 0, &box);
+
+	// Map 并读取数据
+	D3D11_MAPPED_SUBRESOURCE mapped = {};
+	hr = m_deviceContext->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
+	GUARANTEE_OR_DIE(SUCCEEDED(hr), "Failed to map staging buffer");
+
+	memcpy(outData, mapped.pData, bytesToRead);
+
+	m_deviceContext->Unmap(stagingBuffer, 0);
+
+	// 释放Staging Buffer
+	stagingBuffer->Release();
+	stagingBuffer = nullptr;
+}
+
+void Renderer::BindStructuredBufferSRV(unsigned int slot, StructuredBuffer* buffer)
+{
+	GUARANTEE_OR_DIE(buffer != nullptr, "StructuredBuffer is null");
+
+	// 绑定到Vertex Shader和Pixel Shader 的t寄存器
+	m_deviceContext->VSSetShaderResources(slot, 1, &buffer->m_srv);
+	m_deviceContext->PSSetShaderResources(slot, 1, &buffer->m_srv);
+	m_deviceContext->CSSetShaderResources(slot, 1, &buffer->m_srv);
+}
+
+void Renderer::BindStructuredBufferUAV(unsigned int slot, StructuredBuffer* buffer)
+{
+	GUARANTEE_OR_DIE(buffer != nullptr, "StructuredBuffer is null");
+	GUARANTEE_OR_DIE(buffer->IsReadWrite(), "StructuredBuffer must be created with isReadWrite=true");
+	GUARANTEE_OR_DIE(buffer->m_uav != nullptr, "UAV is null");
+
+	// 绑定到Compute Shader 的u寄存器
+	UINT initialCount = (UINT)-1;
+	m_deviceContext->CSSetUnorderedAccessViews(slot, 1, &buffer->m_uav, &initialCount);
+}
+
+void Renderer::UnbindStructuredBuffers()
+{
+	// 解绑所有SRV
+	ID3D11ShaderResourceView* nullSRV[8] = { nullptr };
+	m_deviceContext->VSSetShaderResources(0, 8, nullSRV);
+	m_deviceContext->PSSetShaderResources(0, 8, nullSRV);
+	m_deviceContext->CSSetShaderResources(0, 8, nullSRV);
+
+	// 解绑所有UAV
+	ID3D11UnorderedAccessView* nullUAV[8] = { nullptr };
+	UINT initialCounts[8] = { (UINT)-1 };
+	m_deviceContext->CSSetUnorderedAccessViews(0, 8, nullUAV, initialCounts);
+}
+
+IndirectArgsBuffer* Renderer::CreateIndirectArgsBuffer(unsigned int sizeInBytes)
+{
+	return new IndirectArgsBuffer(m_device, sizeInBytes);
+}
+
+void Renderer::BindIndirectArgsBufferUAV(unsigned int slot, IndirectArgsBuffer* buffer)
+{
+	if (buffer) {
+		ID3D11UnorderedAccessView* uav = buffer->GetUAV();
+		m_deviceContext->CSSetUnorderedAccessViews(slot, 1, &uav, nullptr);
+	}
+	else {
+		ID3D11UnorderedAccessView* nullUAV = nullptr;
+		m_deviceContext->CSSetUnorderedAccessViews(slot, 1, &nullUAV, nullptr);
+	}
+}
+
+void Renderer::InitializeIndirectArgsBuffer(IndirectArgsBuffer* buffer, const void* data, unsigned int sizeInBytes)
+{
+	m_deviceContext->UpdateSubresource(buffer->GetBuffer(), 0, nullptr, data, 0, 0);
+}
+
+void Renderer::ReadIndirectArgsBuffer(IndirectArgsBuffer* buffer, void* outData, unsigned int sizeInBytes)
+{
+	ID3D11Buffer* srcBuffer = buffer->GetBuffer();
+	D3D11_BUFFER_DESC srcDesc;
+	srcBuffer->GetDesc(&srcDesc);
+
+	// 创建临时Staging Buffer
+	D3D11_BUFFER_DESC stagingDesc = {};
+	stagingDesc.ByteWidth = srcDesc.ByteWidth;
+	stagingDesc.Usage = D3D11_USAGE_STAGING;
+	stagingDesc.BindFlags = 0;
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	stagingDesc.MiscFlags = 0;
+
+	ID3D11Buffer* stagingBuffer = nullptr;
+	HRESULT hr = m_device->CreateBuffer(&stagingDesc, nullptr, &stagingBuffer);
+	if (FAILED(hr)) {
+		ERROR_AND_DIE("Failed to create staging buffer");
+	}
+
+	// 复制GPU数据到Staging
+	m_deviceContext->CopyResource(stagingBuffer, buffer->GetBuffer());
+
+	// 读取到CPU
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	hr = m_deviceContext->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
+	if (SUCCEEDED(hr)) {
+		memcpy(outData, mapped.pData, sizeInBytes);
+		m_deviceContext->Unmap(stagingBuffer, 0);
+	}
+
+	stagingBuffer->Release();
+}
+
 //-------------------------------------------------------------
 void Renderer::SetStateIfChanged()
 {
@@ -2213,7 +2949,7 @@ void Renderer::CreateInputLayout_ParticleInstanced(Shader* shader) {
 
 		{"INSTANCE_COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
 			1,    // ← InputSlot 1
-			16,   // ← Offset 16（4 floats = 16 bytes）
+			16,   // ← Offset 16（4 byte * 4 = 16 bytes）
 			D3D11_INPUT_PER_INSTANCE_DATA,
 			1},
 
@@ -2242,6 +2978,67 @@ void Renderer::CreateInputLayout_ParticleInstanced(Shader* shader) {
 		ERROR_AND_DIE("Could not create ParticleInstanced input layout");
 	}
 }
+
+void Renderer::CreateInputLayout_PCU_TexIndex(Shader* shader)
+{
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] =
+	{
+		// Position (float3, 12 bytes, offset 0)
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+
+		// Color (Rgba8, 4 bytes, offset 12)
+		{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+
+		// UV (float2, 8 bytes, offset 16)
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+
+		// TextureIndex (uint, 4 bytes, offset 24) ← 新增
+		{"TEXINDEX", 0, DXGI_FORMAT_R32_UINT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
+
+		{ "EMISSION", 0, DXGI_FORMAT_R32_FLOAT, 0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+
+	HRESULT hr = m_device->CreateInputLayout(
+		inputElementDesc,
+		5,  // ← 修改：4个元素（原来3个）
+		shader->m_vertexShaderByteCode.data(),
+		shader->m_vertexShaderByteCode.size(),
+		&shader->m_inputLayout
+	);
+
+	GUARANTEE_OR_DIE(SUCCEEDED(hr), "Failed to create input layout");
+}
+
+void Renderer::CreateInputLayout_GpuCell(Shader* shader)
+{
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] =
+	{
+		// Position (float3, 12 bytes, offset 0)
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		// Color (uint32, 4 bytes, offset 12) ← 注意：UINT不是UNORM
+		{"COLOR", 0, DXGI_FORMAT_R32_UINT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		// UV (float2, 8 bytes, offset 16)
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		// PhysicsType (uint, 4 bytes, offset 24)
+		{"PHYSICSTYPE", 0, DXGI_FORMAT_R32_UINT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		// Emission (float, 4 bytes, offset 28)
+		{"EMISSION", 0, DXGI_FORMAT_R32_FLOAT, 0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0}
+	};
+
+	HRESULT hr = m_device->CreateInputLayout(
+		inputElementDesc,
+		5,  // ← 5个元素
+		shader->m_vertexShaderByteCode.data(),
+		shader->m_vertexShaderByteCode.size(),
+		&shader->m_inputLayout
+	);
+
+	GUARANTEE_OR_DIE(SUCCEEDED(hr), "Failed to create input layout for GPU Cell");
+}
+
+//void Renderer::SetShaderIncludeDirectory(const char* directory)
+//{
+//}
 
 
 

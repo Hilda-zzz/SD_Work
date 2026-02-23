@@ -1,10 +1,11 @@
-#include "Engine/Math/RaycastUtils.hpp"
+﻿#include "Engine/Math/RaycastUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include <cmath> 
 #include <cfloat>
 #include <algorithm>
 #include "Engine/Math/OBB3.hpp"
 #include "../Core/DebugRenderSystem.hpp"
+#include "Engine/Math/Plane2.hpp"
 
 RaycastResult2D::RaycastResult2D(Vec2 fwdNormal, Vec2 startPos, float len) :m_rayFwdNormal(fwdNormal), m_rayStartPos(startPos), m_rayMaxLength(len)
 {
@@ -106,6 +107,88 @@ RaycastResult2D RaycastVsLineSegment2D(Vec2 const& startPos, Vec2 const& fwdNorm
 	result.m_didImpact = true;
 	return result;
 }
+
+RaycastResult2D RaycastVsPlane2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist, Plane2 const& plane)
+{
+	////if the length just reach the plane, it should not impact
+	//RaycastResult2D result = RaycastResult2D(fwdNormal, startPos, maxDist);
+	//float h = 0.f;
+	//if (plane.IsPointInFront(startPos))
+	//{
+	//	h = -DotProduct2D(fwdNormal, plane.m_normal);
+	//	result.m_impactNormal = plane.m_normal;
+	//}
+	//else
+	//{
+	//	h = DotProduct2D(fwdNormal, plane.m_normal);
+	//	result.m_impactNormal = -plane.m_normal;
+	//}
+
+	//if (h <= 0.f) // direction separate
+	//{
+	//	result.m_didImpact = false;
+	//	return result;
+	//}
+
+	//float altitude = DotProduct2D(startPos, plane.m_normal) - plane.m_distance;
+	//if (altitude == 0.f)
+	//{
+	//	//if start point on the plane
+	//	result.m_didImpact = false;
+	//	return result;
+	//}
+	//if (abs(altitude) >= maxDist)
+	//{
+	//	result.m_didImpact = false;
+	//	return result;
+	//}
+	//result.m_impactDist = abs(altitude) / h;
+	//if (result.m_impactDist >= maxDist)
+	//{
+	//	result.m_didImpact = false;
+	//	return result;
+	//}
+
+	//result.m_didImpact = true;
+	//result.m_impactPos = startPos + fwdNormal * result.m_impactDist;
+
+	//return result;
+
+	RaycastResult2D result;
+	result.m_didImpact = false;
+
+	// 计算射线方向与平面法线的点积
+	float dot = DotProduct2D(fwdNormal, plane.m_normal);
+
+	// 平行检测（射线与平面平行或接近平行）
+	if (fabsf(dot) < 0.0001f)
+		return result;
+
+	// 计算起点到平面的有符号距离（只算一次）
+	float signedDist = plane.GetSignedDistance(startPos);
+
+	// 起点在平面上
+	if (fabsf(signedDist) < 0.0001f)
+		return result;
+
+	// 计算交点距离
+	float impactDist = -signedDist / dot;
+
+	// 检查距离是否在有效范围内 [0, maxDist)
+	if (impactDist < 0.f || impactDist >= maxDist)
+		return result;
+
+	// 相交成功
+	result.m_didImpact = true;
+	result.m_impactDist = impactDist;
+	result.m_impactPos = startPos + fwdNormal * impactDist;
+
+	// 根据射线从哪一侧进入来设置法线方向
+	result.m_impactNormal = (signedDist > 0.f) ? plane.m_normal : -plane.m_normal;
+
+	return result;
+}
+
 RaycastResult2D RaycastVsAABB2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist,AABB2 const& box)
 {
 	RaycastResult2D result = RaycastResult2D(fwdNormal, startPos, maxDist);

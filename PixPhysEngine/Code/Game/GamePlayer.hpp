@@ -2,6 +2,8 @@
 #include "BasePlayer.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "CellMatDef.hpp"
 
 class GameMap;
 
@@ -46,12 +48,22 @@ public:
 
 	AABB2 const& GetBaseCamBound() const;
 
+	CellMatType GetSelectedMaterial() const { return m_selectedMaterial; }
+	int GetBrushSize() const { return m_brushSize; }
+	void SetSelectedMaterial(CellMatType material) {
+		m_selectedMaterial = material;
+	}
+
+	void SetBrushSize(int size) {
+		m_brushSize = GetClamped(size, 1, 20);
+	}
+
 private:
 	void UpdateMovement(float deltaTime);
 	void UpdateCamera();
 	void HandleMovementInput();
 	void HandleCameraZoomInput();
-
+	void HandleMatBrushInput();
 private:
 	// Position & Physics
 	Vec2 m_position;              // World position
@@ -76,4 +88,9 @@ private:
 
 	// References
 	GameMap* m_gameMap;
+
+	// Input
+	CellMatType m_selectedMaterial = CellMatType::MAT_SAND;
+	int m_brushSize = 1;
+	IntVec2 m_lastPlacedPos = IntVec2(-1, -1);
 };

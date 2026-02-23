@@ -220,7 +220,7 @@ void Chunk::RebuildMeshWithCulling()
 
 		// 区分水体和固体方块
 		if (def.m_isWater) {
-			AddWaterBlockVerts(i, block);  // 新方法：添加到水体缓冲
+			AddWaterBlockVerts(i);  // 新方法：添加到水体缓冲
 		}
 		else {
 			AddBlockVertsWithCulling(i, block);  // 添加到固体缓冲
@@ -1201,7 +1201,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 	// 如果邻居是水且当前方块是固体，不剔除
 	if (fwdX.IsValid() && def.m_isSolid) {
 		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[fwdX.GetBlock().GetTypeIndex()];
-		if (!neighborDef.m_isSolid) {
+		if (!neighborDef.m_isSolid||neighborDef.m_isLeaves) {
 			shouldCull = false;
 		}
 	}
@@ -1232,7 +1232,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 	shouldCull = negX.IsValid() && negX.IsOpaque();
 	if (negX.IsValid() && def.m_isSolid) {
 		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[negX.GetBlock().GetTypeIndex()];
-		if (!neighborDef.m_isSolid) {
+		if (!neighborDef.m_isSolid || neighborDef.m_isLeaves) {
 			shouldCull = false;
 		}
 	}
@@ -1263,7 +1263,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 	shouldCull = fwdY.IsValid() && fwdY.IsOpaque();
 	if (fwdY.IsValid() && def.m_isSolid) {
 		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[fwdY.GetBlock().GetTypeIndex()];
-		if (!neighborDef.m_isSolid) {
+		if (!neighborDef.m_isSolid || neighborDef.m_isLeaves) {
 			shouldCull = false;
 		}
 	}
@@ -1294,7 +1294,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 	shouldCull = negY.IsValid() && negY.IsOpaque();
 	if (negY.IsValid() && def.m_isSolid) {
 		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[negY.GetBlock().GetTypeIndex()];
-		if (!neighborDef.m_isSolid) {
+		if (!neighborDef.m_isSolid || neighborDef.m_isLeaves) {
 			shouldCull = false;
 		}
 	}
@@ -1325,7 +1325,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 	shouldCull = fwdZ.IsValid() && fwdZ.IsOpaque();
 	if (fwdZ.IsValid() && def.m_isSolid) {
 		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[fwdZ.GetBlock().GetTypeIndex()];
-		if (!neighborDef.m_isSolid) {
+		if (!neighborDef.m_isSolid || neighborDef.m_isLeaves) {
 			shouldCull = false;
 		}
 	}
@@ -1356,7 +1356,7 @@ void Chunk::AddBlockVertsWithCulling(int blockIndex, Block const& block)
 	shouldCull = negZ.IsValid() && negZ.IsOpaque();
 	if (negZ.IsValid() && def.m_isSolid) {
 		const BlockDefinition& neighborDef = BlockDefinition::s_blockDefs[negZ.GetBlock().GetTypeIndex()];
-		if (!neighborDef.m_isSolid) {
+		if (!neighborDef.m_isSolid || neighborDef.m_isLeaves) {
 			shouldCull = false;
 		}
 	}
@@ -1391,9 +1391,9 @@ void Chunk::CalculateWorldBounds()
 	m_worldBounds = AABB3(minBound, maxBound);
 }
 
-void Chunk::AddWaterBlockVerts(int blockIndex, Block const& block)
+void Chunk::AddWaterBlockVerts(int blockIndex)
 {
-	const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
+	//const BlockDefinition& def = BlockDefinition::s_blockDefs[block.GetTypeIndex()];
 
 	BlockIterator iter(this, blockIndex);
 	IntVec3 localCoords = iter.GetLocalCoords();

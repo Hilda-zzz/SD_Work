@@ -29,7 +29,7 @@ void LineSegObstacle::Render()
 	}
 	std::vector<Vertex_PCU> line_verts;
 	
-	AddVertsForLinSegment2D(line_verts, m_lineSeg.m_start, m_lineSeg.m_end, 2.f, curColor);
+	AddVertsForLineSegment2D(line_verts, m_lineSeg.m_start, m_lineSeg.m_end, 2.f, curColor);
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->DrawVertexArray(line_verts);

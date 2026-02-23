@@ -168,11 +168,11 @@ void GameNearestPoint::RenderBasicShape() const
 	g_theRenderer->DrawVertexArray(aabb_verts);
 
 	std::vector<Vertex_PCU> lineseg_verts;
-	AddVertsForLinSegment2D(lineseg_verts, m_lineseg_start, m_lineseg_end, 5.f, Rgba8(0, 100, 230, 255));
+	AddVertsForLineSegment2D(lineseg_verts, m_lineseg_start, m_lineseg_end, 5.f, Rgba8(0, 100, 230, 255));
 	g_theRenderer->DrawVertexArray(lineseg_verts);
 
 	std::vector<Vertex_PCU> infline_verts;
-	AddVertsForLinSegment2D(infline_verts, m_infline_start, m_infline_end, 5.f, Rgba8(0, 100, 230, 255));
+	AddVertsForLineSegment2D(infline_verts, m_infline_start, m_infline_end, 5.f, Rgba8(0, 100, 230, 255));
 	g_theRenderer->DrawVertexArray(infline_verts);
 
 	std::vector<Vertex_PCU> triangle_verts;

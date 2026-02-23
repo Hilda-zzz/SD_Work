@@ -23,6 +23,9 @@ public:
 	void Update(float deltaTime) override;
 	void Render() const override;
 
+	CellChunk* GetChunk(int chunkX, int chunkY) override;
+	CellChunk const* GetChunk(int chunkX, int chunkY) const override;
+
 	void LoadTemplateFromFile(const std::string& filename);
 	void GenerateMapFromTemplate();
 
@@ -71,6 +74,11 @@ private:
 	void RenderWangTemplateOverlay() const;
 	void RenderEdgePixelOverlay() const;
 
+	//
+	/// 创建 Chunk 网格（在子类 Initialize 中调用）
+	void CreateChunkGrid();
+	/// 销毁 Chunk 网格（在子类析构中调用）
+	void DestroyChunkGrid();
 
 	// Wang Tile 特有数据
 	Image* m_templateImage = nullptr;
@@ -93,5 +101,5 @@ private:
 	Image* m_stickerImageA = nullptr;               // RED区域贴画
 	Image* m_stickerImageB = nullptr;               // CYAN区域贴画
 
-	
+	std::vector<std::vector<CellChunk*>> m_chunks;  // [chunkY][chunkX]
 };

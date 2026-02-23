@@ -4,17 +4,9 @@
 #include "CellMatDef.hpp"
 #include "CellMatManager.hpp"
 #include <ThirdParty/imgui/imgui.h>
+#include "CellMatBrush.hpp"
 
 class SandboxPlayer;
-
-struct CellMatUIInfo {
-	PhyType m_physType;
-	std::string m_physTypeName;
-
-	std::string m_name;
-	std::string m_description;
-	ImVec4 m_color;
-};
 
 class SandBoxUI 
 {
@@ -54,7 +46,7 @@ private:
 	bool m_showBrushControls = true;
 	bool m_showMaterialProperties = true;
 
-	static std::unordered_map<CellMatType, CellMatUIInfo> s_materialUIInfo;
+	//static std::unordered_map<CellMatType, CellMatUIInfo> s_materialUIInfo;
 
 	// Material selector state
 	PhyType m_selectedCategory = PhyType::PHY_MOVE_SOLID; // Default to Move Solid

@@ -23,6 +23,7 @@
 #include "Game/GameCamera.hpp"
 #include "Game/PlayerController.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "ProceduralSky.hpp"
 
 extern Game* g_theGame;
 extern JobSystem* g_theJobSystem;
@@ -40,6 +41,8 @@ World::World(PlayerController* playerController) :
 	m_worldConstantBuffer = g_theRenderer->CreateConstantBuffer(sizeof(WorldConstants));
 
 	InitializeWaterSystem();
+
+	m_skySphere = new ProceduralSky(g_theRenderer);
 	//*****************************************************************************************************
 	//for (int i = -1; i < 1; i++)
 	//{
@@ -88,6 +91,8 @@ World::~World()
 	m_saveJobsQueued.clear();
 
 	ShutdownWaterSystem();
+
+	delete m_skySphere;
 }
 
 void World::Shutdown()
@@ -189,13 +194,15 @@ void World::Update(float deltaTime)
 
 	//--------------------------
 	UpdateWorldRenderConstants(deltaTime);
+	SetSkyParams();
+	m_skySphere->Update(m_timeInDay);
 
 	//*****************************************************************************************************
 	// ========== debug draw basis ==========
 	Vec3 basisPos = m_player->GetPosition() + m_player->GetOrientation().GetForward_IFwd() * 50.f;
 	Mat44 basisTransform = Mat44::MakeTranslation3D(basisPos);
-	DebugAddWorldBasis(basisTransform, 0.f, DebugRenderMode::ALWAYS, 1.5f);
-	DebugAddWorldBasis(Mat44(), 0.f, DebugRenderMode::USE_DEPTH, 1.f);
+	//DebugAddWorldBasis(basisTransform, 0.f, DebugRenderMode::ALWAYS, 1.5f);
+	//DebugAddWorldBasis(Mat44(), 0.f, DebugRenderMode::USE_DEPTH, 1.f);
 
 	// ========== dealing with completed jobs ==========
 	ProcessCompletedJobs();
@@ -231,6 +238,8 @@ void World::Update(float deltaTime)
 
 void World::Render() const
 {
+	m_skySphere->Render();
+
 	//---------------------------------
 	SetWorldConstantsToGPU();
 
@@ -414,8 +423,8 @@ void World::RequestChunkActivation()
 	if (!m_player) return;
 
 	// Get player's current chunk coordinates
-	IntVec2 playerChunkCoords = Chunk::GetChunkCoords(m_player->GetPosition());
-	Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
+	IntVec2 playerChunkCoords = Chunk::GetChunkCoords(m_gameCamera->GetPosition());
+	Vec2 playerPosXY = Vec2(m_gameCamera->GetPosition().x, m_gameCamera->GetPosition().y);
 
 	// Calculate how many chunks we can still activate
 	int totalActiveChunks = (int)m_activeChunks.size();
@@ -527,7 +536,7 @@ void World::RequestChunkDeactivations()
 {
 	if (!m_player) return;
 
-	Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
+	Vec2 playerPosXY = Vec2(m_gameCamera->GetPosition().x, m_gameCamera->GetPosition().y);
 	static float deactivationRangeSq = static_cast<float>(CHUNK_DEACTIVATION_RANGE * CHUNK_DEACTIVATION_RANGE);
 
 	// Create a list of chunks to deactivate (can't modify m_activeChunks while iterating)
@@ -682,7 +691,7 @@ void World::SubmitGenerateJobs()
 		m_generateJobsQueued.pop_front();
 		
 		// discard far chunk
-		Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
+		Vec2 playerPosXY = Vec2(m_gameCamera->GetPosition().x, m_gameCamera->GetPosition().y);
 		IntVec2 chunkCoords = job->GetChunkCoords();
 		IntVec2 chunkCenter = Chunk::GetChunkCenter(chunkCoords);
 		float distance = GetDistanceSquared2D(playerPosXY, Vec2((float)chunkCenter.x, (float)chunkCenter.y));
@@ -708,7 +717,7 @@ void World::SubmitLoadJobs()
 		IntVec2 chunkCoords = job->GetChunkCoords();
 
 		// discard far chunk
-		Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
+		Vec2 playerPosXY = Vec2(m_gameCamera->GetPosition().x, m_gameCamera->GetPosition().y);
 		IntVec2 chunkCenter = Chunk::GetChunkCenter(chunkCoords);
 		float distance = GetDistanceSquared2D(playerPosXY, Vec2((float)chunkCenter.x, (float)chunkCenter.y));
 		if (distance > CHUNK_DEACTIVATION_RANGE * CHUNK_DEACTIVATION_RANGE)
@@ -746,7 +755,7 @@ void World::SortGenerateJobsByDistance()
 	if (m_generateJobsQueued.empty())
 		return;
 
-	Vec3 playerPos = m_player->GetPosition();
+	Vec3 playerPos = m_gameCamera->GetPosition();
 
 	std::sort(m_generateJobsQueued.begin(),
 		m_generateJobsQueued.end(),
@@ -773,7 +782,7 @@ void World::SortLoadJobsByDistance()
 	if (m_loadJobsQueued.empty())
 		return;
 
-	Vec3 playerPos = m_player->GetPosition();
+	Vec3 playerPos = m_gameCamera->GetPosition();
 
 	std::sort(m_loadJobsQueued.begin(),
 		m_loadJobsQueued.end(),
@@ -845,7 +854,7 @@ void World::RebuildChunkMeshes()
 		if (!chunk->m_neighborNorth || !chunk->m_neighborEast || !chunk->m_neighborSouth || !chunk->m_neighborWest)
 			continue;
 		// Too far
-		Vec2 playerPosXY = Vec2(m_player->GetPosition().x, m_player->GetPosition().y);
+		Vec2 playerPosXY = Vec2(m_gameCamera->GetPosition().x, m_gameCamera->GetPosition().y);
 		IntVec2 chunkCenter = chunk->GetChunkCenter();
 		float distance = GetDistanceSquared2D(playerPosXY, Vec2((float)chunkCenter.x, (float)chunkCenter.y));
 		if (distance > CHUNK_DEACTIVATION_RANGE * CHUNK_DEACTIVATION_RANGE)
@@ -1717,13 +1726,14 @@ void World::ClearSkyFlagsDownward(BlockIterator startIter)
 void World::UpdateWorldRenderConstants(float deltaTime)
 {
 	UpdateDayNightCycle(deltaTime);
-
-	float lightningStrength = 0.f;  
-	float lightningPerlin = Compute1dPerlinNoise(m_worldTimeInDays * 100.f,1, 9);
-	if (lightningPerlin >= 0.6f&&lightningPerlin<=0.9f)
-		lightningStrength = RangeMap(lightningPerlin,0.6f,0.9f,0.f,1.f);
-	m_skyColor = Interpolate(m_skyColor, Rgba8::WHITE, lightningStrength);
-	m_outdoorLightColor = Interpolate(m_outdoorLightColor, Rgba8::WHITE, lightningStrength);
+	UpdateCelestialPositions();
+	// Lightning and glow adjustment
+	//float lightningStrength = 0.f;  
+	//float lightningPerlin = Compute1dPerlinNoise(m_worldTimeInDays * 100.f,1, 9);
+	//if (lightningPerlin >= 0.6f&&lightningPerlin<=0.9f)
+	//	lightningStrength = RangeMap(lightningPerlin,0.6f,0.9f,0.f,1.f);
+	//m_skyColor = Interpolate(m_skyColor, Rgba8::WHITE, lightningStrength);
+	//m_outdoorLightColor = Interpolate(m_outdoorLightColor, Rgba8::WHITE, lightningStrength);
 
 	float glowPerlin = Compute1dPerlinNoise(m_worldTimeInDays*100.f,1, 9);
 	float glowStrength = RangeMap(glowPerlin, -1.0f, 1.0f, 0.4f, 1.0f);
@@ -1741,14 +1751,15 @@ void World::UpdateDayNightCycle(float deltaTime)
 		worldDayIncrement *= 50.0f;
 
 	m_worldTimeInDays += worldDayIncrement;
-	float timeOfDay = m_worldTimeInDays - floorf(m_worldTimeInDays);
+	m_timeInDay= m_worldTimeInDays - floorf(m_worldTimeInDays);
+	float timeOfDay = m_timeInDay;
 
 	// ===== 定义关键帧颜色 =====
 	// 天空颜色关键帧
-	Rgba8 skyMidnight(20, 20, 40, 255);      // 0.0  = 午夜
-	Rgba8 skyDawn(135, 206, 235, 255);       // 0.25 = 黎明 (浅蓝色)
-	Rgba8 skyNoon(200, 230, 255, 255);       // 0.5  = 正午 (亮蓝色)
-	Rgba8 skyDusk(255, 140, 60, 255);        // 0.75 = 黄昏 (橙红色)
+	Rgba8 skyMidnight(30, 40, 70);      // 0.0  = 午夜
+	Rgba8 skyDawn(255, 180, 120);       // 0.25 = 黎明 (浅蓝色)
+	Rgba8 skyNoon(220, 240, 255);      // 0.5  = 正午 (亮蓝色)
+	Rgba8 skyDusk(255, 160, 80);       // 0.75 = 黄昏 (橙红色)
 
 	// 室外光照颜色关键帧
 	Rgba8 lightMidnight(40, 40, 60, 255);    // 0.0  = 午夜 (深蓝灰)
@@ -1784,6 +1795,70 @@ void World::UpdateDayNightCycle(float deltaTime)
 		float t = (timeOfDay - 0.75f) / 0.25f;  // 归一化到 [0, 1]
 		m_skyColor = Interpolate(skyDusk, skyMidnight, t);
 		m_outdoorLightColor = Interpolate(lightDusk, lightMidnight, t);
+	}
+}
+
+void World::UpdateCelestialPositions()
+{
+	float timeOfDay = RangeMap(m_worldTimeInDays, 0.f, 1.f, 0.f, 24.f);
+	
+	// Sun
+	float sunAngleDegrees = ((timeOfDay - 6.0f) / 12.0f) * 180.0f;
+	m_sunDirection.x = 0.0f;
+	m_sunDirection.y = CosDegrees(sunAngleDegrees);  // 东西
+	m_sunDirection.z = -SinDegrees(sunAngleDegrees);  // 上下
+	m_sunDirection.Normalized();
+
+	// Moon
+	float moonTimeOfDay = fmodf(timeOfDay + 5.0f, 24.0f);
+	float moonOrbitTilt = 30.0f;
+	float moonAngleDegrees = ((moonTimeOfDay - 6.0f) / 12.0f) * 180.0f;
+	m_moonDirection.x = SinDegrees(moonOrbitTilt) * CosDegrees(moonAngleDegrees);
+	m_moonDirection.y = CosDegrees(moonAngleDegrees);
+	m_moonDirection.z = -SinDegrees(moonAngleDegrees);
+	m_moonDirection.Normalized();
+
+	DebugAddWorldPoint(m_player->GetPosition() - m_sunDirection * 5.f,0.5f,0.f,Rgba8::YELLOW);
+	DebugAddWorldArrow(m_player->GetPosition() - m_sunDirection * 5.f, 
+		m_player->GetPosition() - m_sunDirection * 5.f + m_sunDirection * 2.f,
+		0.2f,0.f,Rgba8::RED);
+
+	DebugAddWorldPoint(m_player->GetPosition() - m_moonDirection * 5.f, 0.5f, 0.f, Rgba8::CYAN);
+	DebugAddWorldArrow(m_player->GetPosition() - m_moonDirection * 5.f,
+		m_player->GetPosition() - m_moonDirection * 5.f + m_moonDirection * 2.f,
+		0.2f, 0.f, Rgba8::BLUE);
+
+	// ===== Adjust light intensity by sun height =====
+	float sunHeight = -m_sunDirection.z;
+	float moonHeight = -m_moonDirection.z;
+
+	if (sunHeight > 0.0f)  // 白天
+	{
+		m_sunIntensity = Interpolate(0.4f, 1.f, sunHeight);
+		m_moonIntensity = 0.0f;
+		m_ambientIntensity = Interpolate(0.2f, 0.3f, sunHeight);
+	}
+	else if (sunHeight > -0.1f)  // 日出/日落
+	{
+		m_sunIntensity = 0.4f;
+		m_moonIntensity = 0.2f;
+		m_ambientIntensity = 0.15f;
+	}
+	else  // 夜晚
+	{
+		m_sunIntensity = 0.0f;
+
+		// 根据月亮高度调整月亮强度和环境光
+		if (moonHeight > 0.0f)
+		{
+			m_moonIntensity = Interpolate(0.2f, 0.35f, moonHeight);  
+			m_ambientIntensity = Interpolate(0.1f, 0.15f, moonHeight);
+		}
+		else
+		{
+			m_moonIntensity = 0.0f;  // 月亮在地平线以下
+			m_ambientIntensity = 0.08f;  // 只有星光
+		}
 	}
 }
 
@@ -1826,6 +1901,14 @@ void World::SetWorldConstantsToGPU() const
 	g_theRenderer->BindConstantBuffer(9, m_worldConstantBuffer);
 }
 
+void World::SetSkyParams()
+{
+	m_skySphere->SetSunDirection(m_sunDirection);
+	m_skySphere->SetMoonDirection(m_moonDirection);
+	m_skySphere->SetSunIntensity(m_sunIntensity);
+	//m_skySphere->SetSkyColors();
+}
+
 void World::InitializeWaterSystem()
 {
 	// ========== 1. 创建场景纹理 ==========
@@ -1844,7 +1927,7 @@ void World::InitializeWaterSystem()
 	);
 
 	// ========== 2. 加载水面Shader ==========
-	m_waterShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/WaterScreenSpace", VertexType::VERTEX_PCUTBN);
+	m_waterShader = g_theRenderer->CreateShaderFromFile("Data/Shaders/WaterScreenSpace2", VertexType::VERTEX_PCUTBN);
 
 	// ========== 3. 创建常量缓冲 ==========
 	m_waterConstantBuffer = g_theRenderer->CreateConstantBuffer(sizeof(WaterConstants));
@@ -1878,37 +1961,15 @@ void World::RenderWaterSystem() const
 {
 	// ========== 1. 准备常量缓冲数据 ==========
 	WaterConstants constants;
-	constants.Time = Clock::GetSystemClock().GetTotalSeconds();
+	constants.Time = (float)Clock::GetSystemClock().GetTotalSeconds();
 	constants.WaveSpeed = 0.5f;              // 波浪速度
 	constants.WaveScale = 0.3f;              // 法线贴图平铺
 	constants.SpecularPower =64.0f;        // 高光锐利度
 	constants.SpecularIntensity = 1.0f;      // 高光强度
-	constants.DeepWaterColor = Vec3(0.05, 0.21, 0.39);      // 深蓝
-	constants.ShallowWaterColor = Vec3(0.2, 0.69, 0.69);  // 浅蓝
+	constants.DeepWaterColor = Vec3(0.05f, 0.21f, 0.39f);      // 深蓝
+	constants.ShallowWaterColor = Vec3(0.2f, 0.69f, 0.69f);  // 浅蓝
 	constants.WaterAlpha =1.f;            // 85%不透明
-	constants.RefractionStrength = 0.08f;
-
-	//// 时间和水面高度
-	//constants.Time = Clock::GetSystemClock().GetTotalSeconds();  // 或使用你的时间系统
-
-	//// 水面效果参数
-	//constants.RefractionStrength = 0.05f;
-	//constants.FresnelPower = 5.0f;
-
-	//// 水的颜色
-	//constants.DeepWaterColor = Vec3(0.0f, 0.1f, 0.3f);
-	//constants.ShallowWaterColor = Vec3(0.1f, 0.5f, 0.7f);
-
-	//// 太阳光照（可以从时间/天气系统获取）
-	//constants.SunDirection = Vec3(0.5f, -0.3f, -0.8f).GetNormalized();
-	//constants.SunIntensity = 2.0f;
-	//constants.SunColor = Vec3(1.0f, 0.95f, 0.8f);
-
-	//// 视口和裁剪面
-	//IntVec2 screenSize = g_theRenderer->GetScreenDimensions();
-	//constants.ViewportSize = Vec2((float)screenSize.x, (float)screenSize.y);
-	//constants.NearPlane = m_gameCamera->GetEngineCamera().GetNearPlane();
-	//constants.FarPlane = m_gameCamera->GetEngineCamera().GetFarPlane();
+	constants.RefractionStrength = 0.08f; 
 
 	// 上传到GPU
 	g_theRenderer->CopyConstantBufferToGPU(&constants, sizeof(constants), m_waterConstantBuffer);
@@ -1934,7 +1995,15 @@ void World::RenderWaterSystem() const
 	g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 
 	Vec3 normalSunDirection = m_sunDirection.GetNormalized();
-	g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
+
+	if (m_timeInDay > 0.25 && m_timeInDay < 0.75)
+	{
+		g_theRenderer->SetLightConstants(normalSunDirection, m_sunIntensity, m_ambientIntensity);
+	}
+	else
+	{
+		g_theRenderer->SetLightConstants(m_moonDirection.GetNormalized(), m_moonIntensity, m_ambientIntensity);
+	}
 	// ========== 4. 渲染所有水面Quads ==========
 	for (Chunk* chunk : m_chunkUpdateList)
 	{

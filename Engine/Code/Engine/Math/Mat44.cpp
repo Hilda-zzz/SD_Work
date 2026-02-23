@@ -1,4 +1,4 @@
-#include "Engine/Math/Mat44.hpp"
+﻿#include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include <cmath>
 
@@ -196,6 +196,21 @@ Mat44 const Mat44::MakeOrthoProjection(float left, float right, float bottom, fl
 	return mat;
 }
 
+Mat44 const Mat44::MakeOrthoProjectionReversedZ(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+	// 1. 先用传统方法创建投影矩阵
+	Mat44 traditionalProj = MakeOrthoProjection(left, right, bottom, top, zNear, zFar);
+
+	// 2. 创建深度反转矩阵
+	Mat44 depthReverse;
+	depthReverse.m_values[Kz] = -1.0f;  // 第3行第3列
+	depthReverse.m_values[Tz] = 1.0f;  // 第3行第4列
+
+	// 3. 相乘得到 Reversed-Z 投影矩阵
+	depthReverse.Append(traditionalProj);
+	return depthReverse;
+}
+
 Mat44 const Mat44::MakePerspectiveProjection(float fovYDegrees, float aspect, float zNear, float zFar)
 {
 	Mat44 mat = Mat44();
@@ -210,6 +225,21 @@ Mat44 const Mat44::MakePerspectiveProjection(float fovYDegrees, float aspect, fl
 	mat.m_values[Tw] = 0.0f;
 
 	return mat;
+}
+
+Mat44 const Mat44::MakePerspectiveProjectionReversedZ(float fovYDegrees, float aspect, float zNear, float zFar)
+{
+	// 1. 先用传统方法创建投影矩阵
+	Mat44 traditionalProj = MakePerspectiveProjection(fovYDegrees, aspect, zNear, zFar);
+
+	// 2. 创建深度反转矩阵
+	Mat44 depthReverse;
+	depthReverse.m_values[Kz] = -1.0f;  // 第3行第3列
+	depthReverse.m_values[Tz] = 1.0f;  // 第3行第4列
+
+	// 3. 相乘得到 Reversed-Z 投影矩阵
+	depthReverse.Append(traditionalProj);
+	return depthReverse;
 }
 
 Vec2 const Mat44::TransformVectorQuantity2D(Vec2 const& vectorQuantityXY) const  //w = 0

@@ -48,6 +48,12 @@ private:
 	void DeleteCurrentEmitter();
 	void ApplyConfigToEmitter();  // 将 UI 修改同步到 Emitter
 
+	void TestDefInstance();
+	Nova2DEmitterDefinition* CreateFireDefinition_5x5();
+	void SetupFireEffect(Nova2DSystem* particleSystem);
+
+	void CreateNebulaburstEffect();
+
 private:
 	SandboxPlayer* m_player = nullptr;
 	// 发射器列表

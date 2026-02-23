@@ -3,25 +3,26 @@
 #include "CellChunk.hpp"
 
 class SandboxMap;
+class BaseMap;
 
 // 新的基于Chunk的Cell行为系统
 class CellBehaviorSystemInChunk
 {
 public:
 	// === Update Entrance ===
-	static void UpdateCell(Cell& cell, int worldX, int worldY, SandboxMap* map);
+	static void UpdateCell(Cell& cell, int worldX, int worldY, BaseMap* map);
 
 	// === 移动处理（新版本 - chunk aware） ===
 	static void HandleMoveSolidMovement(
 		int& currentX, int& currentY,
 		int targetX, int targetY,
-		SandboxMap* map
+		BaseMap* map
 	);
 
 	static void HandleLiquidMovement(
 		int& currentX, int& currentY,
 		int targetX, int targetY,
-		SandboxMap* map
+		BaseMap* map
 	);
 
 	// === 碰撞处理（复用旧的） ===
@@ -37,21 +38,24 @@ public:
 	static void ApplyCollisionPhysics(Cell& cell, int deltaX, int deltaY);
 	static void ClampVelocity(Cell& cell, float maxSpeed);
 
+	static void MarkChunkDirtyWithNeighbors(BaseMap* map, int worldX, int worldY);
+
 private:
 	// === 物理类型特化处理 ===
-	static void UpdateMoveSolid(Cell& cell, int worldX, int worldY, SandboxMap* map);
-	static void UpdateLiquid(Cell& cell, int worldX, int worldY, SandboxMap* map);
-	static void UpdateCellularAutomaton(Cell& cell, int worldX, int worldY, SandboxMap* map);
+	static void UpdateMoveSolid(Cell& cell, int worldX, int worldY, BaseMap* map);
+	static void UpdateLiquid(Cell& cell, int worldX, int worldY, BaseMap* map);
+	static void UpdateCellularAutomaton(Cell& cell, int worldX, int worldY, BaseMap* map);
 
-	static void MarkChunkDirtyWithNeighbors(SandboxMap* map, int worldX, int worldY);
+
+	static void MarkChunkDirtyInRange(BaseMap* map, int minX, int minY, int maxX, int maxY);
 
 	static void UpdateAccumulatedMovement(
 		int oldX, int oldY,
 		int newX, int newY,
-		SandboxMap* map
+		BaseMap* map
 	);
 
-	static void UpdateAccumulatedMovementLiquid(int oldX, int oldY, int newX, int newY, SandboxMap* map);
+	static void UpdateAccumulatedMovementLiquid(int oldX, int oldY, int newX, int newY, BaseMap* map);
 
 	static void GetMovementDirections(const Cell& cell, int x, int y, int& primaryDir, int& secondaryDir);
 };

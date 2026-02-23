@@ -86,6 +86,15 @@
     <Filter Include="ThirdParty\implot">
       <UniqueIdentifier>{7bf51076-c81f-40ff-a7e1-735f2aef9d99}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\tracy">
+      <UniqueIdentifier>{5b91345e-2497-4fd4-b8c0-b5a0551cac9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math\Convex">
+      <UniqueIdentifier>{11e09aa0-fb01-4958-a644-0f5b8f5f8672}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math\SpatialTools">
+      <UniqueIdentifier>{637d4e70-9d68-4c55-be0a-2694dc56d4e8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -492,6 +501,39 @@
     </ClCompile>
     <ClCompile Include="..\ThirdParty\imgui\implot_items.cpp">
       <Filter>ThirdParty\implot</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\tracy\TracyClient.cpp">
+      <Filter>ThirdParty\tracy</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\StructuredBuffer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ComputeShader.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Plane2.cpp">
+      <Filter>Math\Convex</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\ConvexPoly2.cpp">
+      <Filter>Math\Convex</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\ConvexHull2.cpp">
+      <Filter>Math\Convex</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\BVHTree2D.cpp">
+      <Filter>Math\SpatialTools</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ShaderIncludeHandler.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\IndirectArgsBuffer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\QuadTree2D.cpp">
+      <Filter>Math\SpatialTools</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Texture2DArray.cpp">
+      <Filter>Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -929,6 +971,42 @@
     </ClInclude>
     <ClInclude Include="..\ThirdParty\imgui\implot_internal.h">
       <Filter>ThirdParty\implot</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\StructuredBuffer.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ComputeShader.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Plane2.hpp">
+      <Filter>Math\Convex</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ConvexPoly2.hpp">
+      <Filter>Math\Convex</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ConvexHull2.hpp">
+      <Filter>Math\Convex</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\BVHTree2D.hpp">
+      <Filter>Math\SpatialTools</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ISpatialObject2D.hpp">
+      <Filter>Math\SpatialTools</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderIncludeHandler.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\IndirectArgsBuffer.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\QuadTree2D.hpp">
+      <Filter>Math\SpatialTools</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Texture2DArray.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\BlitShader.hpp">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

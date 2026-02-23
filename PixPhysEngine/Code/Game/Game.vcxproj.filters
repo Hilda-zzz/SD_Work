@@ -50,6 +50,33 @@
     <Filter Include="WangTileMapMode\Region\RegionDef">
       <UniqueIdentifier>{5702c091-7450-4f4a-bd92-f3c983120bf8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{f3ab5b77-04e3-4a36-b69b-f7162a8e35fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RigidBody\WorldMode">
+      <UniqueIdentifier>{d6df368a-db19-4461-9d98-8241dbfde728}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RigidBody\SandboxMode">
+      <UniqueIdentifier>{7b36f012-a0d2-44a1-98c2-5e4ef4d147bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Nova2D\GPU">
+      <UniqueIdentifier>{77d8a0e4-4688-48eb-afca-1b4f8b1f2b85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Nova2D\Nova2DShaders\CS">
+      <UniqueIdentifier>{1ebbb500-d4bb-4111-9735-542c4be32497}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Nova2D\EmitterNew">
+      <UniqueIdentifier>{8b004906-0091-4a29-94cb-34be84d8745f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Nova2D\Nova2DShaders\CS\header">
+      <UniqueIdentifier>{49b7976b-b7a7-4058-9fcc-ce47a42f677c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{405bbc2c-7ab6-466e-b0e2-129c03dff191}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Bloom">
+      <UniqueIdentifier>{7eed29cb-4617-4fab-b716-29e6cb257b6d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -83,9 +110,6 @@
       <Filter>CellMaterial</Filter>
     </ClCompile>
     <ClCompile Include="Box2DShapeBuilder.cpp">
-      <Filter>RigidBody</Filter>
-    </ClCompile>
-    <ClCompile Include="RigidbodyManager.cpp">
       <Filter>RigidBody</Filter>
     </ClCompile>
     <ClCompile Include="RigidBodyObject.cpp">
@@ -166,6 +190,45 @@
     <ClCompile Include="ConfigDrivenCellGenerator.cpp">
       <Filter>WangTileMapMode\Region</Filter>
     </ClCompile>
+    <ClCompile Include="ChunkPhysUpdateJob.cpp">
+      <Filter>Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkRebuildVertsJob.cpp">
+      <Filter>Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkResetUpdateFlagJob.cpp">
+      <Filter>Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkChemicalUpdateJob.cpp">
+      <Filter>Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="RigidbodyManager.cpp">
+      <Filter>RigidBody\SandboxMode</Filter>
+    </ClCompile>
+    <ClCompile Include="RigidBodyObjectPool.cpp">
+      <Filter>RigidBody\WorldMode</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkRigidBodyManager.cpp">
+      <Filter>RigidBody\WorldMode</Filter>
+    </ClCompile>
+    <ClCompile Include="Box2DDebugDrawManager.cpp">
+      <Filter>RigidBody</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkRigidBodyDetectionJob.cpp">
+      <Filter>Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="Nova2D\Nova2DGPUBuffers.cpp">
+      <Filter>Nova2D\GPU</Filter>
+    </ClCompile>
+    <ClCompile Include="Nova2D\Nova2DEmitterDefinition.cpp">
+      <Filter>Nova2D\EmitterNew</Filter>
+    </ClCompile>
+    <ClCompile Include="Nova2D\Nova2DEmitterInstance.cpp">
+      <Filter>Nova2D\EmitterNew</Filter>
+    </ClCompile>
+    <ClCompile Include="CellDataCollectJob.cpp">
+      <Filter>Jobs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -208,9 +271,6 @@
       <Filter>CellMaterial</Filter>
     </ClInclude>
     <ClInclude Include="RigidBodyObject.hpp">
-      <Filter>RigidBody</Filter>
-    </ClInclude>
-    <ClInclude Include="RigidbodyManager.hpp">
       <Filter>RigidBody</Filter>
     </ClInclude>
     <ClInclude Include="Box2DShapeBuilder.hpp">
@@ -303,15 +363,134 @@
     <ClInclude Include="ConfigDrivenCellGenerator.hpp">
       <Filter>WangTileMapMode\Region</Filter>
     </ClInclude>
+    <ClInclude Include="CellMatBrush.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkPhysUpdateJob.hpp">
+      <Filter>Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkRebuildVertsJob.hpp">
+      <Filter>Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkResetUpdateFlagJob.hpp">
+      <Filter>Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkChemicalUpdateJob.hpp">
+      <Filter>Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidbodyManager.hpp">
+      <Filter>RigidBody\SandboxMode</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBodyObjectPool.hpp">
+      <Filter>RigidBody\WorldMode</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkRigidBodyManager.hpp">
+      <Filter>RigidBody\WorldMode</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DDebugDrawManager.hpp">
+      <Filter>RigidBody</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkRigidBodyDetectionJob.hpp">
+      <Filter>Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBodyPrecomputedData.hpp">
+      <Filter>RigidBody\WorldMode</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DGPUParticle.hpp">
+      <Filter>Nova2D\GPU</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DGPUBuffers.hpp">
+      <Filter>Nova2D\GPU</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DEmitterDefinition.hpp">
+      <Filter>Nova2D\EmitterNew</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DEmitterPresets.hpp">
+      <Filter>Nova2D\EmitterNew</Filter>
+    </ClInclude>
+    <ClInclude Include="Nova2D\Nova2DEmitterInstance.hpp">
+      <Filter>Nova2D\EmitterNew</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DCommon.hlsli">
+      <Filter>Nova2D\Nova2DShaders\CS\header</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUCellData.hpp">
+      <Filter>CellMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="CellDataCollectJob.hpp">
+      <Filter>Jobs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\..\Run\Data\Nova2DShaders\Nova2DParticleInstanced.hlsl">
       <Filter>Nova2D\Nova2DShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Nova2DShaders\TestComputeShader.hlsl">
+      <Filter>Nova2D\Nova2DShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DEmit.hlsl">
+      <Filter>Nova2D\Nova2DShaders\CS</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DPopulateVBO.hlsl">
+      <Filter>Nova2D\Nova2DShaders\CS</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DResetCounters.hlsl">
+      <Filter>Nova2D\Nova2DShaders\CS</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DUpdate.hlsl">
+      <Filter>Nova2D\Nova2DShaders\CS</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DEmit_v2.hlsl">
+      <Filter>Nova2D\Nova2DShaders\CS</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DWriteIndirectArgs.hlsl">
+      <Filter>Nova2D\Nova2DShaders\CS</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DEmit_v3.hlsl">
+      <Filter>Nova2D\Nova2DShaders\CS</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DBindlessRender.hlsl">
+      <Filter>Nova2D\Nova2DShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\CellPopulateVBO.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\CellDrawIndirect.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\BlitWithBloom.hlsl">
+      <Filter>Shaders\Bloom</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\Downsample.hlsl">
+      <Filter>Shaders\Bloom</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\GaussianBlurH.hlsl">
+      <Filter>Shaders\Bloom</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\GaussianBlurV.hlsl">
+      <Filter>Shaders\Bloom</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\UpsampleAdd.hlsl">
+      <Filter>Shaders\Bloom</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\RegionConfigs\JungleRegion.xml">
       <Filter>ConfigFiles\RegionConfigs</Filter>
     </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Run\Data\Shaders\Nova2DShaders\Nova2DParticleStruct.hlsli">
+      <Filter>Nova2D\Nova2DShaders\CS\header</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Shaders\Nova2DShaders\Math.hlsli">
+      <Filter>Nova2D\Nova2DShaders\CS\header</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Shaders\Nova2DShaders\RNG.hlsli">
+      <Filter>Nova2D\Nova2DShaders\CS\header</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Shaders\CellGPUStructs.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -13,14 +13,19 @@
 #include "Engine/Renderer/Material.hpp"
 
 class Shader;
+class ComputeShader;
 class Window;
 class Texture;
 class VertexBuffer;
 class IndexBuffer;
 class ConstantBuffer;
+class StructuredBuffer;
+class IndirectArgsBuffer;
 class Image;
 class TextureCube;
+class Texture2DArray;
 class Material;
+class ShaderIncludeHandler;
 
 struct ID3D11Device;
 struct ID3D11DeviceContext;
@@ -75,7 +80,9 @@ enum class VertexType
 {
 	VERTEX_PCU,
 	VERTEX_PCUTBN,
-	NOVA2D_PARTICLE_INSTANCED
+	NOVA2D_PARTICLE_INSTANCED,
+	VERTEX_PCU_TEXINDEX,
+	VERTEX_GPU_CELL
 };
 
 struct RendererConfig
@@ -100,6 +107,8 @@ public:
 	void		BeginCamera(const Camera& camera);
 	void		EndCamera(const Camera& camera);
 
+	void SetViewport(IntVec2 dimensions);
+
 	void		DrawVertexArray(int numVertexs, const Vertex_PCU* vertexs);
 	void		DrawVertexArray(const std::vector<Vertex_PCU>& vertexs);
 	void		DrawVertexArray_WithTBN(std::vector<Vertex_PCUTBN> const& vertexs);
@@ -121,6 +130,10 @@ public:
 	TextureCube* GetTextureCubeFromFileName(char const* firstFilePath);
 	TextureCube* CreateCubeTextureFromFiles(const std::string filePaths[6]);
 	void		 BindTextureCube(TextureCube* textureCube,int slot=0);
+
+	//----------------Texture2DArray---------------------------------------------------
+	Texture2DArray* CreateTexture2DArrayFromFiles(const std::vector<std::string>& filePaths);
+	void BindTexture2DArray(Texture2DArray* textureArray, int slot = 10);
 	
 	//-----------------------BitmapFont------------------------------------------------------------
 	BitmapFont* CreateOrGetBitmapFont(char const* imageFilePath);
@@ -148,19 +161,69 @@ public:
 	Shader* CreateShaderFromFile(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
 	void			BindShader(Shader* shader);
 
+	//-----------------------Compute Shader-------------------------------------------------------------------
+	ComputeShader* CreateComputeShaderFromFile(char const* shaderName);
+	void BindComputeShader(ComputeShader* shader);
+	void Dispatch(unsigned int threadGroupX, unsigned int threadGroupY, unsigned int threadGroupZ);
+	void UnbindComputeShader();
+
 	//-----------------------Buffer-------------------------------------------------------------------
-	VertexBuffer* CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride, bool isPerInstance = false);
+	VertexBuffer* CreateVertexBuffer(const unsigned int verticeCount, unsigned int stride, 
+		bool isPerInstance = false, bool enableUAV=false);
 	IndexBuffer* CreateIndexBuffer(unsigned int size);
 
 	void CopyGameVertexBufferToGPU(const void* data, unsigned int verticeCount, VertexBuffer* vbo);
 	void CopyGameIndexBufferToGPU(const void* data, unsigned int count, IndexBuffer* ibo);
 	void DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo);
+	void DrawGameIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount);
 	void DrawGameVertexBuffer(VertexBuffer* vbo);
+	void DrawGameVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount);
+
+	// ===== Indirect Draw =====
+	void DrawIndexedIndirect(VertexBuffer* vbo,
+		IndexBuffer* ibo,
+		IndirectArgsBuffer* argsBuffer,
+		unsigned int byteOffset);
+
+	void UnbindVertexBuffer(unsigned int slot);
+
+	// ===== VertexBuffer UAV（新增用于 PopulateVBO）=====
+	void BindVertexBufferUAV(unsigned int slot, VertexBuffer* vbo);
 
 	//---------------------- Constants Buffer -----------------------------------
 	ConstantBuffer* CreateConstantBuffer(const unsigned int size);
 	void			CopyConstantBufferToGPU(const void* data, unsigned int size, ConstantBuffer* cbo);
 	void			BindConstantBuffer(int slot, ConstantBuffer* cbo);
+	void			BindConstantBufferCS(int slot, ConstantBuffer* cbo);
+
+	//---------------------- Structured Buffer -----------------------------------
+	// 创建StructuredBuffer
+	//   elementCount - 元素数量（如500,000个粒子）
+	//   elementSize  - 每个元素大小（如48 bytes）
+	//   isReadWrite  - 是否支持Compute Shader写入（true=UAV, false=SRV only）
+	StructuredBuffer* CreateStructuredBuffer(unsigned int elementCount,
+		unsigned int elementSize,
+		bool isReadWrite);
+
+	void CopyDataToStructuredBuffer(StructuredBuffer* buffer,
+		void const* data,
+		unsigned int elementCount);
+
+	void ReadStructuredBuffer(StructuredBuffer* buffer,
+		void* outData,
+		unsigned int elementCount);
+
+	void BindStructuredBufferSRV(unsigned int slot, StructuredBuffer* buffer);
+
+	void BindStructuredBufferUAV(unsigned int slot, StructuredBuffer* buffer);
+
+	void UnbindStructuredBuffers();
+
+	// ===== Indirect Args Buffer（专用于DrawIndirect）=====
+	IndirectArgsBuffer* CreateIndirectArgsBuffer(unsigned int sizeInBytes);
+	void BindIndirectArgsBufferUAV(unsigned int slot, IndirectArgsBuffer* buffer);
+	void InitializeIndirectArgsBuffer(IndirectArgsBuffer* buffer, const void* data, unsigned int sizeInBytes);
+	void ReadIndirectArgsBuffer(IndirectArgsBuffer* buffer, void* outData, unsigned int sizeInBytes);
 	//-----------------------Shadow-------------------------------------------------------------------
 	void InitializeShadowMapping();
 	void BeginShadowMapRender(Mat44 const& lightViewProjection);
@@ -195,6 +258,7 @@ public:
 	// 创建可作为RenderTarget的纹理
 	Texture* CreateOrGetRenderTargetTexture(IntVec2 dimensions, char const* name);
 	Texture* CreateOrGetDepthTexture(IntVec2 dimensions, char const* name);
+	//Texture* CreateOrGetDepthTextureReverseZ(IntVec2 dimensions, char const* name);
 
 	// 拷贝当前帧缓冲到纹理
 	void CopyFramebufferToTexture(Texture* destTexture);
@@ -204,18 +268,34 @@ public:
 
 	// 绑定纹理到特定槽位（扩展现有BindTexture）
 	void BindTextureToSlot(int slot, Texture const* texture);
+	void BindTextureToComputeShader(int slot, Texture const* texture);
 
 	// 获取屏幕尺寸
 	IntVec2 GetScreenDimensions() const;
 
+	void BeginMRTRender(Texture** renderTargets, int count,bool clearTargest=true, bool useDepthStencil=true);
+	void EndMRTRender();
+	void DrawFullscreenQuad(Texture const* texture);
 
+	// 通用全屏Quad渲染（支持多纹理 + 自定义Shader）
+	void DrawFullscreenQuad(
+		Shader* shader,                          // 使用的Shader
+		std::vector<Texture const*> textures,    // 纹理数组（按slot顺序）
+		BlendMode blendMode = BlendMode::OPAQUE  // 可选：混合模式
+	);
+
+	ShaderIncludeHandler* m_shaderIncludeHandler = nullptr;
 public:
 	std::vector<Texture*>		m_loadedTextures;
 	std::vector<TextureCube*>       m_loadedCubeTextures;
+	std::vector<Texture2DArray*> m_loadedTexture2DArrays;
 	std::vector<BitmapFont*>	m_loadedFonts;
 
 private:
 	RendererConfig			m_config;
+
+	D3D11_VIEWPORT* m_savedViewport;
+	bool m_isInMRTRender = false;
 
 protected:
 	ID3D11Device*			m_device = nullptr;
@@ -227,6 +307,10 @@ protected:
 	std::vector<Shader*>	m_loadedShaders;
 	Shader*					m_currentShader = nullptr;
 	Shader*					m_defaultShader = nullptr;
+	Shader* m_blitShader = nullptr;
+
+	std::vector<ComputeShader*> m_loadedComputeShaders;
+	ComputeShader* m_currentComputeShader = nullptr;
 
 	VertexBuffer*			m_immediateVBO = nullptr;
 	VertexBuffer*			m_immediateVBO_WithTBN = nullptr;
@@ -245,6 +329,8 @@ protected:
 
 protected:
 	Shader*			CreateShaderFromSource(char const* shaderName, char const* shaderSource, VertexType vertexType = VertexType::VERTEX_PCU);
+
+	ComputeShader* CreateComputeShaderFromSource(char const* shaderName, char const* shaderSource);
 	
 	bool			CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name,
 					char const* source, char const* enetryPoint, char const* target);
@@ -307,4 +393,8 @@ private:
 	void CreateInputLayout_PCU(Shader* shader);
 	void CreateInputLayout_PCUTBN(Shader* shader);
 	void CreateInputLayout_ParticleInstanced(Shader* shader);
+	void CreateInputLayout_PCU_TexIndex(Shader* shader);
+	void CreateInputLayout_GpuCell(Shader* shader);
+
+	void SetShaderIncludeDirectory(const char* directory);
 };

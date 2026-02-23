@@ -65,6 +65,9 @@ private:
 	void DebugDrawCurrentTile() const;
 	void RenderTileDebugUI();
 
+	// Temp Test
+	void TestComputeShader();
+
 public:
 	static GameState m_curGameState;
 	static GameState m_nextGameState;

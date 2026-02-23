@@ -7,6 +7,8 @@
 #include <Engine/Core/ErrorWarningAssert.hpp>
 #include <queue>
 #include <map>
+#include <ThirdParty/tracy/tracy/Tracy.hpp>
+#include "CellChunk.hpp"
 
 // 配置索引计算：
 //   d(0,1) --- c(1,1)
@@ -73,17 +75,20 @@ static const MarchingSquaresCase MARCHING_SQUARES_CASES[16] = {
 
 std::vector<Vec2> Box2DShapeBuilder::ExtractOutlineFromCells(std::vector<CellWithCoords> const& cells, std::vector<Vec2>& marchingPoints)
 {
+	ZoneScoped;
 	if (cells.empty()) {
 		return {};
 	}
 
 	//================================
+
 	// Get a aabb bound
 	std::unordered_set<IntVec2, IntVec2Hash> occupiedCells;
 	IntVec2 minPos(INT_MAX, INT_MAX);
 	IntVec2 maxPos(INT_MIN, INT_MIN);
 
-	for (auto const& cellData : cells) {
+	for (auto const& cellData : cells) 
+	{
 		IntVec2 pos(cellData.m_worldCoords.x, cellData.m_worldCoords.y);
 		occupiedCells.insert(pos);
 		minPos.x = std::min(minPos.x, pos.x);
@@ -91,6 +96,7 @@ std::vector<Vec2> Box2DShapeBuilder::ExtractOutlineFromCells(std::vector<CellWit
 		maxPos.x = std::max(maxPos.x, pos.x);
 		maxPos.y = std::max(maxPos.y, pos.y);
 	}
+	
 	//==========Marching Squares======================
 	std::vector<Vec2> outline;
 	outline.reserve(cells.size() * 4);
@@ -99,7 +105,6 @@ std::vector<Vec2> Box2DShapeBuilder::ExtractOutlineFromCells(std::vector<CellWit
 	{
 		for (int gridX = minPos.x - 1; gridX <= maxPos.x; ++gridX) 
 		{
-
 			int config = GetMarchingSquaresConfig(gridX, gridY, occupiedCells);
 
 			if (config == 0 || config == 15)  continue;
@@ -121,7 +126,7 @@ std::vector<Vec2> Box2DShapeBuilder::ExtractOutlineFromCells(std::vector<CellWit
 	// connect outline
 	if (outline.size() >= 4)
 	{
-		outline = ConnectAndOrderVertices(outline);
+		outline = ConnectAndOrderVerticesFast(std::move(outline));
 		marchingPoints.reserve(outline.size());
 		for (int i = 0; i < outline.size(); i++)
 		{
@@ -137,8 +142,171 @@ std::vector<Vec2> Box2DShapeBuilder::ExtractOutlineFromCells(std::vector<CellWit
 	return outline;
 }
 
+std::vector<Vec2> Box2DShapeBuilder::ExtractOutlineFromCellsSimple(std::vector<CellWithCoords> const& cells)
+{
+	ZoneScoped;
+
+	if (cells.empty()) {
+		return {};
+	}
+
+	////================================
+	//// 1. 构建occupied cells set和计算AABB
+	////================================
+	//std::unordered_set<IntVec2, IntVec2Hash> occupiedCells;
+	//occupiedCells.reserve(cells.size());
+
+	//IntVec2 minPos(INT_MAX, INT_MAX);
+	//IntVec2 maxPos(INT_MIN, INT_MIN);
+
+	//for (auto const& cellData : cells)
+	//{
+	//	IntVec2 pos(cellData.m_worldCoords.x, cellData.m_worldCoords.y);
+	//	occupiedCells.insert(pos);
+
+	//	minPos.x = std::min(minPos.x, pos.x);
+	//	minPos.y = std::min(minPos.y, pos.y);
+	//	maxPos.x = std::max(maxPos.x, pos.x);
+	//	maxPos.y = std::max(maxPos.y, pos.y);
+	//}
+
+	////================================
+	//// 2. Marching Squares 提取轮廓点
+	////================================
+	//std::vector<Vec2> outline;
+	//outline.reserve(cells.size() * 4);
+
+	//for (int gridY = minPos.y - 1; gridY <= maxPos.y; ++gridY)
+	//{
+	//	for (int gridX = minPos.x - 1; gridX <= maxPos.x; ++gridX)
+	//	{
+	//		int config = GetMarchingSquaresConfig(gridX, gridY, occupiedCells);
+
+	//		// 跳过全空或全满的情况
+	//		if (config == 0 || config == 15) {
+	//			continue;
+	//		}
+
+	//		// 添加轮廓顶点
+	//		MarchingSquaresCase const& caseData = MARCHING_SQUARES_CASES[config];
+	//		for (int i = 0; i < caseData.vertexCount; ++i)
+	//		{
+	//			Vec2 worldPos(
+	//				static_cast<float>(gridX) + caseData.vertices[i].x + 0.5f,
+	//				static_cast<float>(gridY) + caseData.vertices[i].y + 0.5f
+	//			);
+	//			outline.push_back(worldPos);
+	//		}
+	//	}
+	//}
+
+
+	//--------NEW ---------
+	//================================
+	// 1. 计算AABB
+	//================================
+	IntVec2 minPos(INT_MAX, INT_MAX);
+	IntVec2 maxPos(INT_MIN, INT_MIN);
+
+	for (auto const& cellData : cells)
+	{
+		minPos.x = std::min(minPos.x, cellData.m_worldCoords.x);
+		minPos.y = std::min(minPos.y, cellData.m_worldCoords.y);
+		maxPos.x = std::max(maxPos.x, cellData.m_worldCoords.x);
+		maxPos.y = std::max(maxPos.y, cellData.m_worldCoords.y);
+	}
+
+	//================================
+	// 2. 构建2D grid（替代unordered_set）
+	//================================
+	// 扩展边界以容纳marching squares的查询范围
+	int width = maxPos.x - minPos.x + 3;   // +3: -1 到 maxPos+1
+	int height = maxPos.y - minPos.y + 3;
+
+	std::vector<bool> occupiedGrid(width * height, false);
+
+	// 填充grid（偏移1个单位，留出-1的边界）
+	for (auto const& cellData : cells)
+	{
+		int localX = cellData.m_worldCoords.x - minPos.x + 1;
+		int localY = cellData.m_worldCoords.y - minPos.y + 1;
+		occupiedGrid[localY * width + localX] = true;
+	}
+
+	//================================
+	// 3. Marching Squares（内联配置检查）
+	//================================
+	std::vector<Vec2> outline;
+	outline.reserve(cells.size() * 4);
+
+	// 遍历范围：minPos-1 到 maxPos
+	for (int gridY = minPos.y - 1; gridY <= maxPos.y; ++gridY)
+	{
+		for (int gridX = minPos.x - 1; gridX <= maxPos.x; ++gridX)
+		{
+			// 内联配置检查（避免函数调用）
+			int localX = gridX - minPos.x + 1;
+			int localY = gridY - minPos.y + 1;
+			int baseIdx = localY * width + localX;
+
+			// 直接计算config（4次数组查询 vs 4次哈希查询）
+			int config = 0;
+			if (occupiedGrid[baseIdx])              config |= 1;  // bottom-left
+			if (occupiedGrid[baseIdx + 1])          config |= 2;  // bottom-right
+			if (occupiedGrid[baseIdx + width + 1])  config |= 4;  // top-right
+			if (occupiedGrid[baseIdx + width])      config |= 8;  // top-left
+
+			// 跳过全空或全满
+			if (config == 0 || config == 15) {
+				continue;
+			}
+
+			// 添加轮廓顶点
+			MarchingSquaresCase const& caseData = MARCHING_SQUARES_CASES[config];
+			for (int i = 0; i < caseData.vertexCount; ++i)
+			{
+				Vec2 worldPos(
+					static_cast<float>(gridX) + caseData.vertices[i].x + 0.5f,
+					static_cast<float>(gridY) + caseData.vertices[i].y + 0.5f
+				);
+				outline.push_back(worldPos);
+			}
+		}
+	}
+
+
+	//================================
+	// 4. 连接、排序和简化轮廓
+	//================================
+	if (outline.size() >= 4)
+	{
+		// 连接并排序顶点
+		outline = ConnectAndOrderVerticesFast(std::move(outline));
+
+		// 为Douglas-Peucker算法重新排序
+		outline = ReorderOutlineForDouglasPeucker(std::move(outline));
+
+		// Douglas-Peucker简化
+		outline = DouglasPeucker(std::move(outline), 2.0f);
+
+		// 移除最后一个点（如果它是闭合轮廓的重复点）
+		if (!outline.empty()) {
+			outline.pop_back();
+		}
+	}
+	else
+	{
+		// 如果点数太少，清空返回
+		outline.clear();
+	}
+
+	return outline;  // RVO会优化掉拷贝
+}
+
 std::vector<std::vector<CellWithCoords>> Box2DShapeBuilder::SeparateConnectedComponents(const std::vector<CellWithCoords>& cells)
 {
+	ZoneScoped;
+
 	std::map<std::pair<int, int>, int> coordToIndex;
 	for (int i = 0; i < cells.size(); i++) 
 	{
@@ -187,6 +355,120 @@ std::vector<std::vector<CellWithCoords>> Box2DShapeBuilder::SeparateConnectedCom
 		}
 		components.push_back(component);
 	}
+	return components;
+}
+
+std::vector<std::vector<CellWithCoords>> Box2DShapeBuilder::SeparateConnectedComponentsMove(std::vector<CellWithCoords>&& cells)
+{
+	ZoneScoped;
+	if (cells.empty()) {
+		return {};
+	}
+
+	constexpr int GRID_SIZE = CHUNK_SIZE * CHUNK_SIZE;  // 4096
+	const size_t cellCount = cells.size();
+
+	// 1. 堆分配 - 使用 std::vector
+	std::vector<int> grid(GRID_SIZE, -1);  // 初始化为-1
+
+	// 2. 填充grid
+	int chunkBaseX = cells[0].m_worldCoords.x & ~63;
+	int chunkBaseY = cells[0].m_worldCoords.y & ~63;
+
+	for (size_t i = 0; i < cellCount; i++)
+	{
+		int localX = cells[i].m_worldCoords.x - chunkBaseX;
+		int localY = cells[i].m_worldCoords.y - chunkBaseY;
+
+#ifdef _DEBUG
+		if (localX < 0 || localX >= CHUNK_SIZE || localY < 0 || localY >= CHUNK_SIZE) {
+			DebuggerPrintf("Warning: Cell out of chunk bounds [%d, %d]\n", localX, localY);
+			continue;
+		}
+#endif
+
+		grid[localY * CHUNK_SIZE + localX] = static_cast<int>(i);
+	}
+
+	// 3. BFS - 堆分配
+	std::vector<bool> visited(cellCount, false);  // 只需要cellCount大小
+	std::vector<int> bfsQueue;
+	bfsQueue.reserve(cellCount);  // 预分配，避免重新分配
+
+	std::vector<std::vector<CellWithCoords>> components;
+	components.reserve(cellCount / 64 + 1);
+
+	for (size_t i = 0; i < cellCount; i++)
+	{
+		if (visited[i]) continue;
+
+		std::vector<CellWithCoords> component;
+		component.reserve(128);
+
+		// BFS
+		bfsQueue.clear();
+		bfsQueue.push_back(static_cast<int>(i));
+		visited[i] = true;
+
+		size_t queueHead = 0;
+
+		while (queueHead < bfsQueue.size())
+		{
+			int idx = bfsQueue[queueHead++];
+			component.push_back(cells[idx]);
+
+			int localX = cells[idx].m_worldCoords.x - chunkBaseX;
+			int localY = cells[idx].m_worldCoords.y - chunkBaseY;
+			int gridIdx = localY * CHUNK_SIZE + localX;
+
+			// 上
+			if (localY > 0)
+			{
+				int neighborIdx = grid[gridIdx - CHUNK_SIZE];
+				if (neighborIdx != -1 && !visited[neighborIdx])
+				{
+					visited[neighborIdx] = true;
+					bfsQueue.push_back(neighborIdx);
+				}
+			}
+
+			// 下
+			if (localY < CHUNK_SIZE - 1)
+			{
+				int neighborIdx = grid[gridIdx + CHUNK_SIZE];
+				if (neighborIdx != -1 && !visited[neighborIdx])
+				{
+					visited[neighborIdx] = true;
+					bfsQueue.push_back(neighborIdx);
+				}
+			}
+
+			// 左
+			if (localX > 0)
+			{
+				int neighborIdx = grid[gridIdx - 1];
+				if (neighborIdx != -1 && !visited[neighborIdx])
+				{
+					visited[neighborIdx] = true;
+					bfsQueue.push_back(neighborIdx);
+				}
+			}
+
+			// 右
+			if (localX < CHUNK_SIZE - 1)
+			{
+				int neighborIdx = grid[gridIdx + 1];
+				if (neighborIdx != -1 && !visited[neighborIdx])
+				{
+					visited[neighborIdx] = true;
+					bfsQueue.push_back(neighborIdx);
+				}
+			}
+		}
+
+		components.push_back(std::move(component));
+	}
+
 	return components;
 }
 
@@ -325,6 +607,7 @@ int Box2DShapeBuilder::GetMarchingSquaresConfig(int gridX, int gridY, std::unord
 
 std::vector<Vec2> Box2DShapeBuilder::ConnectAndOrderVertices(std::vector<Vec2> const& vertices)
 {
+	ZoneScoped;
 	if (vertices.size() < 3)  return vertices;
 
 	// 简单的贪心连接算法：每次找最近的未访问点
@@ -353,6 +636,119 @@ std::vector<Vec2> Box2DShapeBuilder::ConnectAndOrderVertices(std::vector<Vec2> c
 				{
 					minDist = dist;
 					nextIndex = (int)j;
+				}
+			}
+		}
+
+		if (nextIndex == -1) break;
+
+		orderedVertices.push_back(vertices[nextIndex]);
+		visited[nextIndex] = true;
+		currentIndex = nextIndex;
+	}
+
+	return orderedVertices;
+}
+
+std::vector<Vec2> Box2DShapeBuilder::ConnectAndOrderVerticesFast(std::vector<Vec2>&& vertices)
+{
+	ZoneScoped;
+
+	if (vertices.size() < 3) {
+		return std::move(vertices);
+	}
+
+	const size_t vertCount = vertices.size();
+
+	Vec2 minPos(FLT_MAX, FLT_MAX);
+	Vec2 maxPos(-FLT_MAX, -FLT_MAX);
+
+	for (auto const& v : vertices) {
+		minPos.x = std::min(minPos.x, v.x);
+		minPos.y = std::min(minPos.y, v.y);
+		maxPos.x = std::max(maxPos.x, v.x);
+		maxPos.y = std::max(maxPos.y, v.y);
+	}
+
+	// 针对Marching Squares优化：
+	// 1. 轮廓点在0.5对齐的位置 (x.5, y.5)
+	// 2. 相邻点距离是1.0 (直线) 或 √2 (对角)
+	// 3. cellSize = 2.0 可以保证相邻点在3×3范围内
+	constexpr float CELL_SIZE = 2.0f;
+	constexpr float MAX_NEIGHBOR_DIST_SQ = 2.5f;  // √2 ≈ 1.414, 平方 ≈ 2.0, 留余量2.5
+
+	int gridWidth = static_cast<int>((maxPos.x - minPos.x) / CELL_SIZE) + 2;
+	int gridHeight = static_cast<int>((maxPos.y - minPos.y) / CELL_SIZE) + 2;
+
+	struct GridCell {
+		std::vector<int> indices;
+	};
+	std::vector<GridCell> grid(gridWidth * gridHeight);
+
+	for (size_t i = 0; i < vertCount; ++i) {
+		int gx = std::clamp(static_cast<int>((vertices[i].x - minPos.x) / CELL_SIZE), 0, gridWidth - 1);
+		int gy = std::clamp(static_cast<int>((vertices[i].y - minPos.y) / CELL_SIZE), 0, gridHeight - 1);
+		grid[gy * gridWidth + gx].indices.push_back(static_cast<int>(i));
+	}
+
+	std::vector<Vec2> orderedVertices;
+	orderedVertices.reserve(vertCount);
+	std::vector<bool> visited(vertCount, false);
+
+	int currentIndex = 0;
+	orderedVertices.push_back(vertices[currentIndex]);
+	visited[currentIndex] = true;
+
+	for (size_t i = 1; i < vertCount; ++i)
+	{
+		Vec2 const& currentPos = vertices[currentIndex];
+
+		int gx = std::clamp(static_cast<int>((currentPos.x - minPos.x) / CELL_SIZE), 0, gridWidth - 1);
+		int gy = std::clamp(static_cast<int>((currentPos.y - minPos.y) / CELL_SIZE), 0, gridHeight - 1);
+
+		float minDistSq = FLT_MAX;
+		int nextIndex = -1;
+
+		// 只搜索3×3区域（radius=1）
+		for (int dy = -1; dy <= 1; ++dy) {
+			for (int dx = -1; dx <= 1; ++dx) {
+				int nx = gx + dx;
+				int ny = gy + dy;
+
+				if (nx < 0 || nx >= gridWidth || ny < 0 || ny >= gridHeight) {
+					continue;
+				}
+
+				int cellIdx = ny * gridWidth + nx;
+
+				for (int idx : grid[cellIdx].indices) {
+					if (!visited[idx]) {
+						float distSq = (vertices[idx] - currentPos).GetLengthSquared();
+
+						// 只考虑"合理距离"的点（相邻轮廓点）
+						if (distSq <= MAX_NEIGHBOR_DIST_SQ && distSq < minDistSq) {
+							minDistSq = distSq;
+							nextIndex = idx;
+						}
+					}
+				}
+			}
+		}
+
+		// 如果3×3内没找到合理的点，说明可能有问题
+		// 回退到全局搜索（但这不应该发生在正常的marching squares轮廓上）
+		if (nextIndex == -1) {
+#ifdef _DEBUG
+			DebuggerPrintf("Warning: Grid search failed at iteration %zu, falling back to global search\n", i);
+#endif
+
+			for (size_t j = 0; j < vertCount; ++j) {
+				if (!visited[j]) {
+					float distSq = (vertices[j] - currentPos).GetLengthSquared();
+					if (distSq < minDistSq) {
+						minDistSq = distSq;
+						nextIndex = static_cast<int>(j);
+					}
 				}
 			}
 		}
@@ -641,6 +1037,123 @@ TriangulationOutput Box2DShapeBuilder::CDTTriangulation(std::vector<Vec2> const&
 	}
 
 	return output;
+}
+
+std::vector<IntVec2> Box2DShapeBuilder::DetectHolesToFill(const std::vector<CellWithCoords>& cells)
+{
+	ZoneScoped;
+
+	if (cells.empty()) {
+		return {};
+	}
+
+	// 1. 构建occupied grid
+	IntVec2 minPos(INT_MAX, INT_MAX);
+	IntVec2 maxPos(INT_MIN, INT_MIN);
+
+	for (const auto& cellData : cells)
+	{
+		minPos.x = std::min(minPos.x, cellData.m_worldCoords.x);
+		minPos.y = std::min(minPos.y, cellData.m_worldCoords.y);
+		maxPos.x = std::max(maxPos.x, cellData.m_worldCoords.x);
+		maxPos.y = std::max(maxPos.y, cellData.m_worldCoords.y);
+	}
+
+	int width = maxPos.x - minPos.x + 3;
+	int height = maxPos.y - minPos.y + 3;
+
+	std::vector<bool> occupiedGrid(width * height, false);
+
+	for (const auto& cellData : cells)
+	{
+		int localX = cellData.m_worldCoords.x - minPos.x + 1;
+		int localY = cellData.m_worldCoords.y - minPos.y + 1;
+		occupiedGrid[localY * width + localX] = true;
+	}
+
+	// 2. 泛洪填充检测空洞
+	std::vector<bool> visited(width * height, false);
+	std::vector<IntVec2> holesToFill;
+
+	// 从边界开始泛洪，标记外部区域
+	std::queue<IntVec2> floodQueue;
+
+	// 添加四边的起始点
+	for (int x = 0; x < width; ++x)
+	{
+		floodQueue.push(IntVec2(x, 0));
+		floodQueue.push(IntVec2(x, height - 1));
+	}
+	for (int y = 1; y < height - 1; ++y)
+	{
+		floodQueue.push(IntVec2(0, y));
+		floodQueue.push(IntVec2(width - 1, y));
+	}
+
+	// BFS标记外部
+	while (!floodQueue.empty())
+	{
+		IntVec2 pos = floodQueue.front();
+		floodQueue.pop();
+
+		int idx = pos.y * width + pos.x;
+
+		if (pos.x < 0 || pos.x >= width || pos.y < 0 || pos.y >= height)
+			continue;
+
+		if (visited[idx] || occupiedGrid[idx])
+			continue;
+
+		visited[idx] = true;
+
+		// 检查4个邻居
+		floodQueue.push(IntVec2(pos.x + 1, pos.y));
+		floodQueue.push(IntVec2(pos.x - 1, pos.y));
+		floodQueue.push(IntVec2(pos.x, pos.y + 1));
+		floodQueue.push(IntVec2(pos.x, pos.y - 1));
+	}
+
+	// 3. 未访问且未占用的区域就是空洞
+	for (int y = 1; y < height - 1; ++y)
+	{
+		for (int x = 1; x < width - 1; ++x)
+		{
+			int idx = y * width + x;
+			if (!visited[idx] && !occupiedGrid[idx])
+			{
+				// 这是一个空洞，需要填充
+				IntVec2 worldCoord(x + minPos.x - 1, y + minPos.y - 1);
+				holesToFill.push_back(worldCoord);
+			}
+		}
+	}
+
+	return holesToFill;
+}
+
+std::vector<CellWithCoords> Box2DShapeBuilder::CreateVirtualFilledCells(const std::vector<CellWithCoords>& originalCells, const std::vector<IntVec2>& holeCoords)
+{
+	ZoneScoped;
+
+	// 创建虚拟的cell用于填充空洞
+	// 注意：这些cell不会真正添加到地图中
+
+	std::vector<CellWithCoords> virtualCells;
+	virtualCells.reserve(holeCoords.size());
+
+	// 使用一个静态的虚拟cell模板
+	static Cell virtualCellTemplate;
+	virtualCellTemplate.m_type = CellMatType::MAT_STATIC_FILL;  // 或其他合适的类型
+	virtualCellTemplate.m_isBelongRb = false;  // 虚拟的，不真正属于任何rb
+
+	for (const IntVec2& coord : holeCoords)
+	{
+		// 创建虚拟的CellWithCoords
+		// 注意：这里的cell指针指向静态模板，不会修改实际地图
+		virtualCells.emplace_back(nullptr, coord);  // nullptr表示虚拟cell
+	}
+
+	return virtualCells;
 }
 
 float Box2DShapeBuilder::GetOrientation(const Vec2& a, const Vec2& b, const Vec2& c)

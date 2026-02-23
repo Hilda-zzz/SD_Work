@@ -30,7 +30,7 @@ WangTileMap::WangTileMap(SandboxPlayer* player)
 
 WangTileMap::~WangTileMap()
 {
-	BaseMap::~BaseMap();
+	//BaseMap::~BaseMap();
 	if (m_templateImage) {
 		delete m_templateImage;
 		m_templateImage = nullptr;
@@ -45,6 +45,8 @@ WangTileMap::~WangTileMap()
 	m_materialTextures.clear();
 
 	delete m_stickerImageA;
+
+	DestroyChunkGrid();
 }
 
 void WangTileMap::Initialize()
@@ -532,7 +534,7 @@ void WangTileMap::GenerateBaseCellsInChunk(CellChunk* chunk)
 			if (advancedDensity > 0.6f)
 			{
 				cell.SetToType(CellMatType::MAT_STONE);
-				cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
+				cell.m_color = SampleMaterialTexture(cell.m_type.load(), worldX, worldY);
 
 				// Decoration noise
 				float decoNoise = Compute2dPerlinNoise(
@@ -588,14 +590,14 @@ void WangTileMap::GenerateBaseCellsInChunk(CellChunk* chunk)
 				else if (decoNoise > 0.2f)
 				{
 					cell.SetToType(CellMatType::MAT_WOOD);
-					cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
+					cell.m_color = SampleMaterialTexture(cell.m_type.load(), worldX, worldY);
 				}
 
 				// 边缘过渡区域
 				if (advancedDensity < 0.8f)
 				{
 					cell.SetToType(CellMatType::MAT_WOOD);
-					cell.m_color = SampleMaterialTexture(cell.m_type, worldX, worldY);
+					cell.m_color = SampleMaterialTexture(cell.m_type.load(), worldX, worldY);
 
 					// 使用m_edgeSticker进行边缘装饰
 					if (m_edgeSticker) {
@@ -897,6 +899,31 @@ void WangTileMap::RenderEdgePixelOverlay() const
 	g_theRenderer->DrawVertexArray((int)verts.size(), verts.data());
 }
 
+void WangTileMap::CreateChunkGrid()
+{
+	m_chunks.resize(m_chunkGridSize.y);
+
+	for (int chunkY = 0; chunkY < m_chunkGridSize.y; ++chunkY) {
+		m_chunks[chunkY].resize(m_chunkGridSize.x);
+
+		for (int chunkX = 0; chunkX < m_chunkGridSize.x; ++chunkX) {
+			IntVec2 chunkCoords(chunkX, chunkY);
+			m_chunks[chunkY][chunkX] = new CellChunk(chunkCoords, this);
+		}
+	}
+}
+
+void WangTileMap::DestroyChunkGrid()
+{
+	for (auto& row : m_chunks) {
+		for (auto& chunk : row) {
+			delete chunk;
+			chunk = nullptr;
+		}
+	}
+	m_chunks.clear();
+}
+
 void WangTileMap::GenerateMapFromTemplate()
 {
 	GUARANTEE_OR_DIE(!m_templateData.empty(), "Template not loaded!");
@@ -934,7 +961,7 @@ void WangTileMap::Update(float deltaTime)
 		);
 	}
 
-	g_nova2D->Update(deltaTime);
+	g_nova2D->Update(deltaTime,m_player->GetCamera(),nullptr);
 
 	RenderDebugUI();
 }
@@ -981,10 +1008,10 @@ void WangTileMap::Render() const
 		Vec2 start(worldX, 0.f);
 		Vec2 end(worldX, static_cast<float>(m_mapSize.y));
 		Rgba8 gridColor(100, 100, 100, 128);
-		AddVertsForLinSegment2D(chunkGridVerts, start, end, 0.5f, Rgba8::MAGNETA);
-		AddVertsForLinSegment2D(chunkGridVerts, start + Vec2(16.f, 0.f), end + Vec2(16.f, 0.f), 0.5f, gridColor);
-		AddVertsForLinSegment2D(chunkGridVerts, start+Vec2(32.f,0.f), end + Vec2(32.f, 0.f), 0.5f, gridColor);
-		AddVertsForLinSegment2D(chunkGridVerts, start + Vec2(48.f, 0.f), end + Vec2(48.f, 0.f), 0.5f, gridColor);
+		AddVertsForLineSegment2D(chunkGridVerts, start, end, 0.5f, Rgba8::MAGNETA);
+		AddVertsForLineSegment2D(chunkGridVerts, start + Vec2(16.f, 0.f), end + Vec2(16.f, 0.f), 0.5f, gridColor);
+		AddVertsForLineSegment2D(chunkGridVerts, start+Vec2(32.f,0.f), end + Vec2(32.f, 0.f), 0.5f, gridColor);
+		AddVertsForLineSegment2D(chunkGridVerts, start + Vec2(48.f, 0.f), end + Vec2(48.f, 0.f), 0.5f, gridColor);
 	}
 
 	// Horizontal lines
@@ -993,10 +1020,10 @@ void WangTileMap::Render() const
 		Vec2 start(0.f, worldY);
 		Vec2 end(static_cast<float>(m_mapSize.x), worldY);
 		Rgba8 gridColor(100, 100, 100, 128);
-		AddVertsForLinSegment2D(chunkGridVerts, start, end, 0.5f, Rgba8::MAGNETA);
-		AddVertsForLinSegment2D(chunkGridVerts, start + Vec2(0.f, 16.f), end + Vec2(0.f, 16.f), 0.5f, gridColor);
-		AddVertsForLinSegment2D(chunkGridVerts, start + Vec2(0.f, 32.f), end + Vec2(0.f, 32.f), 0.5f, gridColor);
-		AddVertsForLinSegment2D(chunkGridVerts, start + Vec2(0.f, 48.f), end + Vec2(0.f, 48.f), 0.5f, gridColor);
+		AddVertsForLineSegment2D(chunkGridVerts, start, end, 0.5f, Rgba8::MAGNETA);
+		AddVertsForLineSegment2D(chunkGridVerts, start + Vec2(0.f, 16.f), end + Vec2(0.f, 16.f), 0.5f, gridColor);
+		AddVertsForLineSegment2D(chunkGridVerts, start + Vec2(0.f, 32.f), end + Vec2(0.f, 32.f), 0.5f, gridColor);
+		AddVertsForLineSegment2D(chunkGridVerts, start + Vec2(0.f, 48.f), end + Vec2(0.f, 48.f), 0.5f, gridColor);
 	}
 
 	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
@@ -1008,4 +1035,20 @@ void WangTileMap::Render() const
 	g_theRenderer->DrawVertexArray(chunkGridVerts);
 
 	g_theRenderer->EndCamera(m_player->m_camera);
+}
+
+CellChunk* WangTileMap::GetChunk(int chunkX, int chunkY)
+{
+	if (!IsChunkIndexValid(chunkX, chunkY)) {
+		return nullptr;
+	}
+	return m_chunks[chunkY][chunkX];
+}
+
+CellChunk const* WangTileMap::GetChunk(int chunkX, int chunkY) const
+{
+	if (!IsChunkIndexValid(chunkX, chunkY)) {
+		return nullptr;
+	}
+	return m_chunks[chunkY][chunkX];
 }

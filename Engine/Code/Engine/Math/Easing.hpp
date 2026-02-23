@@ -30,4 +30,6 @@ float SmoothStep5(float t);
 float Hesitate3(float t);
 float Hesitate5(float t);
 
+float EaseOutCubic(float t);
+
 float CustomFunkyEasingFunction(float t);

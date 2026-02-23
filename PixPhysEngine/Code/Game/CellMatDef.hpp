@@ -6,6 +6,7 @@
 
 enum class PhyType :uint8_t
 {
+	PHY_EMPTY,
 	PHY_STATIC_SOLID,
 	PHY_MOVE_SOLID,
 	PHY_LIQUID,
@@ -28,8 +29,8 @@ enum class CellMatType : uint8_t
 	MAT_ACID,
 	MAT_STSOLID_FIRE,
 	MAT_DYSOLID_FIRE,
-
-	MAT_CA_SAND
+	MAT_CA_SAND,
+	COUNT
 };
 
 class CellMatDef
@@ -151,6 +152,7 @@ public:
 	float m_randomDirectionChance;    // 随机方向概率 (无水平速度时)
 
 	Rgba8 m_color=Rgba8::HILDA;
+	uint8_t m_emissionValue = 0; //0-31
 
 	// Chemical Params
 	bool m_isHighTemp = false;

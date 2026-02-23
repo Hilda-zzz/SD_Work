@@ -8,7 +8,7 @@
 #include "Engine/Renderer/SpriteAnimDefinition.hpp"
 
 class SpriteSheet;
-class IntVec2;
+struct IntVec2;
 
 class ResourceManager
 {

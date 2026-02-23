@@ -7,6 +7,8 @@
 #include "Engine/Core/EventSystem.hpp"
 #include <ThirdParty/imgui/imgui.h>
 #include "Engine/Renderer/Renderer.hpp"
+#include <winnt.h>
+#include <cstring>
 
 Window* Window::s_mainWindow = nullptr;
 
@@ -404,6 +406,7 @@ void Window::CreateOSWindow()
 
 	WCHAR windowTitle[1024];
 	MultiByteToWideChar(GetACP(), 0, m_config.m_windowTitle.c_str(), -1, windowTitle, sizeof(windowTitle) / sizeof(windowTitle[0]));
+	//strcpy_s(windowTitle, sizeof(windowTitle), m_config.m_windowTitle.c_str());
 	HWND windowHandle = CreateWindowEx(
 		windowStyleExFlags,
 		windowClassDescription.lpszClassName,

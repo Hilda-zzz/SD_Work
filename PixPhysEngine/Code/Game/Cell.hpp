@@ -6,7 +6,8 @@
 #include "Game/CellMatManager.hpp"
 
 struct Cell {
-	CellMatType m_type = CellMatType::MAT_EMPTY;
+	//CellMatType m_type = CellMatType::MAT_EMPTY;
+	std::atomic<CellMatType> m_type{ CellMatType::MAT_EMPTY };
 	float m_velocityY = 0.f;          
 	float m_velocityX = 0.f;      
 	float m_accumulMoveY = 0.f;
@@ -30,9 +31,97 @@ struct Cell {
 
 	int m_extraData = 0;
 
+	Cell() = default;
+
+	Cell(const Cell& other)
+		: m_type(other.m_type.load())
+		, m_velocityY(other.m_velocityY)
+		, m_velocityX(other.m_velocityX)
+		, m_accumulMoveY(other.m_accumulMoveY)
+		, m_accumulMoveX(other.m_accumulMoveX)
+		, m_updatedThisFrame(other.m_updatedThisFrame)
+		, m_color(other.m_color)
+		, m_isFreeFalling(other.m_isFreeFalling)
+		, m_framesWithoutMovement(other.m_framesWithoutMovement)
+		, m_liquidReCollideTimes(other.m_liquidReCollideTimes)
+		, m_isBelongRb(other.m_isBelongRb)
+		, m_rigidBodyId(other.m_rigidBodyId)
+		, m_lifeCountDown(other.m_lifeCountDown)
+		, m_flameCountDown(other.m_flameCountDown)
+		, m_dissolveCountDown(other.m_dissolveCountDown)
+		, m_corrosionCountDown(other.m_corrosionCountDown)
+		, m_extraData(other.m_extraData)
+	{}
+
+	Cell& operator=(const Cell& other) {
+		if (this != &other) {
+			m_type.store(other.m_type.load());
+			m_velocityY = other.m_velocityY;
+			m_velocityX = other.m_velocityX;
+			m_accumulMoveY = other.m_accumulMoveY;
+			m_accumulMoveX = other.m_accumulMoveX;
+			m_updatedThisFrame = other.m_updatedThisFrame;
+			m_color = other.m_color;
+			m_isFreeFalling = other.m_isFreeFalling;
+			m_framesWithoutMovement = other.m_framesWithoutMovement;
+			m_liquidReCollideTimes = other.m_liquidReCollideTimes;
+			m_isBelongRb = other.m_isBelongRb;
+			m_rigidBodyId = other.m_rigidBodyId;
+			m_lifeCountDown = other.m_lifeCountDown;
+			m_flameCountDown = other.m_flameCountDown;
+			m_dissolveCountDown = other.m_dissolveCountDown;
+			m_corrosionCountDown = other.m_corrosionCountDown;
+			m_extraData = other.m_extraData;
+		}
+		return *this;
+	}
+
+	Cell(Cell&& other) noexcept
+		: m_type(other.m_type.load())
+		, m_velocityY(other.m_velocityY)
+		, m_velocityX(other.m_velocityX)
+		, m_accumulMoveY(other.m_accumulMoveY)
+		, m_accumulMoveX(other.m_accumulMoveX)
+		, m_updatedThisFrame(other.m_updatedThisFrame)
+		, m_color(other.m_color)
+		, m_isFreeFalling(other.m_isFreeFalling)
+		, m_framesWithoutMovement(other.m_framesWithoutMovement)
+		, m_liquidReCollideTimes(other.m_liquidReCollideTimes)
+		, m_isBelongRb(other.m_isBelongRb)
+		, m_rigidBodyId(other.m_rigidBodyId)
+		, m_lifeCountDown(other.m_lifeCountDown)
+		, m_flameCountDown(other.m_flameCountDown)
+		, m_dissolveCountDown(other.m_dissolveCountDown)
+		, m_corrosionCountDown(other.m_corrosionCountDown)
+		, m_extraData(other.m_extraData)
+	{}
+
+	Cell& operator=(Cell&& other) noexcept {
+		if (this != &other) {
+			m_type.store(other.m_type.load());
+			m_velocityY = other.m_velocityY;
+			m_velocityX = other.m_velocityX;
+			m_accumulMoveY = other.m_accumulMoveY;
+			m_accumulMoveX = other.m_accumulMoveX;
+			m_updatedThisFrame = other.m_updatedThisFrame;
+			m_color = other.m_color;
+			m_isFreeFalling = other.m_isFreeFalling;
+			m_framesWithoutMovement = other.m_framesWithoutMovement;
+			m_liquidReCollideTimes = other.m_liquidReCollideTimes;
+			m_isBelongRb = other.m_isBelongRb;
+			m_rigidBodyId = other.m_rigidBodyId;
+			m_lifeCountDown = other.m_lifeCountDown;
+			m_flameCountDown = other.m_flameCountDown;
+			m_dissolveCountDown = other.m_dissolveCountDown;
+			m_corrosionCountDown = other.m_corrosionCountDown;
+			m_extraData = other.m_extraData;
+		}
+		return *this;
+	}
+
 	bool IsEmpty() const { return m_type == CellMatType::MAT_EMPTY; }
 	void SetEmpty() {
-		m_type = CellMatType::MAT_EMPTY;
+		m_type.store(CellMatType::MAT_EMPTY);
 		m_velocityY = 0;
 		m_velocityX = 0;
 		m_accumulMoveX = 0;
@@ -56,7 +145,8 @@ struct Cell {
 	void SetToType(CellMatType toType)
 	{
 		CellMatDef cellDef = CellMatManager::GetMaterialDef(toType);
-		m_type = toType;
+		//m_type = toType;
+		m_type.store(toType);
 		m_lifeCountDown = cellDef.m_lifeCountDown.GetRandomInRange(&Game::s_rng);
 		m_flameCountDown = cellDef.m_flameCountDown.GetRandomInRange(&Game::s_rng);
 		m_dissolveCountDown = cellDef.m_dissolveCountDowm.GetRandomInRange(&Game::s_rng);

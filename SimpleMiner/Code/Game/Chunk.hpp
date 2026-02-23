@@ -218,7 +218,7 @@ public:
 	void AddBlockVertsWithCulling(int blockIndex, Block const& block);
 	void CalculateWorldBounds();
 
-	void AddWaterBlockVerts(int blockIndex, Block const& block);
+	void AddWaterBlockVerts(int blockIndex);
 	bool ShouldRenderWaterFace(const BlockIterator& neighbor) const;
 	//int SaveChunkToFile(std::string const& saveFolder);
 	//bool LoadChunkFromFile(std::string const& filename);

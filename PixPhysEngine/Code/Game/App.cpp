@@ -15,7 +15,7 @@
 #include "Engine/JobSystem/JobSystem.hpp"
 #include "Game/Nova2D/Nova2DSystem.hpp"
 #include "Engine/ResourceManager/ResourceManager.hpp"
-//#include "Game/EngineBuildPreferences.hpp"
+#include "ThirdParty/tracy/tracy/Tracy.hpp"
 
 App*			g_theApp = nullptr;
 Renderer*		g_theRenderer = nullptr;
@@ -139,6 +139,7 @@ void App::Shutdown()
 
 void App::RunFrame()
 {
+	ZoneScoped;
 	BeginFrame();
 	Update();
 	Render();
@@ -150,6 +151,8 @@ void App::RunMainLoop()
 	auto lastFrameTime = std::chrono::high_resolution_clock::now();
 	while (!m_isQuitting)
 	{
+		FrameMark;
+
 		auto frameStartTime = std::chrono::high_resolution_clock::now();
 		g_theApp->RunFrame();
 		auto currentTime = std::chrono::high_resolution_clock::now();
@@ -190,6 +193,8 @@ void App::BeginFrame()
 
 void App::Update()
 {
+	ZoneScoped;
+
 	if (g_theInput->WasKeyJustPressed(0x77))
 	{
 		delete g_theGame;

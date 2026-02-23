@@ -7,6 +7,17 @@
 #include "Engine/Core/Rgba8.hpp"
 #include <vector>
 
+constexpr float CELLS_PER_METER = 16.0f;  // 16 cell = 1 meter
+constexpr float METERS_PER_CELL = 1.0f / CELLS_PER_METER;
+
+constexpr float GRAVITY_METERS = 9.8f;           // 标准重力加速度
+
+enum class UpdateOrder {
+	FIXED,       // 固定顺序 0→1→2→3
+	ROTATING,    // 轮换顺序
+	RANDOM       // 随机顺序
+};
+
 class BaseMap 
 {
 public:
@@ -49,11 +60,11 @@ public:
 
 	/// MoveSolid 能否移动到目标位置
 	/// 条件：目标为空 或 (目标是液体 且 当前密度大于目标密度)
-	virtual bool MSCanMoveTo(int x, int y, float curDensity) const;
+	virtual bool MSCanMoveTo(int x, int y, float curDensity, bool useFastVersion = false) const;
 
 	/// Liquid 能否移动到目标位置
 	/// 条件：当前密度大于目标密度（包括空气密度=0）
-	virtual bool LiquidCanMoveTo(int x, int y, float curDensity) const;
+	virtual bool LiquidCanMoveTo(int x, int y, float curDensity, bool useFastVersion = false) const;
 
 	/// 检查是否能水平移动
 	/// 条件：速度足够 且 有支撑
@@ -76,6 +87,9 @@ public:
 	// ========================================
 	virtual Rgba8 GetCellDebugColor(const Cell& cell, IntVec2 const& worldCoords) const;
 
+	//
+	virtual void PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, bool isRb = false) {};
+
 protected:
 	// ========================================
 	// 构造函数（仅供子类调用）
@@ -87,17 +101,17 @@ protected:
 	// ========================================
 
 	/// 创建 Chunk 网格（在子类 Initialize 中调用）
-	void CreateChunkGrid();
+	//void CreateChunkGrid();
 
 	/// 销毁 Chunk 网格（在子类析构中调用）
-	void DestroyChunkGrid();
+	//void DestroyChunkGrid();
 
 	// ========================================
 	// 共享数据成员
 	// ========================================
 
 	// Chunk 管理
-	std::vector<std::vector<CellChunk*>> m_chunks;  // [chunkY][chunkX]
+	//std::vector<std::vector<CellChunk*>> m_chunks;  // [chunkY][chunkX]
 	IntVec2 m_chunkGridSize;                        // Chunk 网格大小（列数，行数）
 	int m_chunkSize;                                // 单个 Chunk 的尺寸（默认 64）
 

@@ -218,6 +218,10 @@ void ConfigDrivenCellGenerator::GenerateColoredLayer(
 							ApplyEdgeDetection(cell, advancedDensity, layerConfig.edgeDetection, worldX, worldY);
 						}
 					}
+					else
+					{
+						cell.m_color = CellMatManager::GetMaterialDef(cell.m_type).m_color;
+					}
 
 					break;
 				}
@@ -285,41 +289,42 @@ float ConfigDrivenCellGenerator::ApplyNoiseEffect(
 	int worldX, int worldY,
 	const NoiseConfig& noiseConfig)
 {
-	// 计算 Perlin 噪声
-	float noise = Compute2dPerlinNoise(
-		static_cast<float>(worldX),
-		static_cast<float>(worldY),
-		noiseConfig.scale,
-		noiseConfig.octaves,
-		noiseConfig.persistence,
-		noiseConfig.octaveScale,
-		true,  // renormalize
-		noiseConfig.seedOffset
-	);
-
-	// 应用噪声效果
 	float result = baseDensity;
+	if (baseDensity > 0.0001f)
+	{
+		// 计算 Perlin 噪声
+		float noise = Compute2dPerlinNoise(
+			static_cast<float>(worldX),
+			static_cast<float>(worldY),
+			noiseConfig.scale,
+			noiseConfig.octaves,
+			noiseConfig.persistence,
+			noiseConfig.octaveScale,
+			true,  // renormalize
+			noiseConfig.seedOffset
+		);
 
-	switch (noiseConfig.effectType) {
-	case NoiseEffectType::SUBTRACT_ABS:
-		result -= abs(noise) * noiseConfig.effectStrength;
-		break;
+		switch (noiseConfig.effectType) {
+		case NoiseEffectType::SUBTRACT_ABS:
+			result -= abs(noise) * noiseConfig.effectStrength;
+			break;
 
-	case NoiseEffectType::ADD_ABS:
-		result += abs(noise) * noiseConfig.effectStrength;
-		break;
+		case NoiseEffectType::ADD_ABS:
+			result += abs(noise) * noiseConfig.effectStrength;
+			break;
 
-	case NoiseEffectType::SUBTRACT:
-		result -= noise * noiseConfig.effectStrength;
-		break;
+		case NoiseEffectType::SUBTRACT:
+			result -= noise * noiseConfig.effectStrength;
+			break;
 
-	case NoiseEffectType::ADD:
-		result += noise * noiseConfig.effectStrength;
-		break;
+		case NoiseEffectType::ADD:
+			result += noise * noiseConfig.effectStrength;
+			break;
 
-	case NoiseEffectType::MULTIPLY:
-		result *= (1.0f + noise * noiseConfig.effectStrength);
-		break;
+		case NoiseEffectType::MULTIPLY:
+			result *= (1.0f + noise * noiseConfig.effectStrength);
+			break;
+		}
 	}
 
 	return result;

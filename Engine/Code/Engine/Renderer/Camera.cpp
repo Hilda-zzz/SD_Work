@@ -30,6 +30,8 @@ void Camera::SetOrthographicView(Vec2 const& bottomLeft, Vec2 const& topRight, f
 	m_orthograhicTopRight = topRight;
 	m_orthoraphicNear = near;
 	m_orthographicFar = far;
+
+	m_orthoViewBound = AABB2(m_orthographicBottomLeft, m_orthograhicTopRight);
 }
 
 void Camera::SetPerspectiveView(float aspect, float fov, float near, float far)
@@ -96,7 +98,7 @@ AABB2 const& Camera::GetViewport() const
 
 AABB2 const& Camera::GetOrthoViewBound() const
 {
-	return AABB2(m_orthographicBottomLeft,m_orthograhicTopRight);
+	return m_orthoViewBound;
 }
 
 void Camera::SetCameraToRenderTransform(const Mat44& m)
@@ -125,27 +127,37 @@ Mat44 Camera::GetRenderToClipTransform() const
 
 Mat44 Camera::GetOrthographicMatrix() const
 {
-	return Mat44::MakeOrthoProjection(m_orthographicBottomLeft.x, m_orthograhicTopRight.x,
+	//return Mat44::MakeOrthoProjection(m_orthographicBottomLeft.x, m_orthograhicTopRight.x,
+	//	m_orthographicBottomLeft.y, m_orthograhicTopRight.y,
+	//	m_orthoraphicNear, m_orthographicFar);
+
+	return Mat44::MakeOrthoProjectionReversedZ(m_orthographicBottomLeft.x, m_orthograhicTopRight.x,
 		m_orthographicBottomLeft.y, m_orthograhicTopRight.y,
 		m_orthoraphicNear, m_orthographicFar);
 }
 
 Mat44 Camera::GetPerspectiveMatrix() const
 {
-	return Mat44::MakePerspectiveProjection(m_perspectiveFOV, m_perspectiveAspect, m_perspectiveNear, m_perspectiveFar);
+	//return Mat44::MakePerspectiveProjection(m_perspectiveFOV, m_perspectiveAspect, m_perspectiveNear, m_perspectiveFar);
+	return Mat44::MakePerspectiveProjectionReversedZ(m_perspectiveFOV, m_perspectiveAspect, m_perspectiveNear, m_perspectiveFar);
 }
 
 Mat44 Camera::GetProjectionMatrix() const
 {
 	if (m_mode == Mode::eMode_Orthographic)
 	{
-		return Mat44::MakeOrthoProjection(m_orthographicBottomLeft.x, m_orthograhicTopRight.x,
+		//return Mat44::MakeOrthoProjection(m_orthographicBottomLeft.x, m_orthograhicTopRight.x,
+		//	m_orthographicBottomLeft.y, m_orthograhicTopRight.y,
+		//	m_orthoraphicNear, m_orthographicFar);
+
+		return Mat44::MakeOrthoProjectionReversedZ(m_orthographicBottomLeft.x, m_orthograhicTopRight.x,
 			m_orthographicBottomLeft.y, m_orthograhicTopRight.y,
 			m_orthoraphicNear, m_orthographicFar);
 	}
 	else 
 	{
-		return Mat44::MakePerspectiveProjection(m_perspectiveFOV, m_perspectiveAspect, m_perspectiveNear, m_perspectiveFar);
+		//return Mat44::MakePerspectiveProjection(m_perspectiveFOV, m_perspectiveAspect, m_perspectiveNear, m_perspectiveFar);
+		return Mat44::MakePerspectiveProjectionReversedZ(m_perspectiveFOV, m_perspectiveAspect, m_perspectiveNear, m_perspectiveFar);
 	}
 }
 

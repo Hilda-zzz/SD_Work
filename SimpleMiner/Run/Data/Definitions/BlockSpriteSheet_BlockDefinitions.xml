@@ -21,19 +21,19 @@
   <BlockDefinition name="GrassYellow" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="5, 6" topSpriteCoords="6, 6" bottomSpriteCoords="4, 0"/>
   <BlockDefinition name="AcaciaLog" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="0, 3" topSpriteCoords="1, 3" bottomSpriteCoords="1, 3"/>
   <BlockDefinition name="AcaciaPlanks" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="2, 3" topSpriteCoords="2, 3" bottomSpriteCoords="2, 3"/>
-  <BlockDefinition name="AcaciaLeaves" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="3, 3" topSpriteCoords="3, 3" bottomSpriteCoords="3, 3"/>
+  <BlockDefinition name="AcaciaLeaves" isVisible="true" isSolid="true" isOpaque="true" isLeaves="true" sideSpriteCoords="3, 3" topSpriteCoords="3, 3" bottomSpriteCoords="3, 3"/>
   <BlockDefinition name="CactusLog" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="5, 3" topSpriteCoords="6, 3" bottomSpriteCoords="7, 3"/>
   <BlockDefinition name="OakLog" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="0, 4" topSpriteCoords="1, 4" bottomSpriteCoords="1, 4"/>
   <BlockDefinition name="OakPlanks" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="2, 4" topSpriteCoords="2, 4" bottomSpriteCoords="2, 4"/>
-  <BlockDefinition name="OakLeaves" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="3, 4" topSpriteCoords="3, 4" bottomSpriteCoords="3, 4"/>
+  <BlockDefinition name="OakLeaves" isVisible="true" isSolid="true" isOpaque="true" isLeaves="true" sideSpriteCoords="3, 4" topSpriteCoords="3, 4" bottomSpriteCoords="3, 4"/>
   <BlockDefinition name="BirchLog" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="0, 5" topSpriteCoords="1, 5" bottomSpriteCoords="1, 5"/>
   <BlockDefinition name="BirchPlanks" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="2, 5" topSpriteCoords="2, 5" bottomSpriteCoords="2, 5"/>
-  <BlockDefinition name="BirchLeaves" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="3, 5" topSpriteCoords="3, 5" bottomSpriteCoords="3, 5"/>
+  <BlockDefinition name="BirchLeaves" isVisible="true" isSolid="true" isOpaque="true" isLeaves="true" sideSpriteCoords="3, 5" topSpriteCoords="3, 5" bottomSpriteCoords="3, 5"/>
   <BlockDefinition name="JungleLog" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="0, 6" topSpriteCoords="1, 6" bottomSpriteCoords="1, 6"/>
   <BlockDefinition name="JunglePlanks" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="2, 6" topSpriteCoords="2, 6" bottomSpriteCoords="2, 6"/>
-  <BlockDefinition name="JungleLeaves" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="3, 6" topSpriteCoords="3, 6" bottomSpriteCoords="3, 6"/>
+  <BlockDefinition name="JungleLeaves" isVisible="true" isSolid="true" isOpaque="true" isLeaves="true" sideSpriteCoords="3, 6" topSpriteCoords="3, 6" bottomSpriteCoords="3, 6"/>
   <BlockDefinition name="SpruceLog" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="0, 7" topSpriteCoords="1, 7" bottomSpriteCoords="1, 7"/>
   <BlockDefinition name="SprucePlanks" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="2, 7" topSpriteCoords="2, 7" bottomSpriteCoords="2, 7"/>
-  <BlockDefinition name="SpruceLeaves" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="3, 7" topSpriteCoords="3, 7" bottomSpriteCoords="3, 7"/>
+  <BlockDefinition name="SpruceLeaves" isVisible="true" isSolid="true" isOpaque="true" isLeaves="true" sideSpriteCoords="3, 7" topSpriteCoords="3, 7" bottomSpriteCoords="3, 7"/>
   <BlockDefinition name="SpruceLeavesSnow" isVisible="true" isSolid="true" isOpaque="true" sideSpriteCoords="5, 7" topSpriteCoords="2, 0" bottomSpriteCoords="3, 7"/>
 </Definitions>

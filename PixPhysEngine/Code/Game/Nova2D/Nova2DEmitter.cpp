@@ -397,3 +397,4 @@ void Nova2DEmitter::SetAnimation(SpriteAnimDefinition const* anim) {
 	m_config.m_spriteDef = nullptr;
 	m_animTime = 0.0f;
 }
+

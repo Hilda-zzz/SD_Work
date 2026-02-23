@@ -5,11 +5,12 @@
 #include "CellBehaviorSystem.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Game/Game.hpp"
+#include <ThirdParty/tracy/tracy/Tracy.hpp>
 
 
-void CellBehaviorSystemInChunk::UpdateCell(Cell& cell, int worldX, int worldY, SandboxMap* map)
+void CellBehaviorSystemInChunk::UpdateCell(Cell& cell, int worldX, int worldY, BaseMap* map)
 {
-	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 
 	//cell.m_updatedThisFrame = true;
 
@@ -31,43 +32,71 @@ void CellBehaviorSystemInChunk::UpdateCell(Cell& cell, int worldX, int worldY, S
 	}
 }
 
-void CellBehaviorSystemInChunk::HandleMoveSolidMovement(int& currentX, int& currentY, int targetX, int targetY, SandboxMap* map)
+void CellBehaviorSystemInChunk::HandleMoveSolidMovement(int& currentX, int& currentY, int targetX, int targetY, BaseMap* map)
 {
+	//ZoneScoped;
+
+	int minX = currentX, maxX = currentX;
+	int minY = currentY, maxY = currentY;
+
 	int totalSteps = std::abs(targetY - currentY) + std::abs(targetX - currentX);
 	int remainingSteps = totalSteps;
 
+	bool canSkipBoundsCheck = map->IsInBounds(currentX - 32, currentY - 32) &&
+		map->IsInBounds(currentX + 32, currentY + 32);
+
 	auto moveCallback = [&](int pathX, int pathY) -> bool {
-		if (!map->IsInBounds(pathX, pathY)) {
-			return false;
+
+		if (!canSkipBoundsCheck)
+		{
+			if (!map->IsInBounds(pathX, pathY)) {
+				return false;
+			}
 		}
 
 		Cell& currentCell = map->GetCell(currentX, currentY);
 		Cell& targetCell = map->GetCell(pathX, pathY);
-		const CellMatDef& targetCellMatDef = CellMatManager::GetMaterialDef(targetCell.m_type);
+		const CellMatDef& targetCellMatDef = CellMatManager::GetMaterialDef(targetCell.m_type.load());
 
 		// === 1. If empty ===
-		if (targetCell.IsEmpty()) {
+		if (targetCell.IsEmpty()) 
+		{
+			MarkChunkDirtyWithNeighbors(map, currentX, currentY);
 
-			std::swap(map->GetCell(currentX, currentY), map->GetCell(pathX, pathY));
+			std::swap(currentCell, targetCell);
 			// track new position
 			currentX = pathX;
 			currentY = pathY;
 
 			MarkChunkDirtyWithNeighbors(map, currentX, currentY);
+			minX = std::min(minX, currentX);
+			maxX = std::max(maxX, currentX);
+			minY = std::min(minY, currentY);
+			maxY = std::max(maxY, currentY);
+
 			//map->GetChunkByWorldPos(currentX, currentY)->MarkDirty();
 
 			remainingSteps--;
-			map->GetCell(currentX, currentY).m_isFreeFalling = true;
+			//map->GetCell(currentX, currentY).m_isFreeFalling = true;
+			targetCell.m_isFreeFalling=true;
 			return true;
 		}
 
 		// === 2. Liquid, replace with Buoyancy ===
 		else if (targetCellMatDef.m_physicsType == PhyType::PHY_LIQUID) {
 
-			std::swap(map->GetCell(currentX, currentY), map->GetCell(pathX, pathY));
+			MarkChunkDirtyWithNeighbors(map, currentX, currentY);
+
+			std::swap(currentCell, targetCell);
 			currentX = pathX;
 			currentY = pathY;
+
 			MarkChunkDirtyWithNeighbors(map, currentX, currentY);
+			minX = std::min(minX, currentX);
+			maxX = std::max(maxX, currentX);
+			minY = std::min(minY, currentY);
+			maxY = std::max(maxY, currentY);
+
 			//map->GetChunkByWorldPos(currentX, currentY)->MarkDirty();
 
 			remainingSteps--;
@@ -85,7 +114,13 @@ void CellBehaviorSystemInChunk::HandleMoveSolidMovement(int& currentX, int& curr
 			if (HandleMSvsMSCollision(currentX, currentY, pathX, pathY, currentCell, targetCell))
 			{
 				MarkChunkDirtyWithNeighbors(map, currentX, currentY);
-				//map->GetChunkByWorldPos(pathX, pathY)->MarkDirty();
+				minX = std::min(minX, currentX);
+				maxX = std::max(maxX, currentX);
+				minY = std::min(minY, currentY);
+				maxY = std::max(maxY, currentY);
+
+				// #Check: add back
+				map->GetChunkByWorldPos(pathX, pathY)->MarkDirty();
 			}
 			return false;
 		}
@@ -96,112 +131,143 @@ void CellBehaviorSystemInChunk::HandleMoveSolidMovement(int& currentX, int& curr
 			return false;
 		}
 
-		//return false;  // #TODO: Test if needed of any difference
-		else {
-			DebuggerPrintf("WARNING: Unknown physics type at (%d,%d): %d\n",
-				pathX, pathY, (int)targetCellMatDef.m_physicsType);
-			return false;
-		}
+		return false;  // #TODO: Test if needed of any difference
+		//else {
+		//	DebuggerPrintf("WARNING: Unknown physics type at (%d,%d): %d\n",
+		//		pathX, pathY, (int)targetCellMatDef.m_physicsType);
+		//	return false;
+		//}
 	};
 
 	BresenhamLineExcludeStart(currentX, currentY, targetX, targetY, moveCallback);
 
 	//============ Phase 2: Cellular Automata =================================
 
+	{
+		//ZoneScopedN("CAMove");
 	int maxCellularSteps = remainingSteps;
 	int cellularSteps = 0;
 
 	if (remainingSteps > 0) 
 	{
+		const CellMatDef& matDef = CellMatManager::GetMaterialDef(map->GetCell(currentX, currentY).m_type.load());
 		while (cellularSteps < maxCellularSteps) 
 		{
 			cellularSteps++;
 			bool moved = false;
 
-			Cell curCell = map->GetCell(currentX, currentY);
+			Cell& curCell = map->GetCell(currentX, currentY);
 			int primaryDir, secondaryDir;
 			GetMovementDirections(curCell, currentX, currentY, primaryDir, secondaryDir);
 
-			const CellMatDef& matDef = CellMatManager::GetMaterialDef(curCell.m_type);
+			//const CellMatDef& matDef = CellMatManager::GetMaterialDef(curCell.m_type.load());
 
 			// 1. 垂直下落
-			if (map->MSCanMoveTo(currentX, currentY - 1, matDef.m_density)) {
-				std::swap(map->GetCell(currentX, currentY), map->GetCell(currentX, currentY - 1));
+			if (map->MSCanMoveTo(currentX, currentY - 1, matDef.m_density, canSkipBoundsCheck)) {
+				Cell& targetCell = map->GetCell(currentX, currentY - 1);
+				std::swap(curCell, targetCell);
 				currentY--;
 				remainingSteps--;
 				moved = true;
 
 				MarkChunkDirtyWithNeighbors(map, currentX, currentY);
+				minX = std::min(minX, currentX);
+				maxX = std::max(maxX, currentX);
+				minY = std::min(minY, currentY);
+				maxY = std::max(maxY, currentY);
+
 				//map->GetChunkByWorldPos(currentX, currentY)->MarkDirty();
 
 				// 保持下落状态
-				map->GetCell(currentX, currentY).m_isFreeFalling = true;
+				//map->GetCell(currentX, currentY).m_isFreeFalling = true;
+				targetCell.m_isFreeFalling = true;
 			}
 			// 2. 斜向移动
-			else if (map->MSCanMoveTo(currentX + primaryDir, currentY - 1, matDef.m_density)) {
-				std::swap(map->GetCell(currentX, currentY), map->GetCell(currentX + primaryDir, currentY - 1));
+			else if (map->MSCanMoveTo(currentX + primaryDir, currentY - 1, matDef.m_density, canSkipBoundsCheck)) {
+				Cell& targetCell = map->GetCell(currentX + primaryDir, currentY - 1);
+				std::swap(curCell, targetCell);
 				currentX += primaryDir;
 				currentY--;
 				remainingSteps--;
 				moved = true;
 
 				MarkChunkDirtyWithNeighbors(map, currentX, currentY);
+				minX = std::min(minX, currentX);
+				maxX = std::max(maxX, currentX);
+				minY = std::min(minY, currentY);
+				maxY = std::max(maxY, currentY);
+
 				//map->GetChunkByWorldPos(currentX, currentY)->MarkDirty();
 
 				// 应用斜向移动的物理效果
-				const CellMatDef& matDef = CellMatManager::GetMaterialDef(map->GetCell(currentX, currentY).m_type);
+				const CellMatDef& matDef = CellMatManager::GetMaterialDef(targetCell.m_type.load());
 				const auto& params = matDef.m_moveSolid;
 
-				map->GetCell(currentX, currentY).m_velocityY *= 0.9f;  // #TODO: make sure the param
-				map->GetCell(currentX, currentY).m_velocityX *= matDef.m_friction;
+				targetCell.m_velocityY *= 0.9f;  // #TODO: make sure the param
+				targetCell.m_velocityX *= matDef.m_friction;
 
-				float momentumTransfer = std::abs(map->GetCell(currentX, currentY).m_velocityY) * 0.1f;
-				map->GetCell(currentX, currentY).m_velocityX += momentumTransfer * primaryDir;
-				ClampVelocity(map->GetCell(currentX, currentY), matDef.m_terminalVelocity * 0.5f);
+				float momentumTransfer = std::abs(targetCell.m_velocityY) * 0.1f;
+				targetCell.m_velocityX += momentumTransfer * primaryDir;
+				ClampVelocity(targetCell, matDef.m_terminalVelocity * 0.5f);
 			}
 			// 3. 水平移动
 			else if (map->CanMoveHorizontally(currentX, currentY, curCell) &&
 				std::abs(curCell.m_velocityX) > 2.f) {
 				int horizontalDir = curCell.m_velocityX > 0.f ? 1 : -1;
 
-				if (map->MSCanMoveTo(currentX + horizontalDir, currentY, matDef.m_density)) {
-					std::swap(map->GetCell(currentX, currentY), map->GetCell(currentX + horizontalDir, currentY));
+				if (map->MSCanMoveTo(currentX + horizontalDir, currentY, matDef.m_density, canSkipBoundsCheck)) {
+					Cell& targetCell = map->GetCell(currentX + horizontalDir, currentY);
+					std::swap(curCell, targetCell);
 					currentX += horizontalDir;
 					remainingSteps--;
 					moved = true;
 
 					MarkChunkDirtyWithNeighbors(map, currentX, currentY);
+					minX = std::min(minX, currentX);
+					maxX = std::max(maxX, currentX);
+					minY = std::min(minY, currentY);
+					maxY = std::max(maxY, currentY);
+
 					//map->GetChunkByWorldPos(currentX, currentY)->MarkDirty();
 
 					// 应用水平移动的物理效果
-					map->GetCell(currentX, currentY).m_velocityX *= matDef.m_horizontalDamping;
-					map->GetCell(currentX, currentY).m_velocityY *= matDef.m_horizontalDamping;
+					targetCell.m_velocityX *= matDef.m_horizontalDamping;
+					targetCell.m_velocityY *= matDef.m_horizontalDamping;
 
 				}
 			}
 		}
 	}
+	}
+
+	//MarkChunkDirtyInRange(map, minX, minY, maxX, maxY);
 }
 
-void CellBehaviorSystemInChunk::HandleLiquidMovement(int& currentX, int& currentY, int targetX, int targetY, SandboxMap* map)
+void CellBehaviorSystemInChunk::HandleLiquidMovement(int& currentX, int& currentY, int targetX, int targetY, BaseMap* map)
 {
 	int totalSteps = std::abs(targetY - currentY) + std::abs(targetX - currentX);
 	int remainingSteps = totalSteps;
+
+	bool canSkipBoundsCheck = map->IsInBounds(currentX - 32, currentY - 32) &&
+		map->IsInBounds(currentX + 32, currentY + 32);
 
 	//============phase 1. brensenham =================================
 	// bool bresenhamCompleted = true;
 
 	auto moveCallback = [&](int pathX, int pathY) -> bool {
-		if (!map->IsInBounds(pathX, pathY))
+		if (!canSkipBoundsCheck)
 		{
-			// bresenhamCompleted = false;
-			return false;
+			if (!map->IsInBounds(pathX, pathY))
+			{
+				// bresenhamCompleted = false;
+				return false;
+			}
 		}
 
 		Cell& targetCell = map->GetCell(pathX, pathY);
 		Cell& currentCell = map->GetCell(currentX, currentY);
-		const CellMatDef& targetCellMatDef = CellMatManager::GetMaterialDef(targetCell.m_type);
-		const CellMatDef& curCellMatDef = CellMatManager::GetMaterialDef(currentCell.m_type);
+		const CellMatDef& targetCellMatDef = CellMatManager::GetMaterialDef(targetCell.m_type.load());
+		const CellMatDef& curCellMatDef = CellMatManager::GetMaterialDef(currentCell.m_type.load());
 
 		// == 1. if empty
 		if (targetCell.IsEmpty()) {
@@ -266,10 +332,10 @@ void CellBehaviorSystemInChunk::HandleLiquidMovement(int& currentX, int& current
 			GetMovementDirections(curCell, currentX, currentY, primaryDir, secondaryDir);
 			cellularSteps++;
 
-			const CellMatDef& matDef = CellMatManager::GetMaterialDef(map->GetCell(currentX, currentY).m_type);
+			const CellMatDef& matDef = CellMatManager::GetMaterialDef(map->GetCell(currentX, currentY).m_type.load());
 
 			// 1. 优先尝试垂直下落
-			if (map->LiquidCanMoveTo(currentX, currentY - 1, matDef.m_density)) {
+			if (map->LiquidCanMoveTo(currentX, currentY - 1, matDef.m_density, canSkipBoundsCheck)) {
 				std::swap(map->GetCell(currentX, currentY), map->GetCell(currentX, currentY - 1));
 				currentY--;
 				//remainingSteps--;
@@ -311,7 +377,7 @@ void CellBehaviorSystemInChunk::HandleLiquidMovement(int& currentX, int& current
 			{
 				int horizontalDir = curCell.m_velocityX >= 0.f ? 1 : -1;
 				curCell.m_velocityX = horizontalDir * std::abs(map->GetCell(currentX, currentY).m_velocityY) * 0.5f;
-				if (map->LiquidCanMoveTo(currentX + horizontalDir, currentY, matDef.m_density))
+				if (map->LiquidCanMoveTo(currentX + horizontalDir, currentY, matDef.m_density, canSkipBoundsCheck))
 				{
 					std::swap(map->GetCell(currentX, currentY), map->GetCell(currentX + horizontalDir, currentY));
 					currentX += horizontalDir;
@@ -326,7 +392,7 @@ void CellBehaviorSystemInChunk::HandleLiquidMovement(int& currentX, int& current
 					map->GetCell(currentX, currentY).m_velocityY *= matDef.m_verticalDamping;
 					map->GetCell(currentX, currentY).m_accumulMoveY = 0.f;
 				}
-				else if (map->LiquidCanMoveTo(currentX - horizontalDir, currentY, matDef.m_density))
+				else if (map->LiquidCanMoveTo(currentX - horizontalDir, currentY, matDef.m_density, canSkipBoundsCheck))
 				{
 					map->GetCell(currentX, currentY).m_liquidReCollideTimes++;
 					if (map->GetCell(currentX, currentY).m_liquidReCollideTimes > 5)
@@ -357,12 +423,12 @@ void CellBehaviorSystemInChunk::HandleLiquidMovement(int& currentX, int& current
 bool CellBehaviorSystemInChunk::HandleMSvsMSCollision(int fromX, int fromY, int toX, int toY, Cell& movingCell, Cell& targetCell)
 {
 	float ratio = Game::s_rng.RollRandomFloatZeroToOne();
-	const CellMatDef& targetCellMatDef = CellMatManager::GetMaterialDef(targetCell.m_type);
+	const CellMatDef& targetCellMatDef = CellMatManager::GetMaterialDef(targetCell.m_type.load());
 	if (ratio > targetCellMatDef.m_activationThreshold && !targetCell.m_isFreeFalling)
 	{
 		return false; // do not activate
 	}
-	const CellMatDef& moveCellMatDef = CellMatManager::GetMaterialDef(movingCell.m_type);
+	const CellMatDef& moveCellMatDef = CellMatManager::GetMaterialDef(movingCell.m_type.load());
 	// === Activate ===
 	if (!targetCell.m_isFreeFalling)
 	{
@@ -400,7 +466,7 @@ bool CellBehaviorSystemInChunk::HandleMSvsMSCollision(int fromX, int fromY, int 
 void CellBehaviorSystemInChunk::ApplyGravity(Cell& cell, float deltaTime)
 {
 	//CellBehaviorSystem::ApplyGravity(cell, deltaTime);
-	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 
 	float gravity = GRAVITY * matDef.m_gravityMultiplier;
 	cell.m_velocityY += gravity * deltaTime;
@@ -412,7 +478,7 @@ void CellBehaviorSystemInChunk::ApplyCollisionPhysics(Cell& cell, int deltaX, in
 	// 直接复用
 	//CellBehaviorSystem::ApplyCollisionPhysics(cell, deltaX, deltaY);
 
-	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 
 	//if (matDef.m_physicsType != PhyType::PHY_MOVE_SOLID || !cell.m_isFreeFalling) return;
 	if (!cell.m_isFreeFalling) return;
@@ -465,9 +531,9 @@ void CellBehaviorSystemInChunk::ClampVelocity(Cell& cell, float maxSpeed)
 	cell.m_velocityY = GetClamped(cell.m_velocityY, -maxSpeed, maxSpeed);
 }
 
-void CellBehaviorSystemInChunk::UpdateMoveSolid(Cell& cell, int worldX, int worldY, SandboxMap* map)
+void CellBehaviorSystemInChunk::UpdateMoveSolid(Cell& cell, int worldX, int worldY, BaseMap* map)
 {
-	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+	//ZoneScoped;
 
 	// === Update Physics ===
 	if (cell.m_isFreeFalling)
@@ -476,11 +542,12 @@ void CellBehaviorSystemInChunk::UpdateMoveSolid(Cell& cell, int worldX, int worl
 		//map->GetChunkByWorldPos(worldX, worldY)->MarkDirty();
 		if (!cell.m_updatedThisFrame)
 		{
-			ApplyGravity(cell, map->GetDeltaTime());
+			float deltaTime = map->GetDeltaTime();
+			ApplyGravity(cell, deltaTime);
 
 			// update accumulation distance
-			cell.m_accumulMoveY += cell.m_velocityY * map->GetDeltaTime();
-			cell.m_accumulMoveX += cell.m_velocityX * map->GetDeltaTime();
+			cell.m_accumulMoveY += cell.m_velocityY * deltaTime;
+			cell.m_accumulMoveX += cell.m_velocityX * deltaTime;
 
 			cell.m_updatedThisFrame = true;
 		}
@@ -491,18 +558,65 @@ void CellBehaviorSystemInChunk::UpdateMoveSolid(Cell& cell, int worldX, int worl
 	}
 	else
 	{
-		// update isFreeFalling
+		//// update isFreeFalling
+		//if (map->IsInBounds(worldX, worldY - 1))
+		//{
+		//	Cell const& belowNeighborCell = map->GetCell(worldX, worldY - 1);
+		//	CellMatDef const& neigborMatDef = CellMatManager::GetMaterialDef(belowNeighborCell.m_type.load());
+		//	if (belowNeighborCell.IsEmpty() ||
+		//		neigborMatDef.m_physicsType == PhyType::PHY_LIQUID)
+		//	{
+		//		cell.m_isFreeFalling = true;
+
+		//		MarkChunkDirtyWithNeighbors(map, worldX, worldY);
+		//		//map->GetChunkByWorldPos(worldX, worldY)->MarkDirty();
+
+		//		cell.m_framesWithoutMovement = 0;
+		//		cell.m_accumulMoveX = 0.0f;
+		//		cell.m_accumulMoveY = 0.0f;
+		//	}
+		//}
+		//else
+		//{
+		//	return;
+		//}
 		if (map->IsInBounds(worldX, worldY - 1))
 		{
-			CellMatDef const& neigborMatDef = CellMatManager::GetMaterialDef(map->GetCell(worldX, worldY - 1).m_type);
-			if (map->GetCell(worldX, worldY - 1).IsEmpty() ||
-				neigborMatDef.m_physicsType == PhyType::PHY_LIQUID)
+			Cell const& belowCell = map->GetCell(worldX, worldY - 1);
+			CellMatDef const& belowMatDef = CellMatManager::GetMaterialDef(belowCell.m_type.load());
+
+			bool belowPassable = belowCell.IsEmpty() || belowMatDef.m_physicsType == PhyType::PHY_LIQUID;
+
+			bool diagPassable = false;
+
+			bool leftDiagPassable = false;
+			bool rightDiagPassable = false;
+
+			// 检查左下
+			if (map->IsInBounds(worldX - 1, worldY - 1))
+			{
+				Cell const& diagLeft = map->GetCell(worldX - 1, worldY - 1);
+				CellMatDef const& diagLeftMatDef = CellMatManager::GetMaterialDef(diagLeft.m_type.load());
+				if (diagLeft.IsEmpty() || diagLeftMatDef.m_physicsType == PhyType::PHY_LIQUID)
+					leftDiagPassable = true;
+			}
+
+			// 检查右下
+			if (map->IsInBounds(worldX + 1, worldY - 1))
+			{
+				Cell const& diagRight = map->GetCell(worldX + 1, worldY - 1);
+				CellMatDef const& diagRightMatDef = CellMatManager::GetMaterialDef(diagRight.m_type.load());
+				if (diagRight.IsEmpty() || diagRightMatDef.m_physicsType == PhyType::PHY_LIQUID)
+					rightDiagPassable = true;
+			}
+
+			// 左下和右下都满足才激活
+			diagPassable = leftDiagPassable && rightDiagPassable;
+
+			if (belowPassable || diagPassable)
 			{
 				cell.m_isFreeFalling = true;
-
 				MarkChunkDirtyWithNeighbors(map, worldX, worldY);
-				//map->GetChunkByWorldPos(worldX, worldY)->MarkDirty();
-
 				cell.m_framesWithoutMovement = 0;
 				cell.m_accumulMoveX = 0.0f;
 				cell.m_accumulMoveY = 0.0f;
@@ -531,15 +645,16 @@ void CellBehaviorSystemInChunk::UpdateMoveSolid(Cell& cell, int worldX, int worl
 	// Dealing with movement
 	int currentX = worldX;
 	int currentY = worldY;
-	HandleMoveSolidMovement(currentX, currentY, targetX, targetY, map);
+	if (currentX != targetX || currentY != targetY)
+		HandleMoveSolidMovement(currentX, currentY, targetX, targetY, map);
 
 	// update accumulated movement
 	UpdateAccumulatedMovement(worldX, worldY, currentX, currentY, map);
 }
 
-void CellBehaviorSystemInChunk::UpdateLiquid(Cell& cell, int worldX, int worldY, SandboxMap* map)
+void CellBehaviorSystemInChunk::UpdateLiquid(Cell& cell, int worldX, int worldY, BaseMap* map)
 {
-	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 
 	// === Update Physics ===
 	if (cell.m_isFreeFalling)
@@ -583,7 +698,7 @@ void CellBehaviorSystemInChunk::UpdateLiquid(Cell& cell, int worldX, int worldY,
 			if (map->IsInBounds(neighborX, neighborY))
 			{
 				Cell const& neighborCell = map->GetCell(neighborX, neighborY);
-				const CellMatDef& neighborMatDef = CellMatManager::GetMaterialDef(neighborCell.m_type);
+				const CellMatDef& neighborMatDef = CellMatManager::GetMaterialDef(neighborCell.m_type.load());
 				if (neighborCell.IsEmpty() || neighborMatDef.m_density < matDef.m_density)
 				{
 					hasEmptyNeighbor = true;
@@ -634,7 +749,7 @@ void CellBehaviorSystemInChunk::UpdateLiquid(Cell& cell, int worldX, int worldY,
 	UpdateAccumulatedMovementLiquid(worldX, worldY, currentX, currentY, map);
 }
 
-void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, int worldY, SandboxMap* map)
+void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, int worldY, BaseMap* map)
 {
 	//const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
 
@@ -881,7 +996,7 @@ void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, 
 				Cell& leftCell = map->GetCell(leftX, worldY);
 				Cell& rightCell = map->GetCell(rightX, worldY);
 				Cell& belowCell = map->GetCell(worldX, worldY - 1);
-				const CellMatDef& belowMatDef = CellMatManager::GetMaterialDef(belowCell.m_type);
+				const CellMatDef& belowMatDef = CellMatManager::GetMaterialDef(belowCell.m_type.load());
 
 				// 条件：左右都为空 && 下方不是static solid && 下方不为空
 				if (leftCell.IsEmpty() &&
@@ -916,7 +1031,7 @@ void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, 
 					Cell& diagUpCell = map->GetCell(diagUpX, diagUpY);
 
 					// 如果下方为空 并且 斜上方为snow
-					if (belowCell.IsEmpty() && diagUpCell.m_type == CellMatType::MAT_CA_SAND)
+					if (belowCell.IsEmpty() && diagUpCell.m_type.load() == CellMatType::MAT_CA_SAND)
 					{
 						// 与下方交换
 						std::swap(map->GetCell(worldX, worldY), map->GetCell(worldX, worldY - 1));
@@ -1017,7 +1132,7 @@ void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, 
 								if (map->IsInBounds(checkX, checkY))
 								{
 									Cell& checkCell = map->GetCell(checkX, checkY);
-									if (checkCell.m_type == CellMatType::MAT_CA_SAND)
+									if (checkCell.m_type.load() == CellMatType::MAT_CA_SAND)
 									{
 										touchingSnow = true;
 										break;
@@ -1057,9 +1172,9 @@ void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, 
 		Cell& upCell = map->GetCell(worldX, worldY + 1);
 		Cell& downCell = map->GetCell(worldX, worldY - 1);
 
-		if (leftCell.m_type == CellMatType::MAT_CA_SAND &&
-			rightCell.m_type == CellMatType::MAT_CA_SAND &&
-			upCell.m_type == CellMatType::MAT_CA_SAND &&
+		if (leftCell.m_type.load() == CellMatType::MAT_CA_SAND &&
+			rightCell.m_type.load() == CellMatType::MAT_CA_SAND &&
+			upCell.m_type.load() == CellMatType::MAT_CA_SAND &&
 			downCell.IsEmpty())
 		{
 			// 与上方交换
@@ -1071,8 +1186,10 @@ void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, 
 	}
 }
 
-void CellBehaviorSystemInChunk::MarkChunkDirtyWithNeighbors(SandboxMap* map, int worldX, int worldY)
+void CellBehaviorSystemInChunk::MarkChunkDirtyWithNeighbors(BaseMap* map, int worldX, int worldY)
 {
+	//ZoneScoped;
+
 	CellChunk* chunk = map->GetChunkByWorldPos(worldX, worldY);
 	if (!chunk) return;
 
@@ -1122,6 +1239,83 @@ void CellBehaviorSystemInChunk::MarkChunkDirtyWithNeighbors(SandboxMap* map, int
 	if (localCoords.x == CHUNK_SIZE - 1 && localCoords.y == CHUNK_SIZE - 1) {
 		CellChunk* bottomRightChunk = map->GetChunkByWorldPos(worldX + 1, worldY + 1);
 		if (bottomRightChunk) bottomRightChunk->MarkDirty();
+	}
+}
+
+void CellBehaviorSystemInChunk::MarkChunkDirtyInRange(BaseMap* map, int minX, int minY, int maxX, int maxY)
+{
+	//ZoneScoped;
+	// 快速路径:单点标记
+	if (minX == maxX && minY == maxY) {
+		MarkChunkDirtyWithNeighbors(map, minX, minY);
+		return;
+	}
+
+	// 获取局部坐标
+	IntVec2 minLocal = CellChunk::WorldToLocal(minX, minY);
+	IntVec2 maxLocal = CellChunk::WorldToLocal(maxX, maxY);
+
+	// === 核心思想:最多9个chunk,用数组存储去重 ===
+	CellChunk* chunks[9] = { nullptr };
+	int chunkCount = 0;
+
+	auto addChunkIfUnique = [&](CellChunk* chunk) {
+		if (!chunk) return;
+
+		// 检查是否已存在
+		for (int i = 0; i < chunkCount; i++) {
+			if (chunks[i] == chunk) return;
+		}
+
+		// 添加新chunk
+		chunks[chunkCount++] = chunk;
+		};
+
+	// 标记四个顶点所在的chunk
+	addChunkIfUnique(map->GetChunkByWorldPos(minX, minY));
+	addChunkIfUnique(map->GetChunkByWorldPos(maxX, minY));
+	addChunkIfUnique(map->GetChunkByWorldPos(minX, maxY));
+	addChunkIfUnique(map->GetChunkByWorldPos(maxX, maxY));
+
+	// 检查边界并添加相邻chunk
+
+	// 左边界
+	if (minLocal.x == 0) {
+		addChunkIfUnique(map->GetChunkByWorldPos(minX - 1, minY));
+	}
+
+	// 右边界
+	if (maxLocal.x == CHUNK_SIZE - 1) {
+		addChunkIfUnique(map->GetChunkByWorldPos(maxX + 1, minY));
+	}
+
+	// 下边界
+	if (minLocal.y == 0) {
+		addChunkIfUnique(map->GetChunkByWorldPos(minX, minY - 1));
+	}
+
+	// 上边界
+	if (maxLocal.y == CHUNK_SIZE - 1) {
+		addChunkIfUnique(map->GetChunkByWorldPos(minX, maxY + 1));
+	}
+
+	// 检查四个角
+	if (minLocal.x == 0 && minLocal.y == 0) {
+		addChunkIfUnique(map->GetChunkByWorldPos(minX - 1, minY - 1));
+	}
+	if (maxLocal.x == CHUNK_SIZE - 1 && minLocal.y == 0) {
+		addChunkIfUnique(map->GetChunkByWorldPos(maxX + 1, minY - 1));
+	}
+	if (minLocal.x == 0 && maxLocal.y == CHUNK_SIZE - 1) {
+		addChunkIfUnique(map->GetChunkByWorldPos(minX - 1, maxY + 1));
+	}
+	if (maxLocal.x == CHUNK_SIZE - 1 && maxLocal.y == CHUNK_SIZE - 1) {
+		addChunkIfUnique(map->GetChunkByWorldPos(maxX + 1, maxY + 1));
+	}
+
+	// 批量标记所有chunk
+	for (int i = 0; i < chunkCount; i++) {
+		chunks[i]->MarkDirty();
 	}
 }
 
@@ -1190,14 +1384,15 @@ void CellBehaviorSystemInChunk::MarkChunkDirtyWithNeighbors(SandboxMap* map, int
 //	return true;
 //}
 
-void CellBehaviorSystemInChunk::UpdateAccumulatedMovement(int oldX, int oldY, int newX, int newY, SandboxMap* map)
+void CellBehaviorSystemInChunk::UpdateAccumulatedMovement(int oldX, int oldY, int newX, int newY, BaseMap* map)
 {
 	// === 关键：现在cell可能已经跨chunk移动 ===
 	// 所以要从新位置获取cell引用
 
-	if (!map->IsInBounds(newX, newY)) {
-		return;  // 移出边界，放弃更新
-	}
+	// #RiskyDelete
+	//if (!map->IsInBounds(newX, newY)) {
+	//	return;  // 移出边界，放弃更新
+	//}
 
 	Cell& finalCell = map->GetCell(newX, newY);
 
@@ -1205,11 +1400,13 @@ void CellBehaviorSystemInChunk::UpdateAccumulatedMovement(int oldX, int oldY, in
 	int actualMoveY = newY - oldY;
 
 	// === 检查是否没有移动 ===
-	if (actualMoveX == 0 && actualMoveY == 0) {
+	if (actualMoveX == 0 && actualMoveY == 0) 
+	{
 		finalCell.m_framesWithoutMovement++;
 
 		//高温粒子不能置为静态  //&&!CellMatManager::GetMaterialDef(finalCell.m_type).m_isHighTemp? 或许物理化学的mark dirty应该分开处理
-		if (finalCell.m_framesWithoutMovement >= 80) {
+		if (finalCell.m_framesWithoutMovement >= 80) 
+		{
 			finalCell.m_isFreeFalling = false;
 			finalCell.m_velocityY = 0.0f;
 			finalCell.m_velocityX = 0.0f;
@@ -1242,7 +1439,7 @@ void CellBehaviorSystemInChunk::UpdateAccumulatedMovement(int oldX, int oldY, in
 	if (std::abs(finalCell.m_accumulMoveY) < 0.1f) finalCell.m_accumulMoveY = 0.0f;
 }
 
-void CellBehaviorSystemInChunk::UpdateAccumulatedMovementLiquid(int oldX, int oldY, int newX, int newY, SandboxMap* map)
+void CellBehaviorSystemInChunk::UpdateAccumulatedMovementLiquid(int oldX, int oldY, int newX, int newY, BaseMap* map)
 {
 	Cell& finalCell = map->GetCell(newX, newY);
 
@@ -1265,6 +1462,7 @@ void CellBehaviorSystemInChunk::UpdateAccumulatedMovementLiquid(int oldX, int ol
 			{0,  6},
 		};
 
+		const CellMatDef& curMatDef = CellMatManager::GetMaterialDef(finalCell.m_type.load());
 		for (int i = 0; i < 13; ++i) {
 			int neighborX = oldX + offsets[i][0];
 			int neighborY = oldY + offsets[i][1];
@@ -1272,10 +1470,9 @@ void CellBehaviorSystemInChunk::UpdateAccumulatedMovementLiquid(int oldX, int ol
 			if (map->IsInBounds(neighborX, neighborY))
 			{
 				Cell const& neighborCell = map->GetCell(neighborX, neighborY);
-				const CellMatDef& neighborMatDef = CellMatManager::GetMaterialDef(neighborCell.m_type);
-				const CellMatDef& curMatDef = CellMatManager::GetMaterialDef(finalCell.m_type);
-
-				if (map->GetCell(neighborX, neighborY).IsEmpty() || neighborMatDef.m_density < curMatDef.m_density)
+				const CellMatDef& neighborMatDef = CellMatManager::GetMaterialDef(neighborCell.m_type.load());
+			
+				if (neighborCell.IsEmpty() || neighborMatDef.m_density < curMatDef.m_density)
 				{
 					allNeighborsNonEmpty = false;
 					break; // 找到一个空格子就足够了

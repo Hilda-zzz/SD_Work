@@ -88,7 +88,7 @@ void GameCurve::Update()
 			RangeMap(nextT, 0.f, 1.f, 260.f, 560.f),
 			RangeMap(g_easingFunctions[m_easingFuncIndex].m_funcPointer(nextT), 0.f, 1.f, 430.f, 730.f));
 
-		AddVertsForLinSegment2D(m_easingVerts, Start, End, 2.f, Rgba8(90, 90, 90));
+		AddVertsForLineSegment2D(m_easingVerts, Start, End, 2.f, Rgba8(90, 90, 90));
 	}
 
 	float step = 1.f / m_subdivisionCount;
@@ -105,7 +105,7 @@ void GameCurve::Update()
 			RangeMap(nextT, 0.f, 1.f, 260.f, 560.f), 
 			RangeMap(g_easingFunctions[m_easingFuncIndex].m_funcPointer(nextT), 0.f, 1.f, 430.f, 730.f));
 
-		AddVertsForLinSegment2D(m_easingVerts, Start, End, 2.f, Rgba8::GREEN);
+		AddVertsForLineSegment2D(m_easingVerts, Start, End, 2.f, Rgba8::GREEN);
 	}
 	//---------------------------------------------
 	// Moving Point
@@ -120,8 +120,8 @@ void GameCurve::Update()
 	Vec2 bezierTPoint = m_bezierCurve.EvaluateAtParametric(curTimeRatio);
 	
 	m_movePointsVerts.clear();
- 	AddVertsForLinSegment2D(m_movePointsVerts, easingTPoint, Vec2(260.f, easingTPoint.y), 1.5f, Rgba8(152, 161, 242,100));
- 	AddVertsForLinSegment2D(m_movePointsVerts, easingTPoint, Vec2(easingTPoint.x, 430.f), 1.5f, Rgba8(152, 161, 242, 100));
+ 	AddVertsForLineSegment2D(m_movePointsVerts, easingTPoint, Vec2(260.f, easingTPoint.y), 1.5f, Rgba8(152, 161, 242,100));
+ 	AddVertsForLineSegment2D(m_movePointsVerts, easingTPoint, Vec2(easingTPoint.x, 430.f), 1.5f, Rgba8(152, 161, 242, 100));
  	AddVertsForDisc2D(m_movePointsVerts, easingTPoint, 5.f, Rgba8::WHITE);
  	AddVertsForDisc2D(m_movePointsVerts, bezierTPoint,5.f, Rgba8::WHITE);
 	AddVertsForDisc2D(m_movePointsVerts, bezierVPoint, 5.f, Rgba8::GREEN);
@@ -221,9 +221,9 @@ void GameCurve::GenerateBezierCurve(bool ifRandom)
 	}
 
 
-	AddVertsForLinSegment2D(m_bezierVerts, startPoint, guide1Point, 1.5f, Rgba8(35, 35, 80));
-	AddVertsForLinSegment2D(m_bezierVerts, guide1Point, guide2Point, 1.5f, Rgba8(35, 35, 80));
-	AddVertsForLinSegment2D(m_bezierVerts, guide2Point, endPoint, 1.5f, Rgba8(35, 35, 80));
+	AddVertsForLineSegment2D(m_bezierVerts, startPoint, guide1Point, 1.5f, Rgba8(35, 35, 80));
+	AddVertsForLineSegment2D(m_bezierVerts, guide1Point, guide2Point, 1.5f, Rgba8(35, 35, 80));
+	AddVertsForLineSegment2D(m_bezierVerts, guide2Point, endPoint, 1.5f, Rgba8(35, 35, 80));
 
 	float highStep = 1.f / 64;
 	for (int i = 0; i < 64; i++)
@@ -235,7 +235,7 @@ void GameCurve::GenerateBezierCurve(bool ifRandom)
 
 		Vec2 End = m_bezierCurve.EvaluateAtParametric(nextT);
 
-		AddVertsForLinSegment2D(m_bezierVerts, Start, End, 2.f, Rgba8(90,90,90));
+		AddVertsForLineSegment2D(m_bezierVerts, Start, End, 2.f, Rgba8(90,90,90));
 	}
 
 	float step = 1.f / m_subdivisionCount;
@@ -248,7 +248,7 @@ void GameCurve::GenerateBezierCurve(bool ifRandom)
 
 		Vec2 End = m_bezierCurve.EvaluateAtParametric(nextT);
 
-		AddVertsForLinSegment2D(m_bezierVerts, Start, End, 2.f, Rgba8::GREEN);
+		AddVertsForLineSegment2D(m_bezierVerts, Start, End, 2.f, Rgba8::GREEN);
 	}
 
 	AddVertsForDisc2D(m_bezierVerts, startPoint, 4.f, Rgba8::HILDA);
@@ -286,7 +286,7 @@ void GameCurve::GenerateHermiteSpline(bool ifRandom)
 	//control point line
 	for (int i = 0; i < (int)m_hermiteSpline.m_curves.size(); i++)
 	{
-		AddVertsForLinSegment2D(m_splineVerts, m_hermiteSpline.m_points[i], m_hermiteSpline.m_points[i + 1], 1.5f, Rgba8(35, 35, 80));
+		AddVertsForLineSegment2D(m_splineVerts, m_hermiteSpline.m_points[i], m_hermiteSpline.m_points[i + 1], 1.5f, Rgba8(35, 35, 80));
 	}
 
 	//high spline
@@ -301,7 +301,7 @@ void GameCurve::GenerateHermiteSpline(bool ifRandom)
 
 		Vec2 End = m_hermiteSpline.EvaluateAtParametric(nextT);
 
-		AddVertsForLinSegment2D(m_splineVerts, Start, End, 2.f, Rgba8(90, 90, 90));
+		AddVertsForLineSegment2D(m_splineVerts, Start, End, 2.f, Rgba8(90, 90, 90));
 	}
 
 	//cur sub spline
@@ -316,7 +316,7 @@ void GameCurve::GenerateHermiteSpline(bool ifRandom)
 
 		Vec2 End = m_hermiteSpline.EvaluateAtParametric(nextT);
 
-		AddVertsForLinSegment2D(m_splineVerts, Start, End, 2.f, Rgba8::GREEN);
+		AddVertsForLineSegment2D(m_splineVerts, Start, End, 2.f, Rgba8::GREEN);
 	}
 
 	//velocity arrow

@@ -9,11 +9,11 @@
 #include "Engine/Core/Vertex_PCU.hpp"
 #include <Engine/Core/VertexUtils.hpp>
 
-std::unordered_map<CellMatType, CellMatUIInfo> SandBoxUI::s_materialUIInfo;
+//std::unordered_map<CellMatType, CellMatUIInfo> SandBoxUI::s_materialUIInfo;
 
 SandBoxUI::SandBoxUI()
 {
-	InitializeMaterialUIInfo();
+	//InitializeMaterialUIInfo();
 }
 
 SandBoxUI::~SandBoxUI()
@@ -67,7 +67,7 @@ void SandBoxUI::RenderMaterialSelector(SandboxPlayer* player)
 	}
 
 	// === Current selected material display ===
-	const CellMatUIInfo& currentInfo = s_materialUIInfo[selectedMaterial];
+	const CellMatUIInfo& currentInfo = CellMatManager::s_materialUIInfo[selectedMaterial];
 	ImGui::Text("Current: %s", currentInfo.m_name.c_str());
 	ImGui::Separator();
 
@@ -160,7 +160,7 @@ void SandBoxUI::RenderMaterialSelector(SandboxPlayer* player)
 		}
 		else {
 			// Get materials by physics type
-			for (const auto& pair : s_materialUIInfo) {
+			for (const auto& pair : CellMatManager::s_materialUIInfo) {
 				if (pair.second.m_physType == m_selectedCategory && pair.first != CellMatType::MAT_EMPTY) {
 					materialsToShow.push_back(pair.first);
 				}
@@ -176,7 +176,7 @@ void SandBoxUI::RenderMaterialSelector(SandboxPlayer* player)
 
 		for (size_t i = 0; i < materialsToShow.size(); ++i) {
 			CellMatType matType = materialsToShow[i];
-			const CellMatUIInfo& info = s_materialUIInfo[matType];
+			const CellMatUIInfo& info = CellMatManager::s_materialUIInfo[matType];
 			bool isSelected = (selectedMaterial == matType);
 
 			// Start new row if needed
@@ -242,7 +242,7 @@ void SandBoxUI::RenderMaterialSelector(SandboxPlayer* player)
 void SandBoxUI::RenderMaterialProperties(CellMatType selectedMaterial)
 {
 	const CellMatDef& matDef = CellMatManager::GetMaterialDef(selectedMaterial);
-	const CellMatUIInfo& uiInfo = s_materialUIInfo[selectedMaterial];
+	const CellMatUIInfo& uiInfo = CellMatManager::s_materialUIInfo[selectedMaterial];
 
 	// Material header info
 	ImGui::Text("Material: %s", uiInfo.m_name);
@@ -271,8 +271,8 @@ void SandBoxUI::RenderMaterialProperties(CellMatType selectedMaterial)
 
 ImVec4 SandBoxUI::GetMaterialColor(CellMatType matType)
 {
-	auto it = s_materialUIInfo.find(matType);
-	if (it != s_materialUIInfo.end()) {
+	auto it = CellMatManager::s_materialUIInfo.find(matType);
+	if (it != CellMatManager::s_materialUIInfo.end()) {
 		return it->second.m_color;
 	}
 	return ImVec4(0.5f, 0.5f, 0.5f, 1.0f); // Default gray
@@ -290,8 +290,8 @@ const char* SandBoxUI::GetPhysicsTypeName(PhyType physType)
 
 const char* SandBoxUI::GetMaterialDescription(CellMatType matType)
 {
-	auto it = s_materialUIInfo.find(matType);
-	if (it != s_materialUIInfo.end()) {
+	auto it = CellMatManager::s_materialUIInfo.find(matType);
+	if (it != CellMatManager::s_materialUIInfo.end()) {
 		return it->second.m_description.c_str();
 	}
 	return "Unknown Material";
@@ -351,7 +351,7 @@ void SandBoxUI::RenderRigidBodyPanel(SandboxPlayer* player)
 				if (i > 0) ImGui::SameLine();
 
 				CellMatType matType = rbMaterials[i];
-				const CellMatUIInfo& info = s_materialUIInfo[matType];
+				const CellMatUIInfo& info = CellMatManager::s_materialUIInfo[matType];
 				bool isSelected = (m_rigidBodyMaterial == matType);
 
 				ImGui::PushID((int)matType);
@@ -498,14 +498,14 @@ void SandBoxUI::InitializeMaterialUIInfo()
 		CellMatType matType = pair.first;
 		const CellMatDef& matDef = pair.second;
 
-		s_materialUIInfo[matType].m_name = matDef.m_name;
-		s_materialUIInfo[matType].m_description = matDef.m_description;
-		s_materialUIInfo[matType].m_physType = matDef.m_physicsType;
-		s_materialUIInfo[matType].m_physTypeName = GetPhysicsTypeName(matDef.m_physicsType);
+		CellMatManager::s_materialUIInfo[matType].m_name = matDef.m_name;
+		CellMatManager::s_materialUIInfo[matType].m_description = matDef.m_description;
+		CellMatManager::s_materialUIInfo[matType].m_physType = matDef.m_physicsType;
+		CellMatManager::s_materialUIInfo[matType].m_physTypeName = GetPhysicsTypeName(matDef.m_physicsType);
 
 		// 颜色转换
 		Rgba8 m_color = matDef.m_color;
-		s_materialUIInfo[matType].m_color = ImVec4(
+		CellMatManager::s_materialUIInfo[matType].m_color = ImVec4(
 			m_color.r / 255.0f, m_color.g / 255.0f, m_color.b / 255.0f, 1.0f
 		);
 	}
@@ -513,7 +513,7 @@ void SandBoxUI::InitializeMaterialUIInfo()
 
 void SandBoxUI::RenderMaterialButton(CellMatType matType, bool isSelected, SandboxPlayer* player)
 {
-	const CellMatUIInfo& info = s_materialUIInfo[matType];
+	const CellMatUIInfo& info = CellMatManager::s_materialUIInfo[matType];
 
 	ImGui::PushID((int)matType);
 

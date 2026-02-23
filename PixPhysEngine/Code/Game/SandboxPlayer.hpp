@@ -60,7 +60,7 @@ private:
 	CellMatType m_selectedMaterial = CellMatType::MAT_SAND;
 	int m_brushSize = 1;
 	IntVec2 m_lastPlacedPos = IntVec2(-1, -1);
-	bool m_isSand = true;
+	//bool m_isSand = true;
 
 	bool m_isRightMouseDragging = false;
 	int m_dragStartX = 0;

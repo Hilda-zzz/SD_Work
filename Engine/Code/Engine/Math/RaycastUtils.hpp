@@ -5,6 +5,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Plane3.hpp"
+#include "Engine/Math/Plane2.hpp"
 
 class OBB3;
 
@@ -30,6 +31,9 @@ RaycastResult2D RaycastVsDisc2D(Vec2 const& startPos, Vec2 const& fwdNormal, flo
 
 RaycastResult2D RaycastVsLineSegment2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist,
 	Vec2 const& lineStart, Vec2 const& lineEnd);
+
+RaycastResult2D RaycastVsPlane2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist,
+	Plane2 const& plane);
 
 RaycastResult2D RaycastVsAABB2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist,AABB2 const& box);
 

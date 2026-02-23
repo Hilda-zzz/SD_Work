@@ -70,4 +70,6 @@ protected:
 
 	AABB2 m_viewPort = AABB2(Vec2(0.f, 0.f), Vec2(1600.f, 800.f));
 
+	AABB2 m_orthoViewBound;
+
 };

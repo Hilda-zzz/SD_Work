@@ -23,18 +23,13 @@ constexpr float WATER_FLOW_DAMPING = 0.8f;
 static const float SPEED_THRESHOLD = 5.0f;
 
 // ======== Size btw box2d ========================================
-constexpr float CELLS_PER_METER = 16.0f;  // 16 cell = 1 meter
-constexpr float METERS_PER_CELL = 1.0f / CELLS_PER_METER;
-
-constexpr float GRAVITY_METERS = 9.8f;           // 标准重力加速度
+//constexpr float CELLS_PER_METER = 16.0f;  // 16 cell = 1 meter
+//constexpr float METERS_PER_CELL = 1.0f / CELLS_PER_METER;
+//
+//constexpr float GRAVITY_METERS = 9.8f;           // 标准重力加速度
 constexpr float TERMINAL_SPEED_METERS = 20.0f;  // 合理的落体终端速度
 constexpr float WATER_SPEED_METERS = 5.0f;      // 合理的液体流速
 
-enum class UpdateOrder {
-	FIXED,       // 固定顺序 0→1→2→3
-	ROTATING,    // 轮换顺序
-	RANDOM       // 随机顺序
-};
 
 enum class CellColorMode {
 	NORMAL = 0,           // Normal material colors
@@ -67,14 +62,14 @@ public:
 	Cell const& GetCell(int worldX, int worldY) const override;
 
 	bool IsInBounds_Chunk(int worldX, int worldY) const;
-	void PlaceMaterialInChunk(int worldX, int worldY, CellMatType type,bool isRb=false);
+	void PlaceMaterialInChunk(int worldX, int worldY, CellMatType type,bool isRb=false) override;
 
 	void UpdateChunksOfPhase(int phaseIndex);
 	void UpdateSingleChunk(CellChunk* chunk);
 
 	// should be moved from here 
-	bool MSCanMoveTo(int x, int y, float curDensity) const override;
-	bool LiquidCanMoveTo(int x, int y, float curDensity) const override;
+	bool MSCanMoveTo(int x, int y, float curDensity, bool useFastVersion = false) const override;
+	bool LiquidCanMoveTo(int x, int y, float curDensity, bool useFastVersion = false) const override;
 	bool CanMoveHorizontally(int x, int y, const Cell& cell) const override;
 	bool HasSupport(int x, int y) const override;
 	//=====================================
@@ -152,6 +147,7 @@ public:
 	} m_debugSettings;
 
 private:
+	std::vector<std::vector<CellChunk*>> m_chunks;  // [chunkY][chunkX]
 	//float m_deltaTime = 0.f;
 
 	// === NEW - Chunk 管理 ===

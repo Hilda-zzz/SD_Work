@@ -262,7 +262,7 @@ void Game::UpdateGameplayMode(float deltaTime)
 
 	m_world->Update(deltaTime);
 	
-	AddDebugText();
+	//AddDebugText();
 
 	//-----------------------------------------------------------------------------------------
 	if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))

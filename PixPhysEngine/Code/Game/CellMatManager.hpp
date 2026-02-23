@@ -1,11 +1,12 @@
 ﻿#pragma once
 #include <unordered_map>
 #include "Game/CellMatDef.hpp"
+#include "CellMatBrush.hpp"
 
 class CellMatManager
 {
 public:
-	CellMatManager() {}
+	CellMatManager();
 
 	static void InitializeMaterials() {
 		// 空气/真空
@@ -49,7 +50,7 @@ public:
 
 		// 土壤 - 比沙子更粘稠，含有有机物
 		s_materialDefs[CellMatType::MAT_SOIL] = CellMatDef(PhyType::PHY_MOVE_SOLID);
-		s_materialDefs[CellMatType::MAT_SOIL].m_density = 1.3f;
+		s_materialDefs[CellMatType::MAT_SOIL].m_density = 1.9f;
 		s_materialDefs[CellMatType::MAT_SOIL].m_friction = 0.8f;
 		s_materialDefs[CellMatType::MAT_SOIL].m_restitution = 0.1f;
 		s_materialDefs[CellMatType::MAT_SOIL].m_collisionMomentumTransfer = 0.05f;
@@ -86,6 +87,8 @@ public:
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_lifeCountDown =IntRange(120,360);
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_EMPTY;
 
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_emissionValue = 30;
+
 		// 水 - 液体
 		s_materialDefs[CellMatType::MAT_WATER] = CellMatDef(PhyType::PHY_LIQUID);
 		s_materialDefs[CellMatType::MAT_WATER].m_density = 1.0f;
@@ -93,7 +96,7 @@ public:
 		s_materialDefs[CellMatType::MAT_WATER].m_viscosity = 0.8f;
 		s_materialDefs[CellMatType::MAT_WATER].m_interaction.m_isPermeable = true;
 		s_materialDefs[CellMatType::MAT_WATER].m_interaction.m_penetrationResistance = 0.8f;
-		s_materialDefs[CellMatType::MAT_WATER].m_color = Rgba8(30, 144, 255);
+		s_materialDefs[CellMatType::MAT_WATER].m_color = Rgba8(30, 144, 255,50);
 		s_materialDefs[CellMatType::MAT_WATER].m_name = "Water";
 		s_materialDefs[CellMatType::MAT_WATER].m_description = "Fluid material - liquid";
 
@@ -102,6 +105,8 @@ public:
 		s_materialDefs[CellMatType::MAT_WATER].m_horizontalDamping = 0.9f;
 		s_materialDefs[CellMatType::MAT_WATER].m_verticalDamping = 0.99f;
 		s_materialDefs[CellMatType::MAT_WATER].m_collisionDamping = 0.9f;
+
+		s_materialDefs[CellMatType::MAT_WATER].m_emissionValue = 10;
 
 		// oil - 液体
 		s_materialDefs[CellMatType::MAT_OIL] = CellMatDef(PhyType::PHY_LIQUID);
@@ -137,9 +142,16 @@ public:
 		s_materialDefs[CellMatType::MAT_LAVA].m_verticalDamping = 0.9f;
 		s_materialDefs[CellMatType::MAT_LAVA].m_collisionDamping = 0.5f;
 
+		s_materialDefs[CellMatType::MAT_LAVA].m_isHighTemp = true;
+		s_materialDefs[CellMatType::MAT_LAVA].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_LAVA].m_lifeCountDown = IntRange(360, 720);
+		s_materialDefs[CellMatType::MAT_LAVA].m_lifeEndMatType = CellMatType::MAT_SOIL;
+
+		s_materialDefs[CellMatType::MAT_LAVA].m_emissionValue = 30;
+
 		// Acid
 		s_materialDefs[CellMatType::MAT_ACID] = CellMatDef(PhyType::PHY_LIQUID);
-		s_materialDefs[CellMatType::MAT_ACID].m_density = 1.5f;
+		s_materialDefs[CellMatType::MAT_ACID].m_density = 1.2f;
 		s_materialDefs[CellMatType::MAT_ACID].m_friction = 0.3f;
 		s_materialDefs[CellMatType::MAT_ACID].m_viscosity = 0.6f;
 		s_materialDefs[CellMatType::MAT_ACID].m_interaction.m_isPermeable = true;
@@ -156,6 +168,8 @@ public:
 
 		s_materialDefs[CellMatType::MAT_ACID].m_isAcid = true;
 
+		s_materialDefs[CellMatType::MAT_ACID].m_emissionValue = 20;
+
 
 		// 石头 - 静态固体
 		s_materialDefs[CellMatType::MAT_STONE] = CellMatDef(PhyType::PHY_STATIC_SOLID);
@@ -167,7 +181,7 @@ public:
 		s_materialDefs[CellMatType::MAT_STONE].m_description = "Static obstacle - hard solid";
 
 		s_materialDefs[CellMatType::MAT_STONE].m_isCorroded = true;
-		s_materialDefs[CellMatType::MAT_STONE].m_corrosionCountDown = IntRange(60, 120);
+		s_materialDefs[CellMatType::MAT_STONE].m_corrosionCountDown = IntRange(60, 80);
 		s_materialDefs[CellMatType::MAT_STONE].m_corrodeType = CellMatType::MAT_EMPTY;
 
 		// 木头 - 静态固体
@@ -184,7 +198,7 @@ public:
 		s_materialDefs[CellMatType::MAT_WOOD].m_flammableType = CellMatType::MAT_STSOLID_FIRE;
 
 		s_materialDefs[CellMatType::MAT_WOOD].m_isCorroded = true;
-		s_materialDefs[CellMatType::MAT_WOOD].m_corrosionCountDown = IntRange(20, 120);
+		s_materialDefs[CellMatType::MAT_WOOD].m_corrosionCountDown = IntRange(20, 80);
 		s_materialDefs[CellMatType::MAT_WOOD].m_corrodeType = CellMatType::MAT_EMPTY;
 
 		// 静态固体 - 火焰
@@ -198,17 +212,26 @@ public:
 
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_isHighTemp = true;
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_isPersist = false;
-		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeCountDown = IntRange(240, 360);
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeCountDown = IntRange(120, 240);
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_EMPTY;
+
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_emissionValue = 30;
+
 
 		// CA Sand
 		s_materialDefs[CellMatType::MAT_CA_SAND] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
 		s_materialDefs[CellMatType::MAT_CA_SAND].m_density = 1.5f;
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_color = Rgba8::YELLOW;
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_color = Rgba8(146,205,255);
 		s_materialDefs[CellMatType::MAT_CA_SAND].m_name = "CA Sand";
 		s_materialDefs[CellMatType::MAT_CA_SAND].m_description = "Cellular automaton sand";
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_lifeCountDown = IntRange(240, 360);
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_lifeEndMatType = CellMatType::MAT_WATER;
 		//s_materialDefs[CellMatType::MAT_CA_SAND].m_cellularAutomaton.m_diagonalCheckOrder = 0;
+
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_emissionValue = 10;
 	}
+	static void InitializeMaterialUIInfo();
 
 	static const CellMatDef& GetMaterialDef(CellMatType matType) {
 		return s_materialDefs[matType];
@@ -219,10 +242,15 @@ public:
 	}
 
 	// 新增：获取所有材质定义的方法，用于UI自动化
-	static const std::unordered_map<CellMatType, CellMatDef>& GetAllMaterialDefs() {
-		return s_materialDefs;
-	}
+	static const std::unordered_map<CellMatType, CellMatDef>& GetAllMaterialDefs();
+
+private:
+	
+	static const char* GetPhysicsTypeName(PhyType physType);
+public:
+	static std::unordered_map<CellMatType, CellMatUIInfo> s_materialUIInfo;
 
 private:
 	static std::unordered_map<CellMatType, CellMatDef> s_materialDefs;
+
 };

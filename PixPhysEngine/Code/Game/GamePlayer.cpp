@@ -39,6 +39,7 @@ void GamePlayer::HandleInput()
 {
 	HandleMovementInput();
 	HandleCameraZoomInput();
+	HandleMatBrushInput();
 }
 
 void GamePlayer::HandleMovementInput()
@@ -81,6 +82,33 @@ void GamePlayer::HandleCameraZoomInput()
 		float newZoom = m_cameraZoom + zoomChange;
 		newZoom = GetClamped(newZoom, m_minZoom, m_maxZoom);
 		SetCameraZoom(newZoom);
+	}
+}
+
+void GamePlayer::HandleMatBrushInput()
+{
+	if (g_theInput->IsKeyDown(KEYCODE_LEFT_MOUSE))
+	{
+		Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();
+		Vec2 mousePosInWorld = AABB2(m_camera.GetOrthoBottomLeft(), m_camera.GetOrthoTopRight()).GetPointAtUV(mouseUV);
+		int gridX = static_cast<int> (floor(mousePosInWorld.x));
+		int gridY = static_cast<int> (floor(mousePosInWorld.y));
+
+		if (m_gameMap->IsInBounds(gridX, gridY))
+		{
+			for (int dx = 0; dx < m_brushSize; dx++)
+			{
+				for (int dy = 0; dy < m_brushSize; dy++)
+				{
+					int targetX = gridX + dx;
+					int targetY = gridY + dy;
+					if (m_gameMap->IsInBounds(targetX, targetY))
+					{
+						m_gameMap->PlaceMaterialInChunk(targetX, targetY, m_selectedMaterial, false);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -132,7 +160,7 @@ void GamePlayer::UpdateCamera()
 
 	Vec2 newMins = cameraCenter - Vec2(viewWidth * 0.5f, viewHeight * 0.5f);
 	Vec2 newMaxs = cameraCenter + Vec2(viewWidth * 0.5f, viewHeight * 0.5f);
-	m_camera.SetOrthographicView(newMins, newMaxs);
+	m_camera.SetOrthographicView(newMins, newMaxs,-1.f,100.f);
 }
 
 void GamePlayer::Render() const
@@ -180,7 +208,7 @@ void GamePlayer::InitCamera(IntVec2 const& viewSize)
 	Vec2 viewMins = m_position - Vec2(viewWidth * 0.5f, viewHeight * 0.5f);
 	Vec2 viewMaxs = m_position + Vec2(viewWidth * 0.5f, viewHeight * 0.5f);
 
-	m_camera.SetOrthographicView(viewMins, viewMaxs);
+	m_camera.SetOrthographicView(viewMins, viewMaxs ,- 1.0f, 100.0f);
 
 	m_baseViewWidth = viewMaxs.x - viewMins.x;
 	m_baseViewHeight = viewMaxs.y - viewMins.y;

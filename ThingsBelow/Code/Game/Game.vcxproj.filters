@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Tentacles">
+      <UniqueIdentifier>{de1399c1-8a4d-486d-903c-11451c0cf098}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImguiPanel">
+      <UniqueIdentifier>{9aa16fb8-050f-48ef-a907-4710f8a8cfb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="StateMachine">
+      <UniqueIdentifier>{bcc5f668-798f-479b-a46a-3c06aaabc9bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="StateMachine\States">
+      <UniqueIdentifier>{8ff56020-0de5-4e68-9c5a-5a8bd5457e33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TheOldOne">
+      <UniqueIdentifier>{e21e6f50-f526-4d32-834c-1a7718668749}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="InteractiveObjs">
+      <UniqueIdentifier>{1069e839-18be-4f03-9a7c-1a02da75373b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main_Windows.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="App.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="GameCommon.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Tentacle.cpp">
+      <Filter>Tentacles</Filter>
+    </ClCompile>
+    <ClCompile Include="TentacleSegment.cpp">
+      <Filter>Tentacles</Filter>
+    </ClCompile>
+    <ClCompile Include="TentacleDebugPanel.cpp">
+      <Filter>ImguiPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiUIPanel.cpp">
+      <Filter>ImguiPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="TentacleStateMachine.cpp">
+      <Filter>StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="TentacleStates.cpp">
+      <Filter>StateMachine\States</Filter>
+    </ClCompile>
+    <ClCompile Include="TentacleState.cpp">
+      <Filter>StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="TentacleManager.cpp">
+      <Filter>TheOldOne</Filter>
+    </ClCompile>
+    <ClCompile Include="Food.cpp">
+      <Filter>InteractiveObjs</Filter>
+    </ClCompile>
+    <ClCompile Include="InteractiveObject.cpp">
+      <Filter>InteractiveObjs</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneBounds.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="LungeState.cpp">
+      <Filter>StateMachine\States</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="App.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="GameCommon.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineBuildPreferences.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Tentacle.hpp">
+      <Filter>Tentacles</Filter>
+    </ClInclude>
+    <ClInclude Include="TentacleSegment.hpp">
+      <Filter>Tentacles</Filter>
+    </ClInclude>
+    <ClInclude Include="TentacleDebugPanel.hpp">
+      <Filter>ImguiPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiUIPanel.hpp">
+      <Filter>ImguiPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="TentacleState.hpp">
+      <Filter>StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="TentacleStateMachine.hpp">
+      <Filter>StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="TentacleStateType.hpp">
+      <Filter>StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="TentacleStates.hpp">
+      <Filter>StateMachine\States</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalEvent.hpp">
+      <Filter>TheOldOne</Filter>
+    </ClInclude>
+    <ClInclude Include="ITentacleContext.hpp">
+      <Filter>TheOldOne</Filter>
+    </ClInclude>
+    <ClInclude Include="TentacleManager.hpp">
+      <Filter>TheOldOne</Filter>
+    </ClInclude>
+    <ClInclude Include="Food.hpp">
+      <Filter>InteractiveObjs</Filter>
+    </ClInclude>
+    <ClInclude Include="InteractiveObject.hpp">
+      <Filter>InteractiveObjs</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneBounds.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="LungeState.hpp">
+      <Filter>StateMachine\States</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

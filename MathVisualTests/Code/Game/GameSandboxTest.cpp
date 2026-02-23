@@ -215,7 +215,7 @@ void GameSandboxTest::RenderGrid() const
 			float xPos = (float)x * m_cellSize;
 			Vec2 start(xPos, 0.0f);
 			Vec2 end(xPos, (float)m_gridSize.y * m_cellSize);
-			AddVertsForLinSegment2D(m_gridVerts, start, end, GRID_LINE_THICKNESS, Rgba8(100, 100, 100, 100));
+			AddVertsForLineSegment2D(m_gridVerts, start, end, GRID_LINE_THICKNESS, Rgba8(100, 100, 100, 100));
 		}
 
 		// 水平线
@@ -224,7 +224,7 @@ void GameSandboxTest::RenderGrid() const
 			float yPos = (float)y * m_cellSize;
 			Vec2 start(0.0f, yPos);
 			Vec2 end((float)m_gridSize.x * m_cellSize, yPos);
-			AddVertsForLinSegment2D(m_gridVerts, start, end, GRID_LINE_THICKNESS, Rgba8(100, 100, 100, 100));
+			AddVertsForLineSegment2D(m_gridVerts, start, end, GRID_LINE_THICKNESS, Rgba8(100, 100, 100, 100));
 		}
 	//}
 

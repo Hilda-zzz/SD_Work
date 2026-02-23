@@ -31,7 +31,7 @@ void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts,OBB2 const&box, Rgba8 const
 void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts, OBB2 const& box, Rgba8 const& color, Vec2 const& uv_mins, Vec2 const& uv_maxs);
 void AddVertsForTriangle2D(std::vector<Vertex_PCU>& verts, Triangle2 const& triangle, Rgba8 const& color);
 //void AddVertsForOBB2D(std::vector<Vertex_PCU>& verts, Vec2 const& center,Vec2 const& iBasis,Vec2 dimensions, Rgba8 const& color);
-void AddVertsForLinSegment2D(std::vector<Vertex_PCU>& verts, Vec2 const& start,Vec2 const& end,float thickness, Rgba8 const& color);
+void AddVertsForLineSegment2D(std::vector<Vertex_PCU>& verts, Vec2 const& start,Vec2 const& end,float thickness, Rgba8 const& color);
 //void AddVertsForLinSegment2D(std::vector<Vertex_PCU>& verts,LineSegment2 const& lineSegment,float thickness , Rgba8 const& color);
 void AddVertsForArrow2D(std::vector<Vertex_PCU>& verts, Vec2 tailPos, Vec2 tipPos, float arrowSize, float lineThickness, Rgba8 const& color);
 void AddVertsForAABBWire2D(std::vector<Vertex_PCU>& verts, AABB2 const& bounds, Rgba8 const& color, float width,bool isOutsideFrame);
@@ -56,6 +56,8 @@ void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, const AABB3& bounds,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);
+void AddVertsForSkySphere3D(std::vector<Vertex_PCU>& verts, const Vec3& center, float radius,
+	const Rgba8& color, const AABB2& UVs, int numSlices, int numStacks);
 void AddVertsForCylinder3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius,
 	const Rgba8 color = Rgba8::WHITE, const AABB2& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
 void AddVertsForCone3D(std::vector<Vertex_PCU>& verts, const Vec3& start, const Vec3& end, float radius,

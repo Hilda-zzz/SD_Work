@@ -20,6 +20,18 @@
 #include "Nova2DTestMap.hpp"
 #include "GameMap.hpp"
 #include "GamePlayer.hpp"
+#include "ThirdParty/tracy/tracy/Tracy.hpp"
+#include <Engine/Core/ErrorWarningAssert.hpp>
+
+#include "Engine/Renderer/StructuredBuffer.hpp"
+#include "Engine/Renderer/ConstantBuffer.hpp"
+
+// 在Game.cpp开头添加验证代码
+#ifdef TRACY_ENABLE
+#pragma message("✓ Tracy is ENABLED")
+#else
+#pragma message("✗ Tracy is DISABLED - Check preprocessor!")
+#endif
 
 extern bool g_isDebugDraw;
 extern Window* g_theWindow;
@@ -34,6 +46,7 @@ Game::Game()
 	m_gameClock = new Clock();
 
 	CellMatManager::InitializeMaterials();
+	CellMatManager::InitializeMaterialUIInfo();
 
 	m_testUtilImg = new Image("Data/Images/edge_earth_rainforest_ver.png");
 	/*m_sandboxPlayer = new SandboxPlayer(IntVec2(640, 320));
@@ -52,6 +65,8 @@ Game::Game()
 
 	//// 调用生成器
 	//m_generator.InitializeTileGrid(params);
+
+	//TestComputeShader();
 }
 
 Game::~Game()
@@ -96,6 +111,7 @@ Game::~Game()
 
 void Game::Update()
 {
+	ZoneScoped;
 	float deltaSeconds = (float)m_gameClock->GetDeltaSeconds();
 	UpdateDeveloperCheats(deltaSeconds);
 	m_curDeltaTime=deltaSeconds;
@@ -503,11 +519,12 @@ void Game::EnterGameplayMode()
 		m_nova2DMap->Initialize();
 		break;
 	case GameMode::GAME_WORLD:
-		m_gamePlayer = new GamePlayer(IntVec2(640, 320),Vec2(0.f,0.f));
+		m_gamePlayer = new GamePlayer(IntVec2(640, 320),Vec2(1024.f,1024.f));
 		m_gamePlayer->InitCamera(IntVec2(640, 320));
-		m_gameWorldMap = new GameMap(m_gamePlayer,IntVec2(10,5)); 
+		m_gameWorldMap = new GameMap(m_gamePlayer,IntVec2(6,6)); 
 		m_gameWorldMap->SetHerringboneTileset(m_testTileset);
 		m_gameWorldMap->Initialize();
+		m_gamePlayer->SetGameMap(m_gameWorldMap);
 
 		break;
 	default:
@@ -767,6 +784,110 @@ void Game::RenderTileDebugUI() {
 	ImGui::Text("Vertical Tiles: %d", verticalCount);
 
 	ImGui::End();
+}
+
+void Game::TestComputeShader()
+{
+	// ===== 1. 准备测试数据 =====
+	const int TEST_COUNT = 1000;
+	std::vector<float> inputData(TEST_COUNT);
+
+	// 填充输入数据：0, 1, 2, 3, ..., 999
+	for (int i = 0; i < TEST_COUNT; ++i)
+	{
+		inputData[i] = (float)i;
+		//inputData[i] = 1;
+	}
+	//inputData[0] = 1000;
+	// ===== 2. 创建Buffers =====
+	StructuredBuffer* inputBuffer = g_theRenderer->CreateStructuredBuffer(
+		TEST_COUNT,
+		sizeof(float),
+		false  // 只读（SRV）
+	);
+
+	StructuredBuffer* outputBuffer = g_theRenderer->CreateStructuredBuffer(
+		TEST_COUNT,
+		sizeof(float),
+		true  // 可读写（UAV）
+	);
+
+	// ===== 3. 上传数据 =====
+	g_theRenderer->CopyDataToStructuredBuffer(inputBuffer, inputData.data(), TEST_COUNT);
+
+	//std::vector<float> verifyData(TEST_COUNT);
+	//g_theRenderer->ReadStructuredBuffer(inputBuffer, verifyData.data(), TEST_COUNT);
+
+	//DebuggerPrintf("Verify upload: [0]=%.2f, [1]=%.2f, [999]=%.2f\n",
+	//	verifyData[0], verifyData[1], verifyData[999]);
+
+	// ===== 4. 创建参数Buffer =====
+	struct TestParams
+	{
+		float multiplier;
+		float addValue;
+		uint32_t elementCount;
+		uint32_t padding;
+	};
+
+	TestParams params;
+	params.multiplier = 2.0f;
+	params.addValue = 10.0f;
+	params.elementCount = TEST_COUNT;
+	params.padding = 0;
+
+	ConstantBuffer* paramsCBO = g_theRenderer->CreateConstantBuffer(sizeof(TestParams));
+	g_theRenderer->CopyConstantBufferToGPU(&params, sizeof(TestParams), paramsCBO);
+
+	// ===== 5. 加载Compute Shader =====
+	ComputeShader* testShader = g_theRenderer->CreateComputeShaderFromFile("Data/Shaders/Nova2DShaders/TestComputeShader");
+
+	// ===== 6. 绑定并执行 =====
+	g_theRenderer->BindComputeShader(testShader);
+	g_theRenderer->BindStructuredBufferSRV(0, inputBuffer);   // t0
+	g_theRenderer->BindStructuredBufferUAV(0, outputBuffer);  // u0
+	g_theRenderer->BindConstantBufferCS(0, paramsCBO);          // b0
+
+	// 计算线程组数：1000个元素，每组256线程 = 需要4组
+	int threadGroups = (TEST_COUNT + 255) / 256;
+	g_theRenderer->Dispatch(threadGroups, 1, 1);
+
+	g_theRenderer->UnbindComputeShader();
+	g_theRenderer->UnbindStructuredBuffers();
+
+	// ===== 7. 读回结果验证 =====
+	std::vector<float> outputData(TEST_COUNT);
+	g_theRenderer->ReadStructuredBuffer(outputBuffer, outputData.data(), TEST_COUNT);
+
+	// ===== 8. 验证结果 =====
+	bool testPassed = true;
+	for (int i = 0; i < TEST_COUNT; ++i)
+	{
+		float expected = (float)i * 2.0f + 10.0f;  // input * 2 + 10
+		float actual = outputData[i];
+
+		if (fabsf(expected - actual) > 0.001f)
+		{
+			DebuggerPrintf("TEST FAILED at index %d: expected %.2f, got %.2f\n",
+				i, expected, actual);
+			testPassed = false;
+			//break;
+		}
+	}
+
+	if (testPassed)
+	{
+		DebuggerPrintf("Compute Shader Test PASSED!\n");
+		DebuggerPrintf("   Input[0] = %.2f → Output[0] = %.2f (expected %.2f)\n",
+			inputData[0], outputData[0], 10.0f);
+		DebuggerPrintf("   Input[999] = %.2f → Output[999] = %.2f (expected %.2f)\n",
+			inputData[999], outputData[999], 999.0f * 2.0f + 10.0f);
+	}
+
+	// ===== 9. 清理 =====
+	delete inputBuffer;
+	delete outputBuffer;
+	delete paramsCBO;
 }
 
 

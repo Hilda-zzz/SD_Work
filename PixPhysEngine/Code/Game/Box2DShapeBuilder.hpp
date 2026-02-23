@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Cell.hpp"
 #include <unordered_set>
 #include <vector>
@@ -21,6 +21,9 @@ public:
 	static std::vector<std::vector<CellWithCoords>> SeparateConnectedComponents(
 		const std::vector<CellWithCoords>& cells);
 
+	static std::vector<std::vector<CellWithCoords>> SeparateConnectedComponentsMove(
+		std::vector<CellWithCoords>&& cells);
+
 	static bool IfDiscardComponent(const std::vector<CellWithCoords>& cells);
 
 	static std::vector<IntVec2> FillHoles(const std::vector<CellWithCoords>& cells);
@@ -28,15 +31,27 @@ public:
 	static Vec2 CalculateCentroid(std::vector<Cell*> const& cells);
 
 	static std::vector<Vec2> ExtractOutlineFromCells(std::vector<CellWithCoords> const& cells, std::vector<Vec2>& marchingPoints);
+	static std::vector<Vec2> ExtractOutlineFromCellsSimple(std::vector<CellWithCoords> const& cells);
 	static Vec2 CalculateCentroid(const std::vector<Vec2>& points);
 
 	static TriangulationOutput EarClipping(const std::vector<Vec2>& inputVertices);
 	static TriangulationOutput CDTTriangulation(std::vector<Vec2> const& points);
 
+	// World Mode for terrain
+	// 检测并返回需要填充的空洞坐标（不修改原始数据）
+	static std::vector<IntVec2> DetectHolesToFill(
+		const std::vector<CellWithCoords>& cells);
+
+	// 创建虚拟填充的cells（用于刚体生成）
+	static std::vector<CellWithCoords> CreateVirtualFilledCells(
+		const std::vector<CellWithCoords>& originalCells,
+		const std::vector<IntVec2>& holeCoords);
+
 private:
 	static int GetMarchingSquaresConfig(int gridX, int gridY,
 		std::unordered_set<IntVec2,IntVec2Hash> const& occupiedCells);
 	static std::vector<Vec2> ConnectAndOrderVertices(std::vector<Vec2> const& vertices);
+	static std::vector<Vec2> ConnectAndOrderVerticesFast(std::vector<Vec2>&& vertices);
 
 	static std::vector<Vec2> ReorderOutlineForDouglasPeucker(const std::vector<Vec2>& closedLoop);
 	static std::vector<Vec2> DouglasPeucker(const std::vector<Vec2>& points, float epsilon);

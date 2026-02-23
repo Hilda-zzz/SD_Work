@@ -157,7 +157,7 @@ void RigidBodyManager::DrawSolidPolygon(b2Transform transform, const b2Vec2* ver
 		Vec2 v2(p2.x / METERS_PER_CELL, p2.y / METERS_PER_CELL);
 
 		std::vector<Vertex_PCU> verts;
-		AddVertsForLinSegment2D(verts, v1, v2, 0.2f, Rgba8::GREEN);
+		AddVertsForLineSegment2D(verts, v1, v2, 0.2f, Rgba8::GREEN);
 		g_theRenderer->DrawVertexArray(verts);
 	}
 }

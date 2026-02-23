@@ -97,6 +97,12 @@ float Hesitate5(float t)
 	return ComputeQuinticBezier1D(0.f, 1.f, 0.f, 1.f, 0.f, 1.f, t);
 }
 
+float EaseOutCubic(float t)
+{
+	float f = 1.0f - t;
+	return 1.0f - f * f * f;
+}
+
 float CustomFunkyEasingFunction(float t)
 {
 	return (float)abs(abs(sin(4.1f*t)*cos(6.f*t+1.9f)) * 1.2f - 0.1f);

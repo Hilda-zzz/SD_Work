@@ -18,6 +18,7 @@ BlockDefinition::BlockDefinition(XmlElement const* blockDefElement)
 	m_isVisible = ParseXmlAttribute(blockDefElement, "isVisible", false);
 	m_isSolid = ParseXmlAttribute(blockDefElement, "isSolid", false);
 	m_isOpaque = ParseXmlAttribute(blockDefElement, "isOpaque", false); 
+	m_isLeaves = ParseXmlAttribute(blockDefElement, "isLeaves", false);
 	m_indoorLight= ParseXmlAttribute(blockDefElement, "indoorLighting", 0);
 
 	m_topSpriteCoords = ParseXmlAttribute(blockDefElement, "topSpriteCoords", IntVec2(0, 0));
@@ -44,7 +45,7 @@ BlockDefinition::~BlockDefinition()
 
 void BlockDefinition::InitializeBlockDefinitionsFromFile()
 {
-	Texture* blockTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/SpriteSheet_Dokucraft_High_32px.png",5);
+	Texture* blockTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/SpriteSheet_Dokucraft_High_32px3.png",5);
 	s_blockSheet = new SpriteSheet(*blockTexture, IntVec2(8, 8));
 
 	XmlDocument blockDefsXml;

@@ -131,7 +131,7 @@ void SandboxMap::Render() const
 			Vec2 start(worldX, 0.f);
 			Vec2 end(worldX, static_cast<float>(m_mapSize.y));
 			Rgba8 gridColor(100, 100, 100, 128);
-			AddVertsForLinSegment2D(chunkGridVerts, start, end, 0.5f, gridColor);
+			AddVertsForLineSegment2D(chunkGridVerts, start, end, 0.5f, gridColor);
 		}
 
 		// Horizontal lines
@@ -140,7 +140,7 @@ void SandboxMap::Render() const
 			Vec2 start(0.f, worldY);
 			Vec2 end(static_cast<float>(m_mapSize.x), worldY);
 			Rgba8 gridColor(100, 100, 100, 128);
-			AddVertsForLinSegment2D(chunkGridVerts, start, end, 0.5f, gridColor);
+			AddVertsForLineSegment2D(chunkGridVerts, start, end, 0.5f, gridColor);
 		}
 
 		g_theRenderer->DrawVertexArray(chunkGridVerts);
@@ -251,7 +251,7 @@ void SandboxMap::RenderCellInfo() const
 			// Cell Information
 			ImGui::Separator();
 			ImGui::Text("=== Cell Information ===");
-			ImGui::Text("Material Type: %s", GetMaterialTypeName(currentCell.m_type));
+			ImGui::Text("Material Type: %s", GetMaterialTypeName(currentCell.m_type.load()));
 			ImGui::Text("Is Empty: %s", currentCell.IsEmpty() ? "Yes" : "No");
 
 			// Physics Properties
@@ -269,9 +269,9 @@ void SandboxMap::RenderCellInfo() const
 			ImGui::Text("Is Free Falling: %s", currentCell.m_isFreeFalling ? "Yes" : "No");
 			ImGui::Text("Frames Without Movement: %d", currentCell.m_framesWithoutMovement);
 
-			if (currentCell.m_type == CellMatType::MAT_WATER ||
-				currentCell.m_type == CellMatType::MAT_OIL ||
-				currentCell.m_type == CellMatType::MAT_LAVA) {
+			if (currentCell.m_type.load() == CellMatType::MAT_WATER ||
+				currentCell.m_type.load() == CellMatType::MAT_OIL ||
+				currentCell.m_type.load() == CellMatType::MAT_LAVA) {
 				ImGui::Text("Liquid Re-collide Times: %d", currentCell.m_liquidReCollideTimes);
 			}
 
@@ -445,7 +445,7 @@ void SandboxMap::RenderDebugDrawPanel()
 
 Rgba8 SandboxMap::GetCellDebugColor(const Cell& cell, IntVec2 const& worldCoords) const
 {
-	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type);
+	const CellMatDef& matDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 
 	switch (m_debugSettings.m_colorMode) {
 	case CellColorMode::NORMAL:
@@ -536,16 +536,13 @@ void SandboxMap::PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, 
 
 	GetChunkByWorldPos(worldX, worldY)->MarkDirty();
 
-	if (cell.m_type == CellMatType::MAT_EMPTY)
+	if (cell.m_type.load() == CellMatType::MAT_EMPTY)
 	{
 		CellMatDef const& curDef = CellMatManager::GetMaterialDef(type);
-		if (type == CellMatType::MAT_DYSOLID_FIRE)
-		{
-			int a = 0;
-		}
+
 		m_totalMaterialsSet++;
 		cell.m_isBelongRb = isRb;
-		cell.m_type = type;
+		cell.m_type.store(type);
 		cell.m_color = curDef.m_color;
 		cell.m_lifeCountDown = curDef.m_lifeCountDown.GetRandomInRange(&Game::s_rng);
 		cell.m_flameCountDown = curDef.m_flameCountDown.GetRandomInRange(&Game::s_rng);
@@ -655,7 +652,7 @@ void SandboxMap::UpdateSingleChunk(CellChunk* chunk)
 	}
 }
 
-bool SandboxMap::MSCanMoveTo(int x, int y, float curDensity) const
+bool SandboxMap::MSCanMoveTo(int x, int y, float curDensity, bool useFastVersion) const
 {
 	if (!IsInBounds(x, y)) {
 		return false;
@@ -665,7 +662,7 @@ bool SandboxMap::MSCanMoveTo(int x, int y, float curDensity) const
 	Cell const& targetCell = GetCell(x, y);
 
 	// 获取目标cell的密度和物理类型
-	const CellMatDef& targetMatDef = CellMatManager::GetMaterialDef(targetCell.m_type);
+	const CellMatDef& targetMatDef = CellMatManager::GetMaterialDef(targetCell.m_type.load());
 	float targetDensity = targetMatDef.m_density;
 
 	// MoveSolid 可以移动到的条件：
@@ -676,14 +673,14 @@ bool SandboxMap::MSCanMoveTo(int x, int y, float curDensity) const
 			targetMatDef.m_physicsType == PhyType::PHY_LIQUID);
 }
 
-bool SandboxMap::LiquidCanMoveTo(int x, int y, float curDensity) const
+bool SandboxMap::LiquidCanMoveTo(int x, int y, float curDensity, bool useFastVersion) const
 {
 	if (!IsInBounds(x, y)) {
 		return false;
 	}
 
 	Cell const& targetCell = GetCell(x, y);
-	float targetDensity = CellMatManager::GetMaterialDef(targetCell.m_type).m_density;
+	float targetDensity = CellMatManager::GetMaterialDef(targetCell.m_type.load()).m_density;
 	return curDensity > targetDensity;
 }
 
@@ -720,11 +717,11 @@ void SandboxMap::UpdateStatistics()
 				for (int localX = 0; localX < CHUNK_SIZE; ++localX) {
 					const Cell& cell = chunk->GetLocalCell(localX, localY);
 
-					if (cell.m_type != CellMatType::MAT_EMPTY) {
+					if (cell.m_type.load() != CellMatType::MAT_EMPTY) {
 						m_cachedNonEmptyCells++;
 
 						// Count by material type
-						switch (cell.m_type) {
+						switch (cell.m_type.load()) {
 						case CellMatType::MAT_SAND:
 							m_cachedSandCells++;
 							break;
@@ -1013,7 +1010,7 @@ void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
 			if (cell.IsEmpty()) continue;
 
 			IntVec2 worldPos = chunk->LocalToWorld(localX, localY);
-			CellMatDef curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+			CellMatDef curCellDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 
 			// High Temperature
 			if (curCellDef.m_isHighTemp) 
@@ -1023,7 +1020,7 @@ void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
 			if (cell.m_lifeCountDown == 0)
 			{
 				cell.SetToType(curCellDef.m_lifeEndMatType);
-				curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+				curCellDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 			}
 			else if (cell.m_lifeCountDown > 0)
 			{
@@ -1040,7 +1037,7 @@ void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
 				{
 					cell.SetToType(curCellDef.m_flammableType);
 					chunk->MarkDirty();
-					curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+					curCellDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 				}
 				else
 				{
@@ -1049,7 +1046,7 @@ void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
 						IntVec2 neighborWorldPos = worldPos + directions[i];
 						if (IsInBounds(neighborWorldPos.x, neighborWorldPos.y))
 						{
-							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type);
+							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type.load());
 							if (neighborCellDef.m_isHighTemp)
 							{
 								cell.m_flameCountDown--;
@@ -1066,7 +1063,7 @@ void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
 				{
 					cell.SetToType(curCellDef.m_dissolveType);
 					chunk->MarkDirty();
-					curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+					curCellDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 				}
 				else
 				{
@@ -1075,7 +1072,7 @@ void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
 						IntVec2 neighborWorldPos = worldPos + directions[i];
 						if (IsInBounds(neighborWorldPos.x, neighborWorldPos.y))
 						{
-							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type);
+							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type.load());
 							if (neighborCellDef.m_physicsType == PhyType::PHY_LIQUID)
 							{
 								cell.m_dissolveCountDown--;
@@ -1092,7 +1089,7 @@ void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
 				{
 					cell.SetToType(curCellDef.m_corrodeType);
 					chunk->MarkDirty();
-					curCellDef = CellMatManager::GetMaterialDef(cell.m_type);
+					curCellDef = CellMatManager::GetMaterialDef(cell.m_type.load());
 				}
 				else
 				{
@@ -1101,7 +1098,7 @@ void SandboxMap::UpdateSingleChunkChemical(CellChunk* chunk)
 						IntVec2 neighborWorldPos = worldPos + directions[i];
 						if (IsInBounds(neighborWorldPos.x, neighborWorldPos.y))
 						{
-							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type);
+							CellMatDef neighborCellDef = CellMatManager::GetMaterialDef(GetCell(neighborWorldPos.x, neighborWorldPos.y).m_type.load());
 							if (neighborCellDef.m_isAcid)
 							{
 								cell.m_corrosionCountDown--;

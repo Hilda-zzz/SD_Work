@@ -29,6 +29,9 @@
     <Filter Include="Controller">
       <UniqueIdentifier>{d33c465b-4763-45fc-868f-11b31707354e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sky">
+      <UniqueIdentifier>{108aa15e-56fe-454d-ba61-99129b6c9eea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -105,6 +108,9 @@
     </ClCompile>
     <ClCompile Include="InputController_PlayerMode.cpp">
       <Filter>Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="ProceduralSky.cpp">
+      <Filter>Sky</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -195,6 +201,9 @@
     <ClInclude Include="PlayerController.hpp">
       <Filter>Controller</Filter>
     </ClInclude>
+    <ClInclude Include="ProceduralSky.hpp">
+      <Filter>Sky</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\..\Run\Data\Shaders\CubeSkyBox.hlsl">
@@ -210,6 +219,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\..\Run\Data\Shaders\DX11BlinnPhong.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\ProceduralSky.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\WaterScreenSpace2.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

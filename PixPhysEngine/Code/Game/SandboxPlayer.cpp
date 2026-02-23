@@ -50,10 +50,10 @@ void SandboxPlayer::HandleInput()
 {
 	if (!m_sandBoxUI.IsInRigidBodyDrawMode())
 	{
-		if (g_theInput->WasKeyJustPressed('C'))
-		{
-			m_isSand = !m_isSand;
-		}
+		//if (g_theInput->WasKeyJustPressed('C'))
+		//{
+		//	m_isSand = !m_isSand;
+		//}
 		if (g_theInput->IsKeyDown(KEYCODE_LEFT_MOUSE))
 		{
 			Vec2 mouseUV = g_theWindow->GetNormalizedMouseUV();

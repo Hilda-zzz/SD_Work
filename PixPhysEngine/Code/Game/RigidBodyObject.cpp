@@ -7,49 +7,129 @@
 #include <Engine/Core/ErrorWarningAssert.hpp>
 #include "Game/RigidbodyManager.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include <ThirdParty/tracy/tracy/Tracy.hpp>
 
 extern Renderer* g_theRenderer;
 
 RigidBodyObject::RigidBodyObject(int id, b2WorldId b2WorldId, RigidBodyManager* manager)
-	:m_rbID(id),m_b2WorldId(b2WorldId),m_manager(manager)
+	:m_rbID(id),m_b2WorldId(b2WorldId),m_manager(manager), m_b2BodyId(b2_nullBodyId)
 {
 }
 
 RigidBodyObject::~RigidBodyObject()
 {
+	if (!B2_IS_NULL(m_b2BodyId)) {
+		b2DestroyBody(m_b2BodyId);
+		m_b2BodyId = b2_nullBodyId;
+	}
+
+	m_b2ShapeIds.clear();
 }
 
 void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2BodyType type)
 {
 	CreateBox2DBody(cells, type);
 
+	m_bodyType = type;
+
 	SandboxMap* map = m_manager->GetOwnerMap();
 	m_cellBlueprint.clear();
 	m_cells.clear();
 
-	// Saving the blueprint
-	for (const CellWithCoords& cellData : cells)
+	if (m_bodyType == b2_dynamicBody)
 	{
-		m_cells.push_back(cellData.m_cell);
-		Vec2 cellWorldPos = Vec2((float)cellData.m_worldCoords.x, (float)cellData.m_worldCoords.y) + Vec2(0.5f, 0.5f);
+		// Saving the blueprint
+		for (const CellWithCoords& cellData : cells)
+		{
+			m_cells.push_back(cellData.m_cell);
+			Vec2 cellWorldPos = Vec2((float)cellData.m_worldCoords.x, (float)cellData.m_worldCoords.y) + Vec2(0.5f, 0.5f);
 
-		Vec2 localPos = WorldToLocal(cellWorldPos);
-		IntVec2 localKey((int)floorf(localPos.x), (int)floorf(localPos.y));
+			Vec2 localPos = WorldToLocal(cellWorldPos);
+			IntVec2 localKey((int)floorf(localPos.x), (int)floorf(localPos.y));
 
-		cellData.m_cell->m_isBelongRb = true;
-		cellData.m_cell->m_rigidBodyId = m_rbID;
+			cellData.m_cell->m_isBelongRb = true;
+			cellData.m_cell->m_rigidBodyId = m_rbID;
 
-		// ⭐ 保存到蓝图（这张图永远不变！）
-		m_cellBlueprint[localKey] = *cellData.m_cell;
+			// ⭐ 保存到蓝图（这张图永远不变！）
+			m_cellBlueprint[localKey] = *cellData.m_cell;
+		}
+	}
+	else
+	{
+		{
+			ZoneScopedN("inelse");
+			const size_t cellCount = cells.size();
+
+			// 关键优化1：预留空间
+			m_staticCellCoords.clear();
+			m_staticCellCoords.reserve(cellCount);
+
+			m_cells.clear();
+			m_cells.reserve(cellCount);
+
+			for (const CellWithCoords& cellData : cells) 
+			{
+				Cell* cell = cellData.m_cell;
+
+				m_cells.push_back(cellData.m_cell);
+				m_staticCellCoords.emplace(cell, cellData.m_worldCoords);
+
+				cell->m_isBelongRb = true;
+				cell->m_rigidBodyId = m_rbID;
+			}
+		}
+	}
+}
+
+void RigidBodyObject::InitializeFromPrecomputedData(RigidBodyPrecomputedData&& data)
+{
+	ZoneScoped;
+
+	m_bodyType = data.bodyType;
+	m_position = data.centroid;
+
+	// 创建Box2D对象（主线程，快速）
+	CreateBox2DBodyFromPrecomputed(data);
+
+	// 设置Cell归属（主线程，必须）
+	m_cells.clear();
+	m_cells.reserve(data.originalCells.size());
+
+	if (m_bodyType == b2_staticBody)
+	{
+		// 直接使用预计算的映射
+		m_staticCellCoords = std::move(data.staticCellCoords);
+
+		for (const CellWithCoords& cellData : data.originalCells)
+		{
+			m_cells.push_back(cellData.m_cell);
+			cellData.m_cell->m_isBelongRb = true;
+			cellData.m_cell->m_rigidBodyId = m_rbID;
+		}
+	}
+	else if (m_bodyType == b2_dynamicBody)
+	{
+		// 直接使用预计算的蓝图
+		m_cellBlueprint = std::move(data.cellBlueprint);
+
+		for (const CellWithCoords& cellData : data.cellsForRigidBody)
+		{
+			m_cells.push_back(cellData.m_cell);
+			cellData.m_cell->m_isBelongRb = true;
+			cellData.m_cell->m_rigidBodyId = m_rbID;
+		}
 	}
 }
 
 void RigidBodyObject::Update()
 {
-	SyncFromBox2D();
+	if (m_bodyType == b2_dynamicBody)
+	{
+		SyncFromBox2D();
 
-	m_positionDebugDrawVerts.clear();
-	PlaceCellsToNewPositions();
+		m_positionDebugDrawVerts.clear();
+		PlaceCellsToNewPositions();
+	}
 }
 
 void RigidBodyObject::ValidateAndCollectCells()
@@ -427,87 +507,170 @@ Vec2 RigidBodyObject::WorldToLocal(Vec2 worldPos) const
 	return localPos;
 }
 
+void RigidBodyObject::SetActive(bool active)
+{
+	if (m_isActive == active) return;
+
+	m_isActive = active;
+
+	if (B2_IS_NULL(m_b2BodyId)) return;
+
+	// ← 关键：调用Box2D的启用/禁用
+	if (active) 
+	{
+		b2Body_Enable(m_b2BodyId);           // ← 启用body
+		if (m_bodyType == b2_dynamicBody) 
+		{
+			b2Body_SetAwake(m_b2BodyId, true); // 唤醒动态刚体
+		}
+	}
+	else 
+	{
+		b2Body_Disable(m_b2BodyId);          // ← 禁用body
+	}
+}
+
+
+void RigidBodyObject::AddAffectedChunk(CellChunk* chunk)
+{
+	if (chunk) {
+		m_affectedChunks.insert(chunk);
+	}
+}
+
+void RigidBodyObject::Reset()
+{
+	// 1. 清空cells标记
+	for (Cell* cell : m_cells) {
+		if (cell) {
+			cell->m_isBelongRb = false;
+			cell->m_rigidBodyId = -1;
+		}
+	}
+
+	// 1. 重置激活状态
+	m_isActive = false;
+
+	// 2. 重置刚体类型
+	m_bodyType = b2_dynamicBody;
+
+	// 3. 清空所属chunk信息
+	m_ownerChunk = nullptr;
+	m_affectedChunks.clear();
+
+	// 4. 清空cells数据
+	m_cells.clear();
+	m_cellToWorldCoords.clear();
+	m_cellBlueprint.clear();
+	m_staticCellCoords.clear();
+
+	// 5. 重置位置和旋转
+	m_position = Vec2::ZERO;
+	m_rotation = 0.f;
+	m_lastPosition = Vec2::ZERO;
+	m_lastAngle = 0.f;
+	m_positionAccumulator = 0.f;
+	m_angleAccumulator = 0.f;
+
+	// 6. 销毁Box2D body（如果存在）
+	if (!B2_IS_NULL(m_b2BodyId)) {
+		b2DestroyBody(m_b2BodyId);
+		m_b2BodyId = b2_nullBodyId;
+	}
+
+	// 7. 清空shape IDs
+	m_b2ShapeIds.clear();
+
+	// 8. 清空debug绘制顶点
+	m_marchingSquaresVerts.clear();
+	m_douglasVerts.clear();
+	m_triangleMeshVerts.clear();
+	m_positionDebugDrawVerts.clear();
+}
+
 void RigidBodyObject::CreateBox2DBody(std::vector<CellWithCoords> const& cells, b2BodyType type)
 {
+	ZoneScoped;
 	std::vector<Vec2>  marchingSquarePoints;
-	std::vector<Vec2>  outlinePoints = Box2DShapeBuilder::ExtractOutlineFromCells(cells, marchingSquarePoints);
+	//std::vector<Vec2>  outlinePoints = Box2DShapeBuilder::ExtractOutlineFromCells(cells, marchingSquarePoints);
+	std::vector<Vec2>  outlinePoints = Box2DShapeBuilder::ExtractOutlineFromCellsSimple(cells);
 
 	Vec2 centroid_Cell = Box2DShapeBuilder::CalculateCentroid(outlinePoints);
 	m_position = centroid_Cell;
 
-	m_douglasVerts.clear();
-	if (outlinePoints.size() >= 2)
-	{
-		Rgba8 lineColor = Rgba8::GREEN;
+	//m_douglasVerts.clear();
+	//if (outlinePoints.size() >= 2)
+	//{
+	//	Rgba8 lineColor = Rgba8::GREEN;
 
-		for (size_t i = 0; i < outlinePoints.size(); ++i)
-		{
-			float t = static_cast<float>(i) / static_cast<float>(outlinePoints.size() - 1);
+	//	for (size_t i = 0; i < outlinePoints.size(); ++i)
+	//	{
+	//		float t = static_cast<float>(i) / static_cast<float>(outlinePoints.size() - 1);
 
-			Rgba8 startColor = Rgba8::WHITE;
-			Rgba8 endColor = Rgba8::GREEN;
-			Rgba8 lineColor = Interpolate(startColor, endColor, t);
+	//		Rgba8 startColor = Rgba8::WHITE;
+	//		Rgba8 endColor = Rgba8::GREEN;
+	//		Rgba8 lineColor = Interpolate(startColor, endColor, t);
 
-			Vec2 currentPoint = outlinePoints[i];
-			Vec2 nextPoint = outlinePoints[(i + 1) % outlinePoints.size()];
-			//AddVertsForDisc2D(newObj->m_marchingSquaresVerts, currentPoint, 0.1f, lineColor);
-			AddVertsForLinSegment2D(m_douglasVerts, currentPoint - centroid_Cell, nextPoint - centroid_Cell, 0.4f, lineColor);
-		}
-	}
+	//		Vec2 currentPoint = outlinePoints[i];
+	//		Vec2 nextPoint = outlinePoints[(i + 1) % outlinePoints.size()];
+	//		//AddVertsForDisc2D(newObj->m_marchingSquaresVerts, currentPoint, 0.1f, lineColor);
+	//		AddVertsForLineSegment2D(m_douglasVerts, currentPoint - centroid_Cell, nextPoint - centroid_Cell, 0.4f, lineColor);
+	//	}
+	//}
 
-	if (marchingSquarePoints.size() >= 2)
-	{
-		Rgba8 lineColor = Rgba8::GREEN;
+	//if (marchingSquarePoints.size() >= 2)
+	//{
+	//	Rgba8 lineColor = Rgba8::GREEN;
 
-		for (size_t i = 0; i < marchingSquarePoints.size(); ++i)
-		{
-			float t = static_cast<float>(i) / static_cast<float>(marchingSquarePoints.size() - 1);
+	//	for (size_t i = 0; i < marchingSquarePoints.size(); ++i)
+	//	{
+	//		float t = static_cast<float>(i) / static_cast<float>(marchingSquarePoints.size() - 1);
 
-			Rgba8 startColor = Rgba8::WHITE;
-			Rgba8 endColor = Rgba8::GREEN;
-			Rgba8 lineColor = Interpolate(startColor, endColor, t);
+	//		Rgba8 startColor = Rgba8::WHITE;
+	//		Rgba8 endColor = Rgba8::GREEN;
+	//		Rgba8 lineColor = Interpolate(startColor, endColor, t);
 
-			Vec2 currentPoint = marchingSquarePoints[i];
-			Vec2 nextPoint = marchingSquarePoints[(i + 1) % marchingSquarePoints.size()];
-			//AddVertsForDisc2D(newObj->m_marchingSquaresVerts, currentPoint, 0.1f, lineColor);
-			AddVertsForLinSegment2D(m_marchingSquaresVerts, currentPoint - centroid_Cell, nextPoint - centroid_Cell, 0.4f, lineColor);
-		}
-	}
+	//		Vec2 currentPoint = marchingSquarePoints[i];
+	//		Vec2 nextPoint = marchingSquarePoints[(i + 1) % marchingSquarePoints.size()];
+	//		//AddVertsForDisc2D(newObj->m_marchingSquaresVerts, currentPoint, 0.1f, lineColor);
+	//		AddVertsForLineSegment2D(m_marchingSquaresVerts, currentPoint - centroid_Cell, nextPoint - centroid_Cell, 0.4f, lineColor);
+	//	}
+	//}
 	// ================== Test triangulation result ====================
 	//TriangulationOutput triangulationResult = Box2DShapeBuilder::EarClipping(outlinePoints);
 	TriangulationOutput triangulationResult = Box2DShapeBuilder::CDTTriangulation(outlinePoints);
 	int triangleCount = triangulationResult.indices.size() / 3;
-	if (!triangulationResult.indices.empty())
-	{
-		// ============== 绘制三角形（填充） ====================
-		// 使用不同颜色渐变显示每个三角形
-		for (int i = 0; i < triangleCount; ++i)
-		{
-			unsigned int idx0 = triangulationResult.indices[i * 3 + 0];
-			unsigned int idx1 = triangulationResult.indices[i * 3 + 1];
-			unsigned int idx2 = triangulationResult.indices[i * 3 + 2];
-			Vec2 v0 = triangulationResult.vertices[idx0];
-			Vec2 v1 = triangulationResult.vertices[idx1];
-			Vec2 v2 = triangulationResult.vertices[idx2];
+	//if (!triangulationResult.indices.empty())
+	//{
+	//	// ============== 绘制三角形（填充） ====================
+	//	// 使用不同颜色渐变显示每个三角形
+	//	for (int i = 0; i < triangleCount; ++i)
+	//	{
+	//		unsigned int idx0 = triangulationResult.indices[i * 3 + 0];
+	//		unsigned int idx1 = triangulationResult.indices[i * 3 + 1];
+	//		unsigned int idx2 = triangulationResult.indices[i * 3 + 2];
+	//		Vec2 v0 = triangulationResult.vertices[idx0];
+	//		Vec2 v1 = triangulationResult.vertices[idx1];
+	//		Vec2 v2 = triangulationResult.vertices[idx2];
 
-			Rgba8 colors[] = {
-				Rgba8(255, 100, 100, 180),  // 红色
-				Rgba8(100, 255, 100, 180),  // 绿色
-				Rgba8(100, 100, 255, 180),  // 蓝色
-				Rgba8(255, 255, 100, 180),  // 黄色
-				Rgba8(255, 100, 255, 180),  // 品红
-				Rgba8(100, 255, 255, 180)   // 青色
-			};
-			Rgba8 triangleColor = colors[i % 6];
-			Vec3 centroidVec3 = Vec3(centroid_Cell.x, centroid_Cell.y, 0.f);
-			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v0.x, v0.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
+	//		Rgba8 colors[] = {
+	//			Rgba8(255, 100, 100, 180),  // 红色
+	//			Rgba8(100, 255, 100, 180),  // 绿色
+	//			Rgba8(100, 100, 255, 180),  // 蓝色
+	//			Rgba8(255, 255, 100, 180),  // 黄色
+	//			Rgba8(255, 100, 255, 180),  // 品红
+	//			Rgba8(100, 255, 255, 180)   // 青色
+	//		};
+	//		Rgba8 triangleColor = colors[i % 6];
+	//		Vec3 centroidVec3 = Vec3(centroid_Cell.x, centroid_Cell.y, 0.f);
+	//		m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v0.x, v0.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
 
-			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v1.x, v1.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
+	//		m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v1.x, v1.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
 
-			m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v2.x, v2.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
+	//		m_triangleMeshVerts.push_back(Vertex_PCU(Vec3(v2.x, v2.y, 0.f) - centroidVec3, triangleColor, Vec2::ZERO));
 
-		}
-	}
+	//	}
+	//}
 
 	//===================== Create rigidbody ===========================
 	b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -578,6 +741,68 @@ void RigidBodyObject::CreateBox2DBody(std::vector<CellWithCoords> const& cells, 
 			b2Polygon polygon = b2MakePolygon(&hull, 0.0f);
 
 			// 创建shape并附加到body
+			b2ShapeId shapeId = b2CreatePolygonShape(m_b2BodyId, &shapeDef, &polygon);
+
+			if (!B2_IS_NULL(shapeId)) {
+				m_b2ShapeIds.push_back(shapeId);
+			}
+		}
+	}
+}
+
+void RigidBodyObject::CreateBox2DBodyFromPrecomputed(const RigidBodyPrecomputedData& data)
+{
+	ZoneScoped;
+
+	// 创建刚体
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = data.bodyType;
+	bodyDef.position = b2Vec2{
+		data.centroid.x * METERS_PER_CELL,
+		data.centroid.y * METERS_PER_CELL
+	};
+
+	m_b2BodyId = b2CreateBody(m_b2WorldId, &bodyDef);
+	if (B2_IS_NULL(m_b2BodyId)) {
+		ERROR_AND_DIE("Failed to create Box2D body!");
+		return;
+	}
+
+	// 创建形状定义
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.density = 1.0f;
+	shapeDef.material.friction = 0.3f;
+	shapeDef.material.restitution = 0.2f;
+
+	// 直接使用预计算的三角网格（已经是局部坐标！）
+	int triangleCount = static_cast<int>(data.triangleIndices.size()) / 3;
+
+	for (int i = 0; i < triangleCount; ++i)
+	{
+		unsigned int idx0 = data.triangleIndices[i * 3 + 0];
+		unsigned int idx1 = data.triangleIndices[i * 3 + 1];
+		unsigned int idx2 = data.triangleIndices[i * 3 + 2];
+
+		// 顶点已经是局部坐标，直接转换为Box2D坐标
+		b2Vec2 localV0 = {
+			data.triangleVertices[idx0].x * METERS_PER_CELL,
+			data.triangleVertices[idx0].y * METERS_PER_CELL
+		};
+		b2Vec2 localV1 = {
+			data.triangleVertices[idx1].x * METERS_PER_CELL,
+			data.triangleVertices[idx1].y * METERS_PER_CELL
+		};
+		b2Vec2 localV2 = {
+			data.triangleVertices[idx2].x * METERS_PER_CELL,
+			data.triangleVertices[idx2].y * METERS_PER_CELL
+		};
+
+		b2Vec2 points[3] = { localV2, localV1, localV0 };
+		b2Hull hull = b2ComputeHull(points, 3);
+
+		if (hull.count >= 3)
+		{
+			b2Polygon polygon = b2MakePolygon(&hull, 0.0f);
 			b2ShapeId shapeId = b2CreatePolygonShape(m_b2BodyId, &shapeDef, &polygon);
 
 			if (!B2_IS_NULL(shapeId)) {

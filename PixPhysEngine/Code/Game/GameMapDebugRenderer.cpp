@@ -8,6 +8,8 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Game/RegionManager.hpp"
 #include "ThirdParty/ImGui/imgui.h"
+#include "GamePlayer.hpp"
+#include "CellMatBrush.hpp"
 
 extern Renderer* g_theRenderer;
 
@@ -50,6 +52,10 @@ void GameMapDebugRenderer::Render(Camera const& camera) const
 
 	if (m_drawFrustumCulling) {
 		RenderFrustumCulling(camera);
+	}
+
+	if (m_drawActiveChunkBound) {
+		RenderActiveChunkBounds();
 	}
 }
 
@@ -434,145 +440,6 @@ void GameMapDebugRenderer::RenderPixelGrid(Camera const& camera) const
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 	g_theRenderer->DrawVertexArray(verts);
 
-	//-----------------
-	//if (m_tilePlacements.empty())
-	//{
-	//	return;
-	//}
-	//std::vector<Vertex_PCU> verts;
-	//	
-	//// 遍历所有已放置的 tile
-	//for (const HbTilePlacement& placement : m_tilePlacements)
-	//{
-	//	if (!placement.m_selectedTile)
-	//	{
-	//		continue;
-	//	}
-	//	
-	//	// 转换为 cell 坐标（世界坐标）
-	//	float worldX = placement.m_bottomLeftHPixel.x * 8.0f;
-	//	float worldY = placement.m_bottomLeftHPixel.y * 8.0f;
-	//	float worldWidth = placement.m_sizeHPixel.x * 8.0f;
-	//	float worldHeight = placement.m_sizeHPixel.y * 8.0f;
-	//	
-	//	// 创建矩形边界
-	//	AABB2 bounds(worldX, worldY, worldX + worldWidth, worldY + worldHeight);
-	//	
-	//	// 横向 tile = 蓝色，纵向 tile = 红色
-	//	Rgba8 wireColor;
-	//	if (placement.m_orientation == HbTileOrientation::HORIZONTAL)
-	//	{
-	//		wireColor = Rgba8(0, 100, 255, 255);  // 蓝色
-	//	}
-	//	else
-	//	{
-	//		wireColor = Rgba8(255, 0, 0, 255);     // 红色
-	//	}
-	//	
-	//	// 添加边框
-	//	AddVertsForAABBWire2D(verts, bounds, wireColor, 2.f, false);
-	//	
-	//	// === 添加约束标记（在框内） ===
-	//	float markerSize = 2.0f;   // 标记方块的大小
-	//	float inset = 4.0f;        // 向内偏移距离，确保在框内
-	//	
-	//	if (placement.m_orientation == HbTileOrientation::HORIZONTAL)
-	//	{
-	//		// 横向 tile 的 6 条边
-	//		// 边 0: TOP_LEFT (顶部左侧)
-	//		HbEdgeConstraint edge0 = placement.m_selectedTile->GetEdgeConstraint(0);
-	//		Vec2 pos0(worldX + worldWidth * 0.25f, worldY + worldHeight - inset);
-	//		AABB2 marker0(pos0.x - markerSize, pos0.y - markerSize,
-	//			pos0.x + markerSize, pos0.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker0, edge0.m_color);
-	//	
-	//		// 边 1: TOP_RIGHT (顶部右侧)
-	//		HbEdgeConstraint edge1 = placement.m_selectedTile->GetEdgeConstraint(1);
-	//		Vec2 pos1(worldX + worldWidth * 0.75f, worldY + worldHeight - inset);
-	//		AABB2 marker1(pos1.x - markerSize, pos1.y - markerSize,
-	//			pos1.x + markerSize, pos1.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker1, edge1.m_color);
-	//	
-	//		// 边 2: RIGHT (右侧中间)
-	//		HbEdgeConstraint edge2 = placement.m_selectedTile->GetEdgeConstraint(2);
-	//		Vec2 pos2(worldX + worldWidth - inset, worldY + worldHeight * 0.5f);
-	//		AABB2 marker2(pos2.x - markerSize, pos2.y - markerSize,
-	//			pos2.x + markerSize, pos2.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker2, edge2.m_color);
-	//	
-	//		// 边 3: BOTTOM_RIGHT (底部右侧)
-	//		HbEdgeConstraint edge3 = placement.m_selectedTile->GetEdgeConstraint(3);
-	//		Vec2 pos3(worldX + worldWidth * 0.75f, worldY + inset);
-	//		AABB2 marker3(pos3.x - markerSize, pos3.y - markerSize,
-	//			pos3.x + markerSize, pos3.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker3, edge3.m_color);
-	//	
-	//		// 边 4: BOTTOM_LEFT (底部左侧)
-	//		HbEdgeConstraint edge4 = placement.m_selectedTile->GetEdgeConstraint(4);
-	//		Vec2 pos4(worldX + worldWidth * 0.25f, worldY + inset);
-	//		AABB2 marker4(pos4.x - markerSize, pos4.y - markerSize,
-	//			pos4.x + markerSize, pos4.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker4, edge4.m_color);
-	//	
-	//		// 边 5: LEFT (左侧中间)
-	//		HbEdgeConstraint edge5 = placement.m_selectedTile->GetEdgeConstraint(5);
-	//		Vec2 pos5(worldX + inset, worldY + worldHeight * 0.5f);
-	//		AABB2 marker5(pos5.x - markerSize, pos5.y - markerSize,
-	//			pos5.x + markerSize, pos5.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker5, edge5.m_color);
-	//	}
-	//	else // VERTICAL
-	//	{
-	//		// 纵向 tile 的 6 条边
-	//		// 边 0: TOP (顶部中间)
-	//		HbEdgeConstraint edge0 = placement.m_selectedTile->GetEdgeConstraint(0);
-	//		Vec2 pos0(worldX + worldWidth * 0.5f, worldY + worldHeight - inset);
-	//		AABB2 marker0(pos0.x - markerSize, pos0.y - markerSize,
-	//			pos0.x + markerSize, pos0.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker0, edge0.m_color);
-	//	
-	//		// 边 1: RIGHT_TOP (右侧上部)
-	//		HbEdgeConstraint edge1 = placement.m_selectedTile->GetEdgeConstraint(1);
-	//		Vec2 pos1(worldX + worldWidth - inset, worldY + worldHeight * 0.75f);
-	//		AABB2 marker1(pos1.x - markerSize, pos1.y - markerSize,
-	//			pos1.x + markerSize, pos1.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker1, edge1.m_color);
-	//	
-	//		// 边 2: RIGHT_BOTTOM (右侧下部)
-	//		HbEdgeConstraint edge2 = placement.m_selectedTile->GetEdgeConstraint(2);
-	//		Vec2 pos2(worldX + worldWidth - inset, worldY + worldHeight * 0.25f);
-	//		AABB2 marker2(pos2.x - markerSize, pos2.y - markerSize,
-	//			pos2.x + markerSize, pos2.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker2, edge2.m_color);
-	//	
-	//		// 边 3: BOTTOM (底部中间)
-	//		HbEdgeConstraint edge3 = placement.m_selectedTile->GetEdgeConstraint(3);
-	//		Vec2 pos3(worldX + worldWidth * 0.5f, worldY + inset);
-	//		AABB2 marker3(pos3.x - markerSize, pos3.y - markerSize,
-	//			pos3.x + markerSize, pos3.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker3, edge3.m_color);
-	//	
-	//		// 边 4: LEFT_BOTTOM (左侧下部)
-	//		HbEdgeConstraint edge4 = placement.m_selectedTile->GetEdgeConstraint(4);
-	//		Vec2 pos4(worldX + inset, worldY + worldHeight * 0.25f);
-	//		AABB2 marker4(pos4.x - markerSize, pos4.y - markerSize,
-	//			pos4.x + markerSize, pos4.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker4, edge4.m_color);
-	//	
-	//		// 边 5: LEFT_TOP (左侧上部)
-	//		HbEdgeConstraint edge5 = placement.m_selectedTile->GetEdgeConstraint(5);
-	//		Vec2 pos5(worldX + inset, worldY + worldHeight * 0.75f);
-	//		AABB2 marker5(pos5.x - markerSize, pos5.y - markerSize,
-	//			pos5.x + markerSize, pos5.y + markerSize);
-	//		AddVertsForAABB2D(verts, marker5, edge5.m_color);
-	//	}
-	//}
-	//	
-	//// 渲染所有顶点
-	//g_theRenderer->BindTexture(nullptr);
-	//g_theRenderer->SetModelConstants();
-	//g_theRenderer->SetBlendMode(BlendMode::ALPHA);
-	//g_theRenderer->DrawVertexArray(verts);
 }
 
 void GameMapDebugRenderer::RenderFrustumCulling(Camera const& camera) const
@@ -636,47 +503,265 @@ void GameMapDebugRenderer::RenderFrustumCulling(Camera const& camera) const
 	}
 }
 
-//void GameMapDebugRenderer::RenderPixelGrid(Camera const& camera) const
+void GameMapDebugRenderer::RenderActiveChunkBounds() const
+{
+	std::vector<Vertex_PCU> verts;
+	IntVec2 gridSize = m_map->GetSuperChunkGridSize();
+
+	for (int sy = 0; sy < gridSize.y; ++sy) 
+	{
+		for (int sx = 0; sx < gridSize.x; ++sx) 
+		{
+			SuperChunk* sc = m_map->GetSuperChunkByCoords(IntVec2(sx, sy));
+			if (!sc) continue;
+
+			// Skip inactive if flag is set
+			if (m_drawActiveOnly && !sc->IsActive()) 
+			{
+				continue;
+			}
+
+			// Draw all chunks within this super chunk
+			for (int cy = 0; cy < CHUNKS_PER_SUPER_CHUNK; ++cy)
+			{
+				for (int cx = 0; cx < CHUNKS_PER_SUPER_CHUNK; ++cx) 
+				{
+					CellChunk* chunk = sc->GetChunk(cx, cy);
+					if (!chunk||!chunk->IsDirty()) continue;
+
+					AABB2 bounds = chunk->GetWorldBounds();
+					Rgba8 color = Rgba8::CYAN;
+
+					// Draw thin wireframe
+					AddVertsForAABBWire2D(verts, bounds, color, 1.0f, false);
+				}
+			}
+		}
+	}
+
+	if (!verts.empty()) {
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetModelConstants();
+		g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+		g_theRenderer->DrawVertexArray(verts);
+	}
+}
+
+void GameMapDebugRenderer::RenderMaterialSelector(GamePlayer* player)
+{
+	CellMatType selectedMaterial = player->GetSelectedMaterial();
+
+	// ==== brush set =========
+	int brushSize = player->GetBrushSize();
+	ImGui::Text("Brush Size: %d", brushSize);
+
+	// Brush size slider
+	int newBrushSize = brushSize;
+	if (ImGui::SliderInt("##BrushSize", &newBrushSize, 1, 20, "%d")) {
+		player->SetBrushSize(newBrushSize);
+	}
+
+	// === Current selected material display ===
+	const CellMatUIInfo& currentInfo = CellMatManager::s_materialUIInfo[selectedMaterial];
+	ImGui::Text("Current: %s", currentInfo.m_name.c_str());
+	ImGui::Separator();
+
+	// Two-panel layout: Category buttons (left) + Material buttons (right)
+	// Remove all table borders and make it borderless
+	if (ImGui::BeginTable("MaterialSelector", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoBordersInBody)) {
+		ImGui::TableSetupColumn("C", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+		ImGui::TableSetupColumn("Materials", ImGuiTableColumnFlags_WidthStretch);
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+
+		// === Left Panel: Category Selection ===
+		//ImGui::Text("Type");
+		ImGui::Separator();
+
+		// Category buttons (vertical)
+		auto renderCategoryButton = [&](const char* label, PhyType category, bool isToolsCategory = false) {
+			bool isSelected = (m_selectedCategory == category && m_showToolsOnly == isToolsCategory);
+
+			ImGui::PushID(label);
+
+			// Set button colors based on state
+			if (isSelected) {
+				// Selected state - highlighted
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));        // Green
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f)); // Lighter green
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));  // Darker green
+				ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));        // Bright green border
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 2.0f);
+			}
+			else {
+				// Normal state - default gray
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));        // Gray
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.5f, 0.5f, 0.5f, 1.0f)); // Lighter gray
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));  // Darker gray
+			}
+
+			bool clicked = ImGui::Button(label, ImVec2(-1, 40));
+
+			// Clean up styles
+			if (isSelected) {
+				ImGui::PopStyleVar();
+				ImGui::PopStyleColor(4);
+			}
+			else {
+				ImGui::PopStyleColor(3);
+			}
+
+			ImGui::PopID();
+			return clicked;
+			};
+
+		// Category buttons with state management
+		if (renderCategoryButton("Static\nSolid", PhyType::PHY_STATIC_SOLID)) {
+			m_selectedCategory = PhyType::PHY_STATIC_SOLID;
+			m_showToolsOnly = false;
+		}
+
+		if (renderCategoryButton("Move\nSolid", PhyType::PHY_MOVE_SOLID)) {
+			m_selectedCategory = PhyType::PHY_MOVE_SOLID;
+			m_showToolsOnly = false;
+		}
+
+		if (renderCategoryButton("Liquid", PhyType::PHY_LIQUID)) {
+			m_selectedCategory = PhyType::PHY_LIQUID;
+			m_showToolsOnly = false;
+		}
+
+		if (renderCategoryButton("Pure CA", PhyType::PHY_CELLULAR_AUTOMATON)) {
+			m_selectedCategory = PhyType::PHY_CELLULAR_AUTOMATON;
+			m_showToolsOnly = false;
+		}
+
+		if (renderCategoryButton("Tools", PhyType::PHY_STATIC_SOLID, true)) {
+			m_selectedCategory = PhyType::PHY_STATIC_SOLID;
+			m_showToolsOnly = true;
+		}
+
+		ImGui::TableNextColumn();
+
+		// === Right Panel: Material Selection ===
+		//ImGui::Text("Materials");
+		ImGui::Separator();
+
+		// Get materials for selected category
+		std::vector<CellMatType> materialsToShow;
+		if (m_showToolsOnly) {
+			materialsToShow = { CellMatType::MAT_EMPTY }; // Only tools
+		}
+		else {
+			// Get materials by physics type
+			for (const auto& pair : CellMatManager::s_materialUIInfo) {
+				if (pair.second.m_physType == m_selectedCategory && pair.first != CellMatType::MAT_EMPTY) {
+					materialsToShow.push_back(pair.first);
+				}
+			}
+		}
+
+		// Render material buttons as squares in a grid layout
+		float buttonSize = 35.0f;
+		float spacing = 5.0f;
+		float panelWidth = ImGui::GetContentRegionAvail().x;
+		int buttonsPerRow = (int)((panelWidth + spacing) / (buttonSize + spacing));
+		buttonsPerRow = std::max(1, buttonsPerRow);
+
+		for (size_t i = 0; i < materialsToShow.size(); ++i) {
+			CellMatType matType = materialsToShow[i];
+			const CellMatUIInfo& info = CellMatManager::s_materialUIInfo[matType];
+			bool isSelected = (selectedMaterial == matType);
+
+			// Start new row if needed
+			if (i % buttonsPerRow != 0) {
+				ImGui::SameLine();
+			}
+
+			ImGui::PushID((int)matType);
+
+			// Set button colors
+			ImGui::PushStyleColor(ImGuiCol_Button, info.m_color);
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+				ImVec4(info.m_color.x * 1.3f, info.m_color.y * 1.3f, info.m_color.z * 1.3f, info.m_color.w));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+				ImVec4(info.m_color.x * 0.8f, info.m_color.y * 0.8f, info.m_color.z * 0.8f, info.m_color.w));
+
+			// Highlight selected material
+			if (isSelected) {
+				ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 1.0f, 0.5f, 1.0f));
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 3.0f);
+			}
+
+			// Square button with just color (no text)
+	/*		if (ImGui::Button("", ImVec2(buttonSize, buttonSize))) {
+				player->SetSelectedMaterial(matType);
+			}*/
+
+			bool singleClicked = ImGui::Button("", ImVec2(buttonSize, buttonSize));
+			bool doubleClicked = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+
+			if (singleClicked && !doubleClicked) {
+				player->SetSelectedMaterial(matType);
+			}
+			//else if (doubleClicked) {
+			//	player->SetSelectedMaterial(matType);
+			//	m_showMaterialProperties = !m_showMaterialProperties;
+			//}
+
+			// Clean up styles
+			if (isSelected) {
+				ImGui::PopStyleVar();
+				ImGui::PopStyleColor();
+			}
+			ImGui::PopStyleColor(3);
+
+			// Show material name on hover
+			if (ImGui::IsItemHovered()) {
+				ImGui::BeginTooltip();
+				ImGui::Text("%s", info.m_name.c_str());
+				ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s", info.m_description.c_str());
+				ImGui::EndTooltip();
+			}
+
+			ImGui::PopID();
+		}
+
+		ImGui::EndTable();
+	}
+}
+
+//void GameMapDebugRenderer::RenderMaterialProperties(CellMatType selectedMaterial)
 //{
-//	std::vector<Vertex_PCU> gridVerts;
-//	Rgba8 gridColor(255, 255, 0, 64);  // 黄色半透明
+//	const CellMatDef& matDef = CellMatManager::GetMaterialDef(selectedMaterial);
+//	const CellMatUIInfo& uiInfo = CellMatManager::s_materialUIInfo[selectedMaterial];
 //
-//	// 获取相机视野范围（优化：只绘制可见区域）
-//	AABB2 cameraBounds = camera.GetCameraBounds();
+//	// Material header info
+//	ImGui::Text("Material: %s", uiInfo.m_name);
+//	ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s", uiInfo.m_description);
 //
-//	int minChunkX = (int)cameraBounds.m_mins.x / CHUNK_SIZE - 1;
-//	int maxChunkX = (int)cameraBounds.m_maxs.x / CHUNK_SIZE + 1;
-//	int minChunkY = (int)cameraBounds.m_mins.y / CHUNK_SIZE - 1;
-//	int maxChunkY = (int)cameraBounds.m_maxs.y / CHUNK_SIZE + 1;
-//
-//	// 绘制herringbone pixel网格线
-//	for (int chunkY = minChunkY; chunkY <= maxChunkY; ++chunkY) {
-//		for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX) {
-//			int baseWorldX = chunkX * CHUNK_SIZE;
-//			int baseWorldY = chunkY * CHUNK_SIZE;
-//
-//			// 绘制chunk内的pixel网格
-//			for (int i = 0; i <= HB_HPIXELS_PER_CHUNK; ++i) {
-//				int offset = i * HB_CELLS_PER_HPIXEL;
-//
-//				// 垂直线
-//				Vec2 vStart((float)(baseWorldX + offset), (float)baseWorldY);
-//				Vec2 vEnd((float)(baseWorldX + offset), (float)(baseWorldY + CHUNK_SIZE));
-//				AddVertsForLineSegment2D(gridVerts, vStart, vEnd, 0.2f, gridColor);
-//
-//				// 水平线
-//				Vec2 hStart((float)baseWorldX, (float)(baseWorldY + offset));
-//				Vec2 hEnd((float)(baseWorldX + CHUNK_SIZE), (float)(baseWorldY + offset));
-//				AddVertsForLineSegment2D(gridVerts, hStart, hEnd, 0.2f, gridColor);
-//			}
-//		}
+//	// Physics type label
+//	ImVec4 typeColor;
+//	switch (matDef.m_physicsType) {
+//	case PhyType::PHY_STATIC_SOLID:
+//		typeColor = ImVec4(0.8f, 0.6f, 0.4f, 1.0f);
+//		break;
+//	case PhyType::PHY_MOVE_SOLID:
+//		typeColor = ImVec4(1.0f, 0.8f, 0.0f, 1.0f);
+//		break;
+//	case PhyType::PHY_LIQUID:
+//		typeColor = ImVec4(0.3f, 0.6f, 1.0f, 1.0f);
+//		break;
 //	}
 //
-//	if (!gridVerts.empty()) {
-//		g_theRenderer->BindTexture(nullptr);
-//		g_theRenderer->DrawVertexArray(gridVerts);
-//	}
+//	ImGui::TextColored(typeColor, "Type: %s", uiInfo.m_physTypeName);
+//	ImGui::Separator();
+//
+//	// Parameter table
+//	//RenderParameterTable(matDef);
 //}
+
 //-----------------------------------------------------------------------------
 // ImGui Debug Control Panel
 //-----------------------------------------------------------------------------
@@ -740,6 +825,18 @@ void GameMapDebugRenderer::RenderDebugUI()
 	if (ImGui::IsItemHovered())
 	{
 		ImGui::SetTooltip("Show blue markers on visible super chunks and chunks\nBlue square in top-left corner = visible");
+	}
+
+	ImGui::Separator();
+
+	// Active Chunk
+	ImGui::Text("Active Chunk:");
+	ImGui::Checkbox("Draw Active Chunk", &m_drawActiveChunkBound);
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Show active chunks bound in green line.");
 	}
 
 	ImGui::Separator();
@@ -824,4 +921,36 @@ void GameMapDebugRenderer::RenderDebugUI()
 	}
 
 	ImGui::End();
+}
+
+void GameMapDebugRenderer::RenderMatBrushUI(GamePlayer* player)
+{
+	// Set window flags
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
+
+	// Material Selector Window
+	if (m_showMaterialSelector) {
+		ImGui::SetNextWindowSize(ImVec2(280, 50), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_FirstUseEver);
+
+		ImGuiWindowFlags window_flags_selector = ImGuiWindowFlags_NoCollapse |
+			ImGuiWindowFlags_NoTitleBar;// |
+			//ImGuiWindowFlags_NoBackground; // | ImGuiWindowFlags_NoResize;
+
+		if (ImGui::Begin("Material Brush", &m_showMaterialSelector, window_flags_selector)) {
+			RenderMaterialSelector(player);
+		}
+		ImGui::End();
+	}
+
+	// Material Properties Window
+	/*if (m_showMaterialProperties) {
+		ImGui::SetNextWindowSize(ImVec2(350, 500), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(1250, 20), ImGuiCond_FirstUseEver);
+
+		if (ImGui::Begin("Material Properties", &m_showMaterialProperties, window_flags)) {
+			RenderMaterialProperties(player->GetSelectedMaterial());
+		}
+		ImGui::End();
+	}*/
 }

@@ -19,35 +19,35 @@ BaseMap::BaseMap(const IntVec2& mapSize, int chunkSize)
 
 BaseMap::~BaseMap() 
 {
-	DestroyChunkGrid();
+	//DestroyChunkGrid();
 }
 
 // ========================================
 // Chunk 管理
 // ========================================
 
-void BaseMap::CreateChunkGrid() {
-	m_chunks.resize(m_chunkGridSize.y);
-
-	for (int chunkY = 0; chunkY < m_chunkGridSize.y; ++chunkY) {
-		m_chunks[chunkY].resize(m_chunkGridSize.x);
-
-		for (int chunkX = 0; chunkX < m_chunkGridSize.x; ++chunkX) {
-			IntVec2 chunkCoords(chunkX, chunkY);
-			m_chunks[chunkY][chunkX] = new CellChunk(chunkCoords, this);
-		}
-	}
-}
-
-void BaseMap::DestroyChunkGrid() {
-	for (auto& row : m_chunks) {
-		for (auto& chunk : row) {
-			delete chunk;
-			chunk = nullptr;
-		}
-	}
-	m_chunks.clear();
-}
+//void BaseMap::CreateChunkGrid() {
+//	m_chunks.resize(m_chunkGridSize.y);
+//
+//	for (int chunkY = 0; chunkY < m_chunkGridSize.y; ++chunkY) {
+//		m_chunks[chunkY].resize(m_chunkGridSize.x);
+//
+//		for (int chunkX = 0; chunkX < m_chunkGridSize.x; ++chunkX) {
+//			IntVec2 chunkCoords(chunkX, chunkY);
+//			m_chunks[chunkY][chunkX] = new CellChunk(chunkCoords, this);
+//		}
+//	}
+//}
+//
+//void BaseMap::DestroyChunkGrid() {
+//	for (auto& row : m_chunks) {
+//		for (auto& chunk : row) {
+//			delete chunk;
+//			chunk = nullptr;
+//		}
+//	}
+//	m_chunks.clear();
+//}
 
 // ========================================
 // Cell 访问
@@ -74,17 +74,19 @@ const Cell& BaseMap::GetCell(int worldX, int worldY) const {
 // ========================================
 
 CellChunk* BaseMap::GetChunk(int chunkX, int chunkY) {
-	if (!IsChunkIndexValid(chunkX, chunkY)) {
-		return nullptr;
-	}
-	return m_chunks[chunkY][chunkX];
+	//if (!IsChunkIndexValid(chunkX, chunkY)) {
+	//	return nullptr;
+	//}
+	//return m_chunks[chunkY][chunkX];
+	return nullptr;
 }
 
 const CellChunk* BaseMap::GetChunk(int chunkX, int chunkY) const {
-	if (!IsChunkIndexValid(chunkX, chunkY)) {
-		return nullptr;
-	}
-	return m_chunks[chunkY][chunkX];
+	//if (!IsChunkIndexValid(chunkX, chunkY)) {
+	//	return nullptr;
+	//}
+	//return m_chunks[chunkY][chunkX];
+	return nullptr;
 }
 
 CellChunk* BaseMap::GetChunkByWorldPos(int worldX, int worldY) {
@@ -101,13 +103,13 @@ const CellChunk* BaseMap::GetChunkByWorldPos(int worldX, int worldY) const {
 // 物理查询接口
 // ========================================
 
-bool BaseMap::MSCanMoveTo(int x, int y, float curDensity) const {
+bool BaseMap::MSCanMoveTo(int x, int y, float curDensity, bool useFastVersion) const {
 	if (!IsInBounds(x, y)) {
 		return false;
 	}
 
 	const Cell& targetCell = GetCell(x, y);
-	const CellMatDef& targetMatDef = CellMatManager::GetMaterialDef(targetCell.m_type);
+	const CellMatDef& targetMatDef = CellMatManager::GetMaterialDef(targetCell.m_type.load());
 	float targetDensity = targetMatDef.m_density;
 
 	// MoveSolid 可以移动到的条件：
@@ -118,13 +120,13 @@ bool BaseMap::MSCanMoveTo(int x, int y, float curDensity) const {
 			targetMatDef.m_physicsType == PhyType::PHY_LIQUID);
 }
 
-bool BaseMap::LiquidCanMoveTo(int x, int y, float curDensity) const {
+bool BaseMap::LiquidCanMoveTo(int x, int y, float curDensity, bool useFastVersion) const {
 	if (!IsInBounds(x, y)) {
 		return false;
 	}
 
 	const Cell& targetCell = GetCell(x, y);
-	float targetDensity = CellMatManager::GetMaterialDef(targetCell.m_type).m_density;
+	float targetDensity = CellMatManager::GetMaterialDef(targetCell.m_type.load()).m_density;
 
 	// Liquid 可以移动到密度更小的位置（包括空气，密度=0）
 	return curDensity > targetDensity;
