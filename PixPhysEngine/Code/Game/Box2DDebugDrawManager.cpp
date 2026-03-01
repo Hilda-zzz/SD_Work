@@ -8,6 +8,8 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include <ThirdParty/box2d/include/box2d/box2d.h>
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "BaseMap.hpp"
 
 extern Renderer* g_theRenderer;
 
@@ -173,16 +175,16 @@ void Box2DDebugDrawManager::DrawSolidCircle(
 	void* context)
 {
 	Box2DDebugDrawManager* manager = static_cast<Box2DDebugDrawManager*>(context);
-	if (!manager || !manager->m_renderer) {
-		return;
-	}
+	if (!manager || !manager->m_renderer) return;
 
 	Rgba8 rgba = B2ColorToRgba8(color);
+
+	// 和DrawSolidPolygon一致，用B2Vec2ToVec2换算
 	Vec2 center = B2Vec2ToVec2(transform.p);
+	float radiusInCells = radius / METERS_PER_CELL;  // 同样×16
 
 	std::vector<Vertex_PCU> verts;
-	AddVertsForDisc2D(verts, center, radius, rgba);
-
+	AddVertsForDisc2D(verts, center, radiusInCells, rgba);
 	if (!verts.empty()) {
 		manager->m_renderer->DrawVertexArray(verts);
 	}
@@ -292,7 +294,7 @@ Vec2 Box2DDebugDrawManager::B2Vec2ToVec2(b2Vec2 b2v)
 {
 	// 注意：需要根据你的坐标系统转换
 	// 如果使用 METERS_PER_CELL 缩放，在这里处理
-	constexpr float METERS_PER_CELL = 1.0f / 16.0f;  // 假设16 cells = 1 meter
+	//constexpr float METERS_PER_CELL = 1.0f / 16.0f;  // 假设16 cells = 1 meter
 
 	return Vec2(
 		b2v.x / METERS_PER_CELL,

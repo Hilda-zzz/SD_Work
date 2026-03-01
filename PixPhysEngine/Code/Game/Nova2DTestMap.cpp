@@ -171,20 +171,20 @@ void Nova2DTestMap::ApplyConfigToEmitter()
 
 void Nova2DTestMap::TestDefInstance()
 {
-	// ========== Test 1: Fire Effect (橙→红→透明) ==========
-	auto* fireDef = new Nova2DEmitterDefinition();
-	Nova2DEmitterDefinitionGPU& gpu = fireDef->GetGPUData();
+	//// ========== Test 1: Fire Effect (橙→红→透明) ==========
+	//auto* fireDef = new Nova2DEmitterDefinition();
+	//Nova2DEmitterDefinitionGPU& gpu = fireDef->GetGPUData();
 
-	// Emission Settings
-	gpu.m_emission.m_emissionRate = 80.0f;
-	gpu.m_emission.m_lifetimeMin = 3.f;
-	gpu.m_emission.m_lifetimeMax = 4.0f;
-	gpu.m_emission.m_emissionType = 1;  // Circle
-	gpu.m_emission.m_emissionRadius = 40.0f;
-	gpu.m_emission.m_emissionMode = 0;  // CONTINUOUS
+	//// Emission Settings
+	//gpu.m_emission.m_emissionRate = 80.0f;
+	//gpu.m_emission.m_lifetimeMin = 3.f;
+	//gpu.m_emission.m_lifetimeMax = 4.0f;
+	//gpu.m_emission.m_emissionType = 1;  // Circle
+	//gpu.m_emission.m_emissionRadius = 40.0f;
+	//gpu.m_emission.m_emissionMode = 0;  // CONTINUOUS
 
-	//fireDef->SetBurstConfig(20, 1.0f, -1);
-	fireDef->SetTexturePath("Data/Images/Particles/Hilda.jpg");
+	////fireDef->SetBurstConfig(20, 1.0f, -1);
+	//fireDef->SetTexturePath("Data/Images/Particles/Hilda.jpg");
 
 	//// Motion Settings
 	//gpu.m_motion.m_velocityMin.x = -150.0f;
@@ -199,57 +199,57 @@ void Nova2DTestMap::TestDefInstance()
 	////fireDef->EnablePointForce(true);
 
 	//// Vortex Force Test - 中心旋转
-	//fireDef->SetVortexForce(Vec2(400.f, 250.f), 30.f, 200.f);
-	//fireDef->EnableVortex(true);
+	////fireDef->SetVortexForce(Vec2(400.f, 250.f), 30.f, 200.f);
+	////fireDef->EnableVortex(true);
 
-	// Motion Settings - 环绕旋转
-	gpu.m_motion.m_velocityMin.x = -10.f;
-	gpu.m_motion.m_velocityMin.y = -10.f;
-	gpu.m_motion.m_velocityMax.x = 10.f;
-	gpu.m_motion.m_velocityMax.y = 10.f;
-	gpu.m_motion.m_drag = 0.0f;
+	//// Motion Settings - 环绕旋转
+	//gpu.m_motion.m_velocityMin.x = -10.f;
+	//gpu.m_motion.m_velocityMin.y = -10.f;
+	//gpu.m_motion.m_velocityMax.x = 10.f;
+	//gpu.m_motion.m_velocityMax.y = 10.f;
+	//gpu.m_motion.m_drag = 0.0f;
 
-	// 用Point Force把粒子拉向中心（向心力），Vortex提供切向速度
-	fireDef->SetPointForce(500.f, 100.f, 1.0f, true);
-	fireDef->EnablePointForce(true);
+	//// 用Point Force把粒子拉向中心（向心力），Vortex提供切向速度
+	//fireDef->SetPointForce(500.f, 100.f, 1.0f, true);
+	//fireDef->EnablePointForce(true);
 	//fireDef->SetVortexForce(500.f, 400.f);
 	//fireDef->EnableVortex(true);
 
-	// ===== Color Over Lifetime: Orange -> Red -> Transparent =====
-	gpu.m_appearance.m_numColorKeyframes = 3;
+	//// ===== Color Over Lifetime: Orange -> Red -> Transparent =====
+	//gpu.m_appearance.m_numColorKeyframes = 3;
 
-	// Keyframe 0: Birth - Bright Orange (t=0.0)
-	Rgba8 orangeColor(255, 153, 51, 255);  // Bright orange
-	orangeColor.GetAsFloats(gpu.m_appearance.m_colorKeyframes[0].m_colorPacked);
-	gpu.m_appearance.m_colorKeyframes[0].m_time = 0.0f;
+	//// Keyframe 0: Birth - Bright Orange (t=0.0)
+	//Rgba8 orangeColor(255, 153, 51, 255);  // Bright orange
+	//orangeColor.GetAsFloats(gpu.m_appearance.m_colorKeyframes[0].m_colorPacked);
+	//gpu.m_appearance.m_colorKeyframes[0].m_time = 0.0f;
 
-	// Keyframe 1: Middle - Deep Red (t=0.5)
-	Rgba8 redColor(230, 25, 0, 204);  // Deep red, slightly transparent
-	Rgba8::CYAN.GetAsFloats(gpu.m_appearance.m_colorKeyframes[1].m_colorPacked);
-	gpu.m_appearance.m_colorKeyframes[1].m_time = 0.5f;
+	//// Keyframe 1: Middle - Deep Red (t=0.5)
+	//Rgba8 redColor(230, 25, 0, 204);  // Deep red, slightly transparent
+	//Rgba8::CYAN.GetAsFloats(gpu.m_appearance.m_colorKeyframes[1].m_colorPacked);
+	//gpu.m_appearance.m_colorKeyframes[1].m_time = 0.5f;
 
-	// Keyframe 2: Death - Transparent Black (t=1.0)
-	Rgba8 transparentColor(51, 0, 0, 0);  // Dark red, fully transparent
-	transparentColor.GetAsFloats(gpu.m_appearance.m_colorKeyframes[2].m_colorPacked);
-	gpu.m_appearance.m_colorKeyframes[2].m_time = 1.0f;
-	gpu.m_appearance.m_emissionStrength = 0.7f;
+	//// Keyframe 2: Death - Transparent Black (t=1.0)
+	//Rgba8 transparentColor(51, 0, 0, 0);  // Dark red, fully transparent
+	//transparentColor.GetAsFloats(gpu.m_appearance.m_colorKeyframes[2].m_colorPacked);
+	//gpu.m_appearance.m_colorKeyframes[2].m_time = 1.0f;
+	//gpu.m_appearance.m_emissionStrength = 0.7f;
 
-	// ===== Size Over Lifetime: Small -> Large -> Small =====
-	gpu.m_numCurves = 2;
-	gpu.m_curves[0].m_type = 0;  // SIZE curve
-	gpu.m_curves[0].m_numKeyframes = 3;
+	//// ===== Size Over Lifetime: Small -> Large -> Small =====
+	//gpu.m_numCurves = 2;
+	//gpu.m_curves[0].m_type = 0;  // SIZE curve
+	//gpu.m_curves[0].m_numKeyframes = 3;
 
-	// Size Keyframe 0: Birth - Small (3.0)
-	gpu.m_curves[0].m_keyframes[0].m_value = 1.0f;
-	gpu.m_curves[0].m_keyframes[0].m_time = 0.0f;
+	//// Size Keyframe 0: Birth - Small (3.0)
+	//gpu.m_curves[0].m_keyframes[0].m_value = 1.0f;
+	//gpu.m_curves[0].m_keyframes[0].m_time = 0.0f;
 
-	// Size Keyframe 1: Middle - Large (10.0)
-	gpu.m_curves[0].m_keyframes[1].m_value = 2.0f;
-	gpu.m_curves[0].m_keyframes[1].m_time = 0.5f;
+	//// Size Keyframe 1: Middle - Large (10.0)
+	//gpu.m_curves[0].m_keyframes[1].m_value = 2.0f;
+	//gpu.m_curves[0].m_keyframes[1].m_time = 0.5f;
 
-	// Size Keyframe 2: Death - Small (2.0)
-	gpu.m_curves[0].m_keyframes[2].m_value = 1.0f;
-	gpu.m_curves[0].m_keyframes[2].m_time = 1.0f;
+	//// Size Keyframe 2: Death - Small (2.0)
+	//gpu.m_curves[0].m_keyframes[2].m_value = 1.0f;
+	//gpu.m_curves[0].m_keyframes[2].m_time = 1.0f;
 
 	//// ✅ 添加：Curve 1: Curl Noise
 	//gpu.m_curves[1].m_type = 5;  // CURL_NOISE = 5
@@ -277,27 +277,28 @@ void Nova2DTestMap::TestDefInstance()
 	//gpu.m_collision.m_rules[0].m_slowFactor = 1.0f;  // Not used for bounce
 	//gpu.m_collision.m_rules[0].m_maxBounces = 3;
 
-	gpu.m_motion.m_orientToVelocity = 1;
+	//gpu.m_motion.m_orientToVelocity = 1;
 
-	// Register Definition
-	uint32_t fireDefID = g_nova2D->CreateDefinition(fireDef);
+	//// Register Definition
+	//uint32_t fireDefID = g_nova2D->CreateDefinition(fireDef);
 
-	// Create Instance 1 (Left)
-	uint32_t inst1ID = g_nova2D->CreateInstance(fireDefID, 400.0f, 250.0f);
-	Nova2DEmitterInstance* inst1 = g_nova2D->GetInstance(inst1ID);
-	inst1->Play();
+	//// Create Instance 1 (Left)
+	//uint32_t inst1ID = g_nova2D->CreateInstance(fireDefID, 400.0f, 250.0f);
+	//Nova2DEmitterInstance* inst1 = g_nova2D->GetInstance(inst1ID);
+	//inst1->Play();
 
-	// Create Instance 2 (Right)
+	//// Create Instance 2 (Right)
 	//uint32_t inst2ID = g_nova2D->CreateInstance(fireDefID, 500.0f, 150.0f);
 	//Nova2DEmitterInstance* inst2 = g_nova2D->GetInstance(inst2ID);
 	//inst2->Play();
 
-	//SetupFireEffect(g_nova2D);
+	////SetupFireEffect(g_nova2D);
 
-	//DebuggerPrintf("Fire Effect: Definition ID=%u, Instances: %u, %u\n",
-	//	fireDefID, inst1ID, inst2ID);
+	////DebuggerPrintf("Fire Effect: Definition ID=%u, Instances: %u, %u\n",
+	////	fireDefID, inst1ID, inst2ID);
 
 	//CreateNebulaburstEffect();
+	CreateNebulaDriftEffect();
 }
 
 Nova2DEmitterDefinition* Nova2DTestMap::CreateFireDefinition_5x5()
@@ -688,7 +689,7 @@ void Nova2DTestMap::CreateNebulaburstEffect()
 	Nova2DEmitterDefinitionGPU& coreGPU = coreDef->GetGPUData();
 
 	// === Emission ===
-	coreGPU.m_emission.m_emissionRate = 3000.0f;       // 高密度粒子
+	coreGPU.m_emission.m_emissionRate = 30000.0f;       // 高密度粒子
 	coreGPU.m_emission.m_lifetimeMin = 1.5f;
 	coreGPU.m_emission.m_lifetimeMax = 4.0f;
 	coreGPU.m_emission.m_emissionType = 1;           // Circle
@@ -908,4 +909,203 @@ void Nova2DTestMap::CreateNebulaburstEffect()
 	DebuggerPrintf("   Core (Vortex): Def=%u, Inst=%u\n", coreDefID, coreInstID);
 	DebuggerPrintf("   Ring (Pulse):  Def=%u, Inst=%u\n", ringDefID, ringInstID);
 	DebuggerPrintf("   Debris (Spray): Def=%u, Inst=%u\n", debrisDefID, debrisInstID);
+}
+
+void Nova2DTestMap::CreateNebulaDriftEffect()
+{
+	Vec2 centerPos(350.0f, 150.0f);
+
+	//======================================================================
+	// 🌊 Emitter 1: 主体云雾 (Main Nebula Cloud)
+	// 特点：超高密度 + 强Curl Noise涡流 + 低速漂移 + 青白渐变
+	//======================================================================
+	auto* cloudDef = new Nova2DEmitterDefinition();
+	Nova2DEmitterDefinitionGPU& cloudGPU = cloudDef->GetGPUData();
+
+	// === Emission: 极高密度，大范围圆形 ===
+	cloudGPU.m_emission.m_emissionRate = 25000.0f;      // 大量粒子
+	cloudGPU.m_emission.m_lifetimeMin = 4.0f;
+	cloudGPU.m_emission.m_lifetimeMax = 8.0f;
+	cloudGPU.m_emission.m_emissionType = 1;             // Circle
+	cloudGPU.m_emission.m_emissionRadius = 120.0f;      // 宽范围散布
+	cloudGPU.m_emission.m_emissionMode = 0;            // CONTINUOUS
+
+	// === Motion: 极低初速，完全靠Curl Noise驱动 ===
+	cloudGPU.m_motion.m_velocityMin.x = -20.0f;
+	cloudGPU.m_motion.m_velocityMin.y = -20.0f;
+	cloudGPU.m_motion.m_velocityMax.x = 20.0f;
+	cloudGPU.m_motion.m_velocityMax.y = 20.0f;
+	cloudGPU.m_motion.m_velocityMode = 0;              // Random
+	cloudGPU.m_motion.m_drag = 0.8f;           // 较强阻尼，让Curl主导
+
+	// === Curl Noise: 强度随生命周期变化，前期涌现后期消散 ===
+	// Curve type=5 -> CURL_NOISE, 激活 PARTICLE_FLAG_CURL_NOISE
+	cloudGPU.m_numCurves = 2;
+
+	// Curve[0]: SIZE
+	cloudGPU.m_curves[0].m_type = 0;               // SIZE
+	cloudGPU.m_curves[0].m_numKeyframes = 4;
+	cloudGPU.m_curves[0].m_keyframes[0] = { 1.0f, 0.0f,  0, 0 };
+	cloudGPU.m_curves[0].m_keyframes[1] = { 1.5f, 0.2f,  0, 0 };  // 快速膨胀
+	cloudGPU.m_curves[0].m_keyframes[2] = { 2.0f, 0.75f, 0, 0 };  // 保持饱满
+	cloudGPU.m_curves[0].m_keyframes[3] = { 0.5f, 1.0f,  0, 0 };  // 消散
+
+	// Curve[1]: CURL_NOISE strength over lifetime
+	cloudGPU.m_curves[1].m_type = 5;               // CURL_NOISE
+	cloudGPU.m_curves[1].m_numKeyframes = 4;
+	cloudGPU.m_curves[1].m_keyframes[0] = { 300.0f, 0.0f,  0, 0 }; // 初期强涌动
+	cloudGPU.m_curves[1].m_keyframes[1] = { 500.0f, 0.3f,  0, 0 }; // 峰值涡流
+	cloudGPU.m_curves[1].m_keyframes[2] = { 350.0f, 0.7f,  0, 0 }; // 平稳漂移
+	cloudGPU.m_curves[1].m_keyframes[3] = { 50.0f, 1.0f,  0, 0 }; // 消散前减弱
+
+	// === Appearance: 深蓝 → 青白 → 淡紫 → 透明 ===
+	cloudGPU.m_appearance.m_numColorKeyframes = 4;
+
+	Rgba8(30, 80, 200, 0).GetAsFloats(cloudGPU.m_appearance.m_colorKeyframes[0].m_colorPacked);
+	cloudGPU.m_appearance.m_colorKeyframes[0].m_time = 0.0f;  // 诞生时透明
+
+	Rgba8(120, 220, 255, 200).GetAsFloats(cloudGPU.m_appearance.m_colorKeyframes[1].m_colorPacked);
+	cloudGPU.m_appearance.m_colorKeyframes[1].m_time = 0.15f; // 快速出现，亮青
+
+	Rgba8(180, 160, 255, 160).GetAsFloats(cloudGPU.m_appearance.m_colorKeyframes[2].m_colorPacked);
+	cloudGPU.m_appearance.m_colorKeyframes[2].m_time = 0.6f;  // 漂移中淡紫
+
+	Rgba8(80, 60, 160, 0).GetAsFloats(cloudGPU.m_appearance.m_colorKeyframes[3].m_colorPacked);
+	cloudGPU.m_appearance.m_colorKeyframes[3].m_time = 1.0f;  // 消散
+
+	cloudGPU.m_appearance.m_emissionStrength = 0.6f;          // 柔和发光
+
+	uint32_t cloudDefID = g_nova2D->CreateDefinition(cloudDef);
+	uint32_t cloudInstID = g_nova2D->CreateInstance(cloudDefID, centerPos.x, centerPos.y);
+	g_nova2D->GetInstance(cloudInstID)->Play();
+
+	//======================================================================
+	// ✨ Emitter 2: 高亮丝线 (Bright Filaments)
+	// 特点：细长粒子 + 极强Curl Noise + 朝向速度方向 → 形成丝线拉伸感
+	//======================================================================
+	auto* filDef = new Nova2DEmitterDefinition();
+	Nova2DEmitterDefinitionGPU& filGPU = filDef->GetGPUData();
+
+	filGPU.m_emission.m_emissionRate = 8000.0f;
+	filGPU.m_emission.m_lifetimeMin = 2.0f;
+	filGPU.m_emission.m_lifetimeMax = 5.0f;
+	filGPU.m_emission.m_emissionType = 1;                // Circle
+	filGPU.m_emission.m_emissionRadius = 80.0f;
+	filGPU.m_emission.m_emissionMode = 0;
+
+	// 中等初速，Curl会把它们甩成丝线
+	filGPU.m_motion.m_velocityMin.x = -60.0f;
+	filGPU.m_motion.m_velocityMin.y = -60.0f;
+	filGPU.m_motion.m_velocityMax.x = 60.0f;
+	filGPU.m_motion.m_velocityMax.y = 60.0f;
+	filGPU.m_motion.m_velocityMode = 0;
+	filGPU.m_motion.m_drag = 0.3f;                // 低阻尼，保持动量
+	filGPU.m_motion.m_orientToVelocity = 1;               // 朝向运动方向 → 丝线拉伸
+
+	filGPU.m_numCurves = 2;
+
+	// Curve[0]: SIZE —— 细长保持
+	filGPU.m_curves[0].m_type = 0;
+	filGPU.m_curves[0].m_numKeyframes = 3;
+	filGPU.m_curves[0].m_keyframes[0] = { 0.5f, 0.0f,  0, 0 };
+	filGPU.m_curves[0].m_keyframes[1] = { 1.5f, 0.3f,  0, 0 };
+	filGPU.m_curves[0].m_keyframes[2] = { 0.0f, 1.0f,  0, 0 };
+
+	// Curve[1]: CURL_NOISE —— 始终强烈
+	filGPU.m_curves[1].m_type = 5;
+	filGPU.m_curves[1].m_numKeyframes = 3;
+	filGPU.m_curves[1].m_keyframes[0] = { 600.0f, 0.0f,  0, 0 };  // 极强涡流
+	filGPU.m_curves[1].m_keyframes[1] = { 700.0f, 0.5f,  0, 0 };
+	filGPU.m_curves[1].m_keyframes[2] = { 200.0f, 1.0f,  0, 0 };
+
+	// === Appearance: 纯白→青→蓝→透明，高亮 ===
+	filGPU.m_appearance.m_numColorKeyframes = 4;
+
+	Rgba8(255, 255, 255, 240).GetAsFloats(filGPU.m_appearance.m_colorKeyframes[0].m_colorPacked);
+	filGPU.m_appearance.m_colorKeyframes[0].m_time = 0.0f;
+
+	Rgba8(180, 240, 255, 220).GetAsFloats(filGPU.m_appearance.m_colorKeyframes[1].m_colorPacked);
+	filGPU.m_appearance.m_colorKeyframes[1].m_time = 0.2f;
+
+	Rgba8(80, 160, 255, 150).GetAsFloats(filGPU.m_appearance.m_colorKeyframes[2].m_colorPacked);
+	filGPU.m_appearance.m_colorKeyframes[2].m_time = 0.65f;
+
+	Rgba8(40, 60, 180, 0).GetAsFloats(filGPU.m_appearance.m_colorKeyframes[3].m_colorPacked);
+	filGPU.m_appearance.m_colorKeyframes[3].m_time = 1.0f;
+
+	filGPU.m_appearance.m_emissionStrength = 1.2f;         // 强发光，形成丝线高光
+
+	uint32_t filDefID = g_nova2D->CreateDefinition(filDef);
+	uint32_t filInstID = g_nova2D->CreateInstance(filDefID, centerPos.x, centerPos.y);
+	g_nova2D->GetInstance(filInstID)->Play();
+
+	//======================================================================
+	// 💜 Emitter 3: 深色涡眼 (Dark Vortex Core)
+	// 特点：中心少量粒子 + 向心力 + Curl Noise + 深紫色
+	// 作用：形成图中央那团有质量感的深色核心，与外围亮色形成对比
+	//======================================================================
+	auto* coreDef = new Nova2DEmitterDefinition();
+	Nova2DEmitterDefinitionGPU& coreGPU = coreDef->GetGPUData();
+
+	coreGPU.m_emission.m_emissionRate = 3000.0f;
+	coreGPU.m_emission.m_lifetimeMin = 3.0f;
+	coreGPU.m_emission.m_lifetimeMax = 6.0f;
+	coreGPU.m_emission.m_emissionType = 1;
+	coreGPU.m_emission.m_emissionRadius = 40.0f;
+	coreGPU.m_emission.m_emissionMode = 0;
+
+	coreGPU.m_motion.m_velocityMin.x = -15.0f;
+	coreGPU.m_motion.m_velocityMin.y = -15.0f;
+	coreGPU.m_motion.m_velocityMax.x = 15.0f;
+	coreGPU.m_motion.m_velocityMax.y = 15.0f;
+	coreGPU.m_motion.m_drag = 1.5f;               // 强阻尼
+
+	// 向心力：把粒子向中心拉，形成密集核心感
+	coreDef->SetPointForce(0.0f, 0.0f, 80.0f, true);       // 吸引，半径80
+	coreDef->EnablePointForce(true);
+
+	coreGPU.m_numCurves = 2;
+
+	// Curve[0]: SIZE
+	coreGPU.m_curves[0].m_type = 0;
+	coreGPU.m_curves[0].m_numKeyframes = 3;
+	coreGPU.m_curves[0].m_keyframes[0] = { 1.0f, 0.0f, 0, 0 };
+	coreGPU.m_curves[0].m_keyframes[1] = { 2.0f, 0.4f, 0, 0 };
+	coreGPU.m_curves[0].m_keyframes[2] = { 1.0f, 1.0f, 0, 0 };
+
+	// Curve[1]: CURL_NOISE —— 中等强度，配合向心力形成旋臂
+	coreGPU.m_curves[1].m_type = 5;
+	coreGPU.m_curves[1].m_numKeyframes = 3;
+	coreGPU.m_curves[1].m_keyframes[0] = { 200.0f, 0.0f, 0, 0 };
+	coreGPU.m_curves[1].m_keyframes[1] = { 350.0f, 0.5f, 0, 0 };
+	coreGPU.m_curves[1].m_keyframes[2] = { 100.0f, 1.0f, 0, 0 };
+
+	// === Appearance: 深紫 → 蓝紫 → 透明（低发光） ===
+	coreGPU.m_appearance.m_numColorKeyframes = 4;
+
+	Rgba8(60, 20, 120, 0).GetAsFloats(coreGPU.m_appearance.m_colorKeyframes[0].m_colorPacked);
+	coreGPU.m_appearance.m_colorKeyframes[0].m_time = 0.0f;
+
+	Rgba8(100, 40, 200, 200).GetAsFloats(coreGPU.m_appearance.m_colorKeyframes[1].m_colorPacked);
+	coreGPU.m_appearance.m_colorKeyframes[1].m_time = 0.2f;
+
+	Rgba8(80, 30, 160, 160).GetAsFloats(coreGPU.m_appearance.m_colorKeyframes[2].m_colorPacked);
+	coreGPU.m_appearance.m_colorKeyframes[2].m_time = 0.7f;
+
+	Rgba8(30, 10, 60, 0).GetAsFloats(coreGPU.m_appearance.m_colorKeyframes[3].m_colorPacked);
+	coreGPU.m_appearance.m_colorKeyframes[3].m_time = 1.0f;
+
+	coreGPU.m_appearance.m_emissionStrength = 0.3f;
+
+	uint32_t coreDefID = g_nova2D->CreateDefinition(coreDef);
+	uint32_t coreInstID = g_nova2D->CreateInstance(coreDefID, centerPos.x, centerPos.y);
+	g_nova2D->GetInstance(coreInstID)->Play();
+
+	//======================================================================
+	// 🎉 效果完成
+	//======================================================================
+	DebuggerPrintf("🌌 Nebula Drift Effect Created!\n");
+	DebuggerPrintf("   Cloud (Curl Noise):     Def=%u, Inst=%u\n", cloudDefID, cloudInstID);
+	DebuggerPrintf("   Filaments (Bright):     Def=%u, Inst=%u\n", filDefID, filInstID);
+	DebuggerPrintf("   Vortex Core (Dark):     Def=%u, Inst=%u\n", coreDefID, coreInstID);
 }

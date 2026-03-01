@@ -1,6 +1,7 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 const Rgba8 Rgba8::WHITE = Rgba8(255, 255, 255);
 const Rgba8 Rgba8::BLACK = Rgba8(0, 0, 0);
 const Rgba8 Rgba8::RED = Rgba8(255, 0, 0);
@@ -12,6 +13,8 @@ const Rgba8 Rgba8::YELLOW = Rgba8(255, 255, 0);
 const Rgba8 Rgba8::HILDA = Rgba8(152, 161, 242);
 const Rgba8 Rgba8::TRANSP_BLACK = Rgba8(0, 0, 0,120);
 const Rgba8 Rgba8::GRAY = Rgba8(120, 120, 120, 255);
+
+static Rgba8 GetRandomInRange(Rgba8 const& min, Rgba8 const& max, RandomNumberGenerator* rng);
 
 Rgba8::Rgba8():r(255), g(255), b(255), a(255) {}
 
@@ -63,6 +66,12 @@ bool Rgba8::operator!=(Rgba8 const& compare) const
 	return false;
 }
 
+Rgba8 Rgba8::GetRandomColorInRange(Rgba8 const& min, Rgba8 const& max, RandomNumberGenerator* rng)
+{
+	float t = rng->RollRandomFloatZeroToOne();
+	return Interpolate(min, max, t);
+}
+
 Rgba8 Interpolate(Rgba8 start, Rgba8 end, float fractionOfEnd)
 {
 	float r = Interpolate(NormalizeByte(start.r), NormalizeByte(end.r), fractionOfEnd);
@@ -72,5 +81,4 @@ Rgba8 Interpolate(Rgba8 start, Rgba8 end, float fractionOfEnd)
 	return Rgba8((unsigned char)DenormalizeByte(r), (unsigned char)DenormalizeByte(g), 
 		(unsigned char)DenormalizeByte(b), (unsigned char)DenormalizeByte(a));
 }
-
 

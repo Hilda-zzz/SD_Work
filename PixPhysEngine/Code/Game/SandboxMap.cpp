@@ -115,10 +115,40 @@ void SandboxMap::Update(float deltaTime)
 void SandboxMap::Render() const
 {
 	g_theRenderer->BeginCamera(m_player->m_camera);
-	g_theRenderer->SetSamplerMode(SamplerMode::BILINEAR_WRAP);
+	g_theRenderer->SetSamplerMode(SamplerMode::POINT_CLAMP);
 	g_theRenderer->BindTexture(nullptr);
 	g_theRenderer->SetModelConstants();
 	g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+
+
+	// === Background Gradient (top: light gray, bottom: dark gray) ===
+	{
+		Rgba8 colorTop(8, 5, 20, 255);     // 更深的近黑紫
+		Rgba8 colorBot(45, 50, 110, 255);  // 更亮的蓝紫
+
+		float x0 = 0.f;
+		float x1 = static_cast<float>(m_mapSize.x);
+		float y0 = 0.f;
+		float y1 = static_cast<float>(m_mapSize.y);
+
+		std::vector<Vertex_PCU> bgVerts;
+		bgVerts.reserve(6);
+		// Triangle 1
+		bgVerts.push_back(Vertex_PCU(Vec3(x0, y0, 10.f), colorBot, Vec2(0.f, 0.f))); // BL
+		bgVerts.push_back(Vertex_PCU(Vec3(x1, y0, 10.f), colorBot, Vec2(1.f, 0.f))); // BR
+		bgVerts.push_back(Vertex_PCU(Vec3(x1, y1, 10.f), colorTop, Vec2(1.f, 1.f))); // TR
+		// Triangle 2
+		bgVerts.push_back(Vertex_PCU(Vec3(x0, y0, 10.f), colorBot, Vec2(0.f, 0.f))); // BL
+		bgVerts.push_back(Vertex_PCU(Vec3(x1, y1, 10.f), colorTop, Vec2(1.f, 1.f))); // TR
+		bgVerts.push_back(Vertex_PCU(Vec3(x0, y1, 10.f), colorTop, Vec2(0.f, 1.f))); // TL
+
+		g_theRenderer->BindTexture(nullptr);
+		g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+		g_theRenderer->DrawVertexArray(bgVerts);
+	}
+
+
+
 	g_theRenderer->DrawVertexArray(m_boundVerts);
 
 	// === Chunk Grid Lines (Gray) ===
@@ -197,8 +227,8 @@ void SandboxMap::Render() const
 	m_rigidBodyManager->RenderDebug();
 	g_theRenderer->EndCamera(m_player->m_camera);
 
-	RenderImGuiStats();
-	RenderCellInfo();
+	//RenderImGuiStats();
+	//RenderCellInfo();
 }
 
 void SandboxMap::RenderImGuiStats() const
@@ -543,7 +573,7 @@ void SandboxMap::PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, 
 		m_totalMaterialsSet++;
 		cell.m_isBelongRb = isRb;
 		cell.m_type.store(type);
-		cell.m_color = curDef.m_color;
+		cell.m_color = Rgba8::GetRandomColorInRange(curDef.m_colorMin, curDef.m_colorMax, &Game::s_rng);
 		cell.m_lifeCountDown = curDef.m_lifeCountDown.GetRandomInRange(&Game::s_rng);
 		cell.m_flameCountDown = curDef.m_flameCountDown.GetRandomInRange(&Game::s_rng);
 		cell.m_dissolveCountDown = curDef.m_dissolveCountDowm.GetRandomInRange(&Game::s_rng);

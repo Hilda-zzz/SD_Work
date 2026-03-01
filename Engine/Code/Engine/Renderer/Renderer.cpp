@@ -184,17 +184,29 @@ void Renderer::Startup()
 	m_desiredRasterizerMode = RasterizerMode::SOLID_CULL_BACK;
 	m_desiredDepthMode = DepthMode::READ_WRITE_LESS_EQUAL;
 
+	//--------------------------------------------------------
 	//create device and swap chain
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
 	swapChainDesc.BufferDesc.Width = g_theWindow->GetClientDimensions().x;
 	swapChainDesc.BufferDesc.Height = g_theWindow->GetClientDimensions().y;
-	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.SampleDesc.Count = 1;
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = 2;
 	swapChainDesc.OutputWindow = (HWND)g_theWindow->GetHwnd();
 	swapChainDesc.Windowed = true;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+	if (m_config.m_isTransparentWindow)
+	{
+		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		swapChainDesc.BufferCount = 1;
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	}
+	else
+	{
+		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		swapChainDesc.BufferCount = 2;
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	}
+
 	//---------------------------------------------------------
 	//Call D3D11CreateDeviceAndSwapChain.
 	HRESULT hr;
@@ -206,6 +218,36 @@ void Renderer::Startup()
 		ERROR_AND_DIE("Couldn't create D3D 11 device and swap chain.");
 	}
 	//---------------------------------------------------------
+
+
+
+
+
+
+	//--------------------------------------------------------
+	////create device and swap chain
+	//DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+	//swapChainDesc.BufferDesc.Width = g_theWindow->GetClientDimensions().x;
+	//swapChainDesc.BufferDesc.Height = g_theWindow->GetClientDimensions().y;
+	//swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//swapChainDesc.SampleDesc.Count = 1;
+	//swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	//swapChainDesc.BufferCount = 2;
+	//swapChainDesc.OutputWindow = (HWND)g_theWindow->GetHwnd();
+	//swapChainDesc.Windowed = true;
+	//swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	////---------------------------------------------------------
+	////Call D3D11CreateDeviceAndSwapChain.
+	//HRESULT hr;
+	//hr = D3D11CreateDeviceAndSwapChain(
+	//	nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, deviceFlags, nullptr, 0, D3D11_SDK_VERSION, &swapChainDesc,
+	//	&m_swapChain, &m_device, nullptr, &m_deviceContext);
+	//if (!SUCCEEDED(hr))
+	//{
+	//	ERROR_AND_DIE("Couldn't create D3D 11 device and swap chain.");
+	//}
+	//---------------------------------------------------------
+	
 	//save back buffer view
 	//get back buffer texture
 	ID3D11Texture2D* backBuffer;

@@ -23,8 +23,9 @@ void SandboxPlayer::Update(float deltaTime)
 
 void SandboxPlayer::RenderImgui()
 {
-	m_sandBoxUI.RenderMaterialBrushUI(this);
-	m_sandBoxUI.RenderRigidBodyPanel(this);
+	//m_sandBoxUI.RenderMaterialBrushUI(this);
+	//m_sandBoxUI.RenderRigidBodyPanel(this);
+	m_sandBoxUI.RenderAll(this, dynamic_cast<SandboxMap*>(m_curMap));
 }
 
 void SandboxPlayer::InitCamera(IntVec2 const& mapSize)
@@ -43,7 +44,7 @@ void SandboxPlayer::InitCamera(IntVec2 const& mapSize)
 	Vec2 viewMins = mapCenter - Vec2(viewWidth * 0.5f, viewHeight * 0.5f);
 	Vec2 viewMaxs = mapCenter + Vec2(viewWidth * 0.5f, viewHeight * 0.5f);
 
-	m_camera.SetOrthographicView(viewMins, viewMaxs);
+	m_camera.SetOrthographicView(viewMins, viewMaxs,0,100.f);
 }
 
 void SandboxPlayer::HandleInput()

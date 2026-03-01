@@ -20,7 +20,8 @@ public:
 		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_density = 1.5f;
 		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_name = "MAT_STATIC_FILL";
 		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_description = "Tool - Remove material";
-		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_color = Rgba8::HILDA;
+		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_colorMin = Rgba8::HILDA;
+		s_materialDefs[CellMatType::MAT_STATIC_FILL].m_colorMax = Rgba8::HILDA;
 
 		// 沙子 - 标准颗粒物
 		s_materialDefs[CellMatType::MAT_SAND] = CellMatDef(PhyType::PHY_MOVE_SOLID);
@@ -29,7 +30,8 @@ public:
 		s_materialDefs[CellMatType::MAT_SAND].m_restitution = 0.4f;
 		s_materialDefs[CellMatType::MAT_SAND].m_collisionMomentumTransfer = 0.0f;
 		s_materialDefs[CellMatType::MAT_SAND].m_neighborActivationChance = 0.9f;
-		s_materialDefs[CellMatType::MAT_SAND].m_color = Rgba8(245, 164, 96);
+		s_materialDefs[CellMatType::MAT_SAND].m_colorMin = Rgba8(220, 140, 70);
+		s_materialDefs[CellMatType::MAT_SAND].m_colorMax = Rgba8(255, 190, 120);
 		s_materialDefs[CellMatType::MAT_SAND].m_name = "Sand";
 		s_materialDefs[CellMatType::MAT_SAND].m_description = "Standard granular material";
 
@@ -40,7 +42,8 @@ public:
 		s_materialDefs[CellMatType::MAT_SALT].m_restitution = 0.1f;
 		s_materialDefs[CellMatType::MAT_SALT].m_neighborActivationChance = 0.6f;
 		s_materialDefs[CellMatType::MAT_SALT].m_interaction.m_isSoluble = true;
-		s_materialDefs[CellMatType::MAT_SALT].m_color = Rgba8(248, 248, 255);
+		s_materialDefs[CellMatType::MAT_SALT].m_colorMin = Rgba8(220, 225, 235);
+		s_materialDefs[CellMatType::MAT_SALT].m_colorMax = Rgba8(255, 255, 255);
 		s_materialDefs[CellMatType::MAT_SALT].m_name = "Salt";
 		s_materialDefs[CellMatType::MAT_SALT].m_description = "Fine granular material - flows easily";
 
@@ -56,7 +59,8 @@ public:
 		s_materialDefs[CellMatType::MAT_SOIL].m_collisionMomentumTransfer = 0.05f;
 		s_materialDefs[CellMatType::MAT_SOIL].m_neighborActivationChance = 0.4f;
 		s_materialDefs[CellMatType::MAT_SOIL].m_airResistance = 0.85f;
-		s_materialDefs[CellMatType::MAT_SOIL].m_color = Rgba8(101, 67, 33);
+		s_materialDefs[CellMatType::MAT_SOIL].m_colorMin = Rgba8(70, 40, 15);
+		s_materialDefs[CellMatType::MAT_SOIL].m_colorMax = Rgba8(130, 85, 45);
 		s_materialDefs[CellMatType::MAT_SOIL].m_name = "Soil";
 		s_materialDefs[CellMatType::MAT_SOIL].m_description = "Rich earth material - sticky";
 
@@ -67,9 +71,24 @@ public:
 		s_materialDefs[CellMatType::MAT_GRAVEL].m_restitution = 0.6f;
 		s_materialDefs[CellMatType::MAT_GRAVEL].m_collisionMomentumTransfer = 0.2f;
 		s_materialDefs[CellMatType::MAT_GRAVEL].m_neighborActivationChance = 0.8f;
-		s_materialDefs[CellMatType::MAT_GRAVEL].m_color = Rgba8(128, 128, 128);
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_colorMin = Rgba8(90, 90, 90);
+		s_materialDefs[CellMatType::MAT_GRAVEL].m_colorMax = Rgba8(170, 170, 165);
 		s_materialDefs[CellMatType::MAT_GRAVEL].m_name = "Gravel";
 		s_materialDefs[CellMatType::MAT_GRAVEL].m_description = "Small stones - bouncy";
+
+		// 黑曜石 - 岩浆冷却后的移动固体，重、不弹、几乎不流动
+		s_materialDefs[CellMatType::MAT_OBSIDIAN] = CellMatDef(PhyType::PHY_MOVE_SOLID);
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_density = 3.5f;
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_friction = 0.9f;
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_restitution = 0.05f;          // 极低弹性，和gravel(0.6)形成对比
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_collisionMomentumTransfer = 0.05f;
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_neighborActivationChance = 0.2f; // 很难激活邻居，几乎堆死
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_airResistance = 0.8f;
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_collisionDamping = 0.2f;
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_colorMin = Rgba8(20, 10, 25);
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_colorMax = Rgba8(60, 40, 70); // 深紫黑，带一点岩浆余温的紫调
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_name = "Obsidian";
+		s_materialDefs[CellMatType::MAT_OBSIDIAN].m_description = "Cooled lava - dense and inert";
 
 		// 颗粒火
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE] = CellMatDef(PhyType::PHY_MOVE_SOLID);
@@ -78,7 +97,8 @@ public:
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_restitution = 0.6f;
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_collisionMomentumTransfer = 0.2f;
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_neighborActivationChance = 0.8f;
-		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_color = Rgba8(180, 20, 20);
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_colorMin = Rgba8(180, 20, 0);
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_colorMax = Rgba8(255, 120, 20);
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_name = "MAT_DYSOLID_FIRE";
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_description = "Fire transited from dynamic solid material";
 
@@ -96,7 +116,8 @@ public:
 		s_materialDefs[CellMatType::MAT_WATER].m_viscosity = 0.8f;
 		s_materialDefs[CellMatType::MAT_WATER].m_interaction.m_isPermeable = true;
 		s_materialDefs[CellMatType::MAT_WATER].m_interaction.m_penetrationResistance = 0.8f;
-		s_materialDefs[CellMatType::MAT_WATER].m_color = Rgba8(30, 144, 255,50);
+		s_materialDefs[CellMatType::MAT_WATER].m_colorMin = Rgba8(20, 100, 200);
+		s_materialDefs[CellMatType::MAT_WATER].m_colorMax = Rgba8(20, 100, 200);
 		s_materialDefs[CellMatType::MAT_WATER].m_name = "Water";
 		s_materialDefs[CellMatType::MAT_WATER].m_description = "Fluid material - liquid";
 
@@ -115,7 +136,8 @@ public:
 		s_materialDefs[CellMatType::MAT_OIL].m_viscosity = 0.9f;
 		s_materialDefs[CellMatType::MAT_OIL].m_interaction.m_isPermeable = true;
 		s_materialDefs[CellMatType::MAT_OIL].m_interaction.m_penetrationResistance = 0.8f;
-		s_materialDefs[CellMatType::MAT_OIL].m_color = Rgba8(144, 144, 10);
+		s_materialDefs[CellMatType::MAT_OIL].m_colorMin = Rgba8(100, 100, 5);
+		s_materialDefs[CellMatType::MAT_OIL].m_colorMax = Rgba8(180, 175, 30);
 		s_materialDefs[CellMatType::MAT_OIL].m_name = "Oil";
 		s_materialDefs[CellMatType::MAT_OIL].m_description = "Fluid material - liquid";
 
@@ -132,7 +154,8 @@ public:
 		s_materialDefs[CellMatType::MAT_LAVA].m_viscosity = 0.6f;
 		s_materialDefs[CellMatType::MAT_LAVA].m_interaction.m_isPermeable = true;
 		s_materialDefs[CellMatType::MAT_LAVA].m_interaction.m_penetrationResistance = 0.8f;
-		s_materialDefs[CellMatType::MAT_LAVA].m_color = Rgba8(255, 100, 30);
+		s_materialDefs[CellMatType::MAT_LAVA].m_colorMin = Rgba8(200, 50, 10);
+		s_materialDefs[CellMatType::MAT_LAVA].m_colorMax = Rgba8(255, 150, 40);
 		s_materialDefs[CellMatType::MAT_LAVA].m_name = "Lava";
 		s_materialDefs[CellMatType::MAT_LAVA].m_description = "Fluid material - liquid";
 
@@ -145,7 +168,7 @@ public:
 		s_materialDefs[CellMatType::MAT_LAVA].m_isHighTemp = true;
 		s_materialDefs[CellMatType::MAT_LAVA].m_isPersist = false;
 		s_materialDefs[CellMatType::MAT_LAVA].m_lifeCountDown = IntRange(360, 720);
-		s_materialDefs[CellMatType::MAT_LAVA].m_lifeEndMatType = CellMatType::MAT_SOIL;
+		s_materialDefs[CellMatType::MAT_LAVA].m_lifeEndMatType = CellMatType::MAT_OBSIDIAN;
 
 		s_materialDefs[CellMatType::MAT_LAVA].m_emissionValue = 30;
 
@@ -156,7 +179,8 @@ public:
 		s_materialDefs[CellMatType::MAT_ACID].m_viscosity = 0.6f;
 		s_materialDefs[CellMatType::MAT_ACID].m_interaction.m_isPermeable = true;
 		s_materialDefs[CellMatType::MAT_ACID].m_interaction.m_penetrationResistance = 0.8f;
-		s_materialDefs[CellMatType::MAT_ACID].m_color = Rgba8(30, 200, 30);
+		s_materialDefs[CellMatType::MAT_ACID].m_colorMin = Rgba8(80, 160, 20);
+		s_materialDefs[CellMatType::MAT_ACID].m_colorMax = Rgba8(160, 230, 50);
 		s_materialDefs[CellMatType::MAT_ACID].m_name = "Acid";
 		s_materialDefs[CellMatType::MAT_ACID].m_description = "Fluid material - liquid";
 										
@@ -176,7 +200,8 @@ public:
 		s_materialDefs[CellMatType::MAT_STONE].m_density = 3.0f;
 		s_materialDefs[CellMatType::MAT_STONE].m_friction = 0.8f;
 		s_materialDefs[CellMatType::MAT_STONE].m_restitution = 0.1f;
-		s_materialDefs[CellMatType::MAT_STONE].m_color = Rgba8(105, 105, 105);
+		s_materialDefs[CellMatType::MAT_STONE].m_colorMin = Rgba8(75, 75, 75);
+		s_materialDefs[CellMatType::MAT_STONE].m_colorMax = Rgba8(140, 140, 135);
 		s_materialDefs[CellMatType::MAT_STONE].m_name = "Stone";
 		s_materialDefs[CellMatType::MAT_STONE].m_description = "Static obstacle - hard solid";
 
@@ -189,7 +214,8 @@ public:
 		s_materialDefs[CellMatType::MAT_WOOD].m_density = 1.8f;
 		s_materialDefs[CellMatType::MAT_WOOD].m_friction = 0.7f;
 		s_materialDefs[CellMatType::MAT_WOOD].m_restitution = 0.4f;
-		s_materialDefs[CellMatType::MAT_WOOD].m_color = Rgba8(139, 69, 19);
+		s_materialDefs[CellMatType::MAT_WOOD].m_colorMin = Rgba8(100, 45, 10);
+		s_materialDefs[CellMatType::MAT_WOOD].m_colorMax = Rgba8(175, 100, 35);
 		s_materialDefs[CellMatType::MAT_WOOD].m_name = "Wood";
 		s_materialDefs[CellMatType::MAT_WOOD].m_description = "Building material - light solid";
 		
@@ -206,7 +232,8 @@ public:
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_density = 1.8f;
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_friction = 0.1f;
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_restitution = 0.1f;
-		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_color = Rgba8::MAGNETA;
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_colorMin = Rgba8(180, 0, 10);
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_colorMax = Rgba8(255, 80, 20);
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_name = "STATIC_SOLID_FIRE";
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_description = "Fire transited from static solid material";
 
@@ -221,7 +248,8 @@ public:
 		// CA Sand
 		s_materialDefs[CellMatType::MAT_CA_SAND] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
 		s_materialDefs[CellMatType::MAT_CA_SAND].m_density = 1.5f;
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_color = Rgba8(146,205,255);
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_colorMin = Rgba8(185, 195, 225, 255);
+		s_materialDefs[CellMatType::MAT_CA_SAND].m_colorMax = Rgba8(220, 225, 255, 255);
 		s_materialDefs[CellMatType::MAT_CA_SAND].m_name = "CA Sand";
 		s_materialDefs[CellMatType::MAT_CA_SAND].m_description = "Cellular automaton sand";
 		s_materialDefs[CellMatType::MAT_CA_SAND].m_lifeCountDown = IntRange(240, 360);

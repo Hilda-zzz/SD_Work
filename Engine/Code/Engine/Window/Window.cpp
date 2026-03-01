@@ -1,4 +1,4 @@
-#include "Engine/Window/Window.hpp"
+﻿#include "Engine/Window/Window.hpp"
 #define WIN32_LEAN_AND_MEAN	
 #include <windows.h>
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -9,6 +9,9 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include <winnt.h>
 #include <cstring>
+
+#include <dwmapi.h>
+#pragma comment(lib, "dwmapi.lib")
 
 Window* Window::s_mainWindow = nullptr;
 
@@ -326,12 +329,15 @@ void Window::CreateOSWindow()
 	windowClassDescription.lpszClassName = TEXT("Simple Window Class");
 	RegisterClassEx(&windowClassDescription);
 
-	// #SD1ToDo: Add support for fullscreen mode (requires different window style flags than windowed mode)
-// 	DWORD const windowStyleFlags = WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
-// 	DWORD const windowStyleExFlags = WS_EX_APPWINDOW;
 	DWORD windowStyleFlags;
 	DWORD windowStyleExFlags;
-	if (m_config.m_isFullscreen)
+
+	if (m_config.m_isDesktopPet)
+	{
+		windowStyleFlags = WS_POPUP | WS_VISIBLE;
+		windowStyleExFlags = WS_EX_LAYERED | WS_EX_TOPMOST; //WS_EX_LAYERED | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW;
+	}
+	else if (m_config.m_isFullscreen)
 	{
 		windowStyleFlags = WS_POPUP | WS_VISIBLE;
 		windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
@@ -341,7 +347,6 @@ void Window::CreateOSWindow()
 		windowStyleFlags = WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
 		windowStyleExFlags = WS_EX_APPWINDOW;
 	}
-
 	// Get desktop rect, dimensions, aspect
 	RECT desktopRect;
 	HWND desktopWindowHandle = GetDesktopWindow();
@@ -352,7 +357,12 @@ void Window::CreateOSWindow()
 
 	// Calculate maximum client size (as some % of desktop size)
 	float clientWidth, clientHeight;
-	if (m_config.m_isFullscreen)
+	if (m_config.m_isDesktopPet)
+	{
+		clientWidth = (float)GetSystemMetrics(SM_CXSCREEN);
+		clientHeight = (float)GetSystemMetrics(SM_CYSCREEN);
+	}
+	else if (m_config.m_isFullscreen)
 	{
 		clientWidth = desktopWidth;
 		clientHeight = desktopHeight;
@@ -399,7 +409,7 @@ void Window::CreateOSWindow()
 
 	// Calculate the outer dimensions of the physical window, including frame et. al.
 	RECT windowRect = clientRect;
-	if (!m_config.m_isFullscreen)
+	if (!m_config.m_isFullscreen||!m_config.m_isDesktopPet)
 	{
 		AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
 	}
@@ -421,7 +431,22 @@ void Window::CreateOSWindow()
 		(HINSTANCE)applicationInstanceHandle,
 		NULL);
 	m_windowHandle = windowHandle;
+
+	// 桌宠模式：设置颜色键透明（Phase 3 会替换为真正的 alpha 通道方案）
+	if (m_config.m_isDesktopPet)
+	{
+		SetLayeredWindowAttributes(windowHandle, 0, 0, LWA_ALPHA);
+		SetLayeredWindowAttributes(windowHandle, RGB(0, 0, 0), 0, LWA_COLORKEY);
+	}
+
 	ShowWindow(windowHandle, SW_SHOW);
+
+	//if (m_config.m_isDesktopPet)
+	//{
+	//	MARGINS margins = { -1, -1, -1, -1 };
+	//	DwmExtendFrameIntoClientArea(windowHandle, &margins);
+	//}
+
 	SetForegroundWindow(windowHandle);
 	SetFocus(windowHandle);
 

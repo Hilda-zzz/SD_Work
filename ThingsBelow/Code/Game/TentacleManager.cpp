@@ -39,11 +39,11 @@ void TentacleManager::Update(float deltaSeconds)
 	// Step 2: Detect all active events
 	ActiveEvents newEvents = DetectAllActiveEvents();
 
-	// Step 3: Process events (assign tasks to tentacles)
 	ProcessEvents(newEvents);
 
 	// Step 4: Update all tentacles (they execute assigned states)
 	UpdateAllTentacles(deltaSeconds);
+	// Step 3: Process events (assign tasks to tentacles)
 
 	// Step 5: Cleanup completed tasks
 	CleanupCompletedTasks();

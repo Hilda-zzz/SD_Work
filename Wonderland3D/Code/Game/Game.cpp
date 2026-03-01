@@ -474,6 +474,7 @@
 #include "Engine/Renderer/CubeSkyBox.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "ThirdParty/imgui/imgui.h"
+#include <Engine/Core/NamedProperties.hpp>
 
 extern bool g_isDebugDraw;
 extern Renderer* g_theRenderer;
@@ -555,6 +556,8 @@ Game::Game()
 	std::string skyBoxShaderPath = "Data/Shaders/CubeSkyBox";
 
 	m_cubeSkybox = new CubeSkyBox(g_theRenderer, skyboxPaths, &skyBoxShaderPath);
+
+	TestNamedProperties();
 }
 
 Game::~Game()
@@ -979,6 +982,51 @@ void Game::InitializeMaterialMatrix()
 	}
 
 	// 可选：添加标签文字说明
+}
+
+void Game::TestNamedProperties()
+{
+	// NamedProperties: example usage
+
+	std::string lastName("Eiserloh");
+	NamedProperties employmentInfoProperties;
+	// ...
+
+	NamedProperties p;
+	p.SetValue("Height", 1.93f);
+	p.SetValue("Age", 52);
+	p.SetValue("IsMarried", true);
+	p.SetValue("Position", Vec2(3.5f, 6.2f));
+	p.SetValue("EyeColor", Rgba8(77, 38, 23));
+	p.SetValue("LastName", lastName);	// Set as std::string data...
+	p.SetValue("FirstName", "Squirrel"); 	// Set as c-string (char const*)? Store as std::string!	
+	p.SetValue("EmployeeInfo", employmentInfoProperties); // NamedProperties inside NamedProperties!
+
+	float height = p.GetValue("Height", 1.75f);
+	int health = p.GetValue("Health", 100); // Returns 100 if “Health” was not present
+	std::string m_firstName = p.GetValue("FirstName", m_firstName); // Variable as its own default value
+	std::string m_lastName = p.GetValue("LastName", m_lastName);   // This is a common trick
+	//int height2 = p.GetValue("Height", 76); // ERROR: Incorrect type!  Data value is float!
+
+	NamedProperties employerInfo = p.GetValue("EmployeeInfo", NamedProperties()); // Nested!
+	std::string ssn = employerInfo.GetValue("SSN", "00000000");
+
+	// Note the subtleties in the Set, Get, and return types for each of the following examples:
+	std::string unknownNameString = "UNKNOWN NAME";
+	std::string lastName2 = p.GetValue("LastName", unknownNameString);
+	std::string lastName3 = p.GetValue("LastName", "UNKNOWN"); // Explicit override of GetValue!
+	std::string firstName2 = p.GetValue("FirstName", unknownNameString);
+	std::string firstName3 = p.GetValue("FirstName", "UNKNOWN"); // Explicit override of SetValue!
+
+	// For backward compatibility with NamedStrings, we need to be able to SetValue as strings but GetValue as typed!
+	p.SetValue("GPA", "3.14");           // Actually stored as std::string data value
+	p.SetValue("YearBorn", "1973");      // Actually stored as std::string data value
+	p.SetValue("Street Address", "2210"); // Actually stored as std::string data value
+
+	float GPA = p.GetValue("GPA", 0.f);        // Explicitly try to fetch std::string data value as float
+	int   yearBorn = p.GetValue("YearBorn", 1970);   // Explicitly try to fetch std::string data value as int
+	//Vec2* pointer = p.GetValue("Street Address", nullptr); // ERROR: Can't fetch std::string data value as other types!
+
 }
 
 

@@ -151,7 +151,7 @@ struct Cell {
 		m_flameCountDown = cellDef.m_flameCountDown.GetRandomInRange(&Game::s_rng);
 		m_dissolveCountDown = cellDef.m_dissolveCountDowm.GetRandomInRange(&Game::s_rng);
 		m_corrosionCountDown = cellDef.m_corrosionCountDown.GetRandomInRange(&Game::s_rng);
-		m_color = cellDef.m_color;
+		m_color = Rgba8::GetRandomColorInRange(cellDef.m_colorMin, cellDef.m_colorMax, &Game::s_rng);
 	}
 };
 

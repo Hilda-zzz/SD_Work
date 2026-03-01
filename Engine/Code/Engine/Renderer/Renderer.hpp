@@ -91,6 +91,7 @@ struct RendererConfig
 	bool m_enableShadow = false;
 
 	bool m_imguiInitialized = false;
+	bool m_isTransparentWindow = false;
 };
 
 class Renderer

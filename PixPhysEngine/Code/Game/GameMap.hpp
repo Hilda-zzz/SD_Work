@@ -16,6 +16,7 @@ class RigidBodyObjectPool;
 class Texture;
 class Shader;
 class ConstantBuffer;
+class ParallaxBackground;
 
 class GameMap : public BaseMap 
 {
@@ -126,6 +127,15 @@ public:
 	void RenderRigidBodiesDebug() const;        // 渲染刚体调试信息
 
 	// ====================================================================
+	// === Parallax Background Access ===
+	ParallaxBackground* GetParallaxBackground() { return m_parallaxBackground; }
+	const ParallaxBackground* GetParallaxBackground() const { return m_parallaxBackground; }
+
+	// === Parallax Theme Management ===
+	void SetParallaxTheme(const std::string& themeName);
+	void UpdateParallaxForGameState();
+
+	b2WorldId GetB2WorldId() const { return m_b2WorldId; }
 
 private:
     void InitializeSuperChunks();
@@ -171,6 +181,9 @@ private:
 
 	void RenderActiveSuperChunk() const;
 	void ApplyBloomEffect() const;
+
+	void InitializeParallaxBackground();
+
 
 private:
     GamePlayer* m_player;
@@ -249,4 +262,8 @@ private:
 	Shader* m_bloomBlitShader = nullptr;    // Final composite
 
 	ConstantBuffer* m_blurParamsCBO = nullptr;
+
+	// Parallax Bkg
+	ParallaxBackground* m_parallaxBackground = nullptr;
+	bool m_showParallaxDebugPanel = false;
 };

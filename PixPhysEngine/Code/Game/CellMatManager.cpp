@@ -23,7 +23,7 @@ void CellMatManager::InitializeMaterialUIInfo()
 		s_materialUIInfo[matType].m_physTypeName = GetPhysicsTypeName(matDef.m_physicsType);
 
 		// 颜色转换
-		Rgba8 m_color = matDef.m_color;
+		Rgba8 m_color = matDef.m_colorMin;
 		s_materialUIInfo[matType].m_color = ImVec4(
 			m_color.r / 255.0f, m_color.g / 255.0f, m_color.b / 255.0f, 1.0f
 		);

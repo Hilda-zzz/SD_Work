@@ -131,7 +131,6 @@ void Tentacle::Render() const
 	
 }
 
-
 void Tentacle::ChangeState(TentacleStateType newStateType)
 {
 	m_stateMachine->ChangeState(newStateType);

@@ -32,7 +32,7 @@ void RigidBodyObject::Initialize(std::vector<CellWithCoords> const& cells, b2Bod
 
 	m_bodyType = type;
 
-	SandboxMap* map = m_manager->GetOwnerMap();
+	//BaseMap* map = m_manager->GetOwnerMap();
 	m_cellBlueprint.clear();
 	m_cells.clear();
 

@@ -42,6 +42,9 @@ private:
 	void AddEntityToList(Entity& thisEntity, EntityList& list);
 
 	void InitializeMaterialMatrix();
+
+	void TestNamedProperties();
+
 public:
 	Clock* m_gameClock = nullptr;
 	bool m_isAttractMode = true;

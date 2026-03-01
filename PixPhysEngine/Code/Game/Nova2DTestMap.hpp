@@ -53,6 +53,7 @@ private:
 	void SetupFireEffect(Nova2DSystem* particleSystem);
 
 	void CreateNebulaburstEffect();
+	void CreateNebulaDriftEffect();
 
 private:
 	SandboxPlayer* m_player = nullptr;

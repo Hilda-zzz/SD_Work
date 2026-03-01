@@ -59,6 +59,8 @@
     <ClCompile Include="Nova2D\Nova2DGPUBuffers.cpp" />
     <ClCompile Include="Nova2D\Nova2DParticle.cpp" />
     <ClCompile Include="Nova2D\Nova2DSystem.cpp" />
+    <ClCompile Include="ParallaxBackground.cpp" />
+    <ClCompile Include="ParallaxLayer.cpp" />
     <ClCompile Include="RegionBounds.cpp" />
     <ClCompile Include="RegionDefinition.cpp" />
     <ClCompile Include="RegionDefinitionLoader.cpp" />
@@ -126,6 +128,9 @@
     <ClInclude Include="Nova2D\Nova2DParticleInstance.hpp" />
     <ClInclude Include="Nova2D\Nova2DSystem.hpp" />
     <ClInclude Include="Nova2D\Nova2DParticle.hpp" />
+    <ClInclude Include="ParallaxBackground.hpp" />
+    <ClInclude Include="ParallaxBackgroundDebugPanel.hpp" />
+    <ClInclude Include="ParallaxLayer.hpp" />
     <ClInclude Include="PCGTemplate.hpp" />
     <ClInclude Include="RegionBounds.hpp" />
     <ClInclude Include="RegionDefinition.hpp" />

@@ -77,6 +77,9 @@
     <Filter Include="Shaders\Bloom">
       <UniqueIdentifier>{7eed29cb-4617-4fab-b716-29e6cb257b6d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="WorldMode\ParrallaxBkg">
+      <UniqueIdentifier>{fc4b6b1d-3472-4a3b-a2b3-5ca3648e29b7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">
@@ -228,6 +231,12 @@
     </ClCompile>
     <ClCompile Include="CellDataCollectJob.cpp">
       <Filter>Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallaxBackground.cpp">
+      <Filter>WorldMode\ParrallaxBkg</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallaxLayer.cpp">
+      <Filter>WorldMode\ParrallaxBkg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -419,6 +428,15 @@
     </ClInclude>
     <ClInclude Include="CellDataCollectJob.hpp">
       <Filter>Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallaxBackground.hpp">
+      <Filter>WorldMode\ParrallaxBkg</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallaxBackgroundDebugPanel.hpp">
+      <Filter>WorldMode\ParrallaxBkg</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallaxLayer.hpp">
+      <Filter>WorldMode\ParrallaxBkg</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

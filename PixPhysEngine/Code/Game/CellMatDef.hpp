@@ -30,6 +30,7 @@ enum class CellMatType : uint8_t
 	MAT_STSOLID_FIRE,
 	MAT_DYSOLID_FIRE,
 	MAT_CA_SAND,
+	MAT_OBSIDIAN,
 	COUNT
 };
 
@@ -151,7 +152,9 @@ public:
 	float m_momentumPreservation;     // 动量保持度 (影响移动连续性) =》用作碰撞后保留多少比例的momentum给接收碰撞的cell
 	float m_randomDirectionChance;    // 随机方向概率 (无水平速度时)
 
-	Rgba8 m_color=Rgba8::HILDA;
+	Rgba8 m_colorMin = Rgba8::HILDA;
+	Rgba8 m_colorMax = Rgba8::HILDA;
+
 	uint8_t m_emissionValue = 0; //0-31
 
 	// Chemical Params

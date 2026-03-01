@@ -1,5 +1,7 @@
 #pragma once
 
+class RandomNumberGenerator;
+
 struct Rgba8
 {
 public: 
@@ -27,6 +29,8 @@ public:
 	float GetColorDistance(const Rgba8& color1, const Rgba8& color2);
 	bool		operator==(Rgba8 const& compare) const;
 	bool		operator!=(Rgba8 const& compare) const;
+
+	static Rgba8 GetRandomColorInRange(Rgba8 const& min, Rgba8 const& max, RandomNumberGenerator* rng);
 };
 
 Rgba8 Interpolate(Rgba8 start, Rgba8 end, float fractionOfEnd);

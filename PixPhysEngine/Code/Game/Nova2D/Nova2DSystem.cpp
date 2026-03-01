@@ -944,7 +944,7 @@ void Nova2DSystem::RenderGPUCompute(Camera const& camera) const
 		}
 
 		//m_renderer->BindTexture(nullptr);
-		m_renderer->SetBlendMode(BlendMode::ADDITIVE);  
+		m_renderer->SetBlendMode(BlendMode::ALPHA);  
 		m_renderer->SetModelConstants();
 
 		//m_renderer->DrawGameIndexedVertexBuffer(m_populatedVBO,m_populatedIBO, counters.m_aliveCountAfterSim*6);

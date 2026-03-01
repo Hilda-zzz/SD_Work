@@ -220,7 +220,8 @@ void ConfigDrivenCellGenerator::GenerateColoredLayer(
 					}
 					else
 					{
-						cell.m_color = CellMatManager::GetMaterialDef(cell.m_type).m_color;
+						CellMatDef const& def = CellMatManager::GetMaterialDef(cell.m_type);
+						cell.m_color = Rgba8::GetRandomColorInRange(def.m_colorMin, def.m_colorMax, &Game::s_rng);
 					}
 
 					break;

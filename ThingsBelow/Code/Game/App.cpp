@@ -49,11 +49,14 @@ void App::Startup()
 	windowConfig.m_inputSystem = g_theInput;
 	windowConfig.m_aspectRatio = 2.f;
 	windowConfig.m_windowTitle = "Protogame2D";
+	windowConfig.m_isDesktopPet = true;
+	//windowConfig.m_isFullscreen = true;
 	g_theWindow = new Window(windowConfig);
 	
 	RendererConfig rendererConfig;
 	rendererConfig.m_window = g_theWindow;
 	rendererConfig.m_imguiInitialized = true;
+	rendererConfig.m_isTransparentWindow =true;
 	g_theRenderer = new Renderer(rendererConfig);
 	
 	g_systemClock = new Clock();
@@ -166,7 +169,7 @@ void App::Update()
 
 void App::Render()  const
 {
-	g_theRenderer->ClearScreen(Rgba8::HILDA);
+	g_theRenderer->ClearScreen(Rgba8::BLACK);
 	g_theGame->Renderer();
 
 	g_theRenderer->RenderImguiFrame();

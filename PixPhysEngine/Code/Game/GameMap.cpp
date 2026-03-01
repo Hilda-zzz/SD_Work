@@ -27,6 +27,7 @@
 #include "ChunkRigidBodyManager.hpp"
 #include "Engine/Renderer/ConstantBuffer.hpp"
 #include "Nova2D/Nova2DSystem.hpp"
+#include "ParallaxBackground.hpp"
 
 extern InputSystem* g_theInput;
 extern JobSystem* g_theJobSystem;
@@ -182,6 +183,8 @@ void GameMap::Initialize()
 
 	// === Blur参数CBO ===
 	m_blurParamsCBO = g_theRenderer->CreateConstantBuffer(16);
+
+	InitializeParallaxBackground();
 }
 
 void GameMap::SetHerringboneTileset(HerringboneTileset* tileset)
@@ -224,6 +227,14 @@ void GameMap::RenderRigidBodiesDebug() const
 	Box2DDebugDrawManager::GetInstance().DrawWorld(m_b2WorldId);
 }
 
+void GameMap::SetParallaxTheme(const std::string& themeName)
+{
+}
+
+void GameMap::UpdateParallaxForGameState()
+{
+}
+
 void GameMap::InitializeSuperChunks()
 {
     m_superChunks.resize(m_superChunkGridSize.y);
@@ -248,6 +259,13 @@ void GameMap::Update(float deltaTime)
 	ZoneScoped;
 	m_deltaTime = deltaTime;
 
+	// ========== 新增：在所有其他更新之前更新视差背景 ==========
+	if (m_parallaxBackground && m_player)
+	{
+		m_parallaxBackground->Update(m_player->GetCamera());
+	}
+	//======================================================
+
 	if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
 	{
 		g_nova2D->CreateInstance(0, m_player->GetPosition().x, m_player->GetPosition().y);
@@ -255,7 +273,7 @@ void GameMap::Update(float deltaTime)
 
 	g_nova2D->Update(deltaTime,m_player->GetCamera(),m_cellCollisionTexture);
 
-    m_player->Update(deltaTime);
+	m_player->PrePhysicsUpdate(deltaTime);      // 1. 处理输入，推速度
 
     UpdateSuperChunkStreaming();
 
@@ -266,6 +284,8 @@ void GameMap::Update(float deltaTime)
 
 	// ← 新增：更新物理世界
 	UpdatePhysicsWorld(deltaTime);
+
+	m_player->PostPhysicsUpdate(deltaTime);
 	
 	// 切换调试面板 (例如按 F3)
 	if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
@@ -287,10 +307,27 @@ void GameMap::Update(float deltaTime)
 void GameMap::Render() const
 {
 	ZoneScoped;
+
 	g_theRenderer->BeginCamera(m_player->GetCamera());
 
 	Texture* rts[3] = { m_cellMainColorTexture, m_cellCollisionTexture, m_cellBloomTexture };
 	g_theRenderer->BeginMRTRender(rts, 3);
+
+	// ========== 新增：在渲染游戏内容之前渲染背景 ==========
+	if (m_parallaxBackground && m_player)
+	{
+		g_theRenderer->SetBlendMode(BlendMode::ALPHA);  // 半透明混合
+		g_theRenderer->SetDepthMode(DepthMode::DISABLED);  // 背景不需要深度测试
+		g_theRenderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+		g_theRenderer->BindShader(nullptr);
+		// 渲染视差背景
+		m_parallaxBackground->Render(m_player->GetCamera());
+
+		// 恢复渲染状态（根据你的游戏需要）
+		g_theRenderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+	}
+
+	//====================================================
 
 	{
 		ZoneScopedN("RenderSolid");
@@ -333,9 +370,9 @@ void GameMap::Render() const
 	g_theRenderer->BindShader(nullptr);
     m_debugRenderer->Render(m_player->GetCamera());
 
-	//  RenderRigidBodiesDebug();
-
     m_player->Render();
+
+	//RenderRigidBodiesDebug();
 
     g_theRenderer->EndCamera(m_player->GetCamera());
 }
@@ -364,7 +401,7 @@ void GameMap::PlaceMaterialInChunk(int worldX, int worldY, CellMatType type, boo
 
 		cell.m_isBelongRb = isRb;
 		cell.m_type.store(type);
-		cell.m_color = curDef.m_color;
+		cell.m_color = Rgba8::GetRandomColorInRange(curDef.m_colorMin, curDef.m_colorMax, &Game::s_rng);
 		cell.m_lifeCountDown = curDef.m_lifeCountDown.GetRandomInRange(&Game::s_rng);
 		cell.m_flameCountDown = curDef.m_flameCountDown.GetRandomInRange(&Game::s_rng);
 		cell.m_dissolveCountDown = curDef.m_dissolveCountDowm.GetRandomInRange(&Game::s_rng);
@@ -2362,4 +2399,74 @@ bool GameMap::IsChunkVisible(CellChunk const* chunk, AABB2 const& viewBounds) co
 
 	AABB2 chunkBounds = chunk->GetWorldBounds();
 	return DoAABB2Overlap(chunkBounds, viewBounds);
+}
+
+void GameMap::InitializeParallaxBackground()
+{
+	// 假设你有一个全局的 Renderer 指针（如 g_theRenderer）
+	extern Renderer* g_theRenderer;  // 根据你的项目结构调整
+
+	m_parallaxBackground = new ParallaxBackground(g_theRenderer);
+	m_parallaxBackground->Initialize();
+
+	// 方法1: 快速设置（推荐用于快速原型）
+	// ----------------------------------------
+	std::vector<Texture*> caveTextures = {
+		g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/1-Background.png"),
+		g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/2-super far.png"),
+		g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/3-far.png"),
+		g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/4-far light.png"),
+		g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/5-close.png"),
+		g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/6-close light.png")
+		//g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/Set2/sky.png"),
+		//g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/Set2/far-clouds.png"),
+		//g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/Set2/near-clouds.png"),
+		//g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/Set2/far-mountains.png"),
+		//g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/Set2/mountains.png"),
+		//g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Bkg/Set2/trees.png")
+	};
+	m_parallaxBackground->SetupCaveBackground(caveTextures);
+
+	// 方法2: 手动配置每一层（推荐用于生产环境）
+	// ----------------------------------------
+	/*
+	// 远景层 - 模糊的洞穴轮廓
+	ParallaxLayerConfig farLayer;
+	farLayer.texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/cave_far.png");
+	farLayer.depthFactor = 0.15f;      // 很远，移动很慢
+	farLayer.scrollSpeedX = 1.0f;      // 完全跟随相机
+	farLayer.scrollSpeedY = 1.0f;
+	farLayer.alpha = 0.5f;             // 半透明，增加深度感
+	farLayer.tint = Rgba8(180, 180, 200, 255);  // 微蓝色调，模拟远景
+	farLayer.isLoopingX = true;
+	farLayer.isLoopingY = false;
+	farLayer.verticalOffsetPercent = 0.5f;  // 居中
+	m_parallaxBackground->AddLayer(farLayer);
+
+	// 中景层 - 清晰的洞穴结构
+	ParallaxLayerConfig midLayer;
+	midLayer.texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/cave_mid.png");
+	midLayer.depthFactor = 0.5f;       // 中等距离
+	midLayer.scrollSpeedX = 1.0f;
+	midLayer.scrollSpeedY = 1.0f;
+	midLayer.alpha = 0.75f;
+	midLayer.tint = Rgba8(200, 200, 210, 255);
+	midLayer.isLoopingX = true;
+	midLayer.isLoopingY = false;
+	midLayer.verticalOffsetPercent = 0.5f;
+	m_parallaxBackground->AddLayer(midLayer);
+
+	// 近景层 - 详细的岩石纹理
+	ParallaxLayerConfig nearLayer;
+	nearLayer.texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/cave_near.png");
+	nearLayer.depthFactor = 0.85f;     // 接近相机速度
+	nearLayer.scrollSpeedX = 1.0f;
+	nearLayer.scrollSpeedY = 1.0f;
+	nearLayer.alpha = 1.0f;            // 完全不透明
+	nearLayer.tint = Rgba8::WHITE;
+	nearLayer.isLoopingX = true;
+	nearLayer.isLoopingY = false;
+	nearLayer.verticalOffsetPercent = 0.5f;
+	m_parallaxBackground->AddLayer(nearLayer);
+	*/
 }

@@ -21,7 +21,7 @@ class Texture2DArray;
 
 struct Nova2DConfig 
 {
-	int maxParticles = 500000;  // MVP: 先用小数量
+	int maxParticles = 1000000;  // MVP: 先用小数量
 };
 
 enum class Nova2DRenderMode

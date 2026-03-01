@@ -364,7 +364,7 @@ void Game::RenderGameplayMode() const
 		break;
 	}
 
-	g_theRenderer->BeginCamera(m_screenCamera);
+	/*g_theRenderer->BeginCamera(m_screenCamera);
 	float framerate = 1.f / m_curDeltaTime;
 	char buffer[256];
 	sprintf_s(buffer,
@@ -385,7 +385,7 @@ void Game::RenderGameplayMode() const
 
 	g_theRenderer->DrawVertexArray(title);
 
-	g_theRenderer->EndCamera(m_screenCamera);
+	g_theRenderer->EndCamera(m_screenCamera);*/
 }
 
 void Game::RenderGameModeSelectionUI() const
@@ -574,10 +574,10 @@ void Game::ExitGameplayMode()
 		m_sandboxPlayer = nullptr;
 		break;
 	case GameMode::GAME_WORLD:
-		delete m_gameWorldMap;
-		m_gameWorldMap = nullptr;
 		delete m_gamePlayer;
 		m_gamePlayer = nullptr;
+		delete m_gameWorldMap;
+		m_gameWorldMap = nullptr;
 		break;
 	default:
 		break;

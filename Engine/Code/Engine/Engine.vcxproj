@@ -372,9 +372,12 @@
     <ClCompile Include="Core\ErrorWarningAssert.cpp" />
     <ClCompile Include="Core\EventSystem.cpp" />
     <ClCompile Include="Core\FileUtils.cpp" />
+    <ClCompile Include="Core\HashedCaseInsensitiveString.cpp" />
     <ClCompile Include="Core\Image.cpp" />
     <ClCompile Include="Core\MeshUtils.cpp" />
+    <ClCompile Include="Core\NamedProperties.cpp" />
     <ClCompile Include="Core\ObjLoader.cpp" />
+    <ClCompile Include="Core\ParseFromString.cpp" />
     <ClCompile Include="Core\TileHeatMap.cpp" />
     <ClCompile Include="Core\NamedStrings.cpp" />
     <ClCompile Include="Core\Rgba8.cpp" />
@@ -525,9 +528,12 @@
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Core\EventSystem.hpp" />
     <ClInclude Include="Core\FileUtils.hpp" />
+    <ClInclude Include="Core\HashedCaseInsensitiveString.hpp" />
     <ClInclude Include="Core\Image.hpp" />
     <ClInclude Include="Core\MeshUtils.hpp" />
+    <ClInclude Include="Core\NamedProperties.hpp" />
     <ClInclude Include="Core\ObjLoader.hpp" />
+    <ClInclude Include="Core\ParseFromString.hpp" />
     <ClInclude Include="Core\TileHeatMap.hpp" />
     <ClInclude Include="Core\NamedStrings.hpp" />
     <ClInclude Include="Core\Rgba8.hpp" />
