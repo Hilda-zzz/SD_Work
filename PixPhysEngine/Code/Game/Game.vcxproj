@@ -28,6 +28,8 @@
     <ClCompile Include="BaseMap.cpp" />
     <ClCompile Include="Box2DDebugDrawManager.cpp" />
     <ClCompile Include="Box2DShapeBuilder.cpp" />
+    <ClCompile Include="CABehaviors.cpp" />
+    <ClCompile Include="CAPrimitives.cpp" />
     <ClCompile Include="CellBehaviorSystem.cpp" />
     <ClCompile Include="CellBehaviorSystemInChunk.cpp" />
     <ClCompile Include="CellChunk.cpp" />
@@ -88,6 +90,8 @@
     <ClInclude Include="BaseMap.hpp" />
     <ClInclude Include="Box2DDebugDrawManager.hpp" />
     <ClInclude Include="Box2DShapeBuilder.hpp" />
+    <ClInclude Include="CABehaviors.hpp" />
+    <ClInclude Include="CAPrimitives.hpp" />
     <ClInclude Include="CellBehaviorSystem.hpp" />
     <ClInclude Include="CellBehaviorSystemInChunk.hpp" />
     <ClInclude Include="CellChunk.hpp" />

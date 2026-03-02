@@ -2,6 +2,8 @@
 #include <unordered_map>
 #include "Game/CellMatDef.hpp"
 #include "CellMatBrush.hpp"
+#include "CABehaviors.hpp"
+
 
 class CellMatManager
 {
@@ -105,7 +107,7 @@ public:
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_isHighTemp = true;
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_isPersist = false;
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_lifeCountDown =IntRange(120,360);
-		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_EMPTY;
+		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_CA_SMOKE;
 
 		s_materialDefs[CellMatType::MAT_DYSOLID_FIRE].m_emissionValue = 30;
 
@@ -129,6 +131,10 @@ public:
 
 		s_materialDefs[CellMatType::MAT_WATER].m_emissionValue = 10;
 
+		s_materialDefs[CellMatType::MAT_WATER].m_isFlammable = true;
+		s_materialDefs[CellMatType::MAT_WATER].m_flameCountDown = IntRange(1, 5);
+		s_materialDefs[CellMatType::MAT_WATER].m_flammableType = CellMatType::MAT_CA_STEAM;
+
 		// oil - 液体
 		s_materialDefs[CellMatType::MAT_OIL] = CellMatDef(PhyType::PHY_LIQUID);
 		s_materialDefs[CellMatType::MAT_OIL].m_density = 0.8f;
@@ -137,7 +143,7 @@ public:
 		s_materialDefs[CellMatType::MAT_OIL].m_interaction.m_isPermeable = true;
 		s_materialDefs[CellMatType::MAT_OIL].m_interaction.m_penetrationResistance = 0.8f;
 		s_materialDefs[CellMatType::MAT_OIL].m_colorMin = Rgba8(100, 100, 5);
-		s_materialDefs[CellMatType::MAT_OIL].m_colorMax = Rgba8(180, 175, 30);
+		s_materialDefs[CellMatType::MAT_OIL].m_colorMax = Rgba8(100, 100, 5);
 		s_materialDefs[CellMatType::MAT_OIL].m_name = "Oil";
 		s_materialDefs[CellMatType::MAT_OIL].m_description = "Fluid material - liquid";
 
@@ -146,6 +152,10 @@ public:
 		s_materialDefs[CellMatType::MAT_OIL].m_horizontalDamping = 0.9f;
 		s_materialDefs[CellMatType::MAT_OIL].m_verticalDamping = 0.9f;
 		s_materialDefs[CellMatType::MAT_OIL].m_collisionDamping = 0.5f;
+
+		s_materialDefs[CellMatType::MAT_OIL].m_isFlammable = true;
+		s_materialDefs[CellMatType::MAT_OIL].m_flameCountDown = IntRange(1, 10);
+		s_materialDefs[CellMatType::MAT_OIL].m_flammableType = CellMatType::MAT_CA_FIRE;
 
 		// lava 液体
 		s_materialDefs[CellMatType::MAT_LAVA] = CellMatDef(PhyType::PHY_LIQUID);
@@ -180,7 +190,7 @@ public:
 		s_materialDefs[CellMatType::MAT_ACID].m_interaction.m_isPermeable = true;
 		s_materialDefs[CellMatType::MAT_ACID].m_interaction.m_penetrationResistance = 0.8f;
 		s_materialDefs[CellMatType::MAT_ACID].m_colorMin = Rgba8(80, 160, 20);
-		s_materialDefs[CellMatType::MAT_ACID].m_colorMax = Rgba8(160, 230, 50);
+		s_materialDefs[CellMatType::MAT_ACID].m_colorMax = Rgba8(80, 160, 20);
 		s_materialDefs[CellMatType::MAT_ACID].m_name = "Acid";
 		s_materialDefs[CellMatType::MAT_ACID].m_description = "Fluid material - liquid";
 										
@@ -240,24 +250,132 @@ public:
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_isHighTemp = true;
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_isPersist = false;
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeCountDown = IntRange(120, 240);
-		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_EMPTY;
+		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_lifeEndMatType = CellMatType::MAT_CA_SMOKE;
 
 		s_materialDefs[CellMatType::MAT_STSOLID_FIRE].m_emissionValue = 30;
 
 
-		// CA Sand
-		s_materialDefs[CellMatType::MAT_CA_SAND] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_density = 1.5f;
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_colorMin = Rgba8(185, 195, 225, 255);
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_colorMax = Rgba8(220, 225, 255, 255);
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_name = "CA Sand";
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_description = "Cellular automaton sand";
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_lifeCountDown = IntRange(240, 360);
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_isPersist = false;
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_lifeEndMatType = CellMatType::MAT_WATER;
-		//s_materialDefs[CellMatType::MAT_CA_SAND].m_cellularAutomaton.m_diagonalCheckOrder = 0;
+		// CA Snow
+		s_materialDefs[CellMatType::MAT_CA_SNOW] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_density = 1.2f;
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_colorMin = Rgba8(180, 200, 240, 220);
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_colorMax = Rgba8(230, 240, 255, 255);
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_name = "CA Snow";
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_description = "Cellular automaton snow";
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_lifeCountDown = IntRange(240, 360);
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_lifeEndMatType = CellMatType::MAT_WATER;
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_caUpdateFunc = &CABehaviors::Update_Snow;
+		s_materialDefs[CellMatType::MAT_CA_SNOW].m_emissionValue = 10;
 
-		s_materialDefs[CellMatType::MAT_CA_SAND].m_emissionValue = 10;
+		// CA Cloud
+		s_materialDefs[CellMatType::MAT_CA_CLOUD] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_density = 0.3f;
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_colorMin = Rgba8(220, 220, 220, 210);
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_colorMax = Rgba8(150, 190, 240, 220);
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_name = "CA Cloud";
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_description = "Cellular automaton cloud";
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_lifeCountDown = IntRange(600, 1200);
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_lifeEndMatType = CellMatType::MAT_WATER;
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_caUpdateFunc = &CABehaviors::Update_Cloud;
+		s_materialDefs[CellMatType::MAT_CA_CLOUD].m_emissionValue = 5;
+
+		// CA Steam
+		s_materialDefs[CellMatType::MAT_CA_STEAM] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_density = 0.1f;
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_colorMin = Rgba8(160, 220, 210, 100);
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_colorMax = Rgba8(200, 245, 240, 150);
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_name = "CA Steam";
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_description = "Cellular automaton steam";
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_lifeCountDown = IntRange(60, 100);
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_lifeEndMatType = CellMatType::MAT_EMPTY;
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_caUpdateFunc = &CABehaviors::Update_Steam;
+		s_materialDefs[CellMatType::MAT_CA_STEAM].m_emissionValue = 3;
+
+		// CA Plant
+		s_materialDefs[CellMatType::MAT_CA_PLANT] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_density = 2.f;
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_colorMin = Rgba8(30, 160, 120, 255);  // 青绿
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_colorMax = Rgba8(100, 210, 80, 255);  // 嫩绿
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_name = "CA Plant";
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_description = "Grows in water, spreads upward";
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_isPersist = true;
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_isFlammable = true;
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_flameCountDown = IntRange(80, 160);
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_flammableType = CellMatType::MAT_STSOLID_FIRE;
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_caUpdateFunc = &CABehaviors::Update_Plant;
+		s_materialDefs[CellMatType::MAT_CA_PLANT].m_emissionValue = 0;
+
+		// CA Flower
+		s_materialDefs[CellMatType::MAT_CA_FLOWER] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_density = 2.0f;
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_colorMin = Rgba8(220, 40, 60, 255);  // 注册颜色不重要
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_colorMax = Rgba8(240, 80, 160, 255);  // 运行时动态赋色
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_name = "CA Flower";
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_description = "Blooms from plant, fades outward";
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_lifeCountDown = IntRange(300, 600);
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_lifeEndMatType = CellMatType::MAT_CA_PLANT;
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_isFlammable = true;
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_flameCountDown = IntRange(40, 80);
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_flammableType = CellMatType::MAT_STSOLID_FIRE;
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_caUpdateFunc = &CABehaviors::Update_Flower;
+		s_materialDefs[CellMatType::MAT_CA_FLOWER].m_emissionValue = 5;
+
+		// CA Smoke
+		s_materialDefs[CellMatType::MAT_CA_SMOKE] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_density = 0.2f;
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_colorMin = Rgba8(60, 60, 60, 180);
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_colorMax = Rgba8(110, 110, 110, 255);
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_name = "CA Smoke";
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_description = "Drifts upward, disperses slowly";
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_lifeCountDown = IntRange(100, 150);
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_lifeEndMatType = CellMatType::MAT_EMPTY;
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_caUpdateFunc = &CABehaviors::Update_Smoke;
+		s_materialDefs[CellMatType::MAT_CA_SMOKE].m_emissionValue = 2;
+
+		// CA Vine
+		s_materialDefs[CellMatType::MAT_CA_VINE] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_density = 2.f;
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_colorMin = Rgba8(30, 90, 50, 255);  // 深绿主体
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_colorMax = Rgba8(50, 120, 70, 255);
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_name = "CA Vine";
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_description = "Grows tendrils downward";
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_isPersist = true;
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_isFlammable = true;
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_flameCountDown = IntRange(60, 120);
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_flammableType = CellMatType::MAT_STSOLID_FIRE;
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_caUpdateFunc = &CABehaviors::Update_Vine;
+		s_materialDefs[CellMatType::MAT_CA_VINE].m_emissionValue = 0;
+
+		// CA Seed
+		s_materialDefs[CellMatType::MAT_CA_SEED] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_density = 2.f;
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_colorMin = Rgba8(120, 80, 40, 255);  // 深棕
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_colorMax = Rgba8(160, 110, 60, 255);  // 浅棕
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_name = "CA Seed";
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_description = "Falls like sand, sprouts into plant";
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_lifeCountDown = IntRange(-1, -1);  // 不自然消亡，靠发芽转化
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_caUpdateFunc = &CABehaviors::Update_Seed;
+		s_materialDefs[CellMatType::MAT_CA_SEED].m_emissionValue = 0;
+
+		// CA Fire
+		s_materialDefs[CellMatType::MAT_CA_FIRE] = CellMatDef(PhyType::PHY_CELLULAR_AUTOMATON);
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_density = 0.1f;
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_colorMin = Rgba8(255, 80, 10, 200);  // 深橙红
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_colorMax = Rgba8(255, 200, 50, 240);  // 亮黄
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_name = "CA Fire";
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_description = "Swaying fire, rises like fluid";
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_isPersist = false;
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_lifeCountDown = IntRange(60, 150);
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_lifeEndMatType = CellMatType::MAT_CA_SMOKE;
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_isHighTemp = true;
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_caUpdateFunc = &CABehaviors::Update_FireCA;
+		s_materialDefs[CellMatType::MAT_CA_FIRE].m_emissionValue = 25;
 	}
 	static void InitializeMaterialUIInfo();
 

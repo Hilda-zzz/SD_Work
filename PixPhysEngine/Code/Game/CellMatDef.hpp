@@ -3,6 +3,8 @@
 #include <string>
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/IntRange.hpp"
+struct Cell;
+class BaseMap; 
 
 enum class PhyType :uint8_t
 {
@@ -29,8 +31,16 @@ enum class CellMatType : uint8_t
 	MAT_ACID,
 	MAT_STSOLID_FIRE,
 	MAT_DYSOLID_FIRE,
-	MAT_CA_SAND,
+	MAT_CA_SNOW,
 	MAT_OBSIDIAN,
+	MAT_CA_CLOUD,
+	MAT_CA_STEAM,
+	MAT_CA_PLANT,
+	MAT_CA_FLOWER,
+	MAT_CA_SMOKE,
+	MAT_CA_VINE,
+	MAT_CA_SEED,
+	MAT_CA_FIRE,
 	COUNT
 };
 
@@ -124,6 +134,9 @@ private:
 
 public:
 	PhyType m_physicsType=PhyType::PHY_MOVE_SOLID;
+
+	// CA 粒子专用更新函数，nullptr 表示无行为（PHY_CELLULAR_AUTOMATON 时使用）
+	void (*m_caUpdateFunc)(Cell&, int, int, BaseMap*) = nullptr;
 
 	std::string m_description = "";
 	std::string m_name = "";

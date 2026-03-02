@@ -6,7 +6,7 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Game/Game.hpp"
 #include <ThirdParty/tracy/tracy/Tracy.hpp>
-
+#include "CABehaviors.hpp"
 
 void CellBehaviorSystemInChunk::UpdateCell(Cell& cell, int worldX, int worldY, BaseMap* map)
 {
@@ -27,7 +27,9 @@ void CellBehaviorSystemInChunk::UpdateCell(Cell& cell, int worldX, int worldY, B
 		UpdateLiquid(cell, worldX, worldY, map);
 		break;
 	case PhyType::PHY_CELLULAR_AUTOMATON:
-		UpdateCellularAutomaton(cell, worldX, worldY, map);
+		//UpdateCellularAutomaton(cell, worldX, worldY, map);
+		if (matDef.m_caUpdateFunc)
+			matDef.m_caUpdateFunc(cell, worldX, worldY, map);
 		break;
 	}
 }
@@ -57,7 +59,7 @@ void CellBehaviorSystemInChunk::HandleMoveSolidMovement(int& currentX, int& curr
 		Cell& currentCell = map->GetCell(currentX, currentY);
 		Cell& targetCell = map->GetCell(pathX, pathY);
 		const CellMatDef& targetCellMatDef = CellMatManager::GetMaterialDef(targetCell.m_type.load());
-
+		const CellMatDef& curCellMatDef = CellMatManager::GetMaterialDef(currentCell.m_type.load());
 		// === 1. If empty ===
 		if (targetCell.IsEmpty()) 
 		{
@@ -83,30 +85,33 @@ void CellBehaviorSystemInChunk::HandleMoveSolidMovement(int& currentX, int& curr
 		}
 
 		// === 2. Liquid, replace with Buoyancy ===
-		else if (targetCellMatDef.m_physicsType == PhyType::PHY_LIQUID) {
-
+		else if (targetCellMatDef.m_physicsType == PhyType::PHY_LIQUID||targetCellMatDef.m_physicsType==PhyType::PHY_CELLULAR_AUTOMATON) 
+		{
 			MarkChunkDirtyWithNeighbors(map, currentX, currentY);
+	
+			if (curCellMatDef.m_density > targetCellMatDef.m_density)
+			{
+				std::swap(currentCell, targetCell);
+				currentX = pathX;
+				currentY = pathY;
 
-			std::swap(currentCell, targetCell);
-			currentX = pathX;
-			currentY = pathY;
+				MarkChunkDirtyWithNeighbors(map, currentX, currentY);
+				minX = std::min(minX, currentX);
+				maxX = std::max(maxX, currentX);
+				minY = std::min(minY, currentY);
+				maxY = std::max(maxY, currentY);
 
-			MarkChunkDirtyWithNeighbors(map, currentX, currentY);
-			minX = std::min(minX, currentX);
-			maxX = std::max(maxX, currentX);
-			minY = std::min(minY, currentY);
-			maxY = std::max(maxY, currentY);
+				//map->GetChunkByWorldPos(currentX, currentY)->MarkDirty();
 
-			//map->GetChunkByWorldPos(currentX, currentY)->MarkDirty();
+				remainingSteps--;
 
-			remainingSteps--;
-
-			// Liquid resistance
-			Cell& movedCell = map->GetCell(currentX, currentY);
-			movedCell.m_velocityY *= targetCellMatDef.m_viscosity;
-			movedCell.m_velocityX *= targetCellMatDef.m_viscosity;
-			movedCell.m_isFreeFalling = true;
-			return true;
+				// Liquid resistance
+				Cell& movedCell = map->GetCell(currentX, currentY);
+				movedCell.m_velocityY *= targetCellMatDef.m_viscosity;
+				movedCell.m_velocityX *= targetCellMatDef.m_viscosity;
+				movedCell.m_isFreeFalling = true;
+				return true;
+			}
 		}
 
 		// === 3. Move solid collision ===
@@ -1031,7 +1036,7 @@ void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, 
 					Cell& diagUpCell = map->GetCell(diagUpX, diagUpY);
 
 					// 如果下方为空 并且 斜上方为snow
-					if (belowCell.IsEmpty() && diagUpCell.m_type.load() == CellMatType::MAT_CA_SAND)
+					if (belowCell.IsEmpty() && diagUpCell.m_type.load() == CellMatType::MAT_CA_SNOW)
 					{
 						// 与下方交换
 						std::swap(map->GetCell(worldX, worldY), map->GetCell(worldX, worldY - 1));
@@ -1132,7 +1137,7 @@ void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, 
 								if (map->IsInBounds(checkX, checkY))
 								{
 									Cell& checkCell = map->GetCell(checkX, checkY);
-									if (checkCell.m_type.load() == CellMatType::MAT_CA_SAND)
+									if (checkCell.m_type.load() == CellMatType::MAT_CA_SNOW)
 									{
 										touchingSnow = true;
 										break;
@@ -1172,9 +1177,9 @@ void CellBehaviorSystemInChunk::UpdateCellularAutomaton(Cell& cell, int worldX, 
 		Cell& upCell = map->GetCell(worldX, worldY + 1);
 		Cell& downCell = map->GetCell(worldX, worldY - 1);
 
-		if (leftCell.m_type.load() == CellMatType::MAT_CA_SAND &&
-			rightCell.m_type.load() == CellMatType::MAT_CA_SAND &&
-			upCell.m_type.load() == CellMatType::MAT_CA_SAND &&
+		if (leftCell.m_type.load() == CellMatType::MAT_CA_SNOW &&
+			rightCell.m_type.load() == CellMatType::MAT_CA_SNOW &&
+			upCell.m_type.load() == CellMatType::MAT_CA_SNOW &&
 			downCell.IsEmpty())
 		{
 			// 与上方交换

@@ -238,6 +238,12 @@
     <ClCompile Include="ParallaxLayer.cpp">
       <Filter>WorldMode\ParrallaxBkg</Filter>
     </ClCompile>
+    <ClCompile Include="CABehaviors.cpp">
+      <Filter>CellMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="CAPrimitives.cpp">
+      <Filter>CellMaterial</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -437,6 +443,12 @@
     </ClInclude>
     <ClInclude Include="ParallaxLayer.hpp">
       <Filter>WorldMode\ParrallaxBkg</Filter>
+    </ClInclude>
+    <ClInclude Include="CABehaviors.hpp">
+      <Filter>CellMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="CAPrimitives.hpp">
+      <Filter>CellMaterial</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

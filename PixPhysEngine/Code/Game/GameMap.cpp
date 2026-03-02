@@ -1287,7 +1287,7 @@ void GameMap::UpdateSingleChunkChemical(CellChunk* chunk)
 						const CellMatDef& neighborDef = CellMatManager::GetMaterialDef(neighborCell.m_type.load());
 
 						// 如果邻居是液体且不是高温
-						if (neighborDef.m_physicsType == PhyType::PHY_LIQUID && !neighborDef.m_isHighTemp)
+						if (neighborDef.m_physicsType == PhyType::PHY_LIQUID && !neighborDef.m_isHighTemp) // 
 						{
 							cell.m_lifeCountDown = 0;
 							break; // 找到一个就足够了

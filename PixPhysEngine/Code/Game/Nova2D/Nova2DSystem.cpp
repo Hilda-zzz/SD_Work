@@ -909,6 +909,7 @@ void Nova2DSystem::RenderGPUCompute(Camera const& camera) const
 
 	// ===== 3. PopulateVBO（GPU填充顶点）=====
 	{
+		m_renderer->UnbindVertexBuffer(0);
 		m_renderer->BindComputeShader(m_populateVBOShader);
 
 		// 输入（SRV）
